@@ -1,35 +1,35 @@
-# HeishaHub — Advisor
+# HeishaHub — advisor
 #
-# Datengetriebene Optimierungs-Empfehlungen. Jeder Advisor-Sensor liefert:
+# Data-driven optimization recommendations. Each advisor sensor exposes:
 #   - state: "ok" | "warn" | "critical" | "info"
-#   - attributes.message: Klartext-Empfehlung in Deutsch
-#   - attributes.metric: relevanter Wert für die Diagnose
+#   - attributes.message: plain-language recommendation (English)
+#   - attributes.metric:  the diagnostic value
 #
-# Regeln basieren auf gängiger WP-Praxis (Dimplex, Panasonic, Stiebel-Eltron-
-# Optimierungs-Leitfäden) und sind in heishahub_advisor.yaml dokumentiert.
-# Power-User können Schwellen über input_number.heishahub_advisor_* anpassen.
+# Rules are based on common heat-pump tuning practice (Dimplex, Panasonic,
+# Stiebel-Eltron optimization guides). Power users can adjust thresholds via
+# input_number.heishahub_advisor_*.
 
 input_number:
   heishahub_advisor_short_cycle_warn_pct:
-    name: Advisor — Short-Cycle Warnschwelle (%)
+    name: Advisor — short-cycle warn threshold (%)
     min: 5
     max: 80
     step: 1
     initial: 25
   heishahub_advisor_short_cycle_crit_pct:
-    name: Advisor — Short-Cycle kritische Schwelle (%)
+    name: Advisor — short-cycle critical threshold (%)
     min: 10
     max: 90
     step: 1
     initial: 50
   heishahub_advisor_dt_target_k:
-    name: Advisor — Soll-Spreizung Vorlauf-Rücklauf (K)
+    name: Advisor — target supply/return spread (K)
     min: 3
     max: 10
     step: 0.5
     initial: 5
   heishahub_advisor_dhw_min_runtime_min:
-    name: Advisor — DHW Mindest-Laufzeit (Minuten)
+    name: Advisor — DHW minimum run time (minutes)
     min: 5
     max: 60
     step: 1
@@ -38,7 +38,7 @@ input_number:
 template:
   - sensor:
       # ════════════════════════════════════════════════════════════════════
-      # 1) Short-Cycle-Diagnose
+      # 1) Short-cycle diagnosis
       # ════════════════════════════════════════════════════════════════════
       - name: "HeishaHub Advisor Short Cycle"
         unique_id: heishahub_advisor_short_cycle
@@ -57,22 +57,24 @@ template:
             {% set crit = states('input_number.heishahub_advisor_short_cycle_crit_pct') | float(50) %}
             {% set warn = states('input_number.heishahub_advisor_short_cycle_warn_pct') | float(25) %}
             {% if ratio >= crit %}
-            Sehr hohe Taktung ({{ ratio }} %). Mögliche Ursachen:
-            (1) Heizkurve zu steil — WP erreicht Soll zu schnell, schaltet ab.
-            (2) Zu kleines Wasservolumen — Pufferspeicher oder hydraulische
-            Weiche prüfen. (3) Heizkreise zu stark gedrosselt (ERR-Ventile
-            voll auf?). (4) Hysterese zu eng. Empfehlung: Heizkurve
-            absenken und prüfen, ob Mindest-Modulation des Verdichters
-            erreicht wird.
+            Very high cycling rate ({{ ratio }} %). Likely causes:
+            (1) heating curve too steep — the unit reaches setpoint quickly
+            and shuts off; (2) insufficient water volume — consider a buffer
+            tank or hydraulic separator; (3) heating circuits too restricted
+            (check thermostatic valves: are they fully open?);
+            (4) hysteresis too tight. Recommendation: lower the heating
+            curve and verify that the compressor reaches its modulation
+            minimum.
             {% elif ratio >= warn %}
-            Erhöhte Taktung ({{ ratio }} %). Im Übergang akzeptabel, im
-            Tiefwinter Hinweis auf zu enge Hysterese oder zu hohe Heizkurve.
+            Elevated cycling ({{ ratio }} %). Acceptable in shoulder season,
+            but in deep winter it points to tight hysteresis or an
+            over-aggressive heating curve.
             {% else %}
-            Taktung im normalen Bereich.
+            Cycling within normal range.
             {% endif %}
 
       # ════════════════════════════════════════════════════════════════════
-      # 2) Spreizung Vorlauf-Rücklauf (Pumpenleistung)
+      # 2) Supply/return spread (pump speed)
       # ════════════════════════════════════════════════════════════════════
       - name: "HeishaHub Advisor Spread"
         unique_id: heishahub_advisor_spread
@@ -97,29 +99,27 @@ template:
             {% set dt = tout - tin %}
             {% set target = states('input_number.heishahub_advisor_dt_target_k') | float(5) %}
             {% if not is_state('binary_sensor.heishahub_compressor_running','on') %}
-            Verdichter steht — Spreizung nicht aussagekräftig.
+            Compressor idle — spread not meaningful.
             {% elif dt < target - 2 %}
-            Spreizung ({{ dt | round(1) }} K) zu klein. Pumpe läuft zu schnell
-            relativ zur Heizleistung — Pumpendrehzahl reduzieren oder
-            Heizleistung anheben. Reduziert Stromverbrauch der Pumpe und
-            verbessert die Auslegung.
+            Spread ({{ dt | round(1) }} K) too small. Pump runs too fast for
+            the current heat output — reduce pump speed or raise heat output.
+            Reduces pump electrical consumption and improves dimensioning.
             {% elif dt > target + 3 %}
-            Spreizung ({{ dt | round(1) }} K) zu groß. Pumpe zu langsam oder
-            Hydraulik gedrosselt — Volumenstrom zu gering kann zu
-            Hochdruckabschaltungen führen. Pumpendrehzahl erhöhen oder
-            Strangregulierventile prüfen.
+            Spread ({{ dt | round(1) }} K) too large. Pump too slow or
+            hydraulics throttled — low flow can trigger high-pressure
+            shutdowns. Increase pump speed or check the strand-balancing
+            valves.
             {% else %}
-            Spreizung optimal ({{ dt | round(1) }} K, Ziel {{ target }} K).
+            Spread optimal ({{ dt | round(1) }} K, target {{ target }} K).
             {% endif %}
 
       # ════════════════════════════════════════════════════════════════════
-      # 3) Defrost-Häufigkeit
+      # 3) Defrost frequency
       # ════════════════════════════════════════════════════════════════════
       - name: "HeishaHub Advisor Defrost"
         unique_id: heishahub_advisor_defrost
         icon: mdi:snowflake-melt
         state: >-
-          {# Wenn Defrost mehr als 1× pro Stunde bei Außentemp > 5 °C: warn #}
           {% set defrost = is_state('binary_sensor.heishahub_defrost_active','on') %}
           {% set tout = states('sensor.panasonic_heat_pump_main_outside_temperature') | float(0) %}
           {% if defrost and tout > 7 %}warn
@@ -129,24 +129,23 @@ template:
           message: >-
             {% if is_state('binary_sensor.heishahub_defrost_active','on')
                   and states('sensor.panasonic_heat_pump_main_outside_temperature') | float(0) > 7 %}
-            Abtauung bei Außentemperatur > 7 °C aktiv — ungewöhnlich.
-            Mögliche Ursachen: Verdampferluft-Strömung blockiert (Laub, Schnee,
-            zu nahe Wand), Lüfterproblem, Sensorabgleich. Verdampferlamellen
-            prüfen.
+            Defrost cycle active above 7 °C outdoor — unusual. Likely causes:
+            evaporator airflow blocked (leaves, snow, wall too close), fan
+            issue, sensor drift. Check the evaporator fins.
             {% else %}
-            Defrost-Verhalten unauffällig.
+            Defrost behaviour unremarkable.
             {% endif %}
 
       # ════════════════════════════════════════════════════════════════════
-      # 4) Heizkurve-Analyse (gleitend)
+      # 4) Heating-curve analysis (rolling)
       # ════════════════════════════════════════════════════════════════════
       - name: "HeishaHub Advisor Heat Curve"
         unique_id: heishahub_advisor_heat_curve
         icon: mdi:chart-bell-curve
         state: >-
-          {# Vereinfachte Heuristik: bei Außen < 0 °C sollte Vorlauf-Soll
-             den Ist-Vorlauf treffen ohne Heizstab. Wenn Heizstab läuft,
-             ist Heizkurve zu flach. #}
+          {# Simplified heuristic: at outdoor < 0 °C the supply setpoint
+             should be reachable without the auxiliary heater. If the heater
+             runs, the curve is too flat. #}
           {% set heater = is_state('binary_sensor.panasonic_heat_pump_main_heater_state','on') %}
           {% set tout = states('sensor.panasonic_heat_pump_main_outside_temperature') | float(99) %}
           {% if heater and tout > -7 %}warn
@@ -155,16 +154,17 @@ template:
           message: >-
             {% if is_state('binary_sensor.panasonic_heat_pump_main_heater_state','on')
                   and states('sensor.panasonic_heat_pump_main_outside_temperature') | float(99) > -7 %}
-            E-Heizstab läuft bei Außentemperatur über -7 °C. Hinweis auf zu
-            flache Heizkurve oder zu hohe Soll-Vorlauftemperatur. Heizkurve
-            am kalten Ende anheben oder Soll prüfen.
+            Auxiliary electric heater active above -7 °C outdoor. Indicates
+            either a too-flat heating curve or an overshooting supply
+            setpoint. Raise the heating curve at the cold end or check the
+            setpoint.
             {% else %}
-            E-Heizstab inaktiv oder bei sehr tiefen Temperaturen aktiv —
-            unauffällig.
+            Auxiliary heater inactive, or active only at very low outdoor
+            temperatures — unremarkable.
             {% endif %}
 
       # ════════════════════════════════════════════════════════════════════
-      # 5) DHW-Lauf zu kurz (Hygiene/COP)
+      # 5) DHW run too short (hygiene / COP)
       # ════════════════════════════════════════════════════════════════════
       - name: "HeishaHub Advisor DHW Runtime"
         unique_id: heishahub_advisor_dhw_runtime
@@ -178,13 +178,13 @@ template:
         attributes:
           metric: "{{ states('input_number.heishahub_cycle_last_duration_min') }} min"
           message: >-
-            DHW-Lauf von {{ states('input_number.heishahub_cycle_last_duration_min') }} min
-            war kürzer als Mindest-Laufzeit. WW-Bereitung mit kurzen Läufen
-            ist ineffizient und hygienisch grenzwertig. Hysterese im Tank
-            erhöhen oder Anti-Legionellen-Programm prüfen.
+            DHW run of {{ states('input_number.heishahub_cycle_last_duration_min') }} min
+            was shorter than the minimum runtime. Short DHW runs are
+            inefficient and hygienically borderline. Increase tank
+            hysteresis or check the anti-legionella schedule.
 
       # ════════════════════════════════════════════════════════════════════
-      # 6) Sammel-Ampel (für Dashboard-Übersicht)
+      # 6) Aggregate traffic-light (for the dashboard overview)
       # ════════════════════════════════════════════════════════════════════
       - name: "HeishaHub Advisor Summary"
         unique_id: heishahub_advisor_summary

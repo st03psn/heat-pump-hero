@@ -1,71 +1,75 @@
 # Roadmap
 
-## v0.1 — Skelett (jetzt)
+🌐 English (this file) · [Deutsch](de/roadmap.md)
 
-- [x] Repo-Struktur, HACS-Manifest, MIT-Lizenz
+## v0.1 — skeleton (current)
+
+- [x] Repository structure, HACS manifest, MIT license
 - [x] Packages: core / external / efficiency / cycles / advisor / control
-- [x] Dashboard mit 6 Views (Übersicht, Schema, Auswertung, Effizienz,
-  Optimierung, Konfiguration)
-- [x] Setup-Blueprint (Diagnose)
-- [x] CLI-Installer `scripts/install.sh`
-- [x] Grafana-Skeletons (overview, efficiency_jaz_maz)
-- [x] Telegraf-MQTT-Bridge-Config
-- [x] CI: yamllint, JSON-Validierung, HACS-Action
+- [x] Dashboard with 6 views (Overview, Schema, Analysis, Efficiency,
+  Optimization, Configuration)
+- [x] Setup blueprint (diagnostic)
+- [x] CLI installer `scripts/install.sh`
+- [x] Grafana skeletons (overview, efficiency_jaz_maz)
+- [x] Telegraf MQTT bridge config
+- [x] CI: yamllint, JSON validation, HACS action
 - [x] Docs: installation, external_sensors, optimization, tweaking, roadmap
+- [x] Bilingual docs (English primary, German secondary)
 
-## v0.2 — Erste echte Anwendung
+## v0.2 — first usable release
 
-- [ ] Bubble-Card-SVG-Schema mit Live-Hotspots (statt Markdown-Platzhalter)
-- [ ] Schema-Varianten für HK1+DHW, HK1+HK2+DHW, +Puffer
-- [ ] Topic-Prefix als zentrale Variable (`secrets.yaml`-Eintrag)
-- [ ] Tarif-Splits in `utility_meter` (heating/dhw/cooling separat)
-- [ ] HA-Energy-Dashboard-Integration als „Individual Devices"
-- [ ] Mobile-optimiertes Dashboard-Layout
+- [ ] Bubble-Card SVG schematic with live hotspots (replacing the markdown
+  placeholder)
+- [ ] Schematic variants for HK1+DHW, HK1+HK2+DHW, +buffer
+- [ ] Topic prefix as a single variable (`secrets.yaml` entry)
+- [ ] Tariff splits in `utility_meter` (heating/dhw/cooling separate)
+- [ ] HA Energy-Dashboard integration as "individual devices"
+- [ ] Mobile-optimized dashboard layout
 - [ ] Screenshots in `docs/screenshots/`
 
-## v0.3 — Statistik & Langzeit
+## v0.3 — statistics & long-term
 
-- [ ] Wochen-/Monats-/Jahres-Heatmap (Außentemp × Stunde × COP)
-- [ ] Grafana-Dashboards mit echten Queries (heute Skelette)
-- [ ] InfluxDB-Schema dokumentieren, Beispiel-Queries
-- [ ] Heizgrenztemperatur automatisch ermitteln
-- [ ] Vergleich Vorjahr ↔ aktuelles Jahr (Apex-Komparator)
+- [ ] Weekly / monthly / yearly heatmap (outdoor × hour × COP)
+- [ ] Grafana dashboards with real queries (today only skeletons)
+- [ ] Document the InfluxDB schema, provide example queries
+- [ ] Auto-detect heating-limit temperature
+- [ ] Year-over-year comparison (Apex comparator)
 
-## v0.4 — Advisor-Erweiterungen
+## v0.4 — advisor extensions
 
-- [ ] Heizkurven-Optimierungs-Vorschlag aus Daten
-  (Vorlauf-Soll vs. Ist über Außentemperatur, lineare Regression)
-- [ ] Pumpenkennlinien-Empfehlung (Spreizung-Histogramm)
-- [ ] Wasserdruck-Trend-Erkennung (langsamer Druckverlust)
-- [ ] Effizienz-Drift-Erkennung (JAZ Vorjahr vs. aktuell, witterungsbereinigt)
-- [ ] DHW-Timing-Empfehlung (basierend auf Verbrauchsmuster)
+- [ ] Heating-curve recommendation derived from data (target vs. actual
+  supply over outdoor temperature, linear regression)
+- [ ] Pump curve recommendation (spread histogram)
+- [ ] Water-pressure trend detection (slow leak)
+- [ ] Efficiency-drift detection (last year vs. current, weather-adjusted)
+- [ ] DHW timing recommendation (based on usage pattern)
 
-## v0.5 — Control-Erweiterungen
+## v0.5 — control extensions
 
-- [ ] Adaptive Heizkurve (selbstlernend basierend auf Innenraum-Sensoren)
-- [ ] Strompreis-gesteuerte DHW (Tibber/aWATTar-Integration)
-- [ ] Anti-Legionellen-Programm konfigurierbar
-- [ ] Wetter-Vorausschau (Heizen-Vorbereiten bei kommender Kälte)
-- [ ] Estrich-Aufheiz-Programm (Bauphase)
+- [ ] Adaptive heating curve (self-learning from indoor sensors)
+- [ ] Price-driven DHW (Tibber / aWATTar integration)
+- [ ] Configurable legionella program
+- [ ] Weather forecast pre-heating
+- [ ] Screed dry-out program (for new builds)
 
-## v1.0 — Stabil & dokumentiert
+## v1.0 — stable & documented
 
-- [ ] Vollständige Testsuite (HA-CI mit Mock-MQTT)
-- [ ] Mehrsprachigkeit (EN, NL — typische Heishamon-Communities)
-- [ ] Video-Walkthrough
-- [ ] Aufnahme in HACS-Default-Repository
-- [ ] HK2 / Puffer / Solar / Pool vollständig getestet bei Beta-Nutzern
+- [ ] Full test suite (HA CI with mocked MQTT)
+- [ ] Internationalization (EN, NL — typical Heishamon communities)
+- [ ] Video walkthrough
+- [ ] Submission to the HACS default repository
+- [ ] Zone 2 / buffer / solar / pool fully tested with beta users
 
-## Nicht geplant
+## Out of scope
 
-- Eigene Python-Custom-Integration (kamaradclimber deckt Entities ab —
-  Doppel-Arbeit vermeiden)
-- Cloud-Funktionen (HeishaHub bleibt 100 % lokal)
-- Steuerung ohne kamaradclimber-Integration (zu großer Abstraktions-
-  Aufwand für wenig Mehrwert)
+- A dedicated Python custom integration (kamaradclimber covers entities — no
+  need to duplicate work).
+- Cloud features (HeishaHub stays 100 % local).
+- Standalone control without the kamaradclimber integration (too much
+  abstraction work for too little value).
 
-## Beitragen
+## Contributing
 
-Issues mit konkreten Use-Cases willkommen. Vor PRs: Designprinzipien in
-[CLAUDE.md](../CLAUDE.md) lesen, besonders zu Universalität, Advisor-Schema
-und Control-Schalter-Konvention.
+Issues with concrete use-cases very welcome. Before opening a PR, please
+read the design principles in [CLAUDE.md](../CLAUDE.md), in particular the
+universality, advisor schema, and control-switch conventions.

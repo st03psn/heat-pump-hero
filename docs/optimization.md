@@ -1,133 +1,133 @@
-# Optimierung — Takt-Analyse, Advisor, Steuerung
+# Optimization — cycle analysis, advisor, control
 
-## Konzept
+🌐 English (this file) · [Deutsch](de/optimization.md)
 
-Eine Wärmepumpe arbeitet am effizientesten, wenn sie **lange, gleichmäßig**
-läuft, **selten** taktet und mit **niedriger Vorlauftemperatur** auskommt.
-HeishaHub liefert drei Werkzeuge, um genau das zu erreichen:
+## Concept
 
-1. **Takt-Analyse** — misst Zyklen, Laufzeiten, Pausen.
-2. **Advisor** — wertet diese Daten aus und gibt Klartext-Empfehlungen.
-3. **Control** — optionale Automations, die typische Optimierungs-Strategien
-   aus HeishaMoNR (CCC, SoftStart, Solar-DHW) als HA-Automations umsetzen.
+A heat pump runs most efficiently when it operates **long, even** cycles,
+**rarely** kicks in and out, and gets by with a **low supply temperature**.
+HeishaHub provides three tools to get there:
 
-## Takt-Analyse
+1. **Cycle analysis** — measures cycles, run times, pauses.
+2. **Advisor** — interprets that data and produces plain-language hints.
+3. **Control** — optional automations that port typical optimization
+   strategies from HeishaMoNR (CCC, SoftStart, Solar-DHW) to HA automations.
 
-Sensoren in `packages/heishahub_cycles.yaml`:
+## Cycle analysis
 
-| Sensor | Bedeutung |
+Sensors in `packages/heishahub_cycles.yaml`:
+
+| Sensor | Meaning |
 |---|---|
-| `counter.heishahub_cycles_today` | Anzahl Verdichter-Starts heute |
-| `counter.heishahub_short_cycles_today` | Davon kürzer als Schwelle (Default 10 min) |
-| `sensor.heishahub_short_cycle_ratio` | Anteil Short-Cycles (%) |
-| `sensor.heishahub_cycles_per_hour` | Starts pro Stunde (gleitend) |
-| `sensor.heishahub_avg_cycle_duration_24h` | Durchschnittliche Laufzeit |
-| `input_number.heishahub_cycle_last_duration_min` | Letzter Lauf (min) |
-| `input_number.heishahub_cycle_last_pause_min` | Letzte Pause (min) |
+| `counter.heishahub_cycles_today` | Compressor starts today |
+| `counter.heishahub_short_cycles_today` | Of those, shorter than threshold (default 10 min) |
+| `sensor.heishahub_short_cycle_ratio` | Share of short cycles (%) |
+| `sensor.heishahub_cycles_per_hour` | Starts per hour (rolling) |
+| `sensor.heishahub_avg_cycle_duration_24h` | Average runtime |
+| `input_number.heishahub_cycle_last_duration_min` | Last run duration |
+| `input_number.heishahub_cycle_last_pause_min` | Last pause duration |
 
-**Was ist „normal"?**
-- Übergangszeit (5–10 °C außen): 4–8 Starts/Tag, Laufzeit 60–120 min
-- Tiefwinter (< 0 °C): 1–3 Starts/Tag, Dauerlauf bis 24 h
-- DHW: 1–3 Starts/Tag, je 20–45 min
+**What's "normal"?**
 
-Mehr als ~12 Starts/Tag oder Short-Cycle-Quote > 25 % deutet auf zu enges
-Wasservolumen, zu steile Heizkurve oder hydraulische Probleme.
+- Shoulder season (5–10 °C outdoor): 4–8 starts per day, 60–120 min runs
+- Deep winter (< 0 °C): 1–3 starts per day, near-continuous runs
+- DHW: 1–3 starts per day, 20–45 min each
+
+More than ~12 starts per day, or a short-cycle ratio above 25 %, suggests
+insufficient water volume, an over-aggressive heating curve, or hydraulic
+issues.
 
 ## Advisor
 
-`packages/heishahub_advisor.yaml`. Jeder Advisor-Sensor hat:
+`packages/heishahub_advisor.yaml`. Each advisor sensor exposes:
 
 - `state ∈ { ok, warn, critical, info }`
-- `attributes.message` — Erklärung in Klartext
-- `attributes.metric` — Diagnose-Wert
+- `attributes.message` — explanation in plain language
+- `attributes.metric` — the diagnostic value
 
-**Aktuelle Regeln (v0.1):**
+**Current rules (v0.1):**
 
-| Sensor | Prüft | Empfehlung |
+| Sensor | Checks | Suggests |
 |---|---|---|
-| `advisor_short_cycle` | Short-Cycle-Quote vs. Schwelle | Heizkurve, Hysterese, Puffer |
-| `advisor_spread` | Vorlauf-Rücklauf-Spreizung gegen Soll-K | Pumpendrehzahl |
-| `advisor_defrost` | Defrost bei Außentemp > 7 °C | Verdampfer prüfen |
-| `advisor_heat_curve` | E-Heizstab an bei Außentemp > -7 °C | Heizkurve am kalten Ende anheben |
-| `advisor_dhw_runtime` | DHW-Lauf < 20 min | Hysterese / Anti-Legionellen |
-| `advisor_summary` | Sammel-Ampel | Gesamtstatus |
+| `advisor_short_cycle` | short-cycle ratio vs. threshold | heating curve, hysteresis, buffer |
+| `advisor_spread` | supply/return spread vs. target K | pump speed |
+| `advisor_defrost` | defrost while outdoor > 7 °C | inspect evaporator |
+| `advisor_heat_curve` | aux heater on while outdoor > -7 °C | raise heating curve at the cold end |
+| `advisor_dhw_runtime` | DHW run < 20 min | hysteresis / legionella program |
+| `advisor_summary` | aggregate traffic-light | overall status |
 
-**Schwellen anpassen** in *Optimierung → Advisor-Schwellen*:
-- `advisor_short_cycle_warn_pct` (Default 25 %)
-- `advisor_short_cycle_crit_pct` (Default 50 %)
-- `advisor_dt_target_k` (Default 5 K)
-- `advisor_dhw_min_runtime_min` (Default 20 min)
+**Tunable thresholds** in *Optimization → Advisor thresholds*:
+- `advisor_short_cycle_warn_pct` (default 25 %)
+- `advisor_short_cycle_crit_pct` (default 50 %)
+- `advisor_dt_target_k` (default 5 K)
+- `advisor_dhw_min_runtime_min` (default 20 min)
 
-## Control — Steuerungs-Strategien
+## Control — optimization strategies
 
-`packages/heishahub_control.yaml`. **Standard: alles AUS.** Aktivierung über
-zwei Schalter:
+`packages/heishahub_control.yaml`. **Default: everything off.** Two switches
+are needed to enable any strategy:
 
-1. `input_boolean.heishahub_ctrl_master` — Globaler Schalter
-2. Einzelne Strategien — siehe unten
+1. `input_boolean.heishahub_ctrl_master` — global gate
+2. The individual strategy switch — see below
 
 ### Compressor Cycle Control (CCC)
 
-**Problem**: WP schaltet nach kurzer Pause sofort wieder ein → kurze Zyklen,
-hoher Verschleiß, schlechter COP.
+**Problem**: the heat pump restarts shortly after a stop → short cycles,
+high wear, poor COP.
 
-**HeishaHub-Lösung**: Wenn die letzte Pause kürzer als
-`ctrl_ccc_min_pause_min` (Default 15 min) war, wird nach dem Neustart der
-Quiet-Mode 3 für 5 Minuten aktiviert — das reduziert die maximale
-Frequenz und gibt der Anlage Zeit zur Modulation, statt voll hochzufahren
-und früh wieder abzuschalten.
+**HeishaHub solution**: if the previous pause was shorter than
+`ctrl_ccc_min_pause_min` (default 15 min), Quiet-Mode 3 is engaged for 5
+minutes after the restart — this caps the maximum frequency and gives the
+unit a chance to modulate down rather than ramping up and shutting off again.
 
-**Aktivieren**: `ctrl_master = on`, `ctrl_ccc = on`, ggf. Pause-Schwelle
-anpassen.
+**Enable**: `ctrl_master = on`, `ctrl_ccc = on`, adjust pause threshold if
+needed.
 
 ### SoftStart
 
-**Problem**: Anfahrspitzen bei tiefen Außentemperaturen verursachen
-hohen Strom-Peak und ggf. Ansprechen des EVU-Schutzes.
+**Problem**: cold-weather start spikes draw a high current and may trip the
+utility-supplier limiter.
 
-**HeishaHub-Lösung**: Beim Verdichter-Start Quiet-Mode 2 für 10 Minuten →
-sanfter Frequenz-Hochlauf.
+**HeishaHub solution**: on compressor start, engage Quiet-Mode 2 for 10
+minutes → gentle frequency ramp.
 
-### Solar-DHW-Boost
+### Solar-DHW boost
 
-**Problem**: PV-Überschuss verpufft, während die WP später teuer DHW macht.
+**Problem**: PV surplus is exported while the heat pump heats DHW later from
+the grid.
 
-**HeishaHub-Lösung**: Wenn der PV-Überschuss-Sensor (Entity-ID in
-`ctrl_pv_surplus_entity` eintragen) länger als 5 Min über
-`ctrl_solar_pv_threshold_w` (Default 1500 W) liegt **und** der Tank noch
-nicht voll ist, wird `force_dhw` ausgelöst.
+**HeishaHub solution**: when the surplus sensor (entity-ID in
+`ctrl_pv_surplus_entity`) stays above `ctrl_solar_pv_threshold_w` (default
+1500 W) for 5 minutes **and** the tank is not full, fire `force_dhw`.
 
-**Voraussetzungen**:
-- PV-Überschuss-Sensor muss existieren (Eigenverbrauch − Bezug, in W)
-- Tank-Temperatur-Sensor verfügbar
+**Requires**:
+- a surplus sensor (own consumption − grid import, in W)
+- a tank-temperature sensor
 
-### Nacht-Quiet-Mode
+### Night Quiet-Mode
 
-22:00–06:00 automatisch Quiet-Mode 3 — geräuscharm, mit Komfort-Einbuße in
-Tiefkälte. Nur einschalten, wenn Anlage vor dem Schlafzimmer und keine
-Heizlast-Probleme zu erwarten sind.
+22:00–06:00 automatic Quiet-Mode 3 — quiet operation, with a comfort
+penalty in deep cold. Only enable if the unit is near a bedroom and you
+don't expect heat-load problems.
 
-## Workflow für saubere Optimierung
+## Workflow for clean optimization
 
-1. **Beobachten** (1–2 Wochen): Standard-Heizkurve, alles auf default.
-   Advisor sammelt Daten.
-2. **Diagnose**: Sammel-Ampel und einzelne Advisor-Sensoren prüfen.
-   Warnungen lesen, Mess-Werte (`metric`-Attribut) notieren.
-3. **Einzelne Stellschraube** ändern (z. B. Heizkurve um 1 °C senken),
-   1–2 Tage warten, Effekt im Advisor und in den Takt-Statistiken
-   beobachten.
-4. **Steuer-Strategien** (CCC, SoftStart) erst zuschalten, wenn die
-   manuelle Heizkurven-Optimierung am Limit ist.
-5. **Niemals alles auf einmal** ändern — Effekte werden dann nicht
-   zuordenbar.
+1. **Observe** (1–2 weeks): leave the heating curve at default, advisor
+   collects data.
+2. **Diagnose**: read the aggregate traffic-light and individual advisor
+   sensors. Read the warnings, note the metric values.
+3. **One knob at a time** (e.g. lower the heating curve by 1 °C), wait
+   1–2 days, observe the advisor and cycle stats.
+4. **Control strategies** (CCC, SoftStart) — only after the manual
+   heating-curve tuning has reached its limit.
+5. **Never change everything at once** — effects become unattributable.
 
-## Eigene Advisor-Regeln hinzufügen
+## Adding your own advisor rule
 
-Power-User: in `packages/heishahub_advisor.yaml` einen neuen
-`template.sensor`-Block ergänzen, der gleiches Schema einhält
-(`state`, `attributes.message`, `attributes.metric`). Anschließend in
-`heishahub_advisor_summary` hinzufügen, damit die Sammel-Ampel den neuen
-Sensor mit auswertet.
+Power users: add a new `template.sensor` block to
+`packages/heishahub_advisor.yaml` following the same schema (`state`,
+`attributes.message`, `attributes.metric`). Add it to
+`heishahub_advisor_summary` so the aggregate traffic-light considers it.
 
-PRs für allgemein nützliche Regeln willkommen — siehe
-[CLAUDE.md](../CLAUDE.md) für Designprinzipien.
+PRs with generally useful rules are welcome — see [CLAUDE.md](../CLAUDE.md)
+for design principles.

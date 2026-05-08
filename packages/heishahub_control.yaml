@@ -1,16 +1,16 @@
-# HeishaHub — Control (HeishaMoNR-Parität)
+# HeishaHub — control (HeishaMoNR parity)
 #
-# Optionale Steuer-Automationen für Optimierungs-Strategien, die HeishaMoNR
-# (Node-Red) mitbringt. Alle Funktionen sind per input_boolean abschaltbar
-# und standardmäßig AUS — Aktivierung explizit durch den Nutzer.
+# Optional control automations that mirror the optimization strategies
+# HeishaMoNR (Node-Red) ships. Every strategy is gated by an input_boolean
+# and OFF by default — the user has to explicitly enable each one.
 #
-# !!! WICHTIG !!!
-# Schreibend darf nur EIN System sein. Wenn HeishaMoNR aktiv ist, alle
-# input_boolean.heishahub_ctrl_* auf OFF lassen.
+# !!! IMPORTANT !!!
+# Only ONE system may write at a time. If HeishaMoNR is active, leave
+# every input_boolean.heishahub_ctrl_* OFF.
 
 input_boolean:
   heishahub_ctrl_master:
-    name: HeishaHub Control — Master-Schalter
+    name: HeishaHub Control — master switch
     icon: mdi:robot-outline
     initial: false
   heishahub_ctrl_ccc:
@@ -22,29 +22,29 @@ input_boolean:
     icon: mdi:trending-up
     initial: false
   heishahub_ctrl_solar_dhw:
-    name: Solar-DHW-Boost
+    name: Solar-DHW boost
     icon: mdi:solar-power-variant
     initial: false
   heishahub_ctrl_quiet_night:
-    name: Nacht-Quiet-Mode
+    name: Night quiet mode
     icon: mdi:weather-night
     initial: false
 
 input_number:
   heishahub_ctrl_ccc_min_pause_min:
-    name: CCC — Mindest-Pause (Minuten)
+    name: CCC — minimum pause (minutes)
     min: 5
     max: 60
     step: 1
     initial: 15
   heishahub_ctrl_ccc_min_runtime_min:
-    name: CCC — Mindest-Laufzeit (Minuten)
+    name: CCC — minimum runtime (minutes)
     min: 5
     max: 60
     step: 1
     initial: 20
   heishahub_ctrl_solar_pv_threshold_w:
-    name: Solar-DHW — PV-Überschuss-Schwelle (W)
+    name: Solar-DHW — PV-surplus threshold (W)
     min: 500
     max: 5000
     step: 100
@@ -52,19 +52,18 @@ input_number:
 
 input_text:
   heishahub_ctrl_pv_surplus_entity:
-    name: PV-Überschuss-Sensor (Entity-ID)
+    name: PV surplus sensor (entity-ID)
     icon: mdi:solar-power
     initial: ""
 
 automation:
   # ════════════════════════════════════════════════════════════════════════
-  # CCC — Compressor Cycle Control: verhindert zu kurze Pausen
-  # Strategie: Wenn WP nach < min_pause wieder einschaltet, Anforderung
-  #            kurz unterdrücken (über Heizkurven-Offset oder
-  #            Zwangsabschaltung über force_dhw / quiet_mode).
+  # CCC — Compressor Cycle Control: prevent too-short pauses
+  # Strategy: if the unit restarts within < min_pause, briefly reduce
+  #           demand via Quiet-Mode 3.
   # ════════════════════════════════════════════════════════════════════════
   - id: heishahub_ctrl_ccc_block_short_pause
-    alias: HeishaHub CCC — kurze Pause blockieren
+    alias: HeishaHub CCC — block short pause
     mode: single
     trigger:
       - platform: state
@@ -83,7 +82,7 @@ automation:
           {{ states('input_number.heishahub_cycle_last_pause_min') | float(99)
              < states('input_number.heishahub_ctrl_ccc_min_pause_min') | float(15) }}
     action:
-      # Quiet-Mode + Heizkurven-Offset reduziert Anforderung kurzzeitig
+      # Quiet-Mode caps the maximum frequency for a few minutes.
       - service: select.select_option
         target:
           entity_id: select.panasonic_heat_pump_main_quiet_mode
@@ -98,10 +97,10 @@ automation:
       - service: persistent_notification.create
         data:
           title: HeishaHub CCC
-          message: Kurze Pause erkannt — Quiet-Mode 5 Min aktiviert.
+          message: Short pause detected — Quiet-Mode engaged for 5 minutes.
 
   # ════════════════════════════════════════════════════════════════════════
-  # SoftStart — Frequenz-Begrenzung beim Anlauf
+  # SoftStart — frequency cap on compressor start
   # ════════════════════════════════════════════════════════════════════════
   - id: heishahub_ctrl_softstart
     alias: HeishaHub SoftStart
@@ -132,10 +131,10 @@ automation:
           option: "0"
 
   # ════════════════════════════════════════════════════════════════════════
-  # Solar-DHW-Boost — DHW-Forcierung bei PV-Überschuss
+  # Solar-DHW boost — force DHW when PV surplus is high
   # ════════════════════════════════════════════════════════════════════════
   - id: heishahub_ctrl_solar_dhw
-    alias: HeishaHub Solar-DHW-Boost
+    alias: HeishaHub Solar-DHW boost
     mode: single
     trigger:
       - platform: template
@@ -151,7 +150,8 @@ automation:
       - condition: state
         entity_id: input_boolean.heishahub_ctrl_solar_dhw
         state: "on"
-      # nur wenn DHW noch nicht voll (Beispielsensor — nutzerseitig anpassen)
+      # Only trigger if the DHW tank is not already hot. Sample sensor —
+      # adjust per installation.
       - condition: template
         value_template: >-
           {{ states('sensor.panasonic_heat_pump_main_z1_water_temperature') | float(99)
@@ -163,13 +163,13 @@ automation:
       - service: persistent_notification.create
         data:
           title: HeishaHub Solar-DHW
-          message: PV-Überschuss erkannt — DHW-Forcierung gestartet.
+          message: PV surplus detected — DHW force triggered.
 
   # ════════════════════════════════════════════════════════════════════════
-  # Nacht-Quiet-Mode — automatisch um 22:00, aus um 06:00
+  # Night Quiet-Mode — automatic 22:00 → 06:00
   # ════════════════════════════════════════════════════════════════════════
   - id: heishahub_ctrl_quiet_night_on
-    alias: HeishaHub Quiet — Nacht an
+    alias: HeishaHub Quiet — night on
     mode: single
     trigger:
       - platform: time
@@ -189,7 +189,7 @@ automation:
           option: "3"
 
   - id: heishahub_ctrl_quiet_night_off
-    alias: HeishaHub Quiet — Nacht aus
+    alias: HeishaHub Quiet — night off
     mode: single
     trigger:
       - platform: time

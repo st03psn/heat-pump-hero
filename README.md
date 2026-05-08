@@ -1,121 +1,126 @@
 # HeishaHub
 
-> Universelles Home-Assistant-Paket für Panasonic-Aquarea-Wärmepumpen mit
-> Heishamon — Dashboard, Auswertung, Langzeit-Effizienz.
+> Universal Home Assistant package for Panasonic Aquarea heat pumps with
+> Heishamon — dashboard, statistics, optimization advisor, control automations.
 
-[![Validate](https://github.com/st03psn/heishahub/actions/workflows/validate.yml/badge.svg)](https://github.com/st03psn/heishahub/actions/workflows/validate.yml)
+🌐 **Languages:** English (this file) · [Deutsch](README.de.md)
+
+[![Validate](https://github.com/st03psn/HeishaHub/actions/workflows/validate.yml/badge.svg)](https://github.com/st03psn/HeishaHub/actions/workflows/validate.yml)
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-HeishaHub bündelt das, was bisher fehlt: ein importierbares Dashboard im Layout
-des Heishamon-Web-UIs, Service-Cloud-ähnliche Auswertegraphen, ein Anlagen-
-Schema mit Live-Hotspots und sauber gerechnete Effizienz-Kennzahlen
-(JAZ / MAZ / TAZ / COP) — auch über mehrere Jahre.
+HeishaHub bundles what's missing today: an importable Home Assistant dashboard
+laid out like the Heishamon web UI, Service-Cloud-style analytical graphs, an
+installation schematic with live hotspots, and proper efficiency metrics
+(SCOP / monthly / daily / live COP) — including multi-year tracking.
 
 ## Status
 
-🚧 **Pre-alpha (v0.1)** — Skelett mit erster funktionsfähiger HK1-Übersicht,
-Live-COP und Basis-Graphen. Bubble-Schema, Grafana-Boards und Auto-Setup-
-Blueprint folgen iterativ.
+🚧 **Pre-alpha (v0.1)** — skeleton with first working HK1 overview, live COP,
+cycle analysis, optimization advisor, and HeishaMoNR-parity control
+automations. Bubble-Card schematic, Grafana boards, and one-click setup
+blueprint follow iteratively.
 
 ## Features (v0.1 → roadmap)
 
-**Visualisierung & Status**
-- ✅ Status-Dashboard (Übersicht, Heishamon-Web-UI-Layout)
-- ✅ Live-COP & thermische/elektrische Energie
-- ✅ Universal: HK2/DHW/Puffer/Solar/Pool optional, Auto-Hide
-- ✅ Externe Sensoren (Shelly, WMZ) per UI-Dropdown
-- 🟡 Service-Cloud-Stil-Graphen (ApexCharts) — Basis vorhanden, Feinschliff folgt
-- 🟡 Anlagen-Schema (Bubble-Card + SVG) — Platzhalter
-- 🟡 JAZ/MAZ/TAZ + Energy-Dashboard-Integration
+**Visualization & status**
+- ✅ Status dashboard (overview, Heishamon-web-UI layout)
+- ✅ Live COP & thermal/electrical energy
+- ✅ Universal: zone 2 / DHW / buffer / solar / pool optional, auto-hide
+- ✅ External sensors (Shelly, heat meter) selectable via UI dropdown
+- 🟡 Service-Cloud-style graphs (ApexCharts) — basic in place, polish ongoing
+- 🟡 Installation schematic (Bubble-Card + SVG) — placeholder
+- 🟡 SCOP / monthly / daily COP + Energy-Dashboard integration
 
-**Takt-Analyse & Optimierung**
-- ✅ Zyklus-Tracking (Starts/h, Laufzeiten, Pausen)
-- ✅ Short-Cycle-Erkennung mit konfigurierbarer Schwelle
-- ✅ Datengetriebener **Advisor** mit Klartext-Empfehlungen:
-  Taktung, Spreizung VL/RL, Defrost-Verhalten, Heizkurve/Heizstab,
-  DHW-Lauflänge — Sammel-Ampel im Dashboard
-- ✅ **Steuerungs-Strategien (HeishaMoNR-Parität)**: CCC (Compressor Cycle
-  Control), SoftStart, Solar-DHW-Boost, Nacht-Quiet-Mode — alle als
-  HA-Automations, einzeln ein-/ausschaltbar, Master-Schalter
+**Cycle analysis & optimization**
+- ✅ Cycle tracking (starts/h, run times, pauses)
+- ✅ Short-cycle detection with configurable threshold
+- ✅ Data-driven **advisor** with plain-language recommendations:
+  cycling, supply/return spread, defrost behaviour, heat curve / aux heater,
+  DHW run length — aggregate traffic-light tile in dashboard
+- ✅ **Control strategies (HeishaMoNR parity)**: CCC (Compressor Cycle
+  Control), SoftStart, Solar-DHW boost, night Quiet-Mode — all as HA
+  automations, individually toggleable, master switch
 
-**Langzeit & Export**
-- ⏳ Grafana-Boards für Mehrjahres-Effizienz
-- ⏳ Setup-Blueprint für Ein-Klick-Deploy
+**Long-term & export**
+- ⏳ Grafana boards for multi-year efficiency
+- ⏳ Setup blueprint for one-click deploy
 
-## Voraussetzungen
+## Requirements
 
-- Home Assistant 2025.4 oder neuer
-- Heishamon-Hardware (Egyras/IgorYbema-Firmware) am MQTT-Broker
-  (Default-Topic-Prefix `panasonic_heat_pump`)
-- HACS installiert
+- Home Assistant 2025.4 or newer
+- Heishamon hardware (Egyras / IgorYbema firmware) connected to an MQTT
+  broker (default topic prefix: `panasonic_heat_pump`)
+- HACS installed
 
-## Schnellinstallation
+## Quick install
 
-1. **HACS-Custom-Repository hinzufügen**
+1. **Add HACS custom repository**
    - HACS → Integrations → ⋮ → Custom repositories
-   - URL: `https://github.com/st03psn/heishahub`
-   - Kategorie: *Lovelace* (zunächst, bis HACS Mixed-Content unterstützt)
+   - URL: `https://github.com/st03psn/HeishaHub`
+   - Category: *Lovelace* (until HACS supports mixed content)
 
-2. **Abhängigkeiten installieren** (HACS-Suche, Reihenfolge egal):
-   - kamaradclimber Heishamon-HomeAssistant (Integration)
+2. **Install dependencies** (HACS search, order doesn't matter):
+   - kamaradclimber Heishamon-HomeAssistant (integration)
    - apexcharts-card, bubble-card, mushroom, button-card,
-     auto-entities, card-mod (Plugins)
+     auto-entities, card-mod (frontend plugins)
 
-3. **Packages aktivieren** — in `configuration.yaml`:
+3. **Enable packages** — in `configuration.yaml`:
    ```yaml
    homeassistant:
      packages: !include_dir_named packages
    ```
-   und den Inhalt von `packages/` aus diesem Repo nach `<config>/packages/`
-   kopieren (manuell oder via `scripts/install.sh`).
+   Copy the contents of this repo's `packages/` to `<config>/packages/`
+   (manually or via `scripts/install.sh`).
 
-4. **Dashboard hinzufügen** — Settings → Dashboards → Add → From YAML →
-   `dashboards/heishahub.yaml` einfügen.
+4. **Add the dashboard** — Settings → Dashboards → Add → From YAML →
+   paste `dashboards/heishahub.yaml`.
 
-5. **Externe Sensoren** (optional) — Settings → Devices & Services → Helpers:
-   `heishahub_shelly_entity` und `heishahub_wmz_entity` mit Entity-IDs füllen.
-   Siehe [docs/external_sensors.md](docs/external_sensors.md).
+5. **External sensors** (optional) — Settings → Devices & Services → Helpers:
+   set `heishahub_shelly_entity` and `heishahub_wmz_entity` to your sensor
+   entity-IDs. See [docs/external_sensors.md](docs/external_sensors.md).
 
-Ausführliche Anleitung: [docs/installation.md](docs/installation.md).
+Detailed walkthrough: [docs/installation.md](docs/installation.md).
 
-## Architektur
+## Architecture
 
 ```
   Heishamon ─┐
-             ├─MQTT─▶ kamaradclimber → HA-Entities
+             ├─MQTT─▶ kamaradclimber → HA entities
   Shelly ────┤                        │
-  WMZ ───────┘                        ├─▶ heishahub-Packages (Templates)
-                                      │     ├─ COP / JAZ / MAZ / TAZ
-                                      │     └─ Energie thermisch/elektrisch
+  Heat meter ┘                        ├─▶ heishahub packages (templates)
+                                      │     ├─ COP / SCOP / monthly / daily
+                                      │     └─ thermal/electrical energy
                                       ├─▶ HA Recorder + LTS ─▶ Lovelace
-                                      └─▶ HA Energy-Dashboard
+                                      └─▶ HA Energy Dashboard
                                       ↓
-                                 InfluxDB ─▶ Grafana (Mehrjahres-JAZ/MAZ)
+                                 InfluxDB ─▶ Grafana (multi-year SCOP)
 ```
 
-## Projektname & Bezug
+## Project name
 
-**HeishaHub** — Hub für alles rund um Heishamon: Dashboard + Steuerung +
-Statistik in einem Paket.
+**HeishaHub** — a hub for everything around Heishamon: dashboard + control +
+statistics in a single bundle.
 
-## Mitwirken
+## Contributing
 
-Issues und PRs willkommen.
+Issues and pull requests welcome.
 
-- [CLAUDE.md](CLAUDE.md) — Architektur und Konventionen
-- [docs/installation.md](docs/installation.md) — Schritt-für-Schritt-Setup
-- [docs/external_sensors.md](docs/external_sensors.md) — Shelly / WMZ einbinden
-- [docs/optimization.md](docs/optimization.md) — Takt-Analyse, Advisor, Control
-- [docs/tweaking.md](docs/tweaking.md) — Power-User-Anpassungen
-- [docs/roadmap.md](docs/roadmap.md) — Was kommt noch
+- [CLAUDE.md](CLAUDE.md) — architecture and conventions
+- [docs/installation.md](docs/installation.md) — step-by-step setup
+- [docs/external_sensors.md](docs/external_sensors.md) — Shelly / heat meter
+- [docs/optimization.md](docs/optimization.md) — cycle analysis, advisor, control
+- [docs/tweaking.md](docs/tweaking.md) — power-user customizations
+- [docs/roadmap.md](docs/roadmap.md) — what's next
 
-## Lizenz
+German translations live alongside as `*.de.md` and `docs/de/`.
 
-MIT — siehe [LICENSE](LICENSE).
+## License
 
-## Verwandte Projekte
+MIT — see [LICENSE](LICENSE).
 
-- [Egyras/HeishaMon](https://github.com/Egyras/HeishaMon) — Firmware
-- [kamaradclimber/heishamon-homeassistant](https://github.com/kamaradclimber/heishamon-homeassistant) — HA-Integration (Pflicht-Dependency)
-- [edterbak/HeishaMoNR](https://github.com/edterbak/HeishaMoNR) — Node-Red-Variante (kann parallel laufen)
+## Related projects
+
+- [Egyras/HeishaMon](https://github.com/Egyras/HeishaMon) — firmware
+- [kamaradclimber/heishamon-homeassistant](https://github.com/kamaradclimber/heishamon-homeassistant) — HA integration (required dependency)
+- [edterbak/HeishaMoNR](https://github.com/edterbak/HeishaMoNR) — Node-Red variant (can run in parallel)

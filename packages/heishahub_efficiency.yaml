@@ -1,11 +1,14 @@
-# HeishaHub — Effizienz-Berechnung
+# HeishaHub — efficiency
 #
-# COP (live), Energieintegrale, JAZ/MAZ/TAZ.
-# Liest aus den "Active"-Sensoren in heishahub_external.yaml,
-# damit Quellenumschaltung (Shelly / WMZ vs. intern) wirkt.
+# Live COP, energy integrals, daily/monthly/yearly utility_meters, and the
+# resulting period COPs (TAZ/MAZ/JAZ in German parlance, also exposed as
+# SCOP for international users).
+#
+# Reads from the "active" sensors in heishahub_external.yaml so source
+# switching (Shelly / heat meter vs. internal) propagates here.
 
 sensor:
-  # ─── Energie-Integrale (Riemann-Summe → kWh) ───────────────────────────
+  # ─── Energy integrals (Riemann sum → kWh) ──────────────────────────────
   - platform: integration
     source: sensor.heishahub_thermal_power_active
     name: "HeishaHub Thermal Energy"
@@ -24,7 +27,7 @@ sensor:
     method: left
     round: 3
 
-# ─── Utility-Meter — täglich / monatlich / jährlich ─────────────────────
+# ─── Utility meters — daily / monthly / yearly ─────────────────────────
 utility_meter:
   heishahub_thermal_daily:
     source: sensor.heishahub_thermal_energy
@@ -46,7 +49,7 @@ utility_meter:
     source: sensor.heishahub_electrical_energy
     cycle: yearly
 
-# ─── COP-Live / TAZ / MAZ / JAZ ─────────────────────────────────────────
+# ─── Live COP, daily / monthly / yearly COP ────────────────────────────
 template:
   - sensor:
       - name: "HeishaHub COP Live"
@@ -66,24 +69,27 @@ template:
             {{ (t / e) | round(2) if e > 50 else 0 }}
           {% endif %}
 
-      - name: "HeishaHub TAZ"
-        unique_id: heishahub_taz
+      # Daily COP (TAZ — Tagesarbeitszahl)
+      - name: "HeishaHub COP Daily"
+        unique_id: heishahub_cop_daily
         unit_of_measurement: "x"
         state: >-
           {% set t = states('sensor.heishahub_thermal_daily') | float(0) %}
           {% set e = states('sensor.heishahub_electrical_daily') | float(0) %}
           {{ (t / e) | round(2) if e > 0.1 else 0 }}
 
-      - name: "HeishaHub MAZ"
-        unique_id: heishahub_maz
+      # Monthly COP (MAZ — Monatsarbeitszahl)
+      - name: "HeishaHub COP Monthly"
+        unique_id: heishahub_cop_monthly
         unit_of_measurement: "x"
         state: >-
           {% set t = states('sensor.heishahub_thermal_monthly') | float(0) %}
           {% set e = states('sensor.heishahub_electrical_monthly') | float(0) %}
           {{ (t / e) | round(2) if e > 0.1 else 0 }}
 
-      - name: "HeishaHub JAZ"
-        unique_id: heishahub_jaz
+      # Yearly COP / SCOP (JAZ — Jahresarbeitszahl)
+      - name: "HeishaHub SCOP"
+        unique_id: heishahub_scop
         unit_of_measurement: "x"
         state: >-
           {% set t = states('sensor.heishahub_thermal_yearly') | float(0) %}

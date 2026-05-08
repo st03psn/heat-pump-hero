@@ -1,25 +1,26 @@
-# Tweaking — Anpassungen für Power-User
+# Tweaking — power-user customizations
 
-## 1. MQTT-Topic-Prefix ändern
+🌐 English (this file) · [Deutsch](de/tweaking.md)
 
-Default: `panasonic_heat_pump`. Wenn deine Heishamon-Firmware auf einen
-anderen Prefix konfiguriert ist (z. B. `wp_keller`), in **allen Packages**
-suchen-und-ersetzen — am einfachsten via `sed`:
+## 1. Change the MQTT topic prefix
+
+Default: `panasonic_heat_pump`. If your Heishamon firmware uses a different
+prefix (e.g. `wp_basement`), search-and-replace across all packages — the
+quickest way:
 
 ```bash
 cd /config/packages
-sed -i 's|panasonic_heat_pump|wp_keller|g' heishahub_*.yaml
+sed -i 's|panasonic_heat_pump|wp_basement|g' heishahub_*.yaml
 ```
 
-Im Dashboard-YAML ebenfalls anpassen.
+Adjust the dashboard YAML accordingly.
 
-> Geplant für v0.2: zentrale Variable in `secrets.yaml`, sodass nur an einer
-> Stelle geändert werden muss.
+> Planned for v0.2: a single variable in `secrets.yaml`, edited once.
 
-## 2. Eigene Advisor-Regel hinzufügen
+## 2. Add your own advisor rule
 
-In `packages/heishahub_advisor.yaml` neuen Block ergänzen, z. B. „Wasserdruck
-zu niedrig":
+Add a block to `packages/heishahub_advisor.yaml`, e.g. "water pressure too
+low":
 
 ```yaml
 - name: "HeishaHub Advisor Pressure"
@@ -35,59 +36,60 @@ zu niedrig":
     message: >-
       {% set p = states('sensor.panasonic_heat_pump_main_pump_pressure') | float(0) %}
       {% if p < 0.8 %}
-      Wasserdruck kritisch niedrig — sofort nachfüllen!
+      Water pressure critically low — top up immediately.
       {% elif p < 1.0 %}
-      Wasserdruck unter 1 bar — bald nachfüllen.
+      Water pressure below 1 bar — top up soon.
       {% else %}
-      Druck ok ({{ p }} bar).
+      Pressure ok ({{ p }} bar).
       {% endif %}
 ```
 
-Anschließend `heishahub_advisor_summary` aktualisieren.
+Then add it to `heishahub_advisor_summary`.
 
-## 3. Eigene Steuer-Automation
+## 3. Custom control automation
 
-Neue Datei `packages/my_overrides.yaml` anlegen, dort beliebige Automations.
-Konflikte mit `heishahub_control.yaml` vermeiden — eigene Automations sollten
-**dieselben** input_boolean-Schalter respektieren oder eigene Helper benutzen.
+Create `packages/my_overrides.yaml` and put your own automations there. Avoid
+clashing with `heishahub_control.yaml` — your automations should either
+respect the same `input_boolean` switches or carry their own helpers.
 
-## 4. Quiet-Mode-Werte anpassen
+## 4. Adjust Quiet-Mode values
 
-Die Control-Automations setzen Quiet-Mode 0/2/3. Werte anpassen direkt in
-`packages/heishahub_control.yaml` an den `select.select_option`-Aufrufen.
+The control automations toggle Quiet-Mode 0/2/3. Tweak the
+`select.select_option` calls in `packages/heishahub_control.yaml` to fit
+your preference.
 
-## 5. Dashboard-Layout anpassen
+## 5. Custom dashboard layout
 
-`dashboards/heishahub.yaml` ist normales Lovelace-YAML — beliebig editierbar.
-Beim Update via `scripts/install.sh` wird die Datei **überschrieben**. Wer
-dauerhaft eigenes Layout will:
+`dashboards/heishahub.yaml` is plain Lovelace YAML — edit freely. Beware
+that `scripts/install.sh` overwrites the file on update. If you want
+permanent customizations:
 
-- Dashboard im UI duplizieren (UI → Dashboard → ⋮ → Duplicate)
-- HeishaHub-Updates ziehen nur das Original-Dashboard nach.
+- Duplicate the dashboard in the UI (UI → Dashboard → ⋮ → Duplicate).
+- HeishaHub updates only refresh the original.
 
-## 6. Advisor-Empfehlungen lokalisieren / anpassen
+## 6. Localize / customize advisor messages
 
-Messages sind frei editierbar. Wer eigene Diagnose-Texte oder andere
-Sprache möchte: `attributes.message`-Templates direkt anpassen.
-PRs mit Übersetzungen oder verbesserten Texten willkommen.
+Messages are free-form. To switch language or rewrite the diagnostic text,
+edit the `attributes.message` templates directly.
+PRs with translations or improved wording welcome.
 
-## 7. Externe Sensoren ohne UI-Helper
+## 7. External sensors without UI helpers
 
-Wer die Active-Power-Logik komplett ersetzen will (z. B. weil mehrere Shellys
-addiert werden müssen): die `template.sensor.heishahub_*_power_active`-Blöcke
-in `heishahub_external.yaml` durch eigene Templates ersetzen. Andere Packages
-greifen nur auf die `_active`-Sensoren zu — eine zentrale Änderung reicht.
+To replace the active-power logic entirely (e.g. summing several Shellys),
+override the `template.sensor.heishahub_*_power_active` blocks in
+`heishahub_external.yaml`. All other packages reference only the `_active`
+sensors, so a single edit is enough.
 
-## 8. utility_meter-Reset ändern
+## 8. Custom utility_meter periods
 
-Default: täglich/monatlich/jährlich, Reset zur Periodengrenze. Wer einen
-Heizperioden-Zähler (Oktober–April) braucht, in `heishahub_efficiency.yaml`:
+Default: daily / monthly / yearly, reset on period boundary. For a
+heating-season counter (October–April), in `heishahub_efficiency.yaml`:
 
 ```yaml
 heishahub_thermal_heating_season:
   source: sensor.heishahub_thermal_energy
   cycle: yearly
-  offset: { months: 9 }   # Start Oktober
+  offset: { months: 9 }   # start October
 ```
 
-Analog für `electrical_*` und einen JAZ-Heizperioden-Sensor.
+Mirror for `electrical_*` and add a season-SCOP template.

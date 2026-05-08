@@ -1,15 +1,15 @@
-# HeishaHub — Externe Sensoren
+# HeishaHub — external sensors
 #
-# Helfer für die Auswahl externer Strom- und Wärmemengenzähler.
-# Nutzer trägt seine Entity-IDs in der HA-UI (Settings → Devices → Helpers)
-# ein — kein YAML-Edit nötig.
+# Helpers for selecting external electricity and heat-meter sources. The user
+# enters their entity-IDs in the HA UI (Settings → Devices → Helpers) — no
+# YAML editing required.
 #
-# Templates in heishahub_efficiency.yaml lesen indirekt:
+# Templates in heishahub_efficiency.yaml read indirectly:
 #   {{ states(states('input_text.heishahub_shelly_entity')) }}
 
 input_select:
   heishahub_thermal_source:
-    name: HeishaHub — Thermische Quelle
+    name: HeishaHub — thermal source
     icon: mdi:thermometer-water
     options:
       - heishamon_internal
@@ -17,7 +17,7 @@ input_select:
     initial: heishamon_internal
 
   heishahub_electrical_source:
-    name: HeishaHub — Elektrische Quelle
+    name: HeishaHub — electrical source
     icon: mdi:flash
     options:
       - heishamon_internal
@@ -25,7 +25,7 @@ input_select:
     initial: heishamon_internal
 
   heishahub_schema_variant:
-    name: HeishaHub — Anlagen-Schema
+    name: HeishaHub — installation schematic
     icon: mdi:graph-outline
     options:
       - a2w_hk1
@@ -36,26 +36,26 @@ input_select:
 
 input_text:
   heishahub_shelly_entity:
-    name: HeishaHub — Shelly Power-Sensor (Entity-ID)
+    name: HeishaHub — Shelly power sensor (entity-ID)
     icon: mdi:flash-outline
     max: 255
     initial: ""
 
   heishahub_wmz_entity:
-    name: HeishaHub — WMZ Energie-Sensor (Entity-ID)
+    name: HeishaHub — heat meter energy sensor (entity-ID)
     icon: mdi:counter
     max: 255
     initial: ""
 
   heishahub_wmz_power_entity:
-    name: HeishaHub — WMZ Leistungs-Sensor (Entity-ID, optional)
+    name: HeishaHub — heat meter power sensor (entity-ID, optional)
     icon: mdi:gauge
     max: 255
     initial: ""
 
 template:
   - sensor:
-      # ─── Aktive thermische Leistung (gewählte Quelle) ────────────────────
+      # ─── Active thermal power (selected source) ───────────────────────
       - name: "HeishaHub Thermal Power Active"
         unique_id: heishahub_thermal_power_active
         unit_of_measurement: "W"
@@ -74,7 +74,7 @@ template:
             {{ states('sensor.heishahub_thermal_power') | float(0) }}
           {% endif %}
 
-      # ─── Aktive elektrische Leistung (gewählte Quelle) ───────────────────
+      # ─── Active electrical power (selected source) ────────────────────
       - name: "HeishaHub Electrical Power Active"
         unique_id: heishahub_electrical_power_active
         unit_of_measurement: "W"
