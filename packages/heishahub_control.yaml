@@ -1,0 +1,209 @@
+# HeishaHub — Control (HeishaMoNR-Parität)
+#
+# Optionale Steuer-Automationen für Optimierungs-Strategien, die HeishaMoNR
+# (Node-Red) mitbringt. Alle Funktionen sind per input_boolean abschaltbar
+# und standardmäßig AUS — Aktivierung explizit durch den Nutzer.
+#
+# !!! WICHTIG !!!
+# Schreibend darf nur EIN System sein. Wenn HeishaMoNR aktiv ist, alle
+# input_boolean.heishahub_ctrl_* auf OFF lassen.
+
+input_boolean:
+  heishahub_ctrl_master:
+    name: HeishaHub Control — Master-Schalter
+    icon: mdi:robot-outline
+    initial: false
+  heishahub_ctrl_ccc:
+    name: Compressor Cycle Control (CCC)
+    icon: mdi:repeat-variant
+    initial: false
+  heishahub_ctrl_softstart:
+    name: SoftStart
+    icon: mdi:trending-up
+    initial: false
+  heishahub_ctrl_solar_dhw:
+    name: Solar-DHW-Boost
+    icon: mdi:solar-power-variant
+    initial: false
+  heishahub_ctrl_quiet_night:
+    name: Nacht-Quiet-Mode
+    icon: mdi:weather-night
+    initial: false
+
+input_number:
+  heishahub_ctrl_ccc_min_pause_min:
+    name: CCC — Mindest-Pause (Minuten)
+    min: 5
+    max: 60
+    step: 1
+    initial: 15
+  heishahub_ctrl_ccc_min_runtime_min:
+    name: CCC — Mindest-Laufzeit (Minuten)
+    min: 5
+    max: 60
+    step: 1
+    initial: 20
+  heishahub_ctrl_solar_pv_threshold_w:
+    name: Solar-DHW — PV-Überschuss-Schwelle (W)
+    min: 500
+    max: 5000
+    step: 100
+    initial: 1500
+
+input_text:
+  heishahub_ctrl_pv_surplus_entity:
+    name: PV-Überschuss-Sensor (Entity-ID)
+    icon: mdi:solar-power
+    initial: ""
+
+automation:
+  # ════════════════════════════════════════════════════════════════════════
+  # CCC — Compressor Cycle Control: verhindert zu kurze Pausen
+  # Strategie: Wenn WP nach < min_pause wieder einschaltet, Anforderung
+  #            kurz unterdrücken (über Heizkurven-Offset oder
+  #            Zwangsabschaltung über force_dhw / quiet_mode).
+  # ════════════════════════════════════════════════════════════════════════
+  - id: heishahub_ctrl_ccc_block_short_pause
+    alias: HeishaHub CCC — kurze Pause blockieren
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.heishahub_compressor_running
+        from: "off"
+        to: "on"
+    condition:
+      - condition: state
+        entity_id: input_boolean.heishahub_ctrl_master
+        state: "on"
+      - condition: state
+        entity_id: input_boolean.heishahub_ctrl_ccc
+        state: "on"
+      - condition: template
+        value_template: >-
+          {{ states('input_number.heishahub_cycle_last_pause_min') | float(99)
+             < states('input_number.heishahub_ctrl_ccc_min_pause_min') | float(15) }}
+    action:
+      # Quiet-Mode + Heizkurven-Offset reduziert Anforderung kurzzeitig
+      - service: select.select_option
+        target:
+          entity_id: select.panasonic_heat_pump_main_quiet_mode
+        data:
+          option: "3"
+      - delay: "00:05:00"
+      - service: select.select_option
+        target:
+          entity_id: select.panasonic_heat_pump_main_quiet_mode
+        data:
+          option: "0"
+      - service: persistent_notification.create
+        data:
+          title: HeishaHub CCC
+          message: Kurze Pause erkannt — Quiet-Mode 5 Min aktiviert.
+
+  # ════════════════════════════════════════════════════════════════════════
+  # SoftStart — Frequenz-Begrenzung beim Anlauf
+  # ════════════════════════════════════════════════════════════════════════
+  - id: heishahub_ctrl_softstart
+    alias: HeishaHub SoftStart
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.heishahub_compressor_running
+        from: "off"
+        to: "on"
+    condition:
+      - condition: state
+        entity_id: input_boolean.heishahub_ctrl_master
+        state: "on"
+      - condition: state
+        entity_id: input_boolean.heishahub_ctrl_softstart
+        state: "on"
+    action:
+      - service: select.select_option
+        target:
+          entity_id: select.panasonic_heat_pump_main_quiet_mode
+        data:
+          option: "2"
+      - delay: "00:10:00"
+      - service: select.select_option
+        target:
+          entity_id: select.panasonic_heat_pump_main_quiet_mode
+        data:
+          option: "0"
+
+  # ════════════════════════════════════════════════════════════════════════
+  # Solar-DHW-Boost — DHW-Forcierung bei PV-Überschuss
+  # ════════════════════════════════════════════════════════════════════════
+  - id: heishahub_ctrl_solar_dhw
+    alias: HeishaHub Solar-DHW-Boost
+    mode: single
+    trigger:
+      - platform: template
+        value_template: >-
+          {% set ent = states('input_text.heishahub_ctrl_pv_surplus_entity') %}
+          {% set thr = states('input_number.heishahub_ctrl_solar_pv_threshold_w') | float(1500) %}
+          {{ ent and states(ent) | float(0) > thr }}
+        for: "00:05:00"
+    condition:
+      - condition: state
+        entity_id: input_boolean.heishahub_ctrl_master
+        state: "on"
+      - condition: state
+        entity_id: input_boolean.heishahub_ctrl_solar_dhw
+        state: "on"
+      # nur wenn DHW noch nicht voll (Beispielsensor — nutzerseitig anpassen)
+      - condition: template
+        value_template: >-
+          {{ states('sensor.panasonic_heat_pump_main_z1_water_temperature') | float(99)
+             < 55 }}
+    action:
+      - service: button.press
+        target:
+          entity_id: button.panasonic_heat_pump_main_force_dhw
+      - service: persistent_notification.create
+        data:
+          title: HeishaHub Solar-DHW
+          message: PV-Überschuss erkannt — DHW-Forcierung gestartet.
+
+  # ════════════════════════════════════════════════════════════════════════
+  # Nacht-Quiet-Mode — automatisch um 22:00, aus um 06:00
+  # ════════════════════════════════════════════════════════════════════════
+  - id: heishahub_ctrl_quiet_night_on
+    alias: HeishaHub Quiet — Nacht an
+    mode: single
+    trigger:
+      - platform: time
+        at: "22:00:00"
+    condition:
+      - condition: state
+        entity_id: input_boolean.heishahub_ctrl_master
+        state: "on"
+      - condition: state
+        entity_id: input_boolean.heishahub_ctrl_quiet_night
+        state: "on"
+    action:
+      - service: select.select_option
+        target:
+          entity_id: select.panasonic_heat_pump_main_quiet_mode
+        data:
+          option: "3"
+
+  - id: heishahub_ctrl_quiet_night_off
+    alias: HeishaHub Quiet — Nacht aus
+    mode: single
+    trigger:
+      - platform: time
+        at: "06:00:00"
+    condition:
+      - condition: state
+        entity_id: input_boolean.heishahub_ctrl_master
+        state: "on"
+      - condition: state
+        entity_id: input_boolean.heishahub_ctrl_quiet_night
+        state: "on"
+    action:
+      - service: select.select_option
+        target:
+          entity_id: select.panasonic_heat_pump_main_quiet_mode
+        data:
+          option: "0"

@@ -1,0 +1,94 @@
+# HeishaHub — Externe Sensoren
+#
+# Helfer für die Auswahl externer Strom- und Wärmemengenzähler.
+# Nutzer trägt seine Entity-IDs in der HA-UI (Settings → Devices → Helpers)
+# ein — kein YAML-Edit nötig.
+#
+# Templates in heishahub_efficiency.yaml lesen indirekt:
+#   {{ states(states('input_text.heishahub_shelly_entity')) }}
+
+input_select:
+  heishahub_thermal_source:
+    name: HeishaHub — Thermische Quelle
+    icon: mdi:thermometer-water
+    options:
+      - heishamon_internal
+      - external_wmz
+    initial: heishamon_internal
+
+  heishahub_electrical_source:
+    name: HeishaHub — Elektrische Quelle
+    icon: mdi:flash
+    options:
+      - heishamon_internal
+      - external_shelly
+    initial: heishamon_internal
+
+  heishahub_schema_variant:
+    name: HeishaHub — Anlagen-Schema
+    icon: mdi:graph-outline
+    options:
+      - a2w_hk1
+      - a2w_hk1_dhw
+      - a2w_hk1_hk2_dhw
+      - a2w_hk1_hk2_dhw_buffer
+    initial: a2w_hk1
+
+input_text:
+  heishahub_shelly_entity:
+    name: HeishaHub — Shelly Power-Sensor (Entity-ID)
+    icon: mdi:flash-outline
+    max: 255
+    initial: ""
+
+  heishahub_wmz_entity:
+    name: HeishaHub — WMZ Energie-Sensor (Entity-ID)
+    icon: mdi:counter
+    max: 255
+    initial: ""
+
+  heishahub_wmz_power_entity:
+    name: HeishaHub — WMZ Leistungs-Sensor (Entity-ID, optional)
+    icon: mdi:gauge
+    max: 255
+    initial: ""
+
+template:
+  - sensor:
+      # ─── Aktive thermische Leistung (gewählte Quelle) ────────────────────
+      - name: "HeishaHub Thermal Power Active"
+        unique_id: heishahub_thermal_power_active
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: >-
+          {% set src = states('input_select.heishahub_thermal_source') %}
+          {% if src == 'external_wmz' %}
+            {% set ent = states('input_text.heishahub_wmz_power_entity') %}
+            {% if ent and states(ent) not in ['unknown','unavailable','none',''] %}
+              {{ states(ent) | float(0) }}
+            {% else %}
+              {{ states('sensor.heishahub_thermal_power') | float(0) }}
+            {% endif %}
+          {% else %}
+            {{ states('sensor.heishahub_thermal_power') | float(0) }}
+          {% endif %}
+
+      # ─── Aktive elektrische Leistung (gewählte Quelle) ───────────────────
+      - name: "HeishaHub Electrical Power Active"
+        unique_id: heishahub_electrical_power_active
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: >-
+          {% set src = states('input_select.heishahub_electrical_source') %}
+          {% if src == 'external_shelly' %}
+            {% set ent = states('input_text.heishahub_shelly_entity') %}
+            {% if ent and states(ent) not in ['unknown','unavailable','none',''] %}
+              {{ states(ent) | float(0) }}
+            {% else %}
+              {{ states('sensor.panasonic_heat_pump_main_consumed_power') | float(0) }}
+            {% endif %}
+          {% else %}
+            {{ states('sensor.panasonic_heat_pump_main_consumed_power') | float(0) }}
+          {% endif %}

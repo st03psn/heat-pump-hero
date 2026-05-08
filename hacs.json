@@ -1,0 +1,8 @@
+{
+  "name": "HeishaHub",
+  "content_in_root": false,
+  "filename": "heishahub.yaml",
+  "render_readme": true,
+  "homeassistant": "2025.4.0",
+  "hacs": "2.0.0"
+}

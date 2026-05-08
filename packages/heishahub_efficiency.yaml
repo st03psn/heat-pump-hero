@@ -1,0 +1,91 @@
+# HeishaHub — Effizienz-Berechnung
+#
+# COP (live), Energieintegrale, JAZ/MAZ/TAZ.
+# Liest aus den "Active"-Sensoren in heishahub_external.yaml,
+# damit Quellenumschaltung (Shelly / WMZ vs. intern) wirkt.
+
+sensor:
+  # ─── Energie-Integrale (Riemann-Summe → kWh) ───────────────────────────
+  - platform: integration
+    source: sensor.heishahub_thermal_power_active
+    name: "HeishaHub Thermal Energy"
+    unique_id: heishahub_thermal_energy
+    unit_prefix: k
+    unit_time: h
+    method: left
+    round: 3
+
+  - platform: integration
+    source: sensor.heishahub_electrical_power_active
+    name: "HeishaHub Electrical Energy"
+    unique_id: heishahub_electrical_energy
+    unit_prefix: k
+    unit_time: h
+    method: left
+    round: 3
+
+# ─── Utility-Meter — täglich / monatlich / jährlich ─────────────────────
+utility_meter:
+  heishahub_thermal_daily:
+    source: sensor.heishahub_thermal_energy
+    cycle: daily
+  heishahub_thermal_monthly:
+    source: sensor.heishahub_thermal_energy
+    cycle: monthly
+  heishahub_thermal_yearly:
+    source: sensor.heishahub_thermal_energy
+    cycle: yearly
+
+  heishahub_electrical_daily:
+    source: sensor.heishahub_electrical_energy
+    cycle: daily
+  heishahub_electrical_monthly:
+    source: sensor.heishahub_electrical_energy
+    cycle: monthly
+  heishahub_electrical_yearly:
+    source: sensor.heishahub_electrical_energy
+    cycle: yearly
+
+# ─── COP-Live / TAZ / MAZ / JAZ ─────────────────────────────────────────
+template:
+  - sensor:
+      - name: "HeishaHub COP Live"
+        unique_id: heishahub_cop_live
+        unit_of_measurement: "x"
+        availability: >-
+          {{ states('sensor.heishahub_thermal_power_active')
+             not in ['unknown','unavailable','none']
+             and states('sensor.heishahub_electrical_power_active')
+             not in ['unknown','unavailable','none'] }}
+        state: >-
+          {% if is_state('binary_sensor.heishahub_defrost_active','on') %}
+            0
+          {% else %}
+            {% set t = states('sensor.heishahub_thermal_power_active') | float(0) %}
+            {% set e = states('sensor.heishahub_electrical_power_active') | float(0) %}
+            {{ (t / e) | round(2) if e > 50 else 0 }}
+          {% endif %}
+
+      - name: "HeishaHub TAZ"
+        unique_id: heishahub_taz
+        unit_of_measurement: "x"
+        state: >-
+          {% set t = states('sensor.heishahub_thermal_daily') | float(0) %}
+          {% set e = states('sensor.heishahub_electrical_daily') | float(0) %}
+          {{ (t / e) | round(2) if e > 0.1 else 0 }}
+
+      - name: "HeishaHub MAZ"
+        unique_id: heishahub_maz
+        unit_of_measurement: "x"
+        state: >-
+          {% set t = states('sensor.heishahub_thermal_monthly') | float(0) %}
+          {% set e = states('sensor.heishahub_electrical_monthly') | float(0) %}
+          {{ (t / e) | round(2) if e > 0.1 else 0 }}
+
+      - name: "HeishaHub JAZ"
+        unique_id: heishahub_jaz
+        unit_of_measurement: "x"
+        state: >-
+          {% set t = states('sensor.heishahub_thermal_yearly') | float(0) %}
+          {% set e = states('sensor.heishahub_electrical_yearly') | float(0) %}
+          {{ (t / e) | round(2) if e > 0.1 else 0 }}

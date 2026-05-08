@@ -1,0 +1,210 @@
+# HeishaHub — Advisor
+#
+# Datengetriebene Optimierungs-Empfehlungen. Jeder Advisor-Sensor liefert:
+#   - state: "ok" | "warn" | "critical" | "info"
+#   - attributes.message: Klartext-Empfehlung in Deutsch
+#   - attributes.metric: relevanter Wert für die Diagnose
+#
+# Regeln basieren auf gängiger WP-Praxis (Dimplex, Panasonic, Stiebel-Eltron-
+# Optimierungs-Leitfäden) und sind in heishahub_advisor.yaml dokumentiert.
+# Power-User können Schwellen über input_number.heishahub_advisor_* anpassen.
+
+input_number:
+  heishahub_advisor_short_cycle_warn_pct:
+    name: Advisor — Short-Cycle Warnschwelle (%)
+    min: 5
+    max: 80
+    step: 1
+    initial: 25
+  heishahub_advisor_short_cycle_crit_pct:
+    name: Advisor — Short-Cycle kritische Schwelle (%)
+    min: 10
+    max: 90
+    step: 1
+    initial: 50
+  heishahub_advisor_dt_target_k:
+    name: Advisor — Soll-Spreizung Vorlauf-Rücklauf (K)
+    min: 3
+    max: 10
+    step: 0.5
+    initial: 5
+  heishahub_advisor_dhw_min_runtime_min:
+    name: Advisor — DHW Mindest-Laufzeit (Minuten)
+    min: 5
+    max: 60
+    step: 1
+    initial: 20
+
+template:
+  - sensor:
+      # ════════════════════════════════════════════════════════════════════
+      # 1) Short-Cycle-Diagnose
+      # ════════════════════════════════════════════════════════════════════
+      - name: "HeishaHub Advisor Short Cycle"
+        unique_id: heishahub_advisor_short_cycle
+        icon: mdi:timer-alert
+        state: >-
+          {% set ratio = states('sensor.heishahub_short_cycle_ratio') | float(0) %}
+          {% set warn = states('input_number.heishahub_advisor_short_cycle_warn_pct') | float(25) %}
+          {% set crit = states('input_number.heishahub_advisor_short_cycle_crit_pct') | float(50) %}
+          {% if ratio >= crit %}critical
+          {% elif ratio >= warn %}warn
+          {% else %}ok{% endif %}
+        attributes:
+          metric: "{{ states('sensor.heishahub_short_cycle_ratio') }} %"
+          message: >-
+            {% set ratio = states('sensor.heishahub_short_cycle_ratio') | float(0) %}
+            {% set crit = states('input_number.heishahub_advisor_short_cycle_crit_pct') | float(50) %}
+            {% set warn = states('input_number.heishahub_advisor_short_cycle_warn_pct') | float(25) %}
+            {% if ratio >= crit %}
+            Sehr hohe Taktung ({{ ratio }} %). Mögliche Ursachen:
+            (1) Heizkurve zu steil — WP erreicht Soll zu schnell, schaltet ab.
+            (2) Zu kleines Wasservolumen — Pufferspeicher oder hydraulische
+            Weiche prüfen. (3) Heizkreise zu stark gedrosselt (ERR-Ventile
+            voll auf?). (4) Hysterese zu eng. Empfehlung: Heizkurve
+            absenken und prüfen, ob Mindest-Modulation des Verdichters
+            erreicht wird.
+            {% elif ratio >= warn %}
+            Erhöhte Taktung ({{ ratio }} %). Im Übergang akzeptabel, im
+            Tiefwinter Hinweis auf zu enge Hysterese oder zu hohe Heizkurve.
+            {% else %}
+            Taktung im normalen Bereich.
+            {% endif %}
+
+      # ════════════════════════════════════════════════════════════════════
+      # 2) Spreizung Vorlauf-Rücklauf (Pumpenleistung)
+      # ════════════════════════════════════════════════════════════════════
+      - name: "HeishaHub Advisor Spread"
+        unique_id: heishahub_advisor_spread
+        icon: mdi:thermometer-lines
+        state: >-
+          {% set tin = states('sensor.panasonic_heat_pump_main_inlet_temperature') | float(0) %}
+          {% set tout = states('sensor.panasonic_heat_pump_main_outlet_temperature') | float(0) %}
+          {% set running = is_state('binary_sensor.heishahub_compressor_running','on') %}
+          {% set dt = tout - tin %}
+          {% set target = states('input_number.heishahub_advisor_dt_target_k') | float(5) %}
+          {% if not running %}info
+          {% elif dt < target - 2 %}warn
+          {% elif dt > target + 3 %}warn
+          {% else %}ok{% endif %}
+        attributes:
+          metric: >-
+            {{ ((states('sensor.panasonic_heat_pump_main_outlet_temperature') | float(0))
+               - (states('sensor.panasonic_heat_pump_main_inlet_temperature') | float(0))) | round(1) }} K
+          message: >-
+            {% set tin = states('sensor.panasonic_heat_pump_main_inlet_temperature') | float(0) %}
+            {% set tout = states('sensor.panasonic_heat_pump_main_outlet_temperature') | float(0) %}
+            {% set dt = tout - tin %}
+            {% set target = states('input_number.heishahub_advisor_dt_target_k') | float(5) %}
+            {% if not is_state('binary_sensor.heishahub_compressor_running','on') %}
+            Verdichter steht — Spreizung nicht aussagekräftig.
+            {% elif dt < target - 2 %}
+            Spreizung ({{ dt | round(1) }} K) zu klein. Pumpe läuft zu schnell
+            relativ zur Heizleistung — Pumpendrehzahl reduzieren oder
+            Heizleistung anheben. Reduziert Stromverbrauch der Pumpe und
+            verbessert die Auslegung.
+            {% elif dt > target + 3 %}
+            Spreizung ({{ dt | round(1) }} K) zu groß. Pumpe zu langsam oder
+            Hydraulik gedrosselt — Volumenstrom zu gering kann zu
+            Hochdruckabschaltungen führen. Pumpendrehzahl erhöhen oder
+            Strangregulierventile prüfen.
+            {% else %}
+            Spreizung optimal ({{ dt | round(1) }} K, Ziel {{ target }} K).
+            {% endif %}
+
+      # ════════════════════════════════════════════════════════════════════
+      # 3) Defrost-Häufigkeit
+      # ════════════════════════════════════════════════════════════════════
+      - name: "HeishaHub Advisor Defrost"
+        unique_id: heishahub_advisor_defrost
+        icon: mdi:snowflake-melt
+        state: >-
+          {# Wenn Defrost mehr als 1× pro Stunde bei Außentemp > 5 °C: warn #}
+          {% set defrost = is_state('binary_sensor.heishahub_defrost_active','on') %}
+          {% set tout = states('sensor.panasonic_heat_pump_main_outside_temperature') | float(0) %}
+          {% if defrost and tout > 7 %}warn
+          {% else %}ok{% endif %}
+        attributes:
+          metric: "{{ states('sensor.panasonic_heat_pump_main_outside_temperature') }} °C"
+          message: >-
+            {% if is_state('binary_sensor.heishahub_defrost_active','on')
+                  and states('sensor.panasonic_heat_pump_main_outside_temperature') | float(0) > 7 %}
+            Abtauung bei Außentemperatur > 7 °C aktiv — ungewöhnlich.
+            Mögliche Ursachen: Verdampferluft-Strömung blockiert (Laub, Schnee,
+            zu nahe Wand), Lüfterproblem, Sensorabgleich. Verdampferlamellen
+            prüfen.
+            {% else %}
+            Defrost-Verhalten unauffällig.
+            {% endif %}
+
+      # ════════════════════════════════════════════════════════════════════
+      # 4) Heizkurve-Analyse (gleitend)
+      # ════════════════════════════════════════════════════════════════════
+      - name: "HeishaHub Advisor Heat Curve"
+        unique_id: heishahub_advisor_heat_curve
+        icon: mdi:chart-bell-curve
+        state: >-
+          {# Vereinfachte Heuristik: bei Außen < 0 °C sollte Vorlauf-Soll
+             den Ist-Vorlauf treffen ohne Heizstab. Wenn Heizstab läuft,
+             ist Heizkurve zu flach. #}
+          {% set heater = is_state('binary_sensor.panasonic_heat_pump_main_heater_state','on') %}
+          {% set tout = states('sensor.panasonic_heat_pump_main_outside_temperature') | float(99) %}
+          {% if heater and tout > -7 %}warn
+          {% else %}ok{% endif %}
+        attributes:
+          message: >-
+            {% if is_state('binary_sensor.panasonic_heat_pump_main_heater_state','on')
+                  and states('sensor.panasonic_heat_pump_main_outside_temperature') | float(99) > -7 %}
+            E-Heizstab läuft bei Außentemperatur über -7 °C. Hinweis auf zu
+            flache Heizkurve oder zu hohe Soll-Vorlauftemperatur. Heizkurve
+            am kalten Ende anheben oder Soll prüfen.
+            {% else %}
+            E-Heizstab inaktiv oder bei sehr tiefen Temperaturen aktiv —
+            unauffällig.
+            {% endif %}
+
+      # ════════════════════════════════════════════════════════════════════
+      # 5) DHW-Lauf zu kurz (Hygiene/COP)
+      # ════════════════════════════════════════════════════════════════════
+      - name: "HeishaHub Advisor DHW Runtime"
+        unique_id: heishahub_advisor_dhw_runtime
+        icon: mdi:water-boiler
+        state: >-
+          {% set last = states('input_number.heishahub_cycle_last_duration_min') | float(0) %}
+          {% set min_run = states('input_number.heishahub_advisor_dhw_min_runtime_min') | float(20) %}
+          {% set was_dhw = is_state('sensor.heishahub_operating_mode','dhw') %}
+          {% if was_dhw and last < min_run and last > 0 %}warn
+          {% else %}ok{% endif %}
+        attributes:
+          metric: "{{ states('input_number.heishahub_cycle_last_duration_min') }} min"
+          message: >-
+            DHW-Lauf von {{ states('input_number.heishahub_cycle_last_duration_min') }} min
+            war kürzer als Mindest-Laufzeit. WW-Bereitung mit kurzen Läufen
+            ist ineffizient und hygienisch grenzwertig. Hysterese im Tank
+            erhöhen oder Anti-Legionellen-Programm prüfen.
+
+      # ════════════════════════════════════════════════════════════════════
+      # 6) Sammel-Ampel (für Dashboard-Übersicht)
+      # ════════════════════════════════════════════════════════════════════
+      - name: "HeishaHub Advisor Summary"
+        unique_id: heishahub_advisor_summary
+        icon: mdi:lightbulb-on-outline
+        state: >-
+          {% set advisors = [
+            states('sensor.heishahub_advisor_short_cycle'),
+            states('sensor.heishahub_advisor_spread'),
+            states('sensor.heishahub_advisor_defrost'),
+            states('sensor.heishahub_advisor_heat_curve'),
+            states('sensor.heishahub_advisor_dhw_runtime')
+          ] %}
+          {% if 'critical' in advisors %}critical
+          {% elif 'warn' in advisors %}warn
+          {% else %}ok{% endif %}
+        attributes:
+          warn_count: >-
+            {{ [states('sensor.heishahub_advisor_short_cycle'),
+                states('sensor.heishahub_advisor_spread'),
+                states('sensor.heishahub_advisor_defrost'),
+                states('sensor.heishahub_advisor_heat_curve'),
+                states('sensor.heishahub_advisor_dhw_runtime')]
+               | select('in', ['warn','critical']) | list | count }}

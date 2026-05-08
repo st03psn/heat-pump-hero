@@ -1,0 +1,60 @@
+# HeishaHub — Core Package
+#
+# Template-Sensoren für Live-Werte, die im Dashboard angezeigt werden.
+# Jeder Sensor ist `availability:`-geschützt — fehlende Quellen erzeugen
+# keinen "unknown"-Spam.
+#
+# Annahme: kamaradclimber/heishamon-homeassistant ist installiert,
+# Topic-Prefix `panasonic_heat_pump` (Default).
+
+template:
+  - sensor:
+      # ─── Thermische Live-Leistung ────────────────────────────────────────
+      - name: "HeishaHub Thermal Power"
+        unique_id: heishahub_thermal_power
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        availability: >-
+          {{ states('sensor.panasonic_heat_pump_main_inlet_temperature')
+             not in ['unknown','unavailable','none']
+             and states('sensor.panasonic_heat_pump_main_outlet_temperature')
+             not in ['unknown','unavailable','none']
+             and states('sensor.panasonic_heat_pump_main_water_flow')
+             not in ['unknown','unavailable','none'] }}
+        state: >-
+          {% set tin = states('sensor.panasonic_heat_pump_main_inlet_temperature') | float(0) %}
+          {% set tout = states('sensor.panasonic_heat_pump_main_outlet_temperature') | float(0) %}
+          {% set flow = states('sensor.panasonic_heat_pump_main_water_flow') | float(0) %}
+          {% set power = (tout - tin) * flow * 4180 / 60 %}
+          {{ [power, 0] | max | round(0) }}
+
+      # ─── Verdichter läuft? ───────────────────────────────────────────────
+      - name: "HeishaHub Compressor Running"
+        unique_id: heishahub_compressor_running
+        state: >-
+          {{ states('sensor.panasonic_heat_pump_main_compressor_frequency')
+             | float(0) > 0 }}
+
+      # ─── Mode-Mapping (für saubere Anzeige) ──────────────────────────────
+      - name: "HeishaHub Operating Mode"
+        unique_id: heishahub_operating_mode
+        availability: >-
+          {{ states('select.panasonic_heat_pump_main_operating_mode_state')
+             not in ['unknown','unavailable','none'] }}
+        state: >-
+          {% set m = states('select.panasonic_heat_pump_main_operating_mode_state') %}
+          {% if 'Heat' in m %}heating
+          {% elif 'Cool' in m %}cooling
+          {% elif 'DHW' in m or 'Tank' in m %}dhw
+          {% else %}{{ m | lower }}{% endif %}
+
+  - binary_sensor:
+      # ─── Defrost aktiv? (für COP-Maskierung) ─────────────────────────────
+      - name: "HeishaHub Defrost Active"
+        unique_id: heishahub_defrost_active
+        availability: >-
+          {{ states('binary_sensor.panasonic_heat_pump_main_defrost_state')
+             not in ['unknown','unavailable','none'] }}
+        state: >-
+          {{ is_state('binary_sensor.panasonic_heat_pump_main_defrost_state','on') }}

@@ -1,0 +1,169 @@
+# HeishaHub — Takt-Analyse
+#
+# Misst Verdichter-Zyklen: Start/Stop-Events, Laufzeiten, Pausen,
+# Short-Cycle-Quote. Basis für den Advisor und Optimierungs-Entscheidungen.
+#
+# Konvention: ein "Zyklus" = ein zusammenhängender Lauf (Frequenz > 0).
+#
+# Speicherung:
+#   - Letzter Zyklus (Start, Ende, Dauer) als input_datetime/input_number
+#   - Tagesaggregate als utility_meter / counter
+#   - Historie via HA Recorder + LTS
+
+input_datetime:
+  heishahub_cycle_last_start:
+    name: HeishaHub — Letzter Zyklus Start
+    has_date: true
+    has_time: true
+  heishahub_cycle_last_end:
+    name: HeishaHub — Letzter Zyklus Ende
+    has_date: true
+    has_time: true
+
+input_number:
+  heishahub_cycle_short_threshold_min:
+    name: HeishaHub — Schwelle "Short Cycle" (Minuten)
+    min: 1
+    max: 60
+    step: 1
+    initial: 10
+    icon: mdi:timer-alert
+
+  heishahub_cycle_last_duration_min:
+    name: HeishaHub — Letzte Laufzeit (Minuten)
+    min: 0
+    max: 1440
+    step: 0.1
+    initial: 0
+    icon: mdi:timer
+
+  heishahub_cycle_last_pause_min:
+    name: HeishaHub — Letzte Pause (Minuten)
+    min: 0
+    max: 1440
+    step: 0.1
+    initial: 0
+    icon: mdi:timer-pause
+
+counter:
+  heishahub_cycles_today:
+    name: HeishaHub — Zyklen heute
+    icon: mdi:counter
+    initial: 0
+  heishahub_short_cycles_today:
+    name: HeishaHub — Short-Cycles heute
+    icon: mdi:timer-alert-outline
+    initial: 0
+
+automation:
+  # ─── Verdichter STARTET ─────────────────────────────────────────────────
+  - id: heishahub_cycle_on_start
+    alias: HeishaHub — Zyklus Start
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.heishahub_compressor_running
+        from: "off"
+        to: "on"
+    action:
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.heishahub_cycle_last_start
+        data:
+          datetime: "{{ now().isoformat() }}"
+      - variables:
+          last_end: "{{ states('input_datetime.heishahub_cycle_last_end') }}"
+          pause_min: >-
+            {% if last_end not in ['unknown','unavailable','none'] %}
+              {{ ((now() - as_datetime(last_end)).total_seconds() / 60) | round(1) }}
+            {% else %}
+              0
+            {% endif %}
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.heishahub_cycle_last_pause_min
+        data:
+          value: "{{ pause_min }}"
+      - service: counter.increment
+        target:
+          entity_id: counter.heishahub_cycles_today
+
+  # ─── Verdichter STOPPT ──────────────────────────────────────────────────
+  - id: heishahub_cycle_on_stop
+    alias: HeishaHub — Zyklus Ende
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.heishahub_compressor_running
+        from: "on"
+        to: "off"
+    action:
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.heishahub_cycle_last_end
+        data:
+          datetime: "{{ now().isoformat() }}"
+      - variables:
+          last_start: "{{ states('input_datetime.heishahub_cycle_last_start') }}"
+          duration_min: >-
+            {% if last_start not in ['unknown','unavailable','none'] %}
+              {{ ((now() - as_datetime(last_start)).total_seconds() / 60) | round(1) }}
+            {% else %}
+              0
+            {% endif %}
+          threshold: "{{ states('input_number.heishahub_cycle_short_threshold_min') | float(10) }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.heishahub_cycle_last_duration_min
+        data:
+          value: "{{ duration_min }}"
+      - if:
+          - condition: template
+            value_template: "{{ duration_min < threshold and duration_min > 0 }}"
+        then:
+          - service: counter.increment
+            target:
+              entity_id: counter.heishahub_short_cycles_today
+
+  # ─── Counter-Reset täglich um Mitternacht ──────────────────────────────
+  - id: heishahub_cycles_daily_reset
+    alias: HeishaHub — Tageszähler Reset
+    mode: single
+    trigger:
+      - platform: time
+        at: "00:00:00"
+    action:
+      - service: counter.reset
+        target:
+          entity_id:
+            - counter.heishahub_cycles_today
+            - counter.heishahub_short_cycles_today
+
+template:
+  - sensor:
+      # ─── Durchschnittliche Laufzeit (gleitend, 24 h) ───────────────────
+      - name: "HeishaHub Avg Cycle Duration 24h"
+        unique_id: heishahub_avg_cycle_duration_24h
+        unit_of_measurement: "min"
+        state: >-
+          {% set total = states('sensor.panasonic_heat_pump_main_compressor_running_hours') | float(0) %}
+          {% set cycles = states('counter.heishahub_cycles_today') | float(0) %}
+          {{ (total * 60 / cycles) | round(1) if cycles > 0 else 0 }}
+
+      # ─── Short-Cycle-Quote (%) ─────────────────────────────────────────
+      - name: "HeishaHub Short Cycle Ratio"
+        unique_id: heishahub_short_cycle_ratio
+        unit_of_measurement: "%"
+        state: >-
+          {% set total = states('counter.heishahub_cycles_today') | float(0) %}
+          {% set short = states('counter.heishahub_short_cycles_today') | float(0) %}
+          {{ (short / total * 100) | round(0) if total > 0 else 0 }}
+
+      # ─── Starts pro Stunde (heute) ─────────────────────────────────────
+      - name: "HeishaHub Cycles Per Hour"
+        unique_id: heishahub_cycles_per_hour
+        unit_of_measurement: "1/h"
+        state: >-
+          {% set cycles = states('counter.heishahub_cycles_today') | float(0) %}
+          {% set hours = (now().hour + now().minute / 60) %}
+          {{ (cycles / hours) | round(2) if hours > 0.1 else 0 }}

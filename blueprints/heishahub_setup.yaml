@@ -1,0 +1,71 @@
+# HeishaHub — Setup-Skript-Blueprint
+#
+# Ausführen via: Settings → Automations & Scenes → Blueprints →
+#                "HeishaHub Setup" → Skript erstellen → Ausführen.
+#
+# Was es macht:
+#   1. Prüft, ob die Heishamon-Integration Entities erzeugt hat
+#   2. Zeigt eine persistente Notification mit den nächsten Setup-Schritten
+#   3. Setzt die Standardwerte für die Quellen-Auswahl
+#
+# Was es NICHT macht (HA-Sicherheitsmodell):
+#   - Schreibt keine Dateien (das übernimmt scripts/install.sh oder Hand-Copy)
+#   - Modifiziert keine configuration.yaml
+blueprint:
+  name: HeishaHub Setup
+  description: >
+    Initialisiert HeishaHub-Helper und prüft die Installation. Einmalig
+    ausführen nach dem Kopieren der Packages und des Dashboards.
+  domain: script
+  source_url: https://github.com/st03psn/heishahub/blob/main/blueprints/heishahub_setup.yaml
+
+  input:
+    topic_prefix:
+      name: MQTT Topic-Prefix
+      description: Heishamon-Topic-Prefix (Default in der Firmware)
+      default: panasonic_heat_pump
+      selector:
+        text:
+
+mode: single
+
+sequence:
+  - alias: Heishamon-Entities prüfen
+    variables:
+      probe_entity: "sensor.{{ !input topic_prefix | replace('/', '_') }}_main_outside_temperature"
+      found: "{{ states(probe_entity) not in ['unknown','unavailable','none'] }}"
+
+  - alias: Standardquellen setzen
+    service: input_select.select_option
+    target:
+      entity_id:
+        - input_select.heishahub_thermal_source
+        - input_select.heishahub_electrical_source
+    data:
+      option: heishamon_internal
+
+  - alias: Statusmeldung
+    service: persistent_notification.create
+    data:
+      notification_id: heishahub_setup
+      title: HeishaHub Setup
+      message: >
+        {% if found %}
+        ✅ Heishamon-Entities gefunden.
+
+        Nächste Schritte:
+        1. Settings → Dashboards → Add Dashboard → From YAML →
+           Inhalt aus `dashboards/heishahub.yaml` einfügen.
+        2. Falls externe Strom-/Wärmemengenzähler vorhanden:
+           Settings → Devices & Services → Helpers →
+           `heishahub_shelly_entity` / `heishahub_wmz_entity` füllen,
+           dann Quelle auf `external_*` umschalten.
+        3. (Optional) Grafana-Dashboards aus `grafana/` importieren.
+        {% else %}
+        ⚠️ Heishamon-Entities NICHT gefunden (probe: `{{ probe_entity }}`).
+
+        Prüfen:
+        - kamaradclimber/heishamon-homeassistant in HACS installiert?
+        - MQTT-Broker läuft? Heishamon publiziert auf `{{ !input topic_prefix }}/#`?
+        - Topic-Prefix korrekt? (Default: `panasonic_heat_pump`)
+        {% endif %}

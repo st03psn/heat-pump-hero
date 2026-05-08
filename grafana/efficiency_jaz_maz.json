@@ -1,0 +1,44 @@
+{
+  "_comment": "HeishaHub — Mehrjahres-JAZ/MAZ (Skeleton v0.1). Erwartet Measurements heishahub_thermal_energy und heishahub_electrical_energy in InfluxDB (gespiegelt aus HA via official InfluxDB-Integration oder Telegraf).",
+  "annotations": { "list": [] },
+  "editable": true,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "JAZ aktuelles Jahr",
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUX}" },
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 }
+    },
+    {
+      "type": "stat",
+      "title": "JAZ Vorjahr",
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUX}" },
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 }
+    },
+    {
+      "type": "stat",
+      "title": "JAZ Lifetime",
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUX}" },
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 }
+    },
+    {
+      "type": "barchart",
+      "title": "MAZ — Monat × Jahr",
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUX}" },
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 6 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Außentemp-Tagesschnitt vs. TAZ",
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUX}" },
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 18 }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["heishahub", "efficiency"],
+  "templating": { "list": [{ "name": "DS_INFLUX", "type": "datasource", "query": "influxdb" }] },
+  "time": { "from": "now-2y", "to": "now" },
+  "title": "HeishaHub — Effizienz JAZ/MAZ",
+  "uid": "heishahub-efficiency",
+  "version": 1
+}
