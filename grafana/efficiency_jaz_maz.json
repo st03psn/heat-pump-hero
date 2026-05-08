@@ -1,44 +1,289 @@
 {
-  "_comment": "HeishaHub — Mehrjahres-JAZ/MAZ (Skeleton v0.1). Erwartet Measurements heishahub_thermal_energy und heishahub_electrical_energy in InfluxDB (gespiegelt aus HA via official InfluxDB-Integration oder Telegraf).",
+  "__comment": "HeishaHub — Multi-year SCOP/MAZ dashboard. Requires InfluxDB v2 datasource and at least 1 month of data from the HA InfluxDB integration. Adjust bucket variable to match your setup.",
   "annotations": { "list": [] },
   "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
   "panels": [
+
     {
-      "type": "stat",
-      "title": "JAZ aktuelles Jahr",
-      "datasource": { "type": "influxdb", "uid": "${DS_INFLUX}" },
-      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 }
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 200,
+      "title": "SCOP — Seasonal COP",
+      "type": "row"
     },
+
     {
-      "type": "stat",
-      "title": "JAZ Vorjahr",
       "datasource": { "type": "influxdb", "uid": "${DS_INFLUX}" },
-      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 }
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 2,
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red",    "value": null },
+            { "color": "orange", "value": 2.5 },
+            { "color": "yellow", "value": 3.0 },
+            { "color": "green",  "value": 3.5 }
+          ]},
+          "mappings": []
+        }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 1 },
+      "id": 1,
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "area",
+        "textMode": "auto"
+      },
+      "targets": [{
+        "refId": "A",
+        "query": "thermal = from(bucket: v.bucket)\n  |> range(start: date.truncate(t: now(), unit: 1y), stop: now())\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_thermal_energy\" and r[\"_field\"] == \"value\")\n  |> integral(unit: 1h)\n  |> map(fn: (r) => ({r with _field: \"thermal_kwh\"}))\n\nelectrical = from(bucket: v.bucket)\n  |> range(start: date.truncate(t: now(), unit: 1y), stop: now())\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_electrical_energy\" and r[\"_field\"] == \"value\")\n  |> integral(unit: 1h)\n  |> map(fn: (r) => ({r with _field: \"electrical_kwh\"}))\n\njoin(tables: {t: thermal, e: electrical}, on: [\"_stop\"])\n  |> map(fn: (r) => ({_time: r._time, _value: if r._value_e > 0.0 then r._value_t / r._value_e else 0.0, _field: \"SCOP (year to date)\"}))"
+      }],
+      "title": "SCOP — year to date",
+      "type": "stat"
     },
+
     {
-      "type": "stat",
-      "title": "JAZ Lifetime",
       "datasource": { "type": "influxdb", "uid": "${DS_INFLUX}" },
-      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 }
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 2,
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red",    "value": null },
+            { "color": "orange", "value": 2.5 },
+            { "color": "yellow", "value": 3.0 },
+            { "color": "green",  "value": 3.5 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 1 },
+      "id": 2,
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "targets": [{
+        "refId": "A",
+        "query": "import \"date\"\n\nprevYearStart = date.truncate(t: date.sub(d: 1y, from: now()), unit: 1y)\nprevYearEnd   = date.truncate(t: now(), unit: 1y)\n\nthermal = from(bucket: v.bucket)\n  |> range(start: prevYearStart, stop: prevYearEnd)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_thermal_energy\" and r[\"_field\"] == \"value\")\n  |> integral(unit: 1h)\n\nelectrical = from(bucket: v.bucket)\n  |> range(start: prevYearStart, stop: prevYearEnd)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_electrical_energy\" and r[\"_field\"] == \"value\")\n  |> integral(unit: 1h)\n\njoin(tables: {t: thermal, e: electrical}, on: [\"_stop\"])\n  |> map(fn: (r) => ({_time: r._time, _value: if r._value_e > 0.0 then r._value_t / r._value_e else 0.0, _field: \"SCOP previous year\"}))"
+      }],
+      "title": "SCOP — previous year",
+      "type": "stat"
     },
+
     {
-      "type": "barchart",
-      "title": "MAZ — Monat × Jahr",
       "datasource": { "type": "influxdb", "uid": "${DS_INFLUX}" },
-      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 6 }
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 2,
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red",    "value": null },
+            { "color": "orange", "value": 2.5 },
+            { "color": "yellow", "value": 3.0 },
+            { "color": "green",  "value": 3.5 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 1 },
+      "id": 3,
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "targets": [{
+        "refId": "A",
+        "query": "thermal = from(bucket: v.bucket)\n  |> range(start: -100y, stop: now())\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_thermal_energy\" and r[\"_field\"] == \"value\")\n  |> integral(unit: 1h)\n\nelectrical = from(bucket: v.bucket)\n  |> range(start: -100y, stop: now())\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_electrical_energy\" and r[\"_field\"] == \"value\")\n  |> integral(unit: 1h)\n\njoin(tables: {t: thermal, e: electrical}, on: [\"_stop\"])\n  |> map(fn: (r) => ({_time: r._time, _value: if r._value_e > 0.0 then r._value_t / r._value_e else 0.0, _field: \"SCOP lifetime\"}))"
+      }],
+      "title": "SCOP — lifetime",
+      "type": "stat"
     },
+
     {
-      "type": "timeseries",
-      "title": "Außentemp-Tagesschnitt vs. TAZ",
       "datasource": { "type": "influxdb", "uid": "${DS_INFLUX}" },
-      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 18 }
+      "fieldConfig": {
+        "defaults": { "unit": "kilowatt-hour", "decimals": 0 }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 1 },
+      "id": 4,
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "colorMode": "value",
+        "graphMode": "none",
+        "orientation": "vertical"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "query": "from(bucket: v.bucket)\n  |> range(start: date.truncate(t: now(), unit: 1y), stop: now())\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_thermal_energy\" and r[\"_field\"] == \"value\")\n  |> integral(unit: 1h)\n  |> map(fn: (r) => ({r with _field: \"Thermal kWh (year)\"}))"
+        },
+        {
+          "refId": "B",
+          "query": "from(bucket: v.bucket)\n  |> range(start: date.truncate(t: now(), unit: 1y), stop: now())\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_electrical_energy\" and r[\"_field\"] == \"value\")\n  |> integral(unit: 1h)\n  |> map(fn: (r) => ({r with _field: \"Electrical kWh (year)\"}))"
+        }
+      ],
+      "title": "Energy year to date",
+      "type": "stat"
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 7 },
+      "id": 201,
+      "title": "Monthly COP (MAZ) — cross-year comparison",
+      "type": "row"
+    },
+
+    {
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUX}" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "fillOpacity": 20 },
+          "unit": "none",
+          "decimals": 2,
+          "color": { "mode": "palette-classic" },
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "red", "value": null },
+            { "color": "green", "value": 3 }
+          ]}
+        }
+      },
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 8 },
+      "id": 5,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "query": "thermal = from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_thermal_energy\" and r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: 1mo, fn: integral, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: r._value / 3600.0}))\n\nelectrical = from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_electrical_energy\" and r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: 1mo, fn: integral, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: r._value / 3600.0}))\n\njoin(tables: {t: thermal, e: electrical}, on: [\"_time\"])\n  |> map(fn: (r) => ({_time: r._time, _value: if r._value_e > 0.0 then r._value_t / r._value_e else 0.0, _field: \"COP\"}))"
+        }
+      ],
+      "title": "Monthly COP (MAZ) — all months",
+      "type": "timeseries"
+    },
+
+    {
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUX}" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "kilowatt-hour",
+          "decimals": 0,
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Thermal" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#d62728" } }] },
+          { "matcher": { "id": "byName", "options": "Electrical" }, "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "#bcbd22" } }] }
+        ]
+      },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 20 },
+      "id": 6,
+      "options": {
+        "xField": "Month",
+        "stacking": "none",
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_thermal_energy\" and r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: 1mo, fn: integral, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: r._value / 3600.0, _field: \"Thermal\"}))"
+        },
+        {
+          "refId": "B",
+          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_electrical_energy\" and r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: 1mo, fn: integral, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: r._value / 3600.0, _field: \"Electrical\"}))"
+        }
+      ],
+      "title": "Monthly energy — thermal vs electrical",
+      "type": "barchart"
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 30 },
+      "id": 202,
+      "title": "Outdoor temp correlation",
+      "type": "row"
+    },
+
+    {
+      "datasource": { "type": "influxdb", "uid": "${DS_INFLUX}" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "lineWidth": 2, "fillOpacity": 5 }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Outdoor T° (daily avg)" }, "properties": [
+            { "id": "unit", "value": "celsius" },
+            { "id": "color", "value": { "mode": "fixed", "fixedColor": "#e0a800" } },
+            { "id": "custom.axisPlacement", "value": "right" }
+          ]},
+          { "matcher": { "id": "byName", "options": "COP daily" }, "properties": [
+            { "id": "unit", "value": "none" },
+            { "id": "color", "value": { "mode": "fixed", "fixedColor": "#17a2b8" } }
+          ]}
+        ]
+      },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 31 },
+      "id": 7,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "query": "thermal = from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_thermal_energy\" and r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: 1d, fn: integral, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: r._value / 3600.0}))\n\nelectrical = from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_electrical_energy\" and r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: 1d, fn: integral, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: r._value / 3600.0}))\n\njoin(tables: {t: thermal, e: electrical}, on: [\"_time\"])\n  |> map(fn: (r) => ({_time: r._time, _value: if r._value_e > 0.0 then r._value_t / r._value_e else 0.0, _field: \"COP daily\"}))"
+        },
+        {
+          "refId": "B",
+          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.panasonic_heat_pump_main_outside_temperature\" and r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: 1d, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: \"Outdoor T° (daily avg)\"}))"
+        }
+      ],
+      "title": "Daily COP vs outdoor temperature (correlation)",
+      "type": "timeseries"
     }
+
   ],
+  "refresh": "10m",
   "schemaVersion": 39,
-  "tags": ["heishahub", "efficiency"],
-  "templating": { "list": [{ "name": "DS_INFLUX", "type": "datasource", "query": "influxdb" }] },
+  "tags": ["heishahub", "efficiency", "scop", "maz"],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "hide": 0,
+        "label": "InfluxDB",
+        "name": "DS_INFLUX",
+        "options": [],
+        "query": "influxdb",
+        "refresh": 1,
+        "type": "datasource"
+      },
+      {
+        "current": { "value": "homeassistant" },
+        "hide": 0,
+        "label": "Bucket",
+        "name": "bucket",
+        "options": [{ "selected": true, "text": "homeassistant", "value": "homeassistant" }],
+        "query": "homeassistant",
+        "type": "textbox"
+      }
+    ]
+  },
   "time": { "from": "now-2y", "to": "now" },
-  "title": "HeishaHub — Effizienz JAZ/MAZ",
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "HeishaHub — Efficiency (SCOP / MAZ)",
   "uid": "heishahub-efficiency",
   "version": 1
 }

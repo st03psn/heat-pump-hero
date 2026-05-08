@@ -6,6 +6,10 @@
 #
 # Reads from the "active" sensors in heishahub_external.yaml so source
 # switching (Shelly / heat meter vs. internal) propagates here.
+#
+# Tariff splits: utility_meter tariffs heating/dhw/cooling are switched
+# automatically by a template automation that tracks the operating mode.
+# The individual tariff counters feed the per-mode COP/efficiency view.
 
 sensor:
   # ─── Energy integrals (Riemann sum → kWh) ──────────────────────────────
@@ -17,6 +21,8 @@ sensor:
     unit_time: h
     method: left
     round: 3
+    device_class: energy
+    state_class: total_increasing
 
   - platform: integration
     source: sensor.heishahub_electrical_power_active
@@ -26,9 +32,12 @@ sensor:
     unit_time: h
     method: left
     round: 3
+    device_class: energy
+    state_class: total_increasing
 
-# ─── Utility meters — daily / monthly / yearly ─────────────────────────
+# ─── Utility meters — daily / monthly / yearly (with tariff splits) ────
 utility_meter:
+  # ── Thermal — no tariff (total) ──
   heishahub_thermal_daily:
     source: sensor.heishahub_thermal_energy
     cycle: daily
@@ -39,6 +48,30 @@ utility_meter:
     source: sensor.heishahub_thermal_energy
     cycle: yearly
 
+  # ── Thermal — tariff splits (heating / dhw / cooling) ──
+  heishahub_thermal_daily_split:
+    source: sensor.heishahub_thermal_energy
+    cycle: daily
+    tariffs:
+      - heating
+      - dhw
+      - cooling
+  heishahub_thermal_monthly_split:
+    source: sensor.heishahub_thermal_energy
+    cycle: monthly
+    tariffs:
+      - heating
+      - dhw
+      - cooling
+  heishahub_thermal_yearly_split:
+    source: sensor.heishahub_thermal_energy
+    cycle: yearly
+    tariffs:
+      - heating
+      - dhw
+      - cooling
+
+  # ── Electrical — no tariff (total) ──
   heishahub_electrical_daily:
     source: sensor.heishahub_electrical_energy
     cycle: daily
@@ -49,12 +82,65 @@ utility_meter:
     source: sensor.heishahub_electrical_energy
     cycle: yearly
 
-# ─── Live COP, daily / monthly / yearly COP ────────────────────────────
+  # ── Electrical — tariff splits ──
+  heishahub_electrical_daily_split:
+    source: sensor.heishahub_electrical_energy
+    cycle: daily
+    tariffs:
+      - heating
+      - dhw
+      - cooling
+  heishahub_electrical_monthly_split:
+    source: sensor.heishahub_electrical_energy
+    cycle: monthly
+    tariffs:
+      - heating
+      - dhw
+      - cooling
+  heishahub_electrical_yearly_split:
+    source: sensor.heishahub_electrical_energy
+    cycle: yearly
+    tariffs:
+      - heating
+      - dhw
+      - cooling
+
+automation:
+  # ─── Tariff switch: follow operating mode ────────────────────────────────
+  # Switches all six split utility_meters in one call whenever the heat pump
+  # changes mode. Default/unknown → heating (safe fallback).
+  - id: heishahub_tariff_switch
+    alias: HeishaHub — tariff switch (mode → heating/dhw/cooling)
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.heishahub_operating_mode
+    action:
+      - variables:
+          tariff: >-
+            {% set m = states('sensor.heishahub_operating_mode') %}
+            {% if m == 'dhw' %}dhw
+            {% elif m == 'cooling' %}cooling
+            {% else %}heating{% endif %}
+      - service: utility_meter.select_tariff
+        target:
+          entity_id:
+            - sensor.heishahub_thermal_daily_split
+            - sensor.heishahub_thermal_monthly_split
+            - sensor.heishahub_thermal_yearly_split
+            - sensor.heishahub_electrical_daily_split
+            - sensor.heishahub_electrical_monthly_split
+            - sensor.heishahub_electrical_yearly_split
+        data:
+          tariff: "{{ tariff }}"
+
 template:
   - sensor:
+      # ─── Live COP ────────────────────────────────────────────────────────
       - name: "HeishaHub COP Live"
         unique_id: heishahub_cop_live
         unit_of_measurement: "x"
+        state_class: measurement
         availability: >-
           {{ states('sensor.heishahub_thermal_power_active')
              not in ['unknown','unavailable','none']
@@ -69,29 +155,70 @@ template:
             {{ (t / e) | round(2) if e > 50 else 0 }}
           {% endif %}
 
-      # Daily COP (TAZ — Tagesarbeitszahl)
+      # ─── Daily COP (TAZ) — total ─────────────────────────────────────────
       - name: "HeishaHub COP Daily"
         unique_id: heishahub_cop_daily
         unit_of_measurement: "x"
+        state_class: measurement
         state: >-
           {% set t = states('sensor.heishahub_thermal_daily') | float(0) %}
           {% set e = states('sensor.heishahub_electrical_daily') | float(0) %}
           {{ (t / e) | round(2) if e > 0.1 else 0 }}
 
-      # Monthly COP (MAZ — Monatsarbeitszahl)
+      # ─── Monthly COP (MAZ) — total ───────────────────────────────────────
       - name: "HeishaHub COP Monthly"
         unique_id: heishahub_cop_monthly
         unit_of_measurement: "x"
+        state_class: measurement
         state: >-
           {% set t = states('sensor.heishahub_thermal_monthly') | float(0) %}
           {% set e = states('sensor.heishahub_electrical_monthly') | float(0) %}
           {{ (t / e) | round(2) if e > 0.1 else 0 }}
 
-      # Yearly COP / SCOP (JAZ — Jahresarbeitszahl)
+      # ─── Yearly COP / SCOP (JAZ) — total ─────────────────────────────────
       - name: "HeishaHub SCOP"
         unique_id: heishahub_scop
         unit_of_measurement: "x"
+        state_class: measurement
         state: >-
           {% set t = states('sensor.heishahub_thermal_yearly') | float(0) %}
           {% set e = states('sensor.heishahub_electrical_yearly') | float(0) %}
+          {{ (t / e) | round(2) if e > 0.1 else 0 }}
+
+      # ─── COP per mode — heating ───────────────────────────────────────────
+      - name: "HeishaHub COP Monthly Heating"
+        unique_id: heishahub_cop_monthly_heating
+        unit_of_measurement: "x"
+        state_class: measurement
+        state: >-
+          {% set t = states('sensor.heishahub_thermal_monthly_split_heating') | float(0) %}
+          {% set e = states('sensor.heishahub_electrical_monthly_split_heating') | float(0) %}
+          {{ (t / e) | round(2) if e > 0.1 else 0 }}
+
+      - name: "HeishaHub COP Yearly Heating"
+        unique_id: heishahub_cop_yearly_heating
+        unit_of_measurement: "x"
+        state_class: measurement
+        state: >-
+          {% set t = states('sensor.heishahub_thermal_yearly_split_heating') | float(0) %}
+          {% set e = states('sensor.heishahub_electrical_yearly_split_heating') | float(0) %}
+          {{ (t / e) | round(2) if e > 0.1 else 0 }}
+
+      # ─── COP per mode — DHW ───────────────────────────────────────────────
+      - name: "HeishaHub COP Monthly DHW"
+        unique_id: heishahub_cop_monthly_dhw
+        unit_of_measurement: "x"
+        state_class: measurement
+        state: >-
+          {% set t = states('sensor.heishahub_thermal_monthly_split_dhw') | float(0) %}
+          {% set e = states('sensor.heishahub_electrical_monthly_split_dhw') | float(0) %}
+          {{ (t / e) | round(2) if e > 0.1 else 0 }}
+
+      - name: "HeishaHub COP Yearly DHW"
+        unique_id: heishahub_cop_yearly_dhw
+        unit_of_measurement: "x"
+        state_class: measurement
+        state: >-
+          {% set t = states('sensor.heishahub_thermal_yearly_split_dhw') | float(0) %}
+          {% set e = states('sensor.heishahub_electrical_yearly_split_dhw') | float(0) %}
           {{ (t / e) | round(2) if e > 0.1 else 0 }}
