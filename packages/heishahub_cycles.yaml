@@ -1,28 +1,28 @@
-# HeishaHub — Takt-Analyse
+# HeishaHub — cycle analysis
 #
-# Misst Verdichter-Zyklen: Start/Stop-Events, Laufzeiten, Pausen,
-# Short-Cycle-Quote. Basis für den Advisor und Optimierungs-Entscheidungen.
+# Tracks compressor cycles: start/stop events, run times, pauses, and the
+# short-cycle ratio. Feeds the advisor and any optimization decisions.
 #
-# Konvention: ein "Zyklus" = ein zusammenhängender Lauf (Frequenz > 0).
+# Convention: a "cycle" is one continuous run (frequency > 0).
 #
-# Speicherung:
-#   - Letzter Zyklus (Start, Ende, Dauer) als input_datetime/input_number
-#   - Tagesaggregate als utility_meter / counter
-#   - Historie via HA Recorder + LTS
+# Storage:
+#   - Last cycle (start, end, duration) in input_datetime / input_number
+#   - Daily totals in counter entities
+#   - History via HA recorder + LTS
 
 input_datetime:
   heishahub_cycle_last_start:
-    name: HeishaHub — Letzter Zyklus Start
+    name: HeishaHub — last cycle start
     has_date: true
     has_time: true
   heishahub_cycle_last_end:
-    name: HeishaHub — Letzter Zyklus Ende
+    name: HeishaHub — last cycle end
     has_date: true
     has_time: true
 
 input_number:
   heishahub_cycle_short_threshold_min:
-    name: HeishaHub — Schwelle "Short Cycle" (Minuten)
+    name: HeishaHub — "short cycle" threshold (minutes)
     min: 1
     max: 60
     step: 1
@@ -30,7 +30,7 @@ input_number:
     icon: mdi:timer-alert
 
   heishahub_cycle_last_duration_min:
-    name: HeishaHub — Letzte Laufzeit (Minuten)
+    name: HeishaHub — last run duration (minutes)
     min: 0
     max: 1440
     step: 0.1
@@ -38,7 +38,7 @@ input_number:
     icon: mdi:timer
 
   heishahub_cycle_last_pause_min:
-    name: HeishaHub — Letzte Pause (Minuten)
+    name: HeishaHub — last pause (minutes)
     min: 0
     max: 1440
     step: 0.1
@@ -47,18 +47,18 @@ input_number:
 
 counter:
   heishahub_cycles_today:
-    name: HeishaHub — Zyklen heute
+    name: HeishaHub — cycles today
     icon: mdi:counter
     initial: 0
   heishahub_short_cycles_today:
-    name: HeishaHub — Short-Cycles heute
+    name: HeishaHub — short cycles today
     icon: mdi:timer-alert-outline
     initial: 0
 
 automation:
-  # ─── Verdichter STARTET ─────────────────────────────────────────────────
+  # ─── Compressor STARTS ──────────────────────────────────────────────────
   - id: heishahub_cycle_on_start
-    alias: HeishaHub — Zyklus Start
+    alias: HeishaHub — cycle start
     mode: single
     trigger:
       - platform: state
@@ -88,9 +88,9 @@ automation:
         target:
           entity_id: counter.heishahub_cycles_today
 
-  # ─── Verdichter STOPPT ──────────────────────────────────────────────────
+  # ─── Compressor STOPS ───────────────────────────────────────────────────
   - id: heishahub_cycle_on_stop
-    alias: HeishaHub — Zyklus Ende
+    alias: HeishaHub — cycle end
     mode: single
     trigger:
       - platform: state
@@ -125,9 +125,9 @@ automation:
             target:
               entity_id: counter.heishahub_short_cycles_today
 
-  # ─── Counter-Reset täglich um Mitternacht ──────────────────────────────
+  # ─── Daily counter reset at midnight ──────────────────────────────────
   - id: heishahub_cycles_daily_reset
-    alias: HeishaHub — Tageszähler Reset
+    alias: HeishaHub — daily counter reset
     mode: single
     trigger:
       - platform: time
@@ -141,7 +141,7 @@ automation:
 
 template:
   - sensor:
-      # ─── Durchschnittliche Laufzeit (gleitend, 24 h) ───────────────────
+      # ─── Average run duration (rolling 24h) ───────────────────────────
       - name: "HeishaHub Avg Cycle Duration 24h"
         unique_id: heishahub_avg_cycle_duration_24h
         unit_of_measurement: "min"
@@ -150,7 +150,7 @@ template:
           {% set cycles = states('counter.heishahub_cycles_today') | float(0) %}
           {{ (total * 60 / cycles) | round(1) if cycles > 0 else 0 }}
 
-      # ─── Short-Cycle-Quote (%) ─────────────────────────────────────────
+      # ─── Short-cycle ratio (%) ────────────────────────────────────────
       - name: "HeishaHub Short Cycle Ratio"
         unique_id: heishahub_short_cycle_ratio
         unit_of_measurement: "%"
@@ -159,7 +159,7 @@ template:
           {% set short = states('counter.heishahub_short_cycles_today') | float(0) %}
           {{ (short / total * 100) | round(0) if total > 0 else 0 }}
 
-      # ─── Starts pro Stunde (heute) ─────────────────────────────────────
+      # ─── Cycles per hour (today) ──────────────────────────────────────
       - name: "HeishaHub Cycles Per Hour"
         unique_id: heishahub_cycles_per_hour
         unit_of_measurement: "1/h"

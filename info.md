@@ -1,26 +1,33 @@
 # HeishaHub
 
-Komplett-Paket für **Heishamon** in Home Assistant: Dashboard im Layout des
-Heishamon-Web-UIs, Service-Cloud-ähnliche Auswertegraphen, Anlagen-Schema und
-Langzeit-Effizienz (JAZ / MAZ / TAZ / COP) — universal, plug-and-play, mit
-optionaler InfluxDB-/Grafana-Integration für Mehrjahresvergleich.
+🌐 English (this file) · [Deutsch](info.de.md)
+
+Bundle package for **Heishamon** in Home Assistant: dashboard laid out like
+the Heishamon web UI, Service-Cloud-style analytical graphs, installation
+schematic and long-term efficiency (SCOP / monthly / daily / live COP) —
+universal, plug-and-play, with optional InfluxDB / Grafana integration for
+multi-year comparison.
 
 ## Features
 
-- Übersichts-Dashboard (Mushroom) im Look des Heishamon-Web-UIs
-- Anlagen-Schema als Bubble-Card mit SVG + Live-Hotspots
-- ApexCharts-Auswertung mit Mehrachsen, Zeitspannen-Picker, Serien-Toggle
-- JAZ / MAZ / TAZ / Live-COP für Heizen, Warmwasser, Kühlen
-- Externe Sensoren (Shelly Pro 3EM / 1PM / EM, MQTT-Wärmemengenzähler) per
-  UI-Dropdown integrierbar — kein YAML-Edit
-- Auto-Hide für nicht vorhandene Komponenten (HK2, DHW, Puffer, Solar, Pool)
-- Optional: Grafana-Boards für Mehrjahres-JAZ/MAZ-Vergleich
+- Overview dashboard (Mushroom) styled like the Heishamon web UI
+- Installation schematic as a Bubble-Card with SVG and live hotspots
+- ApexCharts analysis with multi-axis support, time range picker, series toggle
+- SCOP / monthly / daily / live COP for heating, DHW, cooling
+- External sensors (Shelly Pro 3EM / 1PM / EM, MQTT heat meters) selectable
+  via UI dropdown — no YAML editing required
+- Auto-hide for absent components (zone 2, DHW, buffer, solar, pool)
+- Cycle analysis with short-cycle detection
+- Data-driven optimization advisor with plain-language recommendations
+- Control strategies (CCC, SoftStart, Solar-DHW, night Quiet-Mode) — HA
+  automations with master switch, off by default
+- Optional: Grafana boards for multi-year SCOP comparison
 
 ## Installation
 
-Siehe [docs/installation.md](docs/installation.md).
+See [docs/installation.md](docs/installation.md).
 
-## Abhängigkeiten
+## Dependencies
 
 - [kamaradclimber/heishamon-homeassistant](https://github.com/kamaradclimber/heishamon-homeassistant)
 - [RomRider/apexcharts-card](https://github.com/RomRider/apexcharts-card)

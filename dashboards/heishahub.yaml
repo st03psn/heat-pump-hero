@@ -1,138 +1,138 @@
 # HeishaHub Dashboard
 # Import via: Settings → Dashboards → Add → From YAML
-# Voraussetzungen: alle in info.md gelisteten Frontend-Plugins sowie
+# Requirements: all frontend plugins listed in info.md, plus
 # kamaradclimber/heishamon-homeassistant.
 
 title: HeishaHub
 icon: mdi:heat-pump
 views:
   # ════════════════════════════════════════════════════════════════════════
-  # 1) ÜBERSICHT — Heishamon-Web-UI-Layout
+  # 1) OVERVIEW — Heishamon-web-UI layout
   # ════════════════════════════════════════════════════════════════════════
-  - title: Übersicht
+  - title: Overview
     path: overview
     icon: mdi:view-dashboard
     type: sections
     sections:
       - type: grid
-        title: Systemstatus
+        title: System status
         cards:
           - type: custom:mushroom-template-card
-            primary: Betrieb
+            primary: Operation
             secondary: "{{ states('switch.panasonic_heat_pump_main_heatpump_state') }}"
             icon: mdi:power
             icon_color: |-
               {{ 'green' if is_state('switch.panasonic_heat_pump_main_heatpump_state','on') else 'disabled' }}
           - type: custom:mushroom-template-card
-            primary: Betriebsart
+            primary: Mode
             secondary: "{{ states('select.panasonic_heat_pump_main_operating_mode_state') }}"
             icon: mdi:fire
             icon_color: orange
           - type: custom:mushroom-template-card
-            primary: Außentemperatur
+            primary: Outdoor temperature
             secondary: "{{ states('sensor.panasonic_heat_pump_main_outside_temperature') }} °C"
             icon: mdi:thermometer
             icon_color: blue
           - type: custom:mushroom-template-card
-            primary: Vorlauf / Rücklauf
+            primary: Supply / return
             secondary: >-
               {{ states('sensor.panasonic_heat_pump_main_outlet_temperature') }} °C /
               {{ states('sensor.panasonic_heat_pump_main_inlet_temperature') }} °C
             icon: mdi:water-thermometer
             icon_color: red
           - type: custom:mushroom-template-card
-            primary: Wasserdruck
+            primary: Water pressure
             secondary: "{{ states('sensor.panasonic_heat_pump_main_pump_pressure') }} bar"
             icon: mdi:gauge
           - type: custom:mushroom-template-card
-            primary: Volumenstrom
+            primary: Water flow
             secondary: "{{ states('sensor.panasonic_heat_pump_main_water_flow') }} L/min"
             icon: mdi:water-pump
 
       - type: grid
-        title: Verdichter
+        title: Compressor
         cards:
           - type: custom:mushroom-template-card
-            primary: Frequenz
+            primary: Frequency
             secondary: "{{ states('sensor.panasonic_heat_pump_main_compressor_frequency') }} Hz"
             icon: mdi:sine-wave
             icon_color: |-
               {{ 'green' if is_state('binary_sensor.heishahub_compressor_running','on') else 'disabled' }}
           - type: custom:mushroom-template-card
-            primary: Betriebsstunden
+            primary: Running hours
             secondary: "{{ states('sensor.panasonic_heat_pump_main_compressor_running_hours') }} h"
             icon: mdi:clock-outline
           - type: custom:mushroom-template-card
-            primary: Verdichterstarts
+            primary: Starts
             secondary: "{{ states('sensor.panasonic_heat_pump_main_compressor_starts') }}"
             icon: mdi:counter
           - type: custom:mushroom-template-card
-            primary: Abtauung
+            primary: Defrost
             secondary: >-
-              {{ 'Aktiv' if is_state('binary_sensor.heishahub_defrost_active','on') else 'Aus' }}
+              {{ 'Active' if is_state('binary_sensor.heishahub_defrost_active','on') else 'Off' }}
             icon: mdi:snowflake-melt
             icon_color: |-
               {{ 'cyan' if is_state('binary_sensor.heishahub_defrost_active','on') else 'disabled' }}
 
       - type: grid
-        title: Effizienz
+        title: Efficiency
         cards:
           - type: custom:mushroom-template-card
-            primary: COP Live
+            primary: COP (live)
             secondary: "{{ states('sensor.heishahub_cop_live') }}"
             icon: mdi:gauge
             icon_color: |-
               {% set v = states('sensor.heishahub_cop_live') | float(0) %}
               {% if v >= 4 %}green{% elif v >= 3 %}yellow{% elif v > 0 %}orange{% else %}disabled{% endif %}
           - type: custom:mushroom-template-card
-            primary: TAZ (heute)
-            secondary: "{{ states('sensor.heishahub_taz') }}"
+            primary: COP (today)
+            secondary: "{{ states('sensor.heishahub_cop_daily') }}"
             icon: mdi:calendar-today
           - type: custom:mushroom-template-card
-            primary: MAZ
-            secondary: "{{ states('sensor.heishahub_maz') }}"
+            primary: COP (month)
+            secondary: "{{ states('sensor.heishahub_cop_monthly') }}"
             icon: mdi:calendar-month
           - type: custom:mushroom-template-card
-            primary: JAZ
-            secondary: "{{ states('sensor.heishahub_jaz') }}"
+            primary: SCOP
+            secondary: "{{ states('sensor.heishahub_scop') }}"
             icon: mdi:calendar
           - type: custom:mushroom-template-card
-            primary: Therm. Energie (Tag)
+            primary: Thermal energy (today)
             secondary: "{{ states('sensor.heishahub_thermal_daily') }} kWh"
             icon: mdi:fire
             icon_color: red
           - type: custom:mushroom-template-card
-            primary: Elektr. Energie (Tag)
+            primary: Electrical energy (today)
             secondary: "{{ states('sensor.heishahub_electrical_daily') }} kWh"
             icon: mdi:flash
             icon_color: yellow
 
   # ════════════════════════════════════════════════════════════════════════
-  # 2) SCHEMA — Bubble-Card mit SVG (Platzhalter v0.1)
+  # 2) SCHEMATIC — Bubble Card with SVG (placeholder in v0.1)
   # ════════════════════════════════════════════════════════════════════════
-  - title: Schema
+  - title: Schematic
     path: schema
     icon: mdi:graph-outline
     cards:
       - type: markdown
         content: |
-          ## Anlagen-Schema
-          🚧 Bubble-Card-SVG-Schema folgt in v0.2.
-          Geplant: hinterlegtes SVG (`dashboards/assets/schema_a2w.svg`) +
-          Hotspots für Vorlauf, Rücklauf, Verdichter, Drei-Wege-Ventil,
-          Pumpe, Heizstab, DHW, Puffer.
+          ## Installation schematic
+          🚧 Bubble-Card SVG schematic arriving in v0.2.
+          Plan: embed `dashboards/assets/schema_a2w.svg` with hotspots for
+          supply, return, compressor, three-way valve, pump, aux heater,
+          DHW, buffer.
 
   # ════════════════════════════════════════════════════════════════════════
-  # 3) AUSWERTUNG — ApexCharts (Service-Cloud-Stil)
+  # 3) ANALYSIS — ApexCharts (Service-Cloud-style)
   # ════════════════════════════════════════════════════════════════════════
-  - title: Auswertung
+  - title: Analysis
     path: analysis
     icon: mdi:chart-multiline
     cards:
       - type: custom:apexcharts-card
         header:
           show: true
-          title: Temperaturen & Verdichter
+          title: Temperatures & compressor
           show_states: true
         graph_span: 12h
         span:
@@ -146,37 +146,37 @@ views:
             opposite: true
             decimals: 0
             apex_config:
-              title: { text: "Hz / U-min / L-min" }
+              title: { text: "Hz / rpm / L-min" }
         series:
           - entity: sensor.panasonic_heat_pump_main_outside_temperature
-            name: Außentemperatur
+            name: Outdoor
             yaxis_id: temp
             color: "#e0a800"
           - entity: sensor.panasonic_heat_pump_main_inlet_temperature
-            name: Rücklauf
+            name: Return
             yaxis_id: temp
             color: "#7ec1ff"
           - entity: sensor.panasonic_heat_pump_main_outlet_temperature
-            name: Vorlauf
+            name: Supply
             yaxis_id: temp
             color: "#d62728"
           - entity: sensor.panasonic_heat_pump_main_discharge_temperature
-            name: Heißgas
+            name: Discharge
             yaxis_id: temp
             color: "#2ca02c"
           - entity: sensor.panasonic_heat_pump_main_compressor_frequency
-            name: Verdichterfrequenz
+            name: Compressor frequency
             yaxis_id: hz
             color: "#bcbd22"
           - entity: sensor.panasonic_heat_pump_main_water_flow
-            name: Volumenstrom
+            name: Water flow
             yaxis_id: hz
             color: "#7fb3d5"
 
       - type: custom:apexcharts-card
         header:
           show: true
-          title: COP-Verlauf
+          title: COP trend
         graph_span: 24h
         yaxis:
           - min: 0
@@ -184,29 +184,29 @@ views:
             decimals: 1
         series:
           - entity: sensor.heishahub_cop_live
-            name: COP Live
+            name: COP (live)
             color: "#17a2b8"
 
   # ════════════════════════════════════════════════════════════════════════
-  # 4) EFFIZIENZ — JAZ/MAZ-Tabelle, Mehrjahres
+  # 4) EFFICIENCY — period KPIs and multi-year trend
   # ════════════════════════════════════════════════════════════════════════
-  - title: Effizienz
+  - title: Efficiency
     path: efficiency
     icon: mdi:chart-bar
     cards:
       - type: entities
-        title: Aktuelle Kennzahlen
+        title: Current KPIs
         entities:
-          - sensor.heishahub_jaz
-          - sensor.heishahub_maz
-          - sensor.heishahub_taz
+          - sensor.heishahub_scop
+          - sensor.heishahub_cop_monthly
+          - sensor.heishahub_cop_daily
           - sensor.heishahub_cop_live
           - sensor.heishahub_thermal_yearly
           - sensor.heishahub_electrical_yearly
           - sensor.heishahub_thermal_monthly
           - sensor.heishahub_electrical_monthly
       - type: statistics-graph
-        title: Energie (30 Tage)
+        title: Energy (30 days)
         days_to_show: 30
         stat_types:
           - sum
@@ -215,31 +215,31 @@ views:
           - sensor.heishahub_electrical_energy
       - type: markdown
         content: |
-          **Mehrjahres-Vergleich:** für JAZ/MAZ über mehrere Jahre Grafana-
-          Dashboard `efficiency_jaz_maz.json` importieren (siehe
+          **Multi-year comparison:** for SCOP/monthly trend across multiple
+          years, import the Grafana dashboard `efficiency_jaz_maz.json` (see
           [docs/installation.md](/local/heishahub/installation.md)).
 
   # ════════════════════════════════════════════════════════════════════════
-  # 5) OPTIMIERUNG — Takt-Analyse + Advisor + Control-Schalter
+  # 5) OPTIMIZATION — cycle analysis + advisor + control switches
   # ════════════════════════════════════════════════════════════════════════
-  - title: Optimierung
+  - title: Optimization
     path: optimization
     icon: mdi:tune-vertical
     cards:
       - type: custom:mushroom-template-card
-        primary: Sammel-Bewertung
+        primary: Aggregate verdict
         secondary: >-
           {% set s = states('sensor.heishahub_advisor_summary') %}
-          {% if s == 'critical' %}🔴 Handlungsbedarf
-          {% elif s == 'warn' %}🟡 Hinweise vorhanden
-          {% else %}🟢 Alles im grünen Bereich{% endif %}
+          {% if s == 'critical' %}🔴 Action required
+          {% elif s == 'warn' %}🟡 Warnings present
+          {% else %}🟢 All clear{% endif %}
         icon: mdi:lightbulb-on
         icon_color: |-
           {% set s = states('sensor.heishahub_advisor_summary') %}
           {% if s == 'critical' %}red{% elif s == 'warn' %}yellow{% else %}green{% endif %}
 
       - type: entities
-        title: Takt-Analyse (heute)
+        title: Cycle analysis (today)
         entities:
           - sensor.heishahub_cycles_per_hour
           - counter.heishahub_cycles_today
@@ -253,56 +253,53 @@ views:
       - type: custom:apexcharts-card
         header:
           show: true
-          title: Taktung — letzte 7 Tage
+          title: Cycling — last 7 days
         graph_span: 7d
         series:
           - entity: counter.heishahub_cycles_today
-            name: Zyklen/Tag
+            name: Cycles/day
             type: column
           - entity: counter.heishahub_short_cycles_today
-            name: Short-Cycles/Tag
+            name: Short cycles/day
             type: column
             color: "#d62728"
 
       - type: entities
-        title: Advisor — Empfehlungen
+        title: Advisor — recommendations
         entities:
           - entity: sensor.heishahub_advisor_short_cycle
-            name: Taktung
+            name: Cycling
             secondary_info: last-changed
           - entity: sensor.heishahub_advisor_spread
-            name: Spreizung VL/RL
+            name: Supply/return spread
           - entity: sensor.heishahub_advisor_defrost
-            name: Defrost-Verhalten
+            name: Defrost behaviour
           - entity: sensor.heishahub_advisor_heat_curve
-            name: Heizkurve / Heizstab
+            name: Heating curve / aux heater
           - entity: sensor.heishahub_advisor_dhw_runtime
-            name: DHW-Lauflänge
+            name: DHW run length
         state_color: true
 
       - type: markdown
-        title: Empfehlungs-Detail
+        title: Recommendation detail
         content: |
-          ### Taktung
+          ### Cycling
           {{ state_attr('sensor.heishahub_advisor_short_cycle','message') }}
 
-          ### Spreizung
+          ### Spread
           {{ state_attr('sensor.heishahub_advisor_spread','message') }}
 
           ### Defrost
           {{ state_attr('sensor.heishahub_advisor_defrost','message') }}
 
-          ### Heizkurve / Heizstab
+          ### Heating curve / aux heater
           {{ state_attr('sensor.heishahub_advisor_heat_curve','message') }}
 
           ### DHW
           {{ state_attr('sensor.heishahub_advisor_dhw_runtime','message') }}
 
       - type: entities
-        title: Steuerungs-Strategien (HeishaMoNR-Parität)
-        footer:
-          type: buttons
-          entities: []
+        title: Control strategies (HeishaMoNR parity)
         entities:
           - input_boolean.heishahub_ctrl_master
           - input_boolean.heishahub_ctrl_ccc
@@ -315,7 +312,7 @@ views:
           - input_number.heishahub_ctrl_solar_pv_threshold_w
 
       - type: entities
-        title: Advisor-Schwellen (Tweaks für Power-User)
+        title: Advisor thresholds (power-user tweaks)
         entities:
           - input_number.heishahub_advisor_short_cycle_warn_pct
           - input_number.heishahub_advisor_short_cycle_crit_pct
@@ -323,20 +320,20 @@ views:
           - input_number.heishahub_advisor_dhw_min_runtime_min
 
   # ════════════════════════════════════════════════════════════════════════
-  # 6) KONFIGURATION
+  # 6) CONFIGURATION
   # ════════════════════════════════════════════════════════════════════════
-  - title: Konfiguration
+  - title: Configuration
     path: config
     icon: mdi:cog
     cards:
       - type: entities
-        title: Quellen-Auswahl
+        title: Source selection
         entities:
           - input_select.heishahub_thermal_source
           - input_select.heishahub_electrical_source
           - input_select.heishahub_schema_variant
       - type: entities
-        title: Externe Sensoren (Entity-IDs)
+        title: External sensors (entity-IDs)
         entities:
           - input_text.heishahub_shelly_entity
           - input_text.heishahub_wmz_entity
@@ -344,14 +341,14 @@ views:
       - type: custom:auto-entities
         card:
           type: entities
-          title: Heizkurve HK1
+          title: Heating curve — zone 1
         filter:
           include:
             - entity_id: number.panasonic_heat_pump_main_z1_heat_curve_*
       - type: custom:auto-entities
         card:
           type: entities
-          title: Heizkurve HK2 (falls vorhanden)
+          title: Heating curve — zone 2 (if present)
         filter:
           include:
             - entity_id: number.panasonic_heat_pump_main_z2_heat_curve_*

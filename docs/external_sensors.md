@@ -1,34 +1,39 @@
-# Externe Sensoren
+# External sensors
 
-Heishamon liefert eine **Schätzung** der elektrischen Aufnahme und berechnet
-die thermische Leistung aus internen Temperatursensoren — beides mit
-Toleranzen von 10–20 %. Für belastbare JAZ/MAZ-Werte sind echte
-Strommessgeräte und ggf. ein Wärmemengenzähler nötig.
+🌐 English (this file) · [Deutsch](de/external_sensors.md)
 
-HeishaHub kann beide Quellen — intern und extern — gleichzeitig vorhalten und
-die aktive Quelle per Dropdown umschalten, ohne YAML zu editieren.
+Heishamon publishes an **estimate** of electrical input and computes thermal
+power from internal temperature sensors — both with 10–20 % tolerance. For
+trustworthy SCOP / monthly figures you need a real electricity meter and
+optionally a heat meter.
 
-## Stromzähler — Shelly
+HeishaHub keeps both sources — internal and external — available
+simultaneously and lets you switch the active one via dropdown, no YAML
+editing required.
 
-### Shelly Pro 3EM (3-Phasen)
+## Electricity — Shelly
 
-1. Shelly in HA einbinden (Shelly-Integration aus HACS oder MQTT).
-2. Es entstehen u. a. `sensor.shellypro3em_<id>_total_active_power` (W) und
+### Shelly Pro 3EM (3-phase)
+
+1. Add the Shelly to HA (Shelly integration via HACS, or MQTT).
+2. Among others, you'll get
+   `sensor.shellypro3em_<id>_total_active_power` (W) and
    `sensor.shellypro3em_<id>_total_energy` (kWh).
-3. *Settings → Devices & Services → Helpers* öffnen, `heishahub_shelly_entity`
-   bearbeiten, dort den **Power-Sensor** (W) eintragen, z. B.
+3. Open *Settings → Devices & Services → Helpers*, edit
+   `heishahub_shelly_entity` and enter the **power sensor** (W), e.g.
    `sensor.shellypro3em_xxx_total_active_power`.
-4. Im Dashboard *Konfiguration → Quellen-Auswahl*:
-   `Elektrische Quelle` auf `external_shelly` umstellen.
+4. In the dashboard *Configuration → Source selection*: set
+   `Electrical source` to `external_shelly`.
 
-### Shelly 1PM / EM (Einphasig)
+### Shelly 1PM / EM (single phase)
 
-Genauso — Entity-ID des Power-Sensors in `heishahub_shelly_entity`.
+Same flow — enter the power-sensor entity-ID into
+`heishahub_shelly_entity`.
 
-## Wärmemengenzähler — MQTT
+## Heat meter — MQTT
 
-Variante 1: **Auslesen über M-Bus-Gateway** (z. B. Weidmann *amber*,
-Lobaro *MBus2MQTT*) → Topic-Beispiel:
+Variant 1: **read out via M-Bus gateway** (e.g. Weidmann *amber*,
+Lobaro *MBus2MQTT*) — example topics:
 
 ```
 mbus/heatmeter1/energy_kwh   → 12345.67
@@ -36,7 +41,7 @@ mbus/heatmeter1/power_w      → 4200
 mbus/heatmeter1/flow_lpm     → 12.5
 ```
 
-In HA via `mqtt sensor`:
+Wire them into HA via `mqtt sensor`:
 
 ```yaml
 mqtt:
@@ -55,32 +60,31 @@ mqtt:
       state_class: measurement
 ```
 
-Dann in den Helpers eintragen:
+Then enter into the helpers:
 - `heishahub_wmz_entity`        → `sensor.wmz_energy`
 - `heishahub_wmz_power_entity`  → `sensor.wmz_power`
 
-Quelle umstellen: *Konfiguration → Quellen-Auswahl* →
-`Thermische Quelle` = `external_wmz`.
+Switch the source: *Configuration → Source selection* →
+`Thermal source` = `external_wmz`.
 
-Variante 2: **Direkter Pulse-Counter** an Shelly-Eingang oder ESPHome.
+Variant 2: **direct pulse counter** on a Shelly input or ESPHome.
 
-## Quellen-Wechsel und Historie
+## Source switch and history
 
-Wechselt man die Quelle, **bleiben** alle bisherigen Werte in der Historie
-erhalten — die `utility_meter`-Zähler werden nicht zurückgesetzt. Ab dem
-Wechselzeitpunkt rechnen die Energie-Integrale mit der neuen Quelle weiter,
-JAZ/MAZ entsprechend.
+Switching the source **preserves** all historical data — `utility_meter`
+counters are not reset. From the moment of the switch onwards the energy
+integrals use the new source, and SCOP / monthly figures follow.
 
-Bei einem Quellenwechsel im laufenden Monat ist die MAZ entsprechend
-gemischt — am sinnvollsten Wechsel zum Monatsersten.
+If you switch mid-month, that month's MAZ/SCOP partial is mixed — switching
+on the first of a month keeps the periods clean.
 
-## Validierung nach Einbindung
+## Validation after binding
 
-Nach dem Wechsel auf externe Quellen:
+After switching to external sources:
 
-1. *Developer Tools → States* → `sensor.heishahub_electrical_power_active`
-   prüfen → muss in W mit deinem Shelly-Sensor identisch sein.
-2. `sensor.heishahub_thermal_power_active` muss plausibel sein
-   (5–15 kW im Heizbetrieb bei 7 °C Außentemperatur).
-3. `sensor.heishahub_cop_live` muss zwischen 2.0 und 5.0 liegen.
-4. Nach 24 h: `sensor.heishahub_taz` zeigt Tageswert.
+1. *Developer Tools → States* — `sensor.heishahub_electrical_power_active`
+   must read identically to your Shelly sensor (in W).
+2. `sensor.heishahub_thermal_power_active` should be plausible
+   (5–15 kW heating at 7 °C outdoor).
+3. `sensor.heishahub_cop_live` should sit between 2.0 and 5.0.
+4. After 24 h, `sensor.heishahub_cop_daily` shows a daily figure.

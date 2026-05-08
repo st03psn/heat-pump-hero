@@ -1,32 +1,34 @@
 # Installation
 
-## Voraussetzungen
+🌐 English (this file) · [Deutsch](de/installation.md)
 
-| Komponente | Mindestversion | Quelle |
+## Prerequisites
+
+| Component | Minimum version | Source |
 |---|---|---|
 | Home Assistant | 2025.4 | hass |
 | HACS | 2.0 | https://hacs.xyz |
-| MQTT-Broker | beliebig | z. B. Mosquitto-Add-on |
-| Heishamon-Hardware | aktuelle Egyras/IgorYbema-Firmware | https://github.com/Egyras/HeishaMon |
+| MQTT broker | any | e.g. Mosquitto add-on |
+| Heishamon hardware | recent Egyras / IgorYbema firmware | https://github.com/Egyras/HeishaMon |
 
-Optional für Langzeit-Statistik:
-- InfluxDB-Add-on
-- Grafana-Add-on
+Optional, for long-term statistics:
+- InfluxDB add-on
+- Grafana add-on
 
-## Schritt 1 — Heishamon-Integration installieren
+## Step 1 — Install the Heishamon integration
 
 In HACS:
 
 1. *Integrations* → ⋮ → *Custom repositories*
 2. URL: `https://github.com/kamaradclimber/heishamon-homeassistant`
-3. Kategorie: *Integration*
-4. *Heishamon* installieren, Home Assistant neu starten.
-5. Settings → Devices & Services → MQTT-Auto-Discovery sollte die WP finden.
-   Topic-Prefix prüfen (Default: `panasonic_heat_pump`).
+3. Category: *Integration*
+4. Install *Heishamon*, then restart Home Assistant.
+5. Settings → Devices & Services — MQTT auto-discovery should pick up the
+   heat pump. Verify the topic prefix (default: `panasonic_heat_pump`).
 
-## Schritt 2 — Frontend-Plugins installieren
+## Step 2 — Install frontend plugins
 
-In HACS *Frontend* nacheinander suchen und installieren:
+In HACS *Frontend*, search and install:
 
 - ApexCharts Card
 - Bubble Card
@@ -35,49 +37,49 @@ In HACS *Frontend* nacheinander suchen und installieren:
 - auto-entities
 - card-mod
 
-## Schritt 3 — HeishaHub-Repo holen
+## Step 3 — Get the HeishaHub repo
 
 ```bash
 cd /tmp
-git clone https://github.com/st03psn/heishahub.git
+git clone https://github.com/st03psn/HeishaHub.git
 ```
 
-## Schritt 4 — Installer ausführen (empfohlen)
+## Step 4 — Run the installer (recommended)
 
 ```bash
-cd heishahub
+cd HeishaHub
 ./scripts/install.sh /path/to/your/homeassistant/config
 ```
 
-Der Installer kopiert:
+The installer copies:
 - `packages/*.yaml` → `<config>/packages/`
 - `dashboards/heishahub.yaml` → `<config>/heishahub/dashboard.yaml`
 - `dashboards/assets/*.svg` → `<config>/www/heishahub/`
 - `blueprints/heishahub_setup.yaml` → `<config>/blueprints/script/heishahub/`
 
-und ergänzt `homeassistant: packages: !include_dir_named packages` in
-`configuration.yaml` (idempotent).
+and idempotently adds `homeassistant: packages: !include_dir_named packages`
+to `configuration.yaml`.
 
-### Manuelle Installation (Alternative)
+### Manual install (alternative)
 
-Wer keinen Shell-Zugriff hat: Inhalt der vier Verzeichnisse manuell kopieren
-(z. B. via *File Editor*-Add-on) und obige Zeile in `configuration.yaml`
-einfügen.
+If you don't have shell access, copy the four directories manually (e.g.
+through the *File Editor* add-on) and append the line above to
+`configuration.yaml`.
 
-## Schritt 5 — Home Assistant neu starten
+## Step 5 — Restart Home Assistant
 
-`Settings → System → Restart`. Nach dem Neustart in *Developer Tools → States*
-nach `heishahub_` filtern — die HeishaHub-Sensoren sollten erscheinen.
+`Settings → System → Restart`. After the restart, filter for `heishahub_` in
+*Developer Tools → States* — the HeishaHub sensors should appear.
 
-## Schritt 6 — Setup-Blueprint ausführen
+## Step 6 — Run the setup blueprint
 
-`Settings → Automations & Scenes → Blueprints` → *HeishaHub Setup* → 
-*Skript erstellen* → Ausführen. Liefert eine persistente Notification mit
-einer Diagnose, ob die Heishamon-Entities gefunden wurden.
+`Settings → Automations & Scenes → Blueprints` → *HeishaHub Setup* →
+*Create script* → run it. It posts a persistent notification reporting
+whether your Heishamon entities were detected.
 
-## Schritt 7 — Dashboard hinzufügen
+## Step 7 — Add the dashboard
 
-`Settings → Dashboards → Add Dashboard → From YAML` →
+`Settings → Dashboards → Add Dashboard → From YAML`:
 
 ```yaml
 title: HeishaHub
@@ -86,37 +88,37 @@ mode: yaml
 filename: heishahub/dashboard.yaml
 ```
 
-## Schritt 8 — (Optional) Externe Sensoren
+## Step 8 — (Optional) external sensors
 
-Siehe [external_sensors.md](external_sensors.md).
+See [external_sensors.md](external_sensors.md).
 
-## Schritt 9 — (Optional) Grafana / InfluxDB
+## Step 9 — (Optional) Grafana / InfluxDB
 
-1. **InfluxDB-Add-on** installieren, Bucket `heishahub` anlegen, Token erzeugen.
-2. **HA InfluxDB-Integration** konfigurieren → spiegelt alle `sensor.heishahub_*`
-   nach InfluxDB.
-3. Alternativ **Telegraf** mit der Config aus
-   `grafana/telegraf_mqtt.conf` für direkten MQTT→InfluxDB-Pfad
-   (höhere Auflösung, kein HA-Recorder-Limit).
-4. **Grafana-Add-on** starten, InfluxDB-Datasource hinzufügen, Dashboards aus
-   `grafana/overview.json` und `grafana/efficiency_jaz_maz.json` importieren.
+1. Install the **InfluxDB add-on**, create a bucket `heishahub`, generate a token.
+2. Configure the **HA InfluxDB integration** — it mirrors all
+   `sensor.heishahub_*` to InfluxDB.
+3. Alternatively, run **Telegraf** with `grafana/telegraf_mqtt.conf` for a
+   direct MQTT → InfluxDB path (higher resolution, no HA recorder limits).
+4. Start the **Grafana add-on**, add the InfluxDB datasource, import
+   `grafana/overview.json` and `grafana/efficiency_jaz_maz.json`.
 
-## Koexistenz mit HeishaMoNR (Node-Red)
+## Coexistence with HeishaMoNR (Node-Red)
 
-Beide Systeme können parallel am MQTT-Broker hören. **Schreibend** sollte nur
-eines aktiv sein. Empfehlung während Parallel-Test:
+Both systems can listen on the same MQTT broker. **Only one** should write.
+While testing in parallel:
 
-- HeishaMoNR steuert (Schedules, CCC, RTC, SoftStart),
-- HeishaHub liest und visualisiert nur — alle `number.*` und `select.*` aus
-  der kamaradclimber-Integration in HA deaktivieren (Entity → Disable).
+- HeishaMoNR controls (schedules, CCC, RTC, SoftStart),
+- HeishaHub reads and visualizes only — disable all `number.*` and
+  `select.*` entities of the kamaradclimber integration in HA
+  (Entity → Disable).
 
-## Update
+## Updating
 
 ```bash
-cd /tmp/heishahub
+cd /tmp/HeishaHub
 git pull
 ./scripts/install.sh /path/to/your/homeassistant/config
 ```
 
-Bestehende Helper-Werte (Quellen-Auswahl, externe Entity-IDs) bleiben erhalten,
-da der Installer die `input_*`-Entities nicht zurücksetzt.
+Existing helper values (source selection, external entity-IDs) are preserved
+because the installer does not reset `input_*` entities.

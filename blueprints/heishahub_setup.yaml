@@ -1,28 +1,28 @@
-# HeishaHub — Setup-Skript-Blueprint
+# HeishaHub — setup script blueprint
 #
-# Ausführen via: Settings → Automations & Scenes → Blueprints →
-#                "HeishaHub Setup" → Skript erstellen → Ausführen.
+# Run via: Settings → Automations & Scenes → Blueprints →
+#          "HeishaHub Setup" → Create script → Run.
 #
-# Was es macht:
-#   1. Prüft, ob die Heishamon-Integration Entities erzeugt hat
-#   2. Zeigt eine persistente Notification mit den nächsten Setup-Schritten
-#   3. Setzt die Standardwerte für die Quellen-Auswahl
+# What it does:
+#   1. Probes whether the Heishamon integration has produced entities.
+#   2. Posts a persistent notification with the next setup steps.
+#   3. Sets default source-selection helpers.
 #
-# Was es NICHT macht (HA-Sicherheitsmodell):
-#   - Schreibt keine Dateien (das übernimmt scripts/install.sh oder Hand-Copy)
-#   - Modifiziert keine configuration.yaml
+# What it does NOT do (HA security model):
+#   - Does not write files (use scripts/install.sh or copy by hand).
+#   - Does not modify configuration.yaml.
 blueprint:
   name: HeishaHub Setup
   description: >
-    Initialisiert HeishaHub-Helper und prüft die Installation. Einmalig
-    ausführen nach dem Kopieren der Packages und des Dashboards.
+    Initializes HeishaHub helpers and verifies the installation. Run once
+    after copying the packages and the dashboard.
   domain: script
-  source_url: https://github.com/st03psn/heishahub/blob/main/blueprints/heishahub_setup.yaml
+  source_url: https://github.com/st03psn/HeishaHub/blob/main/blueprints/heishahub_setup.yaml
 
   input:
     topic_prefix:
-      name: MQTT Topic-Prefix
-      description: Heishamon-Topic-Prefix (Default in der Firmware)
+      name: MQTT topic prefix
+      description: Heishamon topic prefix (firmware default)
       default: panasonic_heat_pump
       selector:
         text:
@@ -30,12 +30,12 @@ blueprint:
 mode: single
 
 sequence:
-  - alias: Heishamon-Entities prüfen
+  - alias: Probe Heishamon entities
     variables:
       probe_entity: "sensor.{{ !input topic_prefix | replace('/', '_') }}_main_outside_temperature"
       found: "{{ states(probe_entity) not in ['unknown','unavailable','none'] }}"
 
-  - alias: Standardquellen setzen
+  - alias: Set default sources
     service: input_select.select_option
     target:
       entity_id:
@@ -44,28 +44,29 @@ sequence:
     data:
       option: heishamon_internal
 
-  - alias: Statusmeldung
+  - alias: Status notification
     service: persistent_notification.create
     data:
       notification_id: heishahub_setup
       title: HeishaHub Setup
       message: >
         {% if found %}
-        ✅ Heishamon-Entities gefunden.
+        ✅ Heishamon entities detected.
 
-        Nächste Schritte:
+        Next steps:
         1. Settings → Dashboards → Add Dashboard → From YAML →
-           Inhalt aus `dashboards/heishahub.yaml` einfügen.
-        2. Falls externe Strom-/Wärmemengenzähler vorhanden:
-           Settings → Devices & Services → Helpers →
-           `heishahub_shelly_entity` / `heishahub_wmz_entity` füllen,
-           dann Quelle auf `external_*` umschalten.
-        3. (Optional) Grafana-Dashboards aus `grafana/` importieren.
+           paste the contents of `dashboards/heishahub.yaml`.
+        2. If you have external electricity / heat meters: open
+           Settings → Devices & Services → Helpers and fill
+           `heishahub_shelly_entity` / `heishahub_wmz_entity`,
+           then switch the source to `external_*`.
+        3. (Optional) import the Grafana dashboards from `grafana/`.
         {% else %}
-        ⚠️ Heishamon-Entities NICHT gefunden (probe: `{{ probe_entity }}`).
+        ⚠️ Heishamon entities NOT found (probe: `{{ probe_entity }}`).
 
-        Prüfen:
-        - kamaradclimber/heishamon-homeassistant in HACS installiert?
-        - MQTT-Broker läuft? Heishamon publiziert auf `{{ !input topic_prefix }}/#`?
-        - Topic-Prefix korrekt? (Default: `panasonic_heat_pump`)
+        Check:
+        - is kamaradclimber/heishamon-homeassistant installed via HACS?
+        - is the MQTT broker running and is Heishamon publishing on
+          `{{ !input topic_prefix }}/#`?
+        - is the topic prefix correct? (Default: `panasonic_heat_pump`)
         {% endif %}

@@ -1,15 +1,15 @@
-# HeishaHub — Core Package
+# HeishaHub — core package
 #
-# Template-Sensoren für Live-Werte, die im Dashboard angezeigt werden.
-# Jeder Sensor ist `availability:`-geschützt — fehlende Quellen erzeugen
-# keinen "unknown"-Spam.
+# Template sensors for the live values shown on the dashboard.
+# Every sensor is `availability:`-guarded — missing sources do not produce
+# `unknown` spam.
 #
-# Annahme: kamaradclimber/heishamon-homeassistant ist installiert,
-# Topic-Prefix `panasonic_heat_pump` (Default).
+# Assumes kamaradclimber/heishamon-homeassistant is installed with the
+# default topic prefix `panasonic_heat_pump`.
 
 template:
   - sensor:
-      # ─── Thermische Live-Leistung ────────────────────────────────────────
+      # ─── Live thermal power ───────────────────────────────────────────
       - name: "HeishaHub Thermal Power"
         unique_id: heishahub_thermal_power
         unit_of_measurement: "W"
@@ -29,14 +29,14 @@ template:
           {% set power = (tout - tin) * flow * 4180 / 60 %}
           {{ [power, 0] | max | round(0) }}
 
-      # ─── Verdichter läuft? ───────────────────────────────────────────────
+      # ─── Compressor running? ──────────────────────────────────────────
       - name: "HeishaHub Compressor Running"
         unique_id: heishahub_compressor_running
         state: >-
           {{ states('sensor.panasonic_heat_pump_main_compressor_frequency')
              | float(0) > 0 }}
 
-      # ─── Mode-Mapping (für saubere Anzeige) ──────────────────────────────
+      # ─── Mode mapping (for clean display) ─────────────────────────────
       - name: "HeishaHub Operating Mode"
         unique_id: heishahub_operating_mode
         availability: >-
@@ -50,7 +50,7 @@ template:
           {% else %}{{ m | lower }}{% endif %}
 
   - binary_sensor:
-      # ─── Defrost aktiv? (für COP-Maskierung) ─────────────────────────────
+      # ─── Defrost active? (used to mask COP) ───────────────────────────
       - name: "HeishaHub Defrost Active"
         unique_id: heishahub_defrost_active
         availability: >-

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  HeishaHub — Anlagen-Schema A2W (HK1)
-  Platzhalter v0.1 — wird in v0.2 mit Inkscape-Feinarbeit ersetzt.
-  Hotspot-Koordinaten für Bubble-Card sind als data-hotspot-* annotiert.
+  HeishaHub — installation schematic A2W (zone 1)
+  Placeholder v0.1 — to be replaced with proper Inkscape artwork in v0.2.
+  Hotspot coordinates for Bubble-Card are annotated as data-hotspot-*.
 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" font-family="sans-serif" font-size="14">
   <style>
@@ -13,32 +13,32 @@
     .label-dark { fill: #1a2733; }
   </style>
 
-  <!-- Außengerät -->
+  <!-- Outdoor unit -->
   <rect class="unit" x="20" y="120" width="180" height="160" rx="8" />
-  <text class="label" x="110" y="200" text-anchor="middle">Außengerät</text>
-  <text class="label" x="110" y="220" text-anchor="middle" font-size="11">Verdichter / Verdampfer</text>
+  <text class="label" x="110" y="200" text-anchor="middle">Outdoor unit</text>
+  <text class="label" x="110" y="220" text-anchor="middle" font-size="11">compressor / evaporator</text>
 
-  <!-- Vorlauf-Leitung -->
-  <path class="pipe-hot" d="M 200 160 H 400 V 80 H 600" data-hotspot="vorlauf" />
-  <text class="label-dark" x="300" y="150" text-anchor="middle">Vorlauf</text>
+  <!-- Supply line -->
+  <path class="pipe-hot" d="M 200 160 H 400 V 80 H 600" data-hotspot="supply" />
+  <text class="label-dark" x="300" y="150" text-anchor="middle">Supply</text>
 
-  <!-- Rücklauf-Leitung -->
-  <path class="pipe-cold" d="M 200 240 H 400 V 320 H 600" data-hotspot="ruecklauf" />
-  <text class="label-dark" x="300" y="260" text-anchor="middle">Rücklauf</text>
+  <!-- Return line -->
+  <path class="pipe-cold" d="M 200 240 H 400 V 320 H 600" data-hotspot="return" />
+  <text class="label-dark" x="300" y="260" text-anchor="middle">Return</text>
 
-  <!-- 3-Wege-Ventil -->
-  <circle cx="450" cy="200" r="22" class="unit" data-hotspot="dreiwegeventil" />
+  <!-- 3-way valve -->
+  <circle cx="450" cy="200" r="22" class="unit" data-hotspot="three_way_valve" />
   <text class="label" x="450" y="205" text-anchor="middle" font-size="10">3WV</text>
 
-  <!-- Inneneinheit / Hydraulik -->
+  <!-- Indoor unit / hydraulics -->
   <rect class="unit" x="600" y="60" width="180" height="280" rx="8" />
-  <text class="label" x="690" y="90" text-anchor="middle">Hydraulikmodul</text>
-  <text class="label" x="690" y="120" text-anchor="middle" font-size="11" data-hotspot="heizstab">E-Heizstab</text>
-  <text class="label" x="690" y="200" text-anchor="middle" font-size="11" data-hotspot="pumpe">Umwälzpumpe</text>
-  <text class="label" x="690" y="240" text-anchor="middle" font-size="11" data-hotspot="hk1">HK1 → Heizkreis</text>
+  <text class="label" x="690" y="90" text-anchor="middle">Hydraulic module</text>
+  <text class="label" x="690" y="120" text-anchor="middle" font-size="11" data-hotspot="aux_heater">Aux electric heater</text>
+  <text class="label" x="690" y="200" text-anchor="middle" font-size="11" data-hotspot="pump">Circulation pump</text>
+  <text class="label" x="690" y="240" text-anchor="middle" font-size="11" data-hotspot="zone1">Zone 1 → heating circuit</text>
 
   <!-- Title -->
   <text x="400" y="30" text-anchor="middle" font-size="18" class="label-dark" font-weight="bold">
-    Wärmepumpe Schema (A2W, HK1)
+    Heat pump schematic (A2W, zone 1)
   </text>
 </svg>

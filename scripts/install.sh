@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #
-# HeishaHub — CLI-Installer
-# Kopiert Packages, Dashboard und Blueprint in eine bestehende
-# Home-Assistant-Konfiguration. Idempotent.
+# HeishaHub — CLI installer
+# Copies packages, dashboard and blueprint into an existing Home Assistant
+# configuration. Idempotent.
 #
 # Usage:
 #   ./scripts/install.sh /path/to/homeassistant/config
@@ -39,7 +39,7 @@ mkdir -p "$HA_CONFIG/heishahub"
 cp "$SCRIPT_DIR/dashboards/heishahub.yaml" "$HA_CONFIG/heishahub/dashboard.yaml"
 mkdir -p "$HA_CONFIG/www/heishahub"
 cp -r "$SCRIPT_DIR/dashboards/assets/." "$HA_CONFIG/www/heishahub/"
-echo "    www/heishahub/  (SVG-Assets)"
+echo "    www/heishahub/  (SVG assets)"
 
 # 3. Blueprint
 mkdir -p "$HA_CONFIG/blueprints/script/heishahub"
@@ -50,7 +50,7 @@ cp "$SCRIPT_DIR/blueprints/heishahub_setup.yaml" \
 if ! grep -q "packages: !include_dir_named packages" "$HA_CONFIG/configuration.yaml"; then
     echo "==> Adding 'packages: !include_dir_named packages' to configuration.yaml"
     if grep -q "^homeassistant:" "$HA_CONFIG/configuration.yaml"; then
-        # Append unter homeassistant:
+        # Insert under existing `homeassistant:` block.
         python3 - "$HA_CONFIG/configuration.yaml" <<'PY'
 import sys, re
 path = sys.argv[1]
