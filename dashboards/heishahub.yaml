@@ -108,19 +108,322 @@ views:
             icon_color: yellow
 
   # ════════════════════════════════════════════════════════════════════════
-  # 2) SCHEMATIC — Bubble Card with SVG (placeholder in v0.1)
+  # 2) SCHEMATIC — Bubble-Card with SVG background + live hotspots
+  #
+  # Requires: Clooos/Bubble-Card ≥ 3.0
+  # SVG background served from /local/heishahub/schema_a2w.svg
+  # (installed by scripts/install.sh into www/heishahub/)
+  #
+  # Each sub_button is positioned with margin offsets that match the
+  # data-hotspot-x / data-hotspot-y coordinates in the SVG (900×520 canvas,
+  # scaled to full card width). Values are percentages of card dimensions.
   # ════════════════════════════════════════════════════════════════════════
   - title: Schematic
     path: schema
     icon: mdi:graph-outline
     cards:
-      - type: markdown
-        content: |
-          ## Installation schematic
-          🚧 Bubble-Card SVG schematic arriving in v0.2.
-          Plan: embed `dashboards/assets/schema_a2w.svg` with hotspots for
-          supply, return, compressor, three-way valve, pump, aux heater,
-          DHW, buffer.
+      # Schema variant selector — switches the SVG background
+      - type: entities
+        entities:
+          - entity: input_select.heishahub_schema_variant
+            name: Installation variant
+
+      - type: custom:bubble-card
+        card_type: separator
+        name: A2W Heat Pump — Live Schematic
+        icon: mdi:heat-pump
+
+      - type: custom:bubble-card
+        card_type: custom
+        # Background: the SVG schematic served from /local/
+        # card_mod sets the background image; sub_buttons overlay live values.
+        card_mod:
+          style: |
+            ha-card {
+              background-image: url('/local/heishahub/schema_a2w.svg');
+              background-size: contain;
+              background-repeat: no-repeat;
+              background-position: center;
+              background-color: #0f1923;
+              min-height: 400px;
+              position: relative;
+            }
+        sub_buttons:
+          # ── Operating mode (top center, ~450/900 = 50%, ~35/520 = 7%) ──
+          - entity: select.panasonic_heat_pump_main_operating_mode_state
+            show_state: true
+            show_name: false
+            show_icon: false
+            styles: |
+              .bubble-sub-button {
+                position: absolute;
+                left: 44%;
+                top: 5%;
+                background: transparent;
+                color: #8ca8c0;
+                font-size: 11px;
+                font-weight: 600;
+              }
+
+          # ── Outdoor temperature (~110/900 = 12%, ~88/520 = 17%) ──
+          - entity: sensor.panasonic_heat_pump_main_outside_temperature
+            show_state: true
+            show_name: false
+            show_icon: false
+            styles: |
+              .bubble-sub-button {
+                position: absolute;
+                left: 8%;
+                top: 14%;
+                background: transparent;
+                color: #e0a800;
+                font-size: 14px;
+                font-weight: 700;
+              }
+
+          # ── Supply (outlet) temperature (~400/900 = 44%, ~140/520 = 27%) ──
+          - entity: sensor.panasonic_heat_pump_main_outlet_temperature
+            show_state: true
+            show_name: false
+            show_icon: false
+            styles: |
+              .bubble-sub-button {
+                position: absolute;
+                left: 41%;
+                top: 22%;
+                background: #1a252f;
+                border: 1px solid #e74c3c;
+                color: #e74c3c;
+                font-size: 11px;
+                font-weight: 700;
+                border-radius: 6px;
+                padding: 2px 5px;
+              }
+
+          # ── Discharge temperature (~240/900 = 27%, ~162/520 = 31%) ──
+          - entity: sensor.panasonic_heat_pump_main_discharge_temperature
+            show_state: true
+            show_name: false
+            show_icon: false
+            styles: |
+              .bubble-sub-button {
+                position: absolute;
+                left: 22%;
+                top: 26%;
+                background: #1a252f;
+                border: 1px solid #e74c3c;
+                color: #e74c3c;
+                font-size: 10px;
+                border-radius: 6px;
+                padding: 2px 4px;
+              }
+
+          # ── Return (inlet) temperature (~400/900 = 44%, ~355/520 = 68%) ──
+          - entity: sensor.panasonic_heat_pump_main_inlet_temperature
+            show_state: true
+            show_name: false
+            show_icon: false
+            styles: |
+              .bubble-sub-button {
+                position: absolute;
+                left: 41%;
+                top: 70%;
+                background: #1a252f;
+                border: 1px solid #2980b9;
+                color: #2980b9;
+                font-size: 11px;
+                font-weight: 700;
+                border-radius: 6px;
+                padding: 2px 5px;
+              }
+
+          # ── Water flow (~260/900 = 29%, ~354/520 = 68%) ──
+          - entity: sensor.panasonic_heat_pump_main_water_flow
+            show_state: true
+            show_name: false
+            show_icon: false
+            styles: |
+              .bubble-sub-button {
+                position: absolute;
+                left: 24%;
+                top: 65%;
+                background: #1a252f;
+                border: 1px solid #2980b9;
+                color: #4a9aca;
+                font-size: 10px;
+                border-radius: 6px;
+                padding: 2px 4px;
+              }
+
+          # ── Compressor frequency (~812/900 = 90%, ~389/520 = 75%) ──
+          - entity: sensor.panasonic_heat_pump_main_compressor_frequency
+            show_state: true
+            show_name: false
+            show_icon: false
+            styles: |
+              .bubble-sub-button {
+                position: absolute;
+                left: 84%;
+                top: 71%;
+                background: #0f1923;
+                border: 1px solid #3d5166;
+                color: #bcbd22;
+                font-size: 11px;
+                font-weight: 700;
+                border-radius: 6px;
+                padding: 2px 5px;
+              }
+
+          # ── Compressor running hours (~780/900 = 87%, ~428/520 = 82%) ──
+          - entity: sensor.panasonic_heat_pump_main_compressor_running_hours
+            show_state: true
+            show_name: false
+            show_icon: false
+            styles: |
+              .bubble-sub-button {
+                position: absolute;
+                left: 82%;
+                top: 79%;
+                background: #0f1923;
+                border: 1px solid #3d5166;
+                color: #8ca8c0;
+                font-size: 10px;
+                border-radius: 4px;
+                padding: 1px 4px;
+              }
+
+          # ── Compressor starts (~842/900 = 94%, ~428/520 = 82%) ──
+          - entity: sensor.panasonic_heat_pump_main_compressor_starts
+            show_state: true
+            show_name: false
+            show_icon: false
+            styles: |
+              .bubble-sub-button {
+                position: absolute;
+                left: 90%;
+                top: 79%;
+                background: #0f1923;
+                border: 1px solid #3d5166;
+                color: #8ca8c0;
+                font-size: 10px;
+                border-radius: 4px;
+                padding: 1px 4px;
+              }
+
+          # ── Defrost active indicator (~812/900 = 90%, ~462/520 = 89%) ──
+          - entity: binary_sensor.heishahub_defrost_active
+            show_state: true
+            show_name: false
+            show_icon: true
+            icon: mdi:snowflake-melt
+            styles: |
+              .bubble-sub-button {
+                position: absolute;
+                left: 84%;
+                top: 86%;
+                background: #0f1923;
+                border: 1px solid #3d5166;
+                color: #00bcd4;
+                font-size: 10px;
+                border-radius: 4px;
+                padding: 1px 4px;
+              }
+              /* Only show when defrost is active */
+              .bubble-sub-button { display: none; }
+              .bubble-sub-button[data-state="on"] { display: flex; }
+
+          # ── Water pressure (~65/900 = 7%, ~436/520 = 84%) ──
+          - entity: sensor.panasonic_heat_pump_main_pump_pressure
+            show_state: true
+            show_name: false
+            show_icon: false
+            styles: |
+              .bubble-sub-button {
+                position: absolute;
+                left: 3%;
+                top: 80%;
+                background: #0f1923;
+                border: 1px solid #3d5166;
+                color: #4a9aca;
+                font-size: 11px;
+                border-radius: 4px;
+                padding: 2px 4px;
+              }
+
+          # ── Water flow (pressure box, ~140/900 = 16%) ──
+          - entity: sensor.panasonic_heat_pump_main_water_flow
+            show_state: true
+            show_name: false
+            show_icon: false
+            styles: |
+              .bubble-sub-button {
+                position: absolute;
+                left: 12%;
+                top: 80%;
+                background: #0f1923;
+                border: 1px solid #3d5166;
+                color: #4a9aca;
+                font-size: 11px;
+                border-radius: 4px;
+                padding: 2px 4px;
+              }
+
+          # ── COP live (~390/900 = 43%, ~478/520 = 92%) ──
+          - entity: sensor.heishahub_cop_live
+            show_state: true
+            show_name: false
+            show_icon: false
+            styles: |
+              .bubble-sub-button {
+                position: absolute;
+                left: 37%;
+                top: 88%;
+                background: #0f1923;
+                border: 1px solid #3d5166;
+                color: #17a2b8;
+                font-size: 12px;
+                font-weight: 700;
+                border-radius: 4px;
+                padding: 2px 5px;
+              }
+
+          # ── COP daily (~450/900 = 50%, ~478/520 = 92%) ──
+          - entity: sensor.heishahub_cop_daily
+            show_state: true
+            show_name: false
+            show_icon: false
+            styles: |
+              .bubble-sub-button {
+                position: absolute;
+                left: 46%;
+                top: 88%;
+                background: #0f1923;
+                border: 1px solid #3d5166;
+                color: #17a2b8;
+                font-size: 12px;
+                font-weight: 700;
+                border-radius: 4px;
+                padding: 2px 5px;
+              }
+
+          # ── SCOP (~515/900 = 57%, ~478/520 = 92%) ──
+          - entity: sensor.heishahub_scop
+            show_state: true
+            show_name: false
+            show_icon: false
+            styles: |
+              .bubble-sub-button {
+                position: absolute;
+                left: 54%;
+                top: 88%;
+                background: #0f1923;
+                border: 1px solid #3d5166;
+                color: #17a2b8;
+                font-size: 12px;
+                font-weight: 700;
+                border-radius: 4px;
+                padding: 2px 5px;
+              }
 
   # ════════════════════════════════════════════════════════════════════════
   # 3) ANALYSIS — ApexCharts (Service-Cloud-style)
