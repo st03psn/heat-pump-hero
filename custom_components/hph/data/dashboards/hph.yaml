@@ -999,6 +999,36 @@ views:
               type: state
               period: day
 
+      # ── SCOP per heating season (Jul 1 – Jun 30, last 10 seasons) ──
+      - type: custom:apexcharts-card
+        header:
+          show: true
+          title: SCOP per heating season (Jul – Jun)
+        graph_span: 3650d
+        span:
+          end: year
+        series:
+          - entity: sensor.hph_scop
+            name: SCOP
+            type: column
+            color: "#66bb6a"
+            statistics:
+              type: mean
+              period: year
+              align: start
+        apex_config:
+          chart:
+            height: 200
+          yaxis:
+            min: 0
+            max: 7
+            decimalsInFloat: 2
+            title:
+              text: "SCOP"
+          xaxis:
+            labels:
+              format: "yyyy"
+
       # ── Statistics graph (built-in) ──
       - type: statistics-graph
         title: Cumulative energy (30 days)

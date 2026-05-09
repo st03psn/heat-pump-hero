@@ -20,6 +20,7 @@
         "description": "These are optional. If you have a Shelly / IoTaWatt power meter, an MBus heat meter, or a dedicated indoor reference thermometer, point HeatPump Hero at them here. You can fill these in later via the integration options.",
         "data": {
           "indoor_temp_entity": "Indoor reference temperature sensor",
+          "outdoor_temp_entity": "Outdoor weather station temperature sensor (overrides vendor preset)",
           "external_thermal_power": "External thermal power (W)",
           "external_electrical_power": "External electrical power (W)",
           "external_thermal_energy": "External thermal energy meter (kWh)",
@@ -60,6 +61,7 @@
         "description": "Optional: Shelly / IoTaWatt power meter, MBus heat meter, indoor reference thermometer. Leave blank to keep current settings.",
         "data": {
           "indoor_temp_entity": "Indoor reference temperature sensor",
+          "outdoor_temp_entity": "Outdoor weather station temperature sensor (overrides vendor preset)",
           "external_thermal_power": "External thermal power (W)",
           "external_electrical_power": "External electrical power (W)",
           "external_thermal_energy": "External thermal energy meter (kWh)",
