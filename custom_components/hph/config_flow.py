@@ -165,17 +165,20 @@ class HphConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def async_get_options_flow(
         config_entry: config_entries.ConfigEntry,
     ) -> "HphOptionsFlow":
-        return HphOptionsFlow(config_entry)
+        return HphOptionsFlow()
 
 
 class HphOptionsFlow(config_entries.OptionsFlow):
     """Re-run the wizard for an existing config entry."""
 
-    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
-        self.config_entry = config_entry
-        self._data: dict[str, Any] = dict(config_entry.data)
+    def __init__(self) -> None:
+        self._data: dict[str, Any] = {}
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> Any:
+        # config_entry is injected by HA after construction.
+        if not self._data:
+            self._data = dict(self.config_entry.data)
+
         if user_input is not None:
             self._data.update(user_input)
             return self.async_create_entry(title="", data=self._data)

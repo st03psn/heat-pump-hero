@@ -241,7 +241,7 @@ TEXT_HELPERS: Final[dict[str, dict[str, Any]]] = {
                              "icon": "mdi:water-boiler", "initial": "[]", "max": 64},
     # Export (hph_export.yaml)
     "hph_export_target_path": {"name": "Export target directory", "icon": "mdi:folder-download",
-                                "initial": "/config/www/heishahub_exports"},
+                                "initial": "/config/www/hph_exports"},
 }
 
 # ─── Number helpers ──────────────────────────────────────────────────────

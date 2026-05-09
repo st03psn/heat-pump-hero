@@ -58,4 +58,11 @@ async def async_apply_pump_model(hass: HomeAssistant, model: str) -> None:
             {"entity_id": f"number.{unique_id}", "value": value},
             blocking=False,
         )
-    _LOGGER.info("Applied model %s — 4 thresholds set", model)
+    # Also reflect the chosen model in the select entity so the UI shows it.
+    await hass.services.async_call(
+        "select",
+        "select_option",
+        {"entity_id": "select.hph_pump_model", "option": model},
+        blocking=False,
+    )
+    _LOGGER.info("Applied model %s — 4 thresholds set, select entity updated", model)

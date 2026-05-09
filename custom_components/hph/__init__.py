@@ -151,6 +151,59 @@ async def _do_export(hass: HomeAssistant) -> None:
         _LOGGER.warning("HPH export failed: %s", exc)
 
 
+async def _apply_sensor_config(hass: HomeAssistant, data: dict) -> None:
+    """Seed source-mode selects and external entity text helpers from config-flow data."""
+    # Determine thermal source mode from what the user picked in step 3.
+    external_thermal_power = data.get("external_thermal_power", "")
+    external_thermal_energy = data.get("external_thermal_energy", "")
+    external_electrical_power = data.get("external_electrical_power", "")
+    external_electrical_energy = data.get("external_electrical_energy", "")
+
+    if external_thermal_energy:
+        thermal_mode = "external_energy"
+    elif external_thermal_power:
+        thermal_mode = "external_power"
+    else:
+        thermal_mode = None  # keep whatever the entity has (default: calculated)
+
+    if external_electrical_energy:
+        electrical_mode = "external_energy"
+    elif external_electrical_power:
+        electrical_mode = "external_power"
+    else:
+        electrical_mode = None  # keep default (heat_pump_internal)
+
+    if thermal_mode:
+        await hass.services.async_call(
+            "select", "select_option",
+            {"entity_id": "select.hph_thermal_source", "option": thermal_mode},
+            blocking=False,
+        )
+
+    if electrical_mode:
+        await hass.services.async_call(
+            "select", "select_option",
+            {"entity_id": "select.hph_electrical_source", "option": electrical_mode},
+            blocking=False,
+        )
+
+    # Seed the external entity text helpers.
+    _text_map = {
+        "text.hph_src_ext_thermal_power": external_thermal_power,
+        "text.hph_src_ext_thermal_energy": external_thermal_energy,
+        "text.hph_src_ext_electrical_power": external_electrical_power,
+        "text.hph_src_ext_electrical_energy": external_electrical_energy,
+        "text.hph_src_indoor_temp": data.get("indoor_temp_entity", ""),
+    }
+    for entity_id, value in _text_map.items():
+        if value:
+            await hass.services.async_call(
+                "text", "set_value",
+                {"entity_id": entity_id, "value": value},
+                blocking=False,
+            )
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up HeatPump Hero from a config entry."""
     _LOGGER.info("Setting up HeatPump Hero entry %s", entry.entry_id)
@@ -178,14 +231,24 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Apply chosen vendor preset (one-shot on first install).
     preset = entry.data.get("vendor_preset")
     if preset and preset != "keep_current":
-        from .helpers.vendor_apply import async_apply_vendor_preset
+        from .helpers.vendor_apply import async_apply_vendor_preset, async_apply_pump_model
         await async_apply_vendor_preset(hass, preset)
+        # Mirror the preset selection in the select entity.
+        await hass.services.async_call(
+            "select", "select_option",
+            {"entity_id": "select.hph_vendor_preset", "option": preset},
+            blocking=False,
+        )
+    else:
+        from .helpers.vendor_apply import async_apply_pump_model
 
-    # Apply chosen pump model thresholds.
+    # Apply chosen pump model thresholds (also updates select.hph_pump_model).
     model = entry.data.get("pump_model")
     if model:
-        from .helpers.vendor_apply import async_apply_pump_model
         await async_apply_pump_model(hass, model)
+
+    # Apply step-3 external sensor config from config flow.
+    await _apply_sensor_config(hass, entry.data)
 
     # Start coordinators (automation logic).
     from .coordinators import (

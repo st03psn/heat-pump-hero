@@ -34,6 +34,9 @@ async def async_setup(hass: HomeAssistant, entry: ConfigEntry) -> list[Callable]
             return
         if new.state in ("unknown", "unavailable", ""):
             return
+        # Skip initial population from unknown (startup) if state is NOERROR
+        if old.state in ("unknown", "unavailable") and new.state in ("ok", "NOERROR"):
+            return
         hass.async_create_task(_log_error(old.state, new.state, new.attributes))
 
     async def _log_error(old_code: str, new_code: str, attrs: dict) -> None:
@@ -60,7 +63,8 @@ async def async_setup(hass: HomeAssistant, entry: ConfigEntry) -> list[Callable]
             {"entity_id": "text.hph_diag_error_history", "value": json.dumps(new_history)},
             blocking=True,
         )
-        if new_code == "ok":
+        no_fault_attrs = attrs.get("severity", "").lower() in ("", "none", "ok")
+        if new_code in ("ok", "NOERROR") or no_fault_attrs:
             await hass.services.async_call(
                 "persistent_notification", "dismiss",
                 {"notification_id": "hph_active_error"},
