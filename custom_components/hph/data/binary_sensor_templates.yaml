@@ -1,0 +1,45 @@
+binary_sensors:
+- name: HeatPump Hero Defrost Active
+  unique_id: hph_defrost_active
+  availability: "{{ states('binary_sensor.hph_source_defrost')\n   not in ['unknown','unavailable','none']\
+    \ }}"
+  state: '{{ is_state(''binary_sensor.hph_source_defrost'',''on'') }}'
+  _source_package: hph_core.yaml
+- name: HeatPump Hero Source Defrost
+  unique_id: hph_source_defrost
+  availability: '{% set ent = states(''text.hph_src_defrost_state'') %} {{ ent
+    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{% set ent = states(''text.hph_src_defrost_state'') %} {{ is_state(ent,
+    ''on'') }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Aux Heater
+  unique_id: hph_source_aux_heater
+  availability: '{% set ent = states(''text.hph_src_aux_heater_state'') %} {{
+    ent and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{% set ent = states(''text.hph_src_aux_heater_state'') %} {{ is_state(ent,
+    ''on'') }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Has HK2
+  unique_id: hph_has_hk2
+  icon: mdi:home-thermometer-outline
+  state: "{% set ent = states('text.hph_src_zone2_temp') %} {% if ent and ent\
+    \ not in ['unknown','unavailable','none',''] %}\n  {% set v = states(ent) %}\n\
+    \  {{ v not in ['unknown','unavailable','none',''] and (v | float(-999)) > -100\
+    \ }}\n{% else %}\n  false\n{% endif %}"
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Has DHW
+  unique_id: hph_has_dhw
+  icon: mdi:water-boiler
+  state: "{% set ent = states('text.hph_src_dhw_temp') %} {% if ent and ent\
+    \ not in ['unknown','unavailable','none',''] %}\n  {% set v = states(ent) %}\n\
+    \  {{ v not in ['unknown','unavailable','none',''] and (v | float(-999)) > -100\
+    \ }}\n{% else %}\n  false\n{% endif %}"
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Has Buffer
+  unique_id: hph_has_buffer
+  icon: mdi:propane-tank
+  state: "{% set ent = states('text.hph_src_buffer_temp') %} {% if ent and ent\
+    \ not in ['unknown','unavailable','none',''] %}\n  {% set v = states(ent) %}\n\
+    \  {{ v not in ['unknown','unavailable','none',''] and (v | float(-999)) > -100\
+    \ }}\n{% else %}\n  false\n{% endif %}"
+  _source_package: hph_sources.yaml

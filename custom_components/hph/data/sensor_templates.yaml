@@ -1,0 +1,967 @@
+sensors:
+- name: HeatPump Hero Advisor Short Cycle
+  unique_id: hph_advisor_short_cycle
+  icon: mdi:timer-alert
+  state: '{% set ratio = states(''sensor.hph_short_cycle_ratio'') | float(0) %} {%
+    set warn = states(''number.hph_advisor_short_cycle_warn_pct'') | float(25)
+    %} {% set crit = states(''number.hph_advisor_short_cycle_crit_pct'') | float(50)
+    %} {% if ratio >= crit %}critical {% elif ratio >= warn %}warn {% else %}ok{%
+    endif %}'
+  attributes:
+    metric: '{{ states(''sensor.hph_short_cycle_ratio'') }} %'
+    message: '{% set ratio = states(''sensor.hph_short_cycle_ratio'') | float(0) %}
+      {% set crit = states(''number.hph_advisor_short_cycle_crit_pct'') | float(50)
+      %} {% set warn = states(''number.hph_advisor_short_cycle_warn_pct'') |
+      float(25) %} {% if ratio >= crit %} Very high cycling rate ({{ ratio }} %).
+      Likely causes: (1) heating curve too steep — the unit reaches setpoint quickly
+      and shuts off; (2) insufficient water volume — consider a buffer tank or hydraulic
+      separator; (3) heating circuits too restricted (check thermostatic valves: are
+      they fully open?); (4) hysteresis too tight. Recommendation: lower the heating
+      curve and verify that the compressor reaches its modulation minimum. {% elif
+      ratio >= warn %} Elevated cycling ({{ ratio }} %). Acceptable in shoulder season,
+      but in deep winter it points to tight hysteresis or an over-aggressive heating
+      curve. {% else %} Cycling within normal range. {% endif %}'
+  _source_package: hph_advisor.yaml
+- name: HeatPump Hero Advisor Spread
+  unique_id: hph_advisor_spread
+  icon: mdi:thermometer-lines
+  state: '{% set tin = states(''sensor.hph_source_inlet_temp'') | float(0) %} {% set
+    tout = states(''sensor.hph_source_outlet_temp'') | float(0) %} {% set running
+    = is_state(''binary_sensor.hph_compressor_running'',''on'') %} {% set dt = tout
+    - tin %} {% set target = states(''number.hph_advisor_dt_target_k'') | float(5)
+    %} {% if not running %}info {% elif dt < target - 2 %}warn {% elif dt > target
+    + 3 %}warn {% else %}ok{% endif %}'
+  attributes:
+    metric: "{{ ((states('sensor.hph_source_outlet_temp') | float(0))\n   - (states('sensor.hph_source_inlet_temp')\
+      \ | float(0))) | round(1) }} K"
+    message: '{% set tin = states(''sensor.hph_source_inlet_temp'') | float(0) %}
+      {% set tout = states(''sensor.hph_source_outlet_temp'') | float(0) %} {% set
+      dt = tout - tin %} {% set target = states(''number.hph_advisor_dt_target_k'')
+      | float(5) %} {% if not is_state(''binary_sensor.hph_compressor_running'',''on'')
+      %} Compressor idle — spread not meaningful. {% elif dt < target - 2 %} Spread
+      ({{ dt | round(1) }} K) too small. Pump runs too fast for the current heat output
+      — reduce pump speed or raise heat output. Reduces pump electrical consumption
+      and improves dimensioning. {% elif dt > target + 3 %} Spread ({{ dt | round(1)
+      }} K) too large. Pump too slow or hydraulics throttled — low flow can trigger
+      high-pressure shutdowns. Increase pump speed or check the strand-balancing valves.
+      {% else %} Spread optimal ({{ dt | round(1) }} K, target {{ target }} K). {%
+      endif %}'
+  _source_package: hph_advisor.yaml
+- name: HeatPump Hero Advisor Defrost
+  unique_id: hph_advisor_defrost
+  icon: mdi:snowflake-melt
+  state: '{% set defrost = is_state(''binary_sensor.hph_defrost_active'',''on'') %}
+    {% set tout = states(''sensor.hph_source_outdoor_temp'') | float(0) %} {% if defrost
+    and tout > 7 %}warn {% else %}ok{% endif %}'
+  attributes:
+    metric: '{{ states(''sensor.hph_source_outdoor_temp'') }} °C'
+    message: "{% if is_state('binary_sensor.hph_defrost_active','on')\n      and states('sensor.hph_source_outdoor_temp')\
+      \ | float(0) > 7 %}\nDefrost cycle active above 7 °C outdoor — unusual. Likely\
+      \ causes: evaporator airflow blocked (leaves, snow, wall too close), fan issue,\
+      \ sensor drift. Check the evaporator fins. {% else %} Defrost behaviour unremarkable.\
+      \ {% endif %}"
+  _source_package: hph_advisor.yaml
+- name: HeatPump Hero Advisor Heat Curve
+  unique_id: hph_advisor_heat_curve
+  icon: mdi:chart-bell-curve
+  state: "{# Simplified heuristic: at outdoor < 0 °C the supply setpoint\n   should\
+    \ be reachable without the auxiliary heater. If the heater\n   runs, the curve\
+    \ is too flat. #}\n{% set heater = is_state('binary_sensor.hph_source_aux_heater','on')\
+    \ %} {% set tout = states('sensor.hph_source_outdoor_temp') | float(99) %} {%\
+    \ if heater and tout > -7 %}warn {% else %}ok{% endif %}"
+  attributes:
+    message: "{% if is_state('binary_sensor.hph_source_aux_heater','on')\n      and\
+      \ states('sensor.hph_source_outdoor_temp') | float(99) > -7 %}\nAuxiliary electric\
+      \ heater active above -7 °C outdoor. Indicates either a too-flat heating curve\
+      \ or an overshooting supply setpoint. Raise the heating curve at the cold end\
+      \ or check the setpoint. {% else %} Auxiliary heater inactive, or active only\
+      \ at very low outdoor temperatures — unremarkable. {% endif %}"
+  _source_package: hph_advisor.yaml
+- name: HeatPump Hero Advisor DHW Runtime
+  unique_id: hph_advisor_dhw_runtime
+  icon: mdi:water-boiler
+  state: '{% set last = states(''number.hph_cycle_last_duration_min'') | float(0)
+    %} {% set min_run = states(''number.hph_advisor_dhw_min_runtime_min'') |
+    float(20) %} {% set was_dhw = is_state(''sensor.hph_operating_mode'',''dhw'')
+    %} {% if was_dhw and last < min_run and last > 0 %}warn {% else %}ok{% endif %}'
+  attributes:
+    metric: '{{ states(''number.hph_cycle_last_duration_min'') }} min'
+    message: DHW run of {{ states('number.hph_cycle_last_duration_min') }} min
+      was shorter than the minimum runtime. Short DHW runs are inefficient and hygienically
+      borderline. Increase tank hysteresis or check the anti-legionella schedule.
+  _source_package: hph_advisor.yaml
+- name: HeatPump Hero Pressure Delta 7d
+  unique_id: hph_pressure_delta_7d
+  unit_of_measurement: bar
+  state_class: measurement
+  availability: "{{ states('sensor.hph_source_pump_pressure')\n   not in ['unknown','unavailable','none']\n\
+    \   and states('sensor.hph_pressure_7d_mean')\n   not in ['unknown','unavailable','none']\
+    \ }}"
+  state: '{% set cur = states(''sensor.hph_source_pump_pressure'') | float(0) %} {%
+    set mean = states(''sensor.hph_pressure_7d_mean'') | float(0) %} {{ (cur - mean)
+    | round(2) }}'
+  _source_package: hph_advisor.yaml
+- name: HeatPump Hero Advisor Diagnostics
+  unique_id: hph_advisor_diagnostics
+  icon: mdi:medical-bag
+  state: '{% set sev = state_attr(''sensor.hph_diagnostics_current_error'',''severity'')
+    %} {% set rec = states(''sensor.hph_diagnostics_recurrence'') | int(0) %} {% if
+    sev == ''critical'' %}critical {% elif sev == ''warn'' %}warn {% elif rec >= 3
+    %}warn {% elif sev == ''info'' %}info {% else %}ok{% endif %}'
+  attributes:
+    metric: '{{ states(''sensor.hph_diagnostics_current_error'') }} (recurrences in
+      last 5: {{ states(''sensor.hph_diagnostics_recurrence'') }})'
+    message: '{% set cur = states(''sensor.hph_diagnostics_current_error'') %} {%
+      set rec = states(''sensor.hph_diagnostics_recurrence'') | int(0) %} {% if cur
+      == ''ok'' and rec == 0 %} No active or recurring fault. {% elif cur == ''ok''
+      and rec > 0 %} No active fault, but the same code has appeared {{ rec }} times
+      in the recent history. Investigate root cause even if the unit recovered. {%
+      else %} Active fault: {{ cur }}. {{ state_attr(''sensor.hph_diagnostics_current_error'',''message'')
+      }} {% set mn = state_attr(''sensor.hph_diagnostics_current_error'',''model_note'')
+      %} {% if mn and mn | trim != '''' %} {{ mn }}{% endif %} {% endif %}'
+  _source_package: hph_advisor.yaml
+- name: HeatPump Hero Advisor Pressure Trend
+  unique_id: hph_advisor_pressure_trend
+  icon: mdi:gauge-low
+  state: '{% set delta = states(''sensor.hph_pressure_delta_7d'') | float(0) %} {%
+    if delta < -0.4 %}critical {% elif delta < -0.2 %}warn {% else %}ok{% endif %}'
+  attributes:
+    metric: '{{ states(''sensor.hph_pressure_delta_7d'') }} bar over 7 d'
+    message: '{% set delta = states(''sensor.hph_pressure_delta_7d'') | float(0) %}
+      {% if delta < -0.4 %} Water pressure dropped {{ (-delta) | round(2) }} bar in
+      7 days — a strong leak indicator. Inspect joints, expansion vessel pressure,
+      and the auto-air-vent. Top up only after locating the leak. {% elif delta <
+      -0.2 %} Water pressure trending down ({{ (-delta) | round(2) }} bar / 7 d).
+      Could be a slow leak or normal expansion-vessel air absorption — re-check in
+      another week. {% else %} Pressure stable. {% endif %}'
+  _source_package: hph_advisor.yaml
+- name: HeatPump Hero Advisor Heating Limit
+  unique_id: hph_advisor_heating_limit
+  icon: mdi:thermometer-off
+  state: '{% set obs = states(''sensor.hph_heating_limit_smoothed'') | float(0) %}
+    {% set target = states(''number.hph_advisor_heating_limit_target_c'') |
+    float(16) %} {% set diff = obs - target %} {% if obs == 0 %}info {% elif diff
+    > 3 %}warn {% elif diff < -5 %}info {% else %}ok{% endif %}'
+  attributes:
+    observed: '{{ states(''sensor.hph_heating_limit_smoothed'') }} °C'
+    target: '{{ states(''number.hph_advisor_heating_limit_target_c'') }} °C'
+    metric: obs {{ states('sensor.hph_heating_limit_smoothed') }} °C / target {{ states('number.hph_advisor_heating_limit_target_c')
+      }} °C
+    message: '{% set obs = states(''sensor.hph_heating_limit_smoothed'') | float(0)
+      %} {% set target = states(''number.hph_advisor_heating_limit_target_c'')
+      | float(16) %} {% set diff = obs - target %} {% if obs == 0 %} Not enough compressor
+      cycles ≥30 min observed yet — heating-limit estimate populates once a few full
+      runs are recorded. {% elif diff > 3 %} Heating limit observed at {{ obs }} °C
+      — well above your target of {{ target }} °C. The heat pump runs even on warm
+      days. Likely causes: heating curve too steep, room thermostat pulling supply,
+      DHW priority too aggressive. Consider lowering the heating limit / curve, or
+      raising the target setpoint. {% elif diff < -5 %} Compressor stops at {{ obs
+      }} °C, well below the target of {{ target }} °C — possibly normal in deep winter,
+      or your target is set too high. No action needed. {% else %} Heating limit ({{
+      obs }} °C observed) matches your target ({{ target }} °C) — good calibration.
+      {% endif %}'
+  _source_package: hph_advisor.yaml
+- name: HeatPump Hero DHW Fires Yesterday
+  unique_id: hph_dhw_fires_yesterday
+  unit_of_measurement: 1/d
+  state_class: measurement
+  state: '{{ states(''number.hph_dhw_fires_yesterday'') | float(0) }}'
+  _source_package: hph_advisor.yaml
+- name: HeatPump Hero Advisor Pump Curve
+  unique_id: hph_advisor_pump_curve
+  icon: mdi:pump
+  availability: "{{ states('sensor.hph_spread_7d_mean')\n   not in ['unknown','unavailable','none']\
+    \ }}"
+  state: '{% set mean = states(''sensor.hph_spread_7d_mean'') | float(0) %} {% set
+    target = states(''number.hph_advisor_dt_target_k'') | float(5) %} {% set
+    min_samples = states(''number.hph_advisor_pump_spread_min_samples'') | float(200)
+    %} {% set n = state_attr(''sensor.hph_spread_7d_mean'',''count'') | int(0) %}
+    {% if n < min_samples %}info {% elif (mean - target) | abs > 2.5 %}warn {% else
+    %}ok{% endif %}'
+  attributes:
+    mean_k: '{{ states(''sensor.hph_spread_7d_mean'') }}'
+    stdev_k: '{{ states(''sensor.hph_spread_7d_stdev'') }}'
+    samples: '{{ state_attr(''sensor.hph_spread_7d_mean'',''count'') }}'
+    target_k: '{{ states(''number.hph_advisor_dt_target_k'') }}'
+    metric: mean {{ states('sensor.hph_spread_7d_mean') }} K / target {{ states('number.hph_advisor_dt_target_k')
+      }} K
+    message: '{% set mean = states(''sensor.hph_spread_7d_mean'') | float(0) %} {%
+      set sd = states(''sensor.hph_spread_7d_stdev'') | float(0) %} {% set target
+      = states(''number.hph_advisor_dt_target_k'') | float(5) %} {% set n =
+      state_attr(''sensor.hph_spread_7d_mean'',''count'') | int(0) %} {% set min_samples
+      = states(''number.hph_advisor_pump_spread_min_samples'') | float(200)
+      %} {% if n < min_samples %} Not enough running-time samples yet ({{ n }} of
+      {{ min_samples | int }} required) — recommendation populates after a few days
+      of operation. {% elif mean < target - 2.5 %} Pump runs too fast on average —
+      observed spread {{ mean | round(1) }} K is well below the target {{ target }}
+      K. Reduce pump speed (constant-pressure setpoint, or one PWM step lower). This
+      cuts pump electrical use and improves flow-side dimensioning. {% elif mean >
+      target + 2.5 %} Pump runs too slow on average — observed spread {{ mean | round(1)
+      }} K is well above target. Risk of low-flow protection trips and high-pressure
+      faults. Increase pump speed or rebalance strands. {% elif sd > 2.5 %} Mean spread
+      on target ({{ mean | round(1) }} K) but variance is high (σ {{ sd | round(1)
+      }} K). Likely PWM-controlled pump switching curves — informational, no action
+      needed. {% else %} Pump curve well dimensioned (mean {{ mean | round(1) }} K,
+      σ {{ sd | round(1) }} K, target {{ target }} K). {% endif %}'
+  _source_package: hph_advisor.yaml
+- name: HeatPump Hero Advisor Efficiency Drift
+  unique_id: hph_advisor_efficiency_drift
+  icon: mdi:trending-down
+  availability: '{{ states(''sensor.hph_cop_last_year'') not in [''unknown'',''unavailable'',''none'']
+    }}'
+  state: '{% set prev = states(''sensor.hph_cop_last_year'') | float(0) %} {% set
+    pct = states(''sensor.hph_scop_change_year_pct'') | float(0) %} {% set warn =
+    states(''number.hph_advisor_drift_warn_pct'') | float(-10) %} {% set crit
+    = states(''number.hph_advisor_drift_crit_pct'') | float(-20) %} {% if prev
+    <= 0.1 %}info {% elif pct <= crit %}critical {% elif pct <= warn %}warn {% else
+    %}ok{% endif %}'
+  attributes:
+    metric: '{{ states(''sensor.hph_scop_change_year_pct'') }} % YoY'
+    current_scop: '{{ states(''sensor.hph_scop'') }}'
+    previous_scop: '{{ states(''sensor.hph_cop_last_year'') }}'
+    message: '{% set prev = states(''sensor.hph_cop_last_year'') | float(0) %} {%
+      set cur = states(''sensor.hph_scop'') | float(0) %} {% set pct = states(''sensor.hph_scop_change_year_pct'')
+      | float(0) %} {% set warn = states(''number.hph_advisor_drift_warn_pct'')
+      | float(-10) %} {% set crit = states(''number.hph_advisor_drift_crit_pct'')
+      | float(-20) %} {% if prev <= 0.1 %} No previous-year SCOP yet — drift detection
+      populates after one full heating season. {% elif pct <= crit %} SCOP dropped
+      {{ pct | abs | round(1) }} % year-over-year ({{ prev }} → {{ cur }}). Likely
+      causes: refrigerant loss (visible as falling COP at low outdoor T°), fouled
+      evaporator, heating-curve drift, or a colder winter. Check the diagnostics log
+      for recurrent F-codes and compare HDD vs last year before dispatching a technician.
+      {% elif pct <= warn %} SCOP slightly down ({{ pct | round(1) }} % vs last year).
+      Possibly a colder winter; weather-adjust before acting. Watch cycling and spread
+      advisors for corroborating signals. {% else %} SCOP stable or improved ({{ pct
+      | round(1) }} % vs last year). {% endif %}'
+  _source_package: hph_advisor.yaml
+- name: HeatPump Hero Advisor DHW Timing
+  unique_id: hph_advisor_dhw_timing
+  icon: mdi:clock-outline
+  state: '{% set mean = states(''sensor.hph_dhw_fires_7d_mean'') | float(0) %} {%
+    set max = states(''number.hph_advisor_dhw_max_fires_per_day'') | float(2)
+    %} {% if mean == 0 %}info {% elif mean > max + 1 %}warn {% else %}ok{% endif %}'
+  attributes:
+    fires_today: '{{ states(''number.hph_dhw_fires_today'') }}'
+    mean_7d: '{{ states(''sensor.hph_dhw_fires_7d_mean'') }}'
+    recent_hours: '{{ states(''text.hph_dhw_start_hours'') }}'
+    message: '{% set today = states(''number.hph_dhw_fires_today'') | int(0) %} {%
+      set mean = states(''sensor.hph_dhw_fires_7d_mean'') | float(0) %} {% set max
+      = states(''number.hph_advisor_dhw_max_fires_per_day'') | float(2) %} {%
+      set hrs = states(''text.hph_dhw_start_hours'') %} {% if mean == 0 %} No
+      DHW activity recorded yet — recommendation populates after the first DHW boosts.
+      {% elif mean > max + 1 %} DHW fires {{ mean | round(1) }} ×/day on average (today:
+      {{ today }}). That''s above the configured target of {{ max | int }}. Schedule
+      a single early-afternoon boost (highest outdoor T° → highest COP) via the legionella
+      program or price-driven DHW; raise tank hysteresis so small draws don''t re-fire
+      the compressor. Recent start hours: {{ hrs }}. {% else %} DHW timing reasonable
+      ({{ mean | round(1) }} fires/day on average). Recent start hours: {{ hrs }}.
+      {% endif %}'
+  _source_package: hph_advisor.yaml
+- name: HeatPump Hero Advisor Summary
+  unique_id: hph_advisor_summary
+  icon: mdi:lightbulb-on-outline
+  state: "{% set advisors = [\n  states('sensor.hph_advisor_short_cycle'),\n  states('sensor.hph_advisor_spread'),\n\
+    \  states('sensor.hph_advisor_defrost'),\n  states('sensor.hph_advisor_heat_curve'),\n\
+    \  states('sensor.hph_advisor_dhw_runtime'),\n  states('sensor.hph_advisor_heating_limit'),\n\
+    \  states('sensor.hph_advisor_diagnostics'),\n  states('sensor.hph_advisor_pressure_trend'),\n\
+    \  states('sensor.hph_advisor_analysis'),\n  states('sensor.hph_advisor_pump_curve'),\n\
+    \  states('sensor.hph_advisor_efficiency_drift'),\n  states('sensor.hph_advisor_dhw_timing')\n\
+    ] %} {% if 'critical' in advisors %}critical {% elif 'warn' in advisors %}warn\
+    \ {% else %}ok{% endif %}"
+  attributes:
+    warn_count: "{{ [states('sensor.hph_advisor_short_cycle'),\n    states('sensor.hph_advisor_spread'),\n\
+      \    states('sensor.hph_advisor_defrost'),\n    states('sensor.hph_advisor_heat_curve'),\n\
+      \    states('sensor.hph_advisor_dhw_runtime'),\n    states('sensor.hph_advisor_heating_limit'),\n\
+      \    states('sensor.hph_advisor_diagnostics'),\n    states('sensor.hph_advisor_pressure_trend'),\n\
+      \    states('sensor.hph_advisor_analysis'),\n    states('sensor.hph_advisor_pump_curve'),\n\
+      \    states('sensor.hph_advisor_efficiency_drift'),\n    states('sensor.hph_advisor_dhw_timing')]\n\
+      \   | select('in', ['warn','critical']) | list | count }}"
+  _source_package: hph_advisor.yaml
+- name: HPH Source Indoor Temperature
+  unique_id: hph_source_indoor_temp
+  unit_of_measurement: °C
+  device_class: temperature
+  state_class: measurement
+  availability: '{% set ent = states(''text.hph_indoor_temp_entity'') %} {{
+    ent and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_indoor_temp_entity'')) | float(0) }}'
+  _source_package: hph_analysis.yaml
+- name: HPH Source Indoor Target
+  unique_id: hph_source_indoor_target
+  unit_of_measurement: °C
+  device_class: temperature
+  state_class: measurement
+  availability: "{{\n  (states('text.hph_indoor_target_entity') and\n   states(states('text.hph_indoor_target_entity'))\n\
+    \   not in ['unknown','unavailable','none',''])\n  or states('number.hph_indoor_target_default')\n\
+    \  not in ['unknown','unavailable','none','']\n}}"
+  state: "{% set ent = states('text.hph_indoor_target_entity') %} {% if ent\
+    \ and states(ent) not in ['unknown','unavailable','none',''] %}\n  {{ states(ent)\
+    \ | float(21) }}\n{% else %}\n  {{ states('number.hph_indoor_target_default')\
+    \ | float(21) }}\n{% endif %}"
+  _source_package: hph_analysis.yaml
+- name: HPH Indoor Temp Deviation
+  unique_id: hph_indoor_temp_deviation
+  unit_of_measurement: K
+  state_class: measurement
+  availability: "{{ states('sensor.hph_source_indoor_temp')\n   not in ['unknown','unavailable','none']\n\
+    \   and states('sensor.hph_source_indoor_target')\n   not in ['unknown','unavailable','none']\
+    \ }}"
+  state: '{% set cur = states(''sensor.hph_source_indoor_temp'') | float(0) %} {%
+    set tgt = states(''sensor.hph_source_indoor_target'') | float(0) %} {{ (cur -
+    tgt) | round(2) }}'
+  _source_package: hph_analysis.yaml
+- name: HPH Advisor Analysis
+  unique_id: hph_advisor_analysis
+  icon: mdi:robot-outline
+  state: '{% set d = states(''sensor.hph_indoor_deviation_smoothed'') | float(0) %}
+    {% set band = states(''number.hph_analysis_dead_band_k'') | float(0.5) %}
+    {% if d | abs <= band %}ok {% elif d | abs <= 2 %}info {% elif d | abs <= 4 %}warn
+    {% else %}critical{% endif %}'
+  attributes:
+    deviation_k: '{{ states(''sensor.hph_indoor_deviation_smoothed'') }}'
+    dead_band_k: '{{ states(''number.hph_analysis_dead_band_k'') }}'
+    window_days: '{{ states(''number.hph_analysis_window_days'') }}'
+    recommendation_k: '{% set d = states(''sensor.hph_indoor_deviation_smoothed'')
+      | float(0) %} {% set band = states(''number.hph_analysis_dead_band_k'')
+      | float(0.5) %} {% if d | abs <= band %}0 {% else %}{{ (-d * 1.0) | round(1)
+      }}{% endif %}'
+    message: '{% set d = states(''sensor.hph_indoor_deviation_smoothed'') | float(0)
+      %} {% set band = states(''number.hph_analysis_dead_band_k'') | float(0.5)
+      %} {% set window = states(''number.hph_analysis_window_days'') %} {% set
+      ind = states(''text.hph_indoor_temp_entity'') %} {% if not ind or ind
+      in [''unknown'',''unavailable'',''none'',''''] %} Indoor temp source not configured.
+      Set text.hph_indoor_temp_entity to your reference room sensor (e.g. sensor.living_room_temperature)
+      under Configuration → Analysis sources. {% elif d | abs <= band %} Indoor temperature
+      is within the dead band ({{ band }} K). No curve adjustment needed. {% elif
+      d > 0 %} Indoor temperature averaged {{ d | round(1) }} K **above** target over
+      the last {{ window }} days. Recommend lowering the heating curve by ~{{ (d)
+      | round(1) }} K, or raising the target by the same amount if the room is comfortable.
+      {% else %} Indoor temperature averaged {{ (-d) | round(1) }} K **below** target
+      over the last {{ window }} days. Recommend raising the heating curve by ~{{
+      (-d) | round(1) }} K, or checking thermostatic valves / hydraulic balancing.
+      {% endif %}
+
+      {% set hcurve = states(''text.hph_heating_curve_recommendation'') %} {%
+      if hcurve and hcurve | trim != '''' %} Heating-curve script recommendation:
+      {{ hcurve }} {% endif %}'
+  _source_package: hph_analysis.yaml
+- name: HeatPump Hero — bridge last publish
+  unique_id: hph_bridge_last_publish
+  device_class: timestamp
+  state: '{{ state_attr(''automation.hph_bridge_publish_state'',''last_triggered'')
+    }}'
+  availability: '{{ is_state(''switch.hph_bridge_enabled'',''on'') }}'
+  _source_package: hph_bridge.yaml
+- name: HeatPump Hero Thermal Power
+  unique_id: hph_thermal_power
+  unit_of_measurement: W
+  device_class: power
+  state_class: measurement
+  availability: "{{ states('sensor.hph_source_inlet_temp')\n   not in ['unknown','unavailable','none']\n\
+    \   and states('sensor.hph_source_outlet_temp')\n   not in ['unknown','unavailable','none']\n\
+    \   and states('sensor.hph_source_flow_rate')\n   not in ['unknown','unavailable','none']\
+    \ }}"
+  state: '{% set tin = states(''sensor.hph_source_inlet_temp'') | float(0) %} {% set
+    tout = states(''sensor.hph_source_outlet_temp'') | float(0) %} {% set flow = states(''sensor.hph_source_flow_rate'')
+    | float(0) %} {% set power = (tout - tin) * flow * 4180 / 60 %} {{ [power, 0]
+    | max | round(0) }}'
+  _source_package: hph_core.yaml
+- name: HeatPump Hero Compressor Running
+  unique_id: hph_compressor_running
+  state: "{{ states('sensor.hph_source_compressor_freq')\n   | float(0) > 0 }}"
+  _source_package: hph_core.yaml
+- name: HeatPump Hero Operating Mode
+  unique_id: hph_operating_mode
+  availability: "{{ states('sensor.hph_source_operating_mode')\n   not in ['unknown','unavailable','none']\
+    \ }}"
+  state: '{% set m = states(''sensor.hph_source_operating_mode'') %} {% if ''Heat''
+    in m %}heating {% elif ''Cool'' in m %}cooling {% elif ''DHW'' in m or ''Tank''
+    in m %}dhw {% else %}{{ m | lower }}{% endif %}'
+  _source_package: hph_core.yaml
+- name: HeatPump Hero Avg Cycle Duration 24h
+  unique_id: hph_avg_cycle_duration_24h
+  unit_of_measurement: min
+  state: '{% set total = states(''sensor.hph_source_compressor_hours'') | float(0)
+    %} {% set cycles = states(''number.hph_cycles_today'') | float(0) %} {{ (total
+    * 60 / cycles) | round(1) if cycles > 0 else 0 }}'
+  _source_package: hph_cycles.yaml
+- name: HeatPump Hero Short Cycle Ratio
+  unique_id: hph_short_cycle_ratio
+  unit_of_measurement: '%'
+  state: '{% set total = states(''number.hph_cycles_today'') | float(0) %} {% set
+    short = states(''number.hph_short_cycles_today'') | float(0) %} {{ (short / total
+    * 100) | round(0) if total > 0 else 0 }}'
+  _source_package: hph_cycles.yaml
+- name: HeatPump Hero Cycles Per Hour
+  unique_id: hph_cycles_per_hour
+  unit_of_measurement: 1/h
+  state: '{% set cycles = states(''number.hph_cycles_today'') | float(0) %} {% set
+    hours = (now().hour + now().minute / 60) %} {{ (cycles / hours) | round(2) if
+    hours > 0.1 else 0 }}'
+  _source_package: hph_cycles.yaml
+- name: HeatPump Hero Diagnostics Current Error
+  unique_id: hph_diagnostics_current_error
+  icon: '{% set s = states(''sensor.hph_diagnostics_current_error'') %}
+
+    {% if s in [''ok'',''unknown'',''unavailable'','''',''none''] %}mdi:check-circle
+
+    {% elif s.startswith(''F'') %}mdi:alert-octagon
+
+    {% elif s in [''H21'',''H62'',''H63'',''H64'',''H65'',''H75'',''H98'',''H99'']
+    %}mdi:alert
+
+    {% else %}mdi:information-outline{% endif %}'
+  state: "{% set raw = states('sensor.hph_source_error_code') | upper %} {% set raw\
+    \ = raw | replace(' ','') | replace('NO_ERROR','OK')\n                | replace('NORMAL','OK')\
+    \ | replace('NONE','OK') %}\n{% if raw in ['','OK','UNKNOWN','UNAVAILABLE','0','H00']\
+    \ %}ok {% else %}{{ raw }}{% endif %}"
+  attributes:
+    severity: "{% set s = states('sensor.hph_diagnostics_current_error') %} {% set\
+      \ critical = ['F12','F14','F22','F23','F24','F27','F41','F46',\n           \
+      \        'H21','H62','H63','H64','H65','H75','H98','H99'] %}\n{% set warn =\
+      \ ['H15','H20','H23','H27','H42','H67','H68','H70','H72',\n               'H74','H76','H90','H91','H95',\n\
+      \               'F15','F16','F20','F25','F36','F37','F40','F42','F45','F48','F95']\
+      \ %}\n{% if s == 'ok' %}none {% elif s in critical %}critical {% elif s in warn\
+      \ %}warn {% else %}info{% endif %}"
+    model_note: '{% set s = states(''sensor.hph_diagnostics_current_error'') %} {%
+      set m = states(''select.hph_pump_model'') %} {% if s == ''H23'' and m
+      == ''panasonic_j_aqj'' %} H23 is a known weak point on the J-series — refrigerant-cycle
+      abnormality. Check refrigerant charge, expansion valve, and discharge sensor
+      before assuming a leak. Service-manual procedure differs between J generations.
+      {% elif s == ''H99'' and m in [''panasonic_l_aql'',''panasonic_m_aqm'',''panasonic_tcap'']
+      %} H99 freeze protection on R32/R290 units — verify minimum flow rate ({{ states(''number.hph_model_min_flow_lpm'')
+      }} L/min) and that no zone valve is fully closed during heat-up. {% elif s ==
+      ''H62'' %} Water-flow switch alarm — check pump speed, dirt traps, air pockets.
+      On J/K-series this is also a common false alarm during defrost. {% else %}{%
+      endif %}'
+    message: '{% set s = states(''sensor.hph_diagnostics_current_error'') %} {% if
+      s == ''ok'' %} No active fault. {% elif s == ''H12'' %}H12: capacity mismatch
+      indoor/outdoor unit. {% elif s == ''H15'' %}H15: compressor temperature sensor
+      open. {% elif s == ''H20'' %}H20: pump abnormality — check pump and water flow.
+      {% elif s == ''H21'' %}H21: float switch / water leakage — inspect indoor unit
+      drain pan, check for leaks. {% elif s == ''H23'' %}H23: refrigerant-cycle abnormality
+      — discharge temp / pressure / TXV — service required. {% elif s == ''H27'' %}H27:
+      service valve abnormality. {% elif s == ''H28'' %}H28: solar sensor abnormality.
+      {% elif s == ''H31'' %}H31: swimming-pool sensor abnormality. {% elif s == ''H36''
+      %}H36: buffer-tank sensor abnormality. {% elif s == ''H38'' %}H38: brand mismatch
+      indoor/outdoor. {% elif s == ''H42'' %}H42: compressor low-pressure protection.
+      {% elif s == ''H43'' %}H43: zone 1 sensor abnormality. {% elif s == ''H44''
+      %}H44: zone 2 sensor abnormality. {% elif s == ''H62'' %}H62: water flow switch
+      — flow too low or stuck switch. {% elif s == ''H63'' %}H63: low refrigerant
+      pressure protection. {% elif s == ''H64'' %}H64: high refrigerant pressure protection
+      — check air-side cleanness. {% elif s == ''H65'' %}H65: water-circulation pump
+      abnormality during defrost. {% elif s == ''H67'' %}H67: external thermistor
+      1 abnormality. {% elif s == ''H68'' %}H68: external thermistor 2 abnormality.
+      {% elif s == ''H70'' %}H70: backup heater overload protection. {% elif s ==
+      ''H72'' %}H72: tank temperature sensor abnormality. {% elif s == ''H74'' %}H74:
+      PCB communication error. {% elif s == ''H75'' %}H75: low-temperature protection
+      — water freeze risk. {% elif s == ''H76'' %}H76: remote control communication
+      error. {% elif s == ''H90'' %}H90: indoor↔outdoor communication error. {% elif
+      s == ''H91'' %}H91: tank booster heater overload. {% elif s == ''H95'' %}H95:
+      power supply error. {% elif s == ''H98'' %}H98: high-pressure protection — same
+      family as H64. {% elif s == ''H99'' %}H99: heat-exchanger freeze protection
+      — flow / glycol issue. {% elif s == ''F12'' %}F12: pressure-switch activated
+      (older boards). {% elif s == ''F14'' %}F14: compressor revolution failure. {%
+      elif s == ''F15'' %}F15: outdoor fan motor lock. {% elif s == ''F16'' %}F16:
+      total operating current protection. {% elif s == ''F20'' %}F20: compressor overheat.
+      {% elif s == ''F22'' %}F22: transistor module overheat. {% elif s == ''F23''
+      %}F23: DC peak detection — inverter fault. {% elif s == ''F24'' %}F24: refrigeration
+      cycle abnormality (different fault from H23). {% elif s == ''F25'' %}F25: cooling/heating
+      cycle changeover failure. {% elif s == ''F27'' %}F27: pressure switch faulty.
+      {% elif s == ''F36'' %}F36: outdoor temperature sensor abnormality. {% elif
+      s == ''F37'' %}F37: water inlet temperature sensor abnormality. {% elif s ==
+      ''F40'' %}F40: compressor discharge temperature sensor abnormality. {% elif
+      s == ''F41'' %}F41: power factor correction abnormality. {% elif s == ''F42''
+      %}F42: heat-exchanger temperature sensor abnormality. {% elif s == ''F45'' %}F45:
+      water outlet temperature sensor abnormality. {% elif s == ''F46'' %}F46: current
+      transformer disconnected. {% elif s == ''F48'' %}F48: evaporator outlet sensor
+      abnormality. {% elif s == ''F95'' %}F95: high outdoor temperature protection
+      (cooling). {% else %}Unknown fault code "{{ s }}" — refer to the service manual
+      for your model.{% endif %}'
+  _source_package: hph_diagnostics.yaml
+- name: HeatPump Hero Diagnostics Recurrence
+  unique_id: hph_diagnostics_recurrence
+  state: "{% set hist = states('text.hph_diag_error_history') %} {% set cur\
+    \ = states('sensor.hph_diagnostics_current_error') %} {% if hist and hist not\
+    \ in ['unknown','unavailable',''] %}\n  {% set arr = hist | from_json(default=[])\
+    \ %}\n  {% set count = arr | selectattr('code','eq',cur) | list | count %}\n \
+    \ {{ count }}\n{% else %}0{% endif %}"
+  _source_package: hph_diagnostics.yaml
+- name: HeatPump Hero COP Live
+  unique_id: hph_cop_live
+  unit_of_measurement: x
+  state_class: measurement
+  availability: "{{ states('sensor.hph_thermal_power_active')\n   not in ['unknown','unavailable','none']\n\
+    \   and states('sensor.hph_electrical_power_active')\n   not in ['unknown','unavailable','none']\
+    \ }}"
+  state: "{% if is_state('binary_sensor.hph_defrost_active','on') %}\n  0\n{% else\
+    \ %}\n  {% set t = states('sensor.hph_thermal_power_active') | float(0) %}\n \
+    \ {% set e = states('sensor.hph_electrical_power_active') | float(0) %}\n  {{\
+    \ (t / e) | round(2) if e > 50 else 0 }}\n{% endif %}"
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero COP Daily
+  unique_id: hph_cop_daily
+  unit_of_measurement: x
+  state_class: measurement
+  state: '{% set t = states(''sensor.hph_thermal_daily'') | float(0) %} {% set e =
+    states(''sensor.hph_electrical_daily'') | float(0) %} {{ (t / e) | round(2) if
+    e > 0.1 else 0 }}'
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero COP Monthly
+  unique_id: hph_cop_monthly
+  unit_of_measurement: x
+  state_class: measurement
+  state: '{% set t = states(''sensor.hph_thermal_monthly'') | float(0) %} {% set e
+    = states(''sensor.hph_electrical_monthly'') | float(0) %} {{ (t / e) | round(2)
+    if e > 0.1 else 0 }}'
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero SCOP
+  unique_id: hph_scop
+  unit_of_measurement: x
+  state_class: measurement
+  state: '{% set t = states(''sensor.hph_thermal_yearly'') | float(0) %} {% set e
+    = states(''sensor.hph_electrical_yearly'') | float(0) %} {{ (t / e) | round(2)
+    if e > 0.1 else 0 }}'
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero COP Monthly Heating
+  unique_id: hph_cop_monthly_heating
+  unit_of_measurement: x
+  state_class: measurement
+  state: '{% set t = states(''sensor.hph_thermal_monthly_split_heating'') | float(0)
+    %} {% set e = states(''sensor.hph_electrical_monthly_split_heating'') | float(0)
+    %} {{ (t / e) | round(2) if e > 0.1 else 0 }}'
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero COP Yearly Heating
+  unique_id: hph_cop_yearly_heating
+  unit_of_measurement: x
+  state_class: measurement
+  state: '{% set t = states(''sensor.hph_thermal_yearly_split_heating'') | float(0)
+    %} {% set e = states(''sensor.hph_electrical_yearly_split_heating'') | float(0)
+    %} {{ (t / e) | round(2) if e > 0.1 else 0 }}'
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero COP Monthly DHW
+  unique_id: hph_cop_monthly_dhw
+  unit_of_measurement: x
+  state_class: measurement
+  state: '{% set t = states(''sensor.hph_thermal_monthly_split_dhw'') | float(0) %}
+    {% set e = states(''sensor.hph_electrical_monthly_split_dhw'') | float(0) %} {{
+    (t / e) | round(2) if e > 0.1 else 0 }}'
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero COP Yearly DHW
+  unique_id: hph_cop_yearly_dhw
+  unit_of_measurement: x
+  state_class: measurement
+  state: '{% set t = states(''sensor.hph_thermal_yearly_split_dhw'') | float(0) %}
+    {% set e = states(''sensor.hph_electrical_yearly_split_dhw'') | float(0) %} {{
+    (t / e) | round(2) if e > 0.1 else 0 }}'
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero COP Last Month
+  unique_id: hph_cop_last_month
+  unit_of_measurement: x
+  state: '{% set t = state_attr(''sensor.hph_thermal_monthly'',''last_period'') |
+    float(0) %} {% set e = state_attr(''sensor.hph_electrical_monthly'',''last_period'')
+    | float(0) %} {{ (t / e) | round(2) if e > 0.1 else 0 }}'
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero COP Last Year
+  unique_id: hph_cop_last_year
+  unit_of_measurement: x
+  state: '{% set t = state_attr(''sensor.hph_thermal_yearly'',''last_period'') | float(0)
+    %} {% set e = state_attr(''sensor.hph_electrical_yearly'',''last_period'') | float(0)
+    %} {{ (t / e) | round(2) if e > 0.1 else 0 }}'
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero Thermal Last Month
+  unique_id: hph_thermal_last_month
+  unit_of_measurement: kWh
+  state_class: measurement
+  state: '{{ state_attr(''sensor.hph_thermal_monthly'',''last_period'') | float(0)
+    | round(2) }}'
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero Electrical Last Month
+  unique_id: hph_electrical_last_month
+  unit_of_measurement: kWh
+  state_class: measurement
+  state: '{{ state_attr(''sensor.hph_electrical_monthly'',''last_period'') | float(0)
+    | round(2) }}'
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero Thermal Last Year
+  unique_id: hph_thermal_last_year
+  unit_of_measurement: kWh
+  state_class: measurement
+  state: '{{ state_attr(''sensor.hph_thermal_yearly'',''last_period'') | float(0)
+    | round(2) }}'
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero Electrical Last Year
+  unique_id: hph_electrical_last_year
+  unit_of_measurement: kWh
+  state_class: measurement
+  state: '{{ state_attr(''sensor.hph_electrical_yearly'',''last_period'') | float(0)
+    | round(2) }}'
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero COP Change Month %
+  unique_id: hph_cop_change_month_pct
+  unit_of_measurement: '%'
+  state_class: measurement
+  icon: '{% set v = states(''sensor.hph_cop_change_month_pct'') | float(0) %} {% if
+    v > 1 %}mdi:trending-up {% elif v < -1 %}mdi:trending-down {% else %}mdi:trending-neutral{%
+    endif %}'
+  state: "{% set cur = states('sensor.hph_cop_monthly') | float(0) %} {% set prev\
+    \ = states('sensor.hph_cop_last_month') | float(0) %} {% if prev > 0.1 %}\n  {{\
+    \ ((cur - prev) / prev * 100) | round(1) }}\n{% else %}\n  0\n{% endif %}"
+  attributes:
+    current: '{{ states(''sensor.hph_cop_monthly'') }}'
+    previous: '{{ states(''sensor.hph_cop_last_month'') }}'
+    message: "{% set cur = states('sensor.hph_cop_monthly') | float(0) %} {% set prev\
+      \ = states('sensor.hph_cop_last_month') | float(0) %} {% if prev <= 0.1 %}\n\
+      \  No data for previous month yet.\n{% else %}\n  {% set pct = ((cur - prev)\
+      \ / prev * 100) | round(1) %}\n  {% if pct > 0 %}\n    {{ pct }}% better than\
+      \ last month (COP {{ cur }} vs {{ prev }}).\n  {% elif pct < 0 %}\n    {{ pct\
+      \ | abs }}% worse than last month (COP {{ cur }} vs {{ prev }}).\n  {% else\
+      \ %}\n    Unchanged from last month (COP {{ cur }}).\n  {% endif %}\n{% endif\
+      \ %}"
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero SCOP Change Year %
+  unique_id: hph_scop_change_year_pct
+  unit_of_measurement: '%'
+  state_class: measurement
+  icon: '{% set v = states(''sensor.hph_scop_change_year_pct'') | float(0) %} {% if
+    v > 1 %}mdi:trending-up {% elif v < -1 %}mdi:trending-down {% else %}mdi:trending-neutral{%
+    endif %}'
+  state: "{% set cur = states('sensor.hph_scop') | float(0) %} {% set prev = states('sensor.hph_cop_last_year')\
+    \ | float(0) %} {% if prev > 0.1 %}\n  {{ ((cur - prev) / prev * 100) | round(1)\
+    \ }}\n{% else %}\n  0\n{% endif %}"
+  attributes:
+    current: '{{ states(''sensor.hph_scop'') }}'
+    previous: '{{ states(''sensor.hph_cop_last_year'') }}'
+    message: "{% set cur = states('sensor.hph_scop') | float(0) %} {% set prev = states('sensor.hph_cop_last_year')\
+      \ | float(0) %} {% if prev <= 0.1 %}\n  No SCOP data for previous year yet —\
+      \ needs at least one full year.\n{% else %}\n  {% set pct = ((cur - prev) /\
+      \ prev * 100) | round(1) %}\n  {% if pct > 0 %}\n    {{ pct }}% better than\
+      \ previous year (SCOP {{ cur }} vs {{ prev }}).\n  {% elif pct < 0 %}\n    {{\
+      \ pct | abs }}% worse than previous year (SCOP {{ cur }} vs {{ prev }}).\n \
+      \ {% else %}\n    Same as previous year (SCOP {{ cur }}).\n  {% endif %}\n{%\
+      \ endif %}"
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero Thermal Change Month %
+  unique_id: hph_thermal_change_month_pct
+  unit_of_measurement: '%'
+  state_class: measurement
+  state: "{% set cur = states('sensor.hph_thermal_monthly') | float(0) %} {% set prev\
+    \ = state_attr('sensor.hph_thermal_monthly','last_period') | float(0) %} {% if\
+    \ prev > 0.1 %}\n  {{ ((cur - prev) / prev * 100) | round(1) }}\n{% else %}\n\
+    \  0\n{% endif %}"
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero Electrical Change Month %
+  unique_id: hph_electrical_change_month_pct
+  unit_of_measurement: '%'
+  state_class: measurement
+  state: "{% set cur = states('sensor.hph_electrical_monthly') | float(0) %} {% set\
+    \ prev = state_attr('sensor.hph_electrical_monthly','last_period') | float(0)\
+    \ %} {% if prev > 0.1 %}\n  {{ ((cur - prev) / prev * 100) | round(1) }}\n{% else\
+    \ %}\n  0\n{% endif %}"
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero Efficiency Trend
+  unique_id: hph_efficiency_trend
+  icon: '{% set v = states(''sensor.hph_cop_change_month_pct'') | float(0) %} {% if
+    v > 5 %}mdi:rocket-launch {% elif v > 1 %}mdi:trending-up {% elif v < -5 %}mdi:alert
+    {% elif v < -1 %}mdi:trending-down {% else %}mdi:trending-neutral{% endif %}'
+  state: '{% set v = states(''sensor.hph_cop_change_month_pct'') | float(0) %} {%
+    if v > 5 %}great {% elif v > 1 %}better {% elif v < -5 %}critical {% elif v <
+    -1 %}worse {% else %}stable{% endif %}'
+  attributes:
+    month_pct: '{{ states(''sensor.hph_cop_change_month_pct'') }}'
+    year_pct: '{{ states(''sensor.hph_scop_change_year_pct'') }}'
+    headline: "{% set m = states('sensor.hph_cop_change_month_pct') | float(0) %}\
+      \ {% set y = states('sensor.hph_scop_change_year_pct') | float(0) %} {% set\
+      \ m_prev = states('sensor.hph_cop_last_month') | float(0) %} {% set y_prev =\
+      \ states('sensor.hph_cop_last_year') | float(0) %} {% set parts = [] %} {% if\
+      \ m_prev > 0.1 %}\n  {% if m > 0 %}\n    {% set parts = parts + ['\U0001F4C8\
+      \ ' ~ m ~ '% better than last month'] %}\n  {% elif m < 0 %}\n    {% set parts\
+      \ = parts + ['\U0001F4C9 ' ~ (m | abs) ~ '% worse than last month'] %}\n  {%\
+      \ endif %}\n{% endif %} {% if y_prev > 0.1 %}\n  {% if y > 0 %}\n    {% set\
+      \ parts = parts + ['\U0001F3C6 ' ~ y ~ '% better than last year'] %}\n  {% elif\
+      \ y < 0 %}\n    {% set parts = parts + ['⚠️ ' ~ (y | abs) ~ '% worse than last\
+      \ year'] %}\n  {% endif %}\n{% endif %} {% if parts | length == 0 %}\n  Trend\
+      \ stable — not enough data for comparison yet.\n{% else %}\n  {{ parts | join('\
+      \ · ') }}\n{% endif %}"
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero Model Refrigerant
+  unique_id: hph_model_refrigerant
+  icon: mdi:gas-cylinder
+  state: '{% set m = states(''select.hph_pump_model'') %} {% if m in [''panasonic_j_aqj'',''panasonic_k_aqk'']
+    %}R410A {% elif m in [''panasonic_l_aql'',''panasonic_tcap''] %}R32 {% elif m
+    == ''panasonic_m_aqm'' %}R290 {% elif m == ''daikin_altherma3'' %}R32 {% elif
+    m == ''mitsubishi_ecodan'' %}R32 / R454C {% elif m == ''vaillant_arotherm'' %}R290
+    {% elif m == ''stiebel_wpl'' %}R454C {% else %}unknown{% endif %}'
+  _source_package: hph_models.yaml
+- name: HeatPump Hero Model Description
+  unique_id: hph_model_description
+  icon: mdi:information-outline
+  state: '{% set m = states(''select.hph_pump_model'') %} {% if m == ''panasonic_j_aqj''
+    %}Panasonic J-series (Aquarea J / WH-MDC, R410A, oldest inverter generation) {%
+    elif m == ''panasonic_k_aqk'' %}Panasonic K-series (R410A, improved modulation)
+    {% elif m == ''panasonic_l_aql'' %}Panasonic L-series (R32, current mainstream)
+    {% elif m == ''panasonic_tcap'' %}Panasonic T-CAP / All-Season (full capacity
+    at low outdoor T°) {% elif m == ''panasonic_m_aqm'' %}Panasonic M-series (R290
+    propane, new flagship, Heishamon community-supported since 2024) {% elif m ==
+    ''daikin_altherma3'' %}Daikin Altherma 3 (R32) {% elif m == ''mitsubishi_ecodan''
+    %}Mitsubishi Ecodan / Zubadan {% elif m == ''vaillant_arotherm'' %}Vaillant aroTHERM
+    Plus (R290) {% elif m == ''stiebel_wpl'' %}Stiebel Eltron WPL series {% else %}generic
+    / unknown {% endif %}'
+  _source_package: hph_models.yaml
+- name: HeatPump Hero Legionella Status
+  unique_id: hph_prog_legionella_status
+  icon: mdi:bacteria-outline
+  state: "{% set en = is_state('switch.hph_prog_legionella','on') %} {% set\
+    \ last = states('datetime.hph_prog_legionella_last_run') %} {% if not en\
+    \ %}disabled {% elif last in ['unknown','unavailable',''] %}pending {% else %}\n\
+    \  {% set dt = as_datetime(last) %}\n  {% set days_since = (now() - dt).total_seconds()\
+    \ / 86400 %}\n  {% if days_since > 8 %}overdue\n  {% elif days_since > 7 %}due\n\
+    \  {% else %}ok{% endif %}\n{% endif %}"
+  attributes:
+    last_run: '{{ states(''datetime.hph_prog_legionella_last_run'') }}'
+    weekday: '{{ states(''select.hph_prog_legionella_weekday'') }}'
+    target_c: '{{ states(''number.hph_prog_legionella_target_c'') }}'
+    hold_min: '{{ states(''number.hph_prog_legionella_hold_min'') }}'
+  _source_package: hph_programs.yaml
+- name: HeatPump Hero Screed Target
+  unique_id: hph_prog_screed_target
+  unit_of_measurement: °C
+  state_class: measurement
+  availability: '{{ is_state(''switch.hph_prog_screed_active'',''on'') }}'
+  state: "{% set p = states('select.hph_prog_screed_profile') %} {% set d =\
+    \ states('number.hph_prog_screed_day') | int(0) %} {% if p == 'functional_3d'\
+    \ %}\n  {# 3 days: 25 → 45 → 25 °C, then end #}\n  {% if d == 1 %}25\n  {% elif\
+    \ d == 2 %}45\n  {% elif d == 3 %}25\n  {% else %}0{% endif %}\n{% elif p == 'combined_10d'\
+    \ %}\n  {# 3d functional + 7d curing #}\n  {% if d == 1 %}25\n  {% elif d == 2\
+    \ %}45\n  {% elif d == 3 %}25\n  {% elif d in [4,5,6,7] %}40\n  {% elif d == 8\
+    \ %}35\n  {% elif d == 9 %}30\n  {% elif d == 10 %}25\n  {% else %}0{% endif %}\n\
+    {% elif p == 'din_18560_28d' %}\n  {# DIN 18560-1: 3d at 25, ramp to 50, hold\
+    \ 18d, cool 4d #}\n  {% if d in [1,2,3] %}25\n  {% elif d == 4 %}30\n  {% elif\
+    \ d == 5 %}35\n  {% elif d == 6 %}45\n  {% elif d in range(7, 25) %}50\n  {% elif\
+    \ d == 25 %}45\n  {% elif d == 26 %}35\n  {% elif d == 27 %}30\n  {% elif d ==\
+    \ 28 %}25\n  {% else %}0{% endif %}\n{% else %}0 {% endif %}"
+  _source_package: hph_programs.yaml
+- name: HeatPump Hero Screed Status
+  unique_id: hph_prog_screed_status
+  icon: mdi:home-floor-a
+  state: '{% set en = is_state(''switch.hph_prog_screed'',''on'') %} {% set
+    act = is_state(''switch.hph_prog_screed_active'',''on'') %} {% set d =
+    states(''number.hph_prog_screed_day'') | int(0) %} {% if not en %}disabled
+    {% elif not act %}armed {% elif d == 0 %}armed {% else %}running {% endif %}'
+  attributes:
+    profile: '{{ states(''select.hph_prog_screed_profile'') }}'
+    day: '{{ states(''number.hph_prog_screed_day'') }}'
+    target_c: '{{ states(''sensor.hph_prog_screed_target'') }}'
+    start: '{{ states(''datetime.hph_prog_screed_start'') }}'
+  _source_package: hph_programs.yaml
+- name: HeatPump Hero Source Inlet Temperature
+  unique_id: hph_source_inlet_temp
+  unit_of_measurement: °C
+  device_class: temperature
+  state_class: measurement
+  availability: '{% set ent = states(''text.hph_src_inlet_temp'') %} {{ ent
+    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_inlet_temp'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Outlet Temperature
+  unique_id: hph_source_outlet_temp
+  unit_of_measurement: °C
+  device_class: temperature
+  state_class: measurement
+  availability: '{% set ent = states(''text.hph_src_outlet_temp'') %} {{ ent
+    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_outlet_temp'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Flow Rate
+  unique_id: hph_source_flow_rate
+  unit_of_measurement: L/min
+  state_class: measurement
+  availability: '{% set ent = states(''text.hph_src_flow_rate'') %} {{ ent and
+    states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_flow_rate'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Outdoor Temperature
+  unique_id: hph_source_outdoor_temp
+  unit_of_measurement: °C
+  device_class: temperature
+  state_class: measurement
+  availability: '{% set ent = states(''text.hph_src_outdoor_temp'') %} {{ ent
+    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_outdoor_temp'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Compressor Frequency
+  unique_id: hph_source_compressor_freq
+  unit_of_measurement: Hz
+  state_class: measurement
+  availability: '{% set ent = states(''text.hph_src_compressor_freq'') %} {{
+    ent and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_compressor_freq'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Operating Mode
+  unique_id: hph_source_operating_mode
+  availability: '{% set ent = states(''text.hph_src_operating_mode'') %} {{
+    ent and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_operating_mode'')) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Pump Pressure
+  unique_id: hph_source_pump_pressure
+  unit_of_measurement: bar
+  device_class: pressure
+  state_class: measurement
+  availability: '{% set ent = states(''text.hph_src_pump_pressure'') %} {{ ent
+    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_pump_pressure'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Compressor Hours
+  unique_id: hph_source_compressor_hours
+  unit_of_measurement: h
+  state_class: total_increasing
+  availability: '{% set ent = states(''text.hph_src_compressor_hours'') %} {{
+    ent and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_compressor_hours'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Compressor Starts
+  unique_id: hph_source_compressor_starts
+  state_class: total_increasing
+  availability: '{% set ent = states(''text.hph_src_compressor_starts'') %}
+    {{ ent and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_compressor_starts'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Discharge Temperature
+  unique_id: hph_source_discharge_temp
+  unit_of_measurement: °C
+  device_class: temperature
+  state_class: measurement
+  availability: '{% set ent = states(''text.hph_src_discharge_temp'') %} {{
+    ent and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_discharge_temp'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Error Code
+  unique_id: hph_source_error_code
+  icon: mdi:alert-circle-outline
+  availability: '{% set ent = states(''text.hph_src_error_code'') %} {{ ent
+    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_error_code'')) | string | upper }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Zone 1 Temperature
+  unique_id: hph_source_zone1_temp
+  unit_of_measurement: °C
+  device_class: temperature
+  state_class: measurement
+  availability: '{% set ent = states(''text.hph_src_zone1_temp'') %} {{ ent
+    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_zone1_temp'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Zone 2 Temperature
+  unique_id: hph_source_zone2_temp
+  unit_of_measurement: °C
+  device_class: temperature
+  state_class: measurement
+  availability: '{% set ent = states(''text.hph_src_zone2_temp'') %} {{ ent
+    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_zone2_temp'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source DHW Temperature
+  unique_id: hph_source_dhw_temp
+  unit_of_measurement: °C
+  device_class: temperature
+  state_class: measurement
+  availability: '{% set ent = states(''text.hph_src_dhw_temp'') %} {{ ent and
+    states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_dhw_temp'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Buffer Temperature
+  unique_id: hph_source_buffer_temp
+  unit_of_measurement: °C
+  device_class: temperature
+  state_class: measurement
+  availability: '{% set ent = states(''text.hph_src_buffer_temp'') %} {{ ent
+    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_buffer_temp'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Thermal Power Active
+  unique_id: hph_thermal_power_active
+  unit_of_measurement: W
+  device_class: power
+  state_class: measurement
+  state: "{% set src = states('select.hph_thermal_source') %} {% if src == 'external_power'\
+    \ %}\n  {% set ent = states('text.hph_src_external_thermal_power') %}\n\
+    \  {% if ent and states(ent) not in ['unknown','unavailable','none',''] %}\n \
+    \   {{ states(ent) | float(0) }}\n  {% else %}\n    0\n  {% endif %}\n{% elif\
+    \ src == 'external_energy' %}\n  0\n{% else %}\n  {{ states('sensor.hph_thermal_power')\
+    \ | float(0) }}\n{% endif %}"
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Electrical Power Active
+  unique_id: hph_electrical_power_active
+  unit_of_measurement: W
+  device_class: power
+  state_class: measurement
+  state: "{% set src = states('select.hph_electrical_source') %} {% if src ==\
+    \ 'external_power' %}\n  {% set ent = states('text.hph_src_external_electrical_power')\
+    \ %}\n  {% if ent and states(ent) not in ['unknown','unavailable','none',''] %}\n\
+    \    {{ states(ent) | float(0) }}\n  {% else %}\n    0\n  {% endif %}\n{% elif\
+    \ src == 'external_energy' %}\n  0\n{% else %}\n  {% set ent = states('text.hph_src_internal_power')\
+    \ %}\n  {% if ent and states(ent) not in ['unknown','unavailable','none',''] %}\n\
+    \    {{ states(ent) | float(0) }}\n  {% else %}\n    0\n  {% endif %}\n{% endif\
+    \ %}"
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Thermal Energy Active
+  unique_id: hph_thermal_energy_active
+  unit_of_measurement: kWh
+  device_class: energy
+  state_class: total_increasing
+  availability: "{% set src = states('select.hph_thermal_source') %} {% if src\
+    \ == 'external_energy' %}\n  {% set ent = states('text.hph_src_external_thermal_energy')\
+    \ %}\n  {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}\n\
+    {% else %}\n  {{ states('sensor.hph_thermal_energy')\n     not in ['unknown','unavailable','none']\
+    \ }}\n{% endif %}"
+  state: "{% set src = states('select.hph_thermal_source') %} {% if src == 'external_energy'\
+    \ %}\n  {{ states(states('text.hph_src_external_thermal_energy')) | float(0)\
+    \ }}\n{% else %}\n  {{ states('sensor.hph_thermal_energy') | float(0) }}\n{% endif\
+    \ %}"
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Electrical Energy Active
+  unique_id: hph_electrical_energy_active
+  unit_of_measurement: kWh
+  device_class: energy
+  state_class: total_increasing
+  availability: "{% set src = states('select.hph_electrical_source') %} {% if\
+    \ src == 'external_energy' %}\n  {% set ent = states('text.hph_src_external_electrical_energy')\
+    \ %}\n  {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}\n\
+    {% else %}\n  {{ states('sensor.hph_electrical_energy')\n     not in ['unknown','unavailable','none']\
+    \ }}\n{% endif %}"
+  state: "{% set src = states('select.hph_electrical_source') %} {% if src ==\
+    \ 'external_energy' %}\n  {{ states(states('text.hph_src_external_electrical_energy'))\
+    \ | float(0) }}\n{% else %}\n  {{ states('sensor.hph_electrical_energy') | float(0)\
+    \ }}\n{% endif %}"
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Schema Variant Detected
+  unique_id: hph_schema_variant_detected
+  icon: mdi:graph-outline
+  state: '{% set hk2 = is_state(''binary_sensor.hph_has_hk2'',''on'') %} {% set dhw
+    = is_state(''binary_sensor.hph_has_dhw'',''on'') %} {% set buf = is_state(''binary_sensor.hph_has_buffer'',''on'')
+    %} {% if hk2 and buf %}a2w_hk1_hk2_dhw_buffer {% elif hk2 and dhw %}a2w_hk1_hk2_dhw
+    {% elif buf %}a2w_hk1_hk2_dhw_buffer {% elif dhw %}a2w_hk1_dhw {% else %}a2w_hk1{%
+    endif %}'
+  attributes:
+    has_hk2: '{{ is_state(''binary_sensor.hph_has_hk2'',''on'') }}'
+    has_dhw: '{{ is_state(''binary_sensor.hph_has_dhw'',''on'') }}'
+    has_buffer: '{{ is_state(''binary_sensor.hph_has_buffer'',''on'') }}'
+    message: '{% set hk2 = is_state(''binary_sensor.hph_has_hk2'',''on'') %} {% set
+      dhw = is_state(''binary_sensor.hph_has_dhw'',''on'') %} {% set buf = is_state(''binary_sensor.hph_has_buffer'',''on'')
+      %} {% set parts = [] %} {% if hk2 %}{% set parts = parts + [''Zone 2''] %}{%
+      endif %} {% if dhw %}{% set parts = parts + [''DHW tank''] %}{% endif %} {%
+      if buf %}{% set parts = parts + [''Buffer tank''] %}{% endif %} {% if parts
+      | length == 0 %} HK1 only — no optional components detected. {% else %} Detected:
+      {{ parts | join('' + '') }} (plus zone 1). {% endif %}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Schema Variant Active
+  unique_id: hph_schema_variant_active
+  icon: mdi:graph-outline
+  state: "{% set sel = states('select.hph_schema_variant') %} {% if sel == 'auto'\
+    \ %}\n  {{ states('sensor.hph_schema_variant_detected') }}\n{% else %}\n  {{ sel\
+    \ }}\n{% endif %}"
+  attributes:
+    source: "{% if states('select.hph_schema_variant') == 'auto' %}\n  auto-detected\n\
+      {% else %}\n  manual override\n{% endif %}"
+  _source_package: hph_sources.yaml

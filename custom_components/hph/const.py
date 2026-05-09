@@ -482,4 +482,7 @@ BUTTON_DEFS: Final[dict[str, dict[str, Any]]] = {
 }
 
 # Platforms HA loads at setup time
-PLATFORMS: Final[list[str]] = ["text", "number", "select", "switch", "datetime", "button"]
+PLATFORMS: Final[list[str]] = [
+    "text", "number", "select", "switch", "datetime", "button",
+    "sensor", "binary_sensor",
+]

@@ -15,8 +15,8 @@ automation:
     entity_id: switch.hph_ctrl_ccc
     state: 'on'
   - condition: template
-    value_template: "{{ states('number.hph_cycle_last_pause_min') | float(99)\n\
-      \   < states('number.hph_ctrl_ccc_min_pause_min') | float(15) }}"
+    value_template: "{{ states('number.hph_cycle_last_pause_min') | float(99)\n  \
+      \ < states('number.hph_ctrl_ccc_min_pause_min') | float(15) }}"
   action:
   - service: select.select_option
     target:
@@ -65,9 +65,9 @@ automation:
   mode: single
   trigger:
   - platform: template
-    value_template: '{% set ent = states(''text.hph_ctrl_pv_surplus_entity'')
-      %} {% set thr = states(''number.hph_ctrl_solar_pv_threshold_w'') | float(1500)
-      %} {{ ent and states(ent) | float(0) > thr }}'
+    value_template: '{% set ent = states(''text.hph_ctrl_pv_surplus_entity'') %} {%
+      set thr = states(''number.hph_ctrl_solar_pv_threshold_w'') | float(1500) %}
+      {{ ent and states(ent) | float(0) > thr }}'
     for: 00:05:00
   condition:
   - condition: state

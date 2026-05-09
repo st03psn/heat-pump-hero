@@ -1,11 +1,3 @@
-template:
-- sensor:
-  - name: HeatPump Hero — bridge last publish
-    unique_id: hph_bridge_last_publish
-    device_class: timestamp
-    state: '{{ state_attr(''automation.hph_bridge_publish_state'',''last_triggered'')
-      }}'
-    availability: '{{ is_state(''switch.hph_bridge_enabled'',''on'') }}'
 script:
   hph_bridge_publish_one:
     alias: HeatPump Hero — publish one entity to MQTT

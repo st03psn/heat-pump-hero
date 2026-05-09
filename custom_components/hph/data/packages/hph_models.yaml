@@ -1,27 +1,3 @@
-template:
-- sensor:
-  - name: HeatPump Hero Model Refrigerant
-    unique_id: hph_model_refrigerant
-    icon: mdi:gas-cylinder
-    state: '{% set m = states(''select.hph_pump_model'') %} {% if m in [''panasonic_j_aqj'',''panasonic_k_aqk'']
-      %}R410A {% elif m in [''panasonic_l_aql'',''panasonic_tcap''] %}R32 {% elif
-      m == ''panasonic_m_aqm'' %}R290 {% elif m == ''daikin_altherma3'' %}R32 {% elif
-      m == ''mitsubishi_ecodan'' %}R32 / R454C {% elif m == ''vaillant_arotherm''
-      %}R290 {% elif m == ''stiebel_wpl'' %}R454C {% else %}unknown{% endif %}'
-  - name: HeatPump Hero Model Description
-    unique_id: hph_model_description
-    icon: mdi:information-outline
-    state: '{% set m = states(''select.hph_pump_model'') %} {% if m == ''panasonic_j_aqj''
-      %}Panasonic J-series (Aquarea J / WH-MDC, R410A, oldest inverter generation)
-      {% elif m == ''panasonic_k_aqk'' %}Panasonic K-series (R410A, improved modulation)
-      {% elif m == ''panasonic_l_aql'' %}Panasonic L-series (R32, current mainstream)
-      {% elif m == ''panasonic_tcap'' %}Panasonic T-CAP / All-Season (full capacity
-      at low outdoor T°) {% elif m == ''panasonic_m_aqm'' %}Panasonic M-series (R290
-      propane, new flagship, Heishamon community-supported since 2024) {% elif m ==
-      ''daikin_altherma3'' %}Daikin Altherma 3 (R32) {% elif m == ''mitsubishi_ecodan''
-      %}Mitsubishi Ecodan / Zubadan {% elif m == ''vaillant_arotherm'' %}Vaillant
-      aroTHERM Plus (R290) {% elif m == ''stiebel_wpl'' %}Stiebel Eltron WPL series
-      {% else %}generic / unknown {% endif %}'
 automation:
 - id: hph_model_apply_thresholds
   alias: HeatPump Hero — apply model-specific thresholds

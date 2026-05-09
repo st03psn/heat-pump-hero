@@ -13,8 +13,8 @@ script:
       data:
         notification_id: hph_export_done
         title: HeatPump Hero export
-        message: Export written to {{ states('text.hph_export_target_path')
-          }} ({{ states('select.hph_export_format') }}, period {{ states('select.hph_export_period')
+        message: Export written to {{ states('text.hph_export_target_path') }} ({{
+          states('select.hph_export_format') }}, period {{ states('select.hph_export_period')
           }}).
 automation:
 - id: hph_export_daily

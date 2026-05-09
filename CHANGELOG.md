@@ -3,6 +3,46 @@
 All notable changes to HeatPump Hero. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0-rc2] — 2026-05-09
+
+### Added — Phase 2: programmatic sensor platforms
+
+`custom_components/hph/sensor.py` and `binary_sensor.py` register
+every `sensor.hph_*` and `binary_sensor.hph_*` entity that previously
+came from `template:` blocks in v0.8 YAML packages. The Jinja
+templates themselves are bundled internally
+(`custom_components/hph/data/sensor_templates.yaml` and
+`binary_sensor_templates.yaml`) and rendered at runtime by a generic
+`HphTemplateSensor` / `HphTemplateBinarySensor` class that uses
+`async_track_template_result` for state-tracking.
+
+This is **not** a YAML deploy — the templates live inside the
+integration package. User's `<config>/packages/` no longer carries
+HeatPump Hero sensor definitions. Result:
+
+- 72 `sensor.hph_*` entities + 6 `binary_sensor.hph_*` entities
+  registered programmatically by the integration
+- All `unique_id`s preserved → recorder history continuity
+- HACS update of the integration brings new sensor logic without any
+  YAML reload step on the user side
+- Bundled `data/packages/` shrinks from 13 files to 11 (now-empty
+  `hph_core.yaml` and `hph_sources.yaml` removed)
+
+The template-driven approach is deliberately conservative — it
+preserves all v0.8 advisor messages, fault-code logic, schema
+detection, COP/SCOP calculations 1:1 without re-implementation risk.
+A post-v1.0 performance pass can rewrite hot-path sensors as fully
+native Python `SensorEntity` subclasses if measurement shows that's
+needed.
+
+### Known limitations carried over from rc1
+
+- Counter increments still need Phase 3 (cycle tracking, dhw fires,
+  price-dhw fires, short-cycle detection).
+- Statistics / integration / utility_meter platforms still ship as
+  YAML in `data/packages/*.yaml` because HA exposes no programmatic
+  registration API for them. Phase 3 may move them to coordinators.
+
 ## [0.9.0-rc1] — 2026-05-09
 
 ### Added — Python custom integration (HACS-installable)

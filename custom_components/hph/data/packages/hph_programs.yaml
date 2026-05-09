@@ -1,49 +1,3 @@
-template:
-- sensor:
-  - name: HeatPump Hero Legionella Status
-    unique_id: hph_prog_legionella_status
-    icon: mdi:bacteria-outline
-    state: "{% set en = is_state('switch.hph_prog_legionella','on') %} {% set\
-      \ last = states('datetime.hph_prog_legionella_last_run') %} {% if not\
-      \ en %}disabled {% elif last in ['unknown','unavailable',''] %}pending {% else\
-      \ %}\n  {% set dt = as_datetime(last) %}\n  {% set days_since = (now() - dt).total_seconds()\
-      \ / 86400 %}\n  {% if days_since > 8 %}overdue\n  {% elif days_since > 7 %}due\n\
-      \  {% else %}ok{% endif %}\n{% endif %}"
-    attributes:
-      last_run: '{{ states(''datetime.hph_prog_legionella_last_run'') }}'
-      weekday: '{{ states(''select.hph_prog_legionella_weekday'') }}'
-      target_c: '{{ states(''number.hph_prog_legionella_target_c'') }}'
-      hold_min: '{{ states(''number.hph_prog_legionella_hold_min'') }}'
-  - name: HeatPump Hero Screed Target
-    unique_id: hph_prog_screed_target
-    unit_of_measurement: °C
-    state_class: measurement
-    availability: '{{ is_state(''switch.hph_prog_screed_active'',''on'') }}'
-    state: "{% set p = states('select.hph_prog_screed_profile') %} {% set d\
-      \ = states('number.hph_prog_screed_day') | int(0) %} {% if p == 'functional_3d'\
-      \ %}\n  {# 3 days: 25 → 45 → 25 °C, then end #}\n  {% if d == 1 %}25\n  {% elif\
-      \ d == 2 %}45\n  {% elif d == 3 %}25\n  {% else %}0{% endif %}\n{% elif p ==\
-      \ 'combined_10d' %}\n  {# 3d functional + 7d curing #}\n  {% if d == 1 %}25\n\
-      \  {% elif d == 2 %}45\n  {% elif d == 3 %}25\n  {% elif d in [4,5,6,7] %}40\n\
-      \  {% elif d == 8 %}35\n  {% elif d == 9 %}30\n  {% elif d == 10 %}25\n  {%\
-      \ else %}0{% endif %}\n{% elif p == 'din_18560_28d' %}\n  {# DIN 18560-1: 3d\
-      \ at 25, ramp to 50, hold 18d, cool 4d #}\n  {% if d in [1,2,3] %}25\n  {% elif\
-      \ d == 4 %}30\n  {% elif d == 5 %}35\n  {% elif d == 6 %}45\n  {% elif d in\
-      \ range(7, 25) %}50\n  {% elif d == 25 %}45\n  {% elif d == 26 %}35\n  {% elif\
-      \ d == 27 %}30\n  {% elif d == 28 %}25\n  {% else %}0{% endif %}\n{% else %}0\
-      \ {% endif %}"
-  - name: HeatPump Hero Screed Status
-    unique_id: hph_prog_screed_status
-    icon: mdi:home-floor-a
-    state: '{% set en = is_state(''switch.hph_prog_screed'',''on'') %} {% set
-      act = is_state(''switch.hph_prog_screed_active'',''on'') %} {% set d
-      = states(''number.hph_prog_screed_day'') | int(0) %} {% if not en %}disabled
-      {% elif not act %}armed {% elif d == 0 %}armed {% else %}running {% endif %}'
-    attributes:
-      profile: '{{ states(''select.hph_prog_screed_profile'') }}'
-      day: '{{ states(''number.hph_prog_screed_day'') }}'
-      target_c: '{{ states(''sensor.hph_prog_screed_target'') }}'
-      start: '{{ states(''datetime.hph_prog_screed_start'') }}'
 automation:
 - id: hph_prog_legionella_run
   alias: HPH program — legionella weekly fire
@@ -59,8 +13,8 @@ automation:
     entity_id: switch.hph_prog_legionella
     state: 'on'
   - condition: template
-    value_template: '{% set wd = states(''select.hph_prog_legionella_weekday'')
-      %} {% set wd_now = [''mon'',''tue'',''wed'',''thu'',''fri'',''sat'',''sun''][now().weekday()]
+    value_template: '{% set wd = states(''select.hph_prog_legionella_weekday'') %}
+      {% set wd_now = [''mon'',''tue'',''wed'',''thu'',''fri'',''sat'',''sun''][now().weekday()]
       %} {{ wd == wd_now }}'
   - condition: template
     value_template: '{{ now().hour == states(''number.hph_prog_legionella_hour'')
@@ -71,8 +25,7 @@ automation:
       \  {{ (now() - as_datetime(last)).total_seconds() > 86400 * 6 }}\n{% endif %}"
   action:
   - variables:
-      target: '{{ states(''number.hph_prog_legionella_target_c'') | float(65)
-        }}'
+      target: '{{ states(''number.hph_prog_legionella_target_c'') | float(65) }}'
       hold: '{{ states(''number.hph_prog_legionella_hold_min'') | int(30) }}'
       dhw_target_entity: '{{ states(''text.hph_ctrl_write_dhw_target'') }}'
       force_dhw_entity: '{{ states(''text.hph_ctrl_write_force_dhw'') }}'
@@ -154,9 +107,9 @@ automation:
     data:
       notification_id: hph_prog_screed
       title: HPH screed program armed
-      message: Profile {{ states('select.hph_prog_screed_profile') }} armed
-        on day 1. Day will advance daily at 00:01. Disable switch.hph_prog_screed
-        to abort early.
+      message: Profile {{ states('select.hph_prog_screed_profile') }} armed on day
+        1. Day will advance daily at 00:01. Disable switch.hph_prog_screed to abort
+        early.
 - id: hph_prog_screed_daily
   alias: HPH program — screed dry-out daily advance
   mode: single
