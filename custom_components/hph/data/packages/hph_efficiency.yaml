@@ -1,3 +1,12 @@
+# HeatPump Hero — energy metering platform config.
+#
+# This is the only YAML package deployed by v0.9+. It contains pure
+# HA platform declarations (utility_meter + integration sensors) that
+# cannot be created programmatically from a custom integration.
+# All automation logic has been moved to Python coordinators.
+#
+# Do not edit — managed by the HeatPump Hero integration.
+
 sensor:
 - platform: integration
   source: sensor.hph_thermal_power_active
@@ -19,6 +28,7 @@ sensor:
   round: 3
   device_class: energy
   state_class: total_increasing
+
 utility_meter:
   hph_thermal_daily:
     source: sensor.hph_thermal_energy_active
@@ -33,23 +43,23 @@ utility_meter:
     source: sensor.hph_thermal_energy_active
     cycle: daily
     tariffs:
-    - heating
-    - dhw
-    - cooling
+      - heating
+      - dhw
+      - cooling
   hph_thermal_monthly_split:
     source: sensor.hph_thermal_energy_active
     cycle: monthly
     tariffs:
-    - heating
-    - dhw
-    - cooling
+      - heating
+      - dhw
+      - cooling
   hph_thermal_yearly_split:
     source: sensor.hph_thermal_energy_active
     cycle: yearly
     tariffs:
-    - heating
-    - dhw
-    - cooling
+      - heating
+      - dhw
+      - cooling
   hph_electrical_daily:
     source: sensor.hph_electrical_energy_active
     cycle: daily
@@ -63,42 +73,20 @@ utility_meter:
     source: sensor.hph_electrical_energy_active
     cycle: daily
     tariffs:
-    - heating
-    - dhw
-    - cooling
+      - heating
+      - dhw
+      - cooling
   hph_electrical_monthly_split:
     source: sensor.hph_electrical_energy_active
     cycle: monthly
     tariffs:
-    - heating
-    - dhw
-    - cooling
+      - heating
+      - dhw
+      - cooling
   hph_electrical_yearly_split:
     source: sensor.hph_electrical_energy_active
     cycle: yearly
     tariffs:
-    - heating
-    - dhw
-    - cooling
-automation:
-- id: hph_tariff_switch
-  alias: HeatPump Hero — tariff switch (mode → heating/dhw/cooling)
-  mode: single
-  trigger:
-  - platform: state
-    entity_id: sensor.hph_operating_mode
-  action:
-  - variables:
-      tariff: '{% set m = states(''sensor.hph_operating_mode'') %} {% if m == ''dhw''
-        %}dhw {% elif m == ''cooling'' %}cooling {% else %}heating{% endif %}'
-  - service: utility_meter.select_tariff
-    target:
-      entity_id:
-      - sensor.hph_thermal_daily_split
-      - sensor.hph_thermal_monthly_split
-      - sensor.hph_thermal_yearly_split
-      - sensor.hph_electrical_daily_split
-      - sensor.hph_electrical_monthly_split
-      - sensor.hph_electrical_yearly_split
-    data:
-      tariff: '{{ tariff }}'
+      - heating
+      - dhw
+      - cooling

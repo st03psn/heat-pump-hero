@@ -3,6 +3,57 @@
 All notable changes to HeatPump Hero. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0-rc3] — 2026-05-09
+
+### Added — Phase 3: Python automation coordinators, zero YAML deployment
+
+All 23 automations from the v0.8 YAML packages have been ported to
+Python coordinators in `custom_components/hph/coordinators/`. The
+integration is now fully self-contained:
+
+| Coordinator | Automations ported |
+|---|---|
+| `coordinators/cycles.py` | cycle start/stop, daily counter reset |
+| `coordinators/advisor.py` | DHW fire tracking, heating-limit record, daily rollover |
+| `coordinators/diagnostics.py` | error-change log + persistent notification |
+| `coordinators/control.py` | CCC short-pause block, SoftStart, Solar-DHW (5-min PV surplus), quiet night on/off |
+| `coordinators/control_ext.py` | adaptive curve (Sunday 04:00), price-DHW (hourly check + daily reset), forecast preheat (4h boost) |
+| `coordinators/programs.py` | legionella weekly program (wait_template up to 4 h), screed arm, screed daily advance |
+| `coordinators/bridge.py` | MQTT bridge publish-on-change, initial publish, clear-on-disable |
+| `coordinators/export.py` | scheduled export (daily / weekly / monthly) |
+| `coordinators/efficiency.py` | tariff switch (operating mode → utility meter tariff) |
+| `coordinators/models.py` | model threshold apply, vendor preset re-apply at runtime |
+
+The `hph.export_now` service is now a real Python implementation that
+writes a CSV snapshot from HA states.
+
+### Changed
+
+- `bootstrap.py` now deploys **one** YAML file (`hph_efficiency.yaml`)
+  instead of 11. `hph_efficiency.yaml` is a pure HA platform config
+  (utility_meter + integration sensors) — there is no Python API to
+  create these from a custom integration. All automation logic is
+  removed from the file.
+- `bootstrap.py` migration step: on first load, removes any
+  `hph_*.yaml` files from `<config>/packages/` that were deployed by
+  v0.8 or v0.9-rc1/rc2 (excluding `hph_efficiency.yaml`).
+- `data/packages/` now contains **only** `hph_efficiency.yaml`.
+
+### Deleted
+
+- `custom_components/hph/data/packages/hph_advisor.yaml`
+- `custom_components/hph/data/packages/hph_analysis.yaml`
+- `custom_components/hph/data/packages/hph_bridge.yaml`
+- `custom_components/hph/data/packages/hph_control.yaml`
+- `custom_components/hph/data/packages/hph_control_extensions.yaml`
+- `custom_components/hph/data/packages/hph_cycles.yaml`
+- `custom_components/hph/data/packages/hph_diagnostics.yaml`
+- `custom_components/hph/data/packages/hph_export.yaml`
+- `custom_components/hph/data/packages/hph_models.yaml`
+- `custom_components/hph/data/packages/hph_programs.yaml`
+
+---
+
 ## [0.9.0-rc2] — 2026-05-09
 
 ### Added — Phase 2: programmatic sensor platforms

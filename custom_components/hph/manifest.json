@@ -1,7 +1,7 @@
 {
   "domain": "hph",
   "name": "HeatPump Hero",
-  "version": "0.9.0-rc1",
+  "version": "0.9.0-rc3",
   "documentation": "https://github.com/st03psn/heat-pump-hero",
   "issue_tracker": "https://github.com/st03psn/heat-pump-hero/issues",
   "codeowners": ["@st03psn"],

@@ -1,22 +1,19 @@
-"""Phase-1 bootstrap helpers.
+"""Phase-3 bootstrap helpers.
 
-Until phases 2 (sensors) and 3 (automations) move every YAML package
-into Python, the integration must still deliver the not-yet-ported
-parts of the project as YAML files in `<config>/packages/`. This
-module handles:
+Phase 3 removes all YAML automation packages — the integration is now
+fully self-contained in Python. This module handles the reduced set of
+deploy/cleanup tasks:
 
-  - Copying `custom_components/hph/data/packages/*.yaml` into
-    `<config>/packages/`
-  - Copying `custom_components/hph/data/dashboards/hph.yaml` into
-    `<config>/hph/dashboard.yaml`
-  - Copying `custom_components/hph/data/dashboards/assets/*.svg` into
-    `<config>/www/hph/`
+  - One-time migration: remove hph_*.yaml files previously deployed to
+    <config>/packages/ (v0.8 / v0.9 phase 1 leftovers)
+  - Copying <config>/hph/dashboard.yaml  (Lovelace YAML-mode panel)
+  - Copying <config>/www/hph/*.svg       (dashboard assets)
+  - Deploying hph_efficiency.yaml        (utility_meter + integration
+    sensors — HA platform config, no automation logic, cannot be
+    expressed in Python)
   - Auto-registering the dashboard via Lovelace's storage backend
   - Cleaning every file we ever deployed when the integration is
     removed via the UI
-
-The bundled `data/` directory is populated at integration install
-time (HACS clones the entire repo plus the data subtree).
 """
 
 from __future__ import annotations
@@ -28,7 +25,6 @@ from typing import Any
 
 from homeassistant.components import frontend
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.network import get_url
 
 from .const import (
     DASHBOARD_FILE_REL,
@@ -39,50 +35,62 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-# Source paths relative to this file (= custom_components/hph/)
 _PKG_DIR = Path(__file__).parent
 _DATA_DIR = _PKG_DIR / "data"
-_DATA_PACKAGES = _DATA_DIR / "packages"
 _DATA_DASHBOARD = _DATA_DIR / "dashboards" / "hph.yaml"
 _DATA_ASSETS = _DATA_DIR / "dashboards" / "assets"
 _DATA_BLUEPRINT = _DATA_DIR / "blueprints" / "hph_setup.yaml"
+_DATA_EFFICIENCY = _DATA_DIR / "packages" / "hph_efficiency.yaml"
 
 
 def _config(hass: HomeAssistant) -> Path:
-    """Return HA's config directory as a Path."""
     return Path(hass.config.path())
 
 
 # ─── Deploy ───────────────────────────────────────────────────────────────
 async def async_deploy_yaml_packages(hass: HomeAssistant) -> dict[str, Any]:
-    """Copy bundled YAML packages, dashboard, assets and blueprint.
+    """Deploy dashboard, assets and the efficiency platform package.
 
-    Idempotent — files are overwritten on every setup so HACS updates
-    propagate cleanly.
+    Also runs one-time migration: removes old hph_*.yaml automation
+    packages deployed by v0.8 / v0.9-phase-1.
 
-    Returns: a dict summarising what was deployed (used by tests + logs).
+    Returns: summary dict (used by tests + logs).
     """
     return await hass.async_add_executor_job(_deploy_sync, _config(hass))
 
 
 def _deploy_sync(config_dir: Path) -> dict[str, Any]:
-    deployed: dict[str, list[str]] = {
-        "packages": [],
+    deployed: dict[str, Any] = {
+        "migrated_removed": [],
         "dashboard": [],
         "assets": [],
         "blueprint": [],
+        "efficiency": False,
     }
 
-    # 1. Packages
+    # 1. Migration: remove old hph_*.yaml automation packages from
+    #    <config>/packages/ (deployed by v0.8 / v0.9-phase-1).
+    #    Only hph_efficiency.yaml is kept — it holds platform config.
     pkg_dst = config_dir / "packages"
-    pkg_dst.mkdir(parents=True, exist_ok=True)
-    if _DATA_PACKAGES.exists():
-        for src in sorted(_DATA_PACKAGES.glob("hph_*.yaml")):
-            dst = pkg_dst / src.name
-            shutil.copyfile(src, dst)
-            deployed["packages"].append(src.name)
+    if pkg_dst.exists():
+        bundled_efficiency = {"hph_efficiency.yaml"}
+        for stale in list(pkg_dst.glob("hph_*.yaml")):
+            if stale.name not in bundled_efficiency:
+                try:
+                    stale.unlink()
+                    deployed["migrated_removed"].append(stale.name)
+                    _LOGGER.info("Migration: removed old automation package %s", stale.name)
+                except OSError as exc:
+                    _LOGGER.warning("Could not remove %s: %s", stale, exc)
 
-    # 2. Dashboard YAML
+    # 2. Deploy hph_efficiency.yaml (utility_meter + integration sensors).
+    if _DATA_EFFICIENCY.exists():
+        pkg_dst.mkdir(parents=True, exist_ok=True)
+        dst = pkg_dst / _DATA_EFFICIENCY.name
+        shutil.copyfile(_DATA_EFFICIENCY, dst)
+        deployed["efficiency"] = True
+
+    # 3. Dashboard YAML
     dash_dst_dir = config_dir / "hph"
     dash_dst_dir.mkdir(parents=True, exist_ok=True)
     if _DATA_DASHBOARD.exists():
@@ -90,7 +98,7 @@ def _deploy_sync(config_dir: Path) -> dict[str, Any]:
         shutil.copyfile(_DATA_DASHBOARD, dst)
         deployed["dashboard"].append(str(dst.relative_to(config_dir)))
 
-    # 3. Asset SVGs
+    # 4. Asset SVGs
     asset_dst = config_dir / "www" / "hph"
     asset_dst.mkdir(parents=True, exist_ok=True)
     if _DATA_ASSETS.exists():
@@ -99,22 +107,29 @@ def _deploy_sync(config_dir: Path) -> dict[str, Any]:
             shutil.copyfile(src, dst)
             deployed["assets"].append(src.name)
 
-    # 4. Setup blueprint (legacy — kept for users who used it pre-v0.9)
+    # 5. Setup blueprint (legacy — kept for users who used it pre-v0.9)
     bp_dst = config_dir / "blueprints" / "script" / "hph"
     bp_dst.mkdir(parents=True, exist_ok=True)
     if _DATA_BLUEPRINT.exists():
         shutil.copyfile(_DATA_BLUEPRINT, bp_dst / _DATA_BLUEPRINT.name)
         deployed["blueprint"].append(_DATA_BLUEPRINT.name)
 
-    # 5. configuration.yaml — add packages include if missing.
-    _ensure_packages_include(config_dir / "configuration.yaml")
+    # 6. Ensure packages include in configuration.yaml (needed for efficiency.yaml)
+    if deployed["efficiency"]:
+        _ensure_packages_include(config_dir / "configuration.yaml")
 
+    if deployed["migrated_removed"]:
+        _LOGGER.info(
+            "Migration complete: removed %d old automation packages: %s",
+            len(deployed["migrated_removed"]),
+            ", ".join(deployed["migrated_removed"]),
+        )
     _LOGGER.info(
-        "HeatPump Hero deployment: %d packages, dashboard=%s, %d assets, blueprint=%s",
-        len(deployed["packages"]),
+        "HeatPump Hero bootstrap: dashboard=%s, %d assets, efficiency=%s, %d old packages removed",
         bool(deployed["dashboard"]),
         len(deployed["assets"]),
-        bool(deployed["blueprint"]),
+        deployed["efficiency"],
+        len(deployed["migrated_removed"]),
     )
     return deployed
 
@@ -123,14 +138,10 @@ def _ensure_packages_include(config_yaml: Path) -> None:
     if not config_yaml.exists():
         _LOGGER.warning("configuration.yaml not found at %s — skipping include", config_yaml)
         return
-
     text = config_yaml.read_text(encoding="utf-8")
     if "packages: !include_dir_named packages" in text:
         return
-
-    # Insert under existing `homeassistant:` block, or append a new one.
     import re
-
     if re.search(r"(?m)^homeassistant:\s*$", text):
         new_text = re.sub(
             r"(?m)^(homeassistant:\s*)$",
@@ -141,36 +152,24 @@ def _ensure_packages_include(config_yaml: Path) -> None:
     else:
         sep = "\n" if not text.endswith("\n") else ""
         new_text = text + f"{sep}\nhomeassistant:\n  packages: !include_dir_named packages\n"
-
     config_yaml.write_text(new_text, encoding="utf-8")
     _LOGGER.info("Added 'packages: !include_dir_named packages' to configuration.yaml")
 
 
 # ─── Dashboard auto-register ──────────────────────────────────────────────
 async def async_register_dashboard(hass: HomeAssistant) -> None:
-    """Register the HPH dashboard so it appears in the sidebar automatically.
-
-    Strategy: register a YAML-mode Lovelace dashboard pointing at the
-    deployed `<config>/hph/dashboard.yaml`. If the user already created
-    a dashboard with the same URL path, we skip silently.
-    """
-    # Lovelace's dashboard registry lives under hass.data["lovelace"].
+    """Register the HPH dashboard so it appears in the sidebar automatically."""
     lovelace_data = hass.data.get("lovelace")
     if lovelace_data is None:
         _LOGGER.debug("Lovelace not loaded yet — skipping dashboard auto-register")
         return
-
     dashboards = getattr(lovelace_data, "dashboards", None)
     if dashboards is None:
         _LOGGER.debug("Lovelace dashboards attribute missing — skipping auto-register")
         return
-
     if DASHBOARD_URL_PATH in dashboards:
         _LOGGER.debug("Dashboard %s already registered — skipping", DASHBOARD_URL_PATH)
         return
-
-    # Sidebar entry — this gives the user a clickable HeatPump Hero menu
-    # item without needing to add the dashboard manually.
     try:
         frontend.async_register_built_in_panel(
             hass,
@@ -194,7 +193,7 @@ async def async_clean_deployed_files(hass: HomeAssistant) -> None:
 
 
 def _clean_sync(config_dir: Path) -> None:
-    # 1. Packages
+    # 1. Remove hph_efficiency.yaml and clean packages/ if empty
     pkg_dir = config_dir / "packages"
     if pkg_dir.exists():
         for f in pkg_dir.glob("hph_*.yaml"):
@@ -203,6 +202,14 @@ def _clean_sync(config_dir: Path) -> None:
                 _LOGGER.info("Removed %s", f)
             except OSError as exc:
                 _LOGGER.warning("Could not remove %s: %s", f, exc)
+        remaining = list(pkg_dir.glob("*.yaml"))
+        if not remaining:
+            _drop_packages_include(config_dir / "configuration.yaml")
+            try:
+                pkg_dir.rmdir()
+                _LOGGER.info("Removed empty %s", pkg_dir)
+            except OSError:
+                pass
 
     # 2. Dashboard YAML + dir
     dash_dir = config_dir / "hph"
@@ -231,23 +238,11 @@ def _clean_sync(config_dir: Path) -> None:
         except OSError as exc:
             _LOGGER.warning("Could not remove %s: %s", bp_dir, exc)
 
-    # 5. Drop packages include if /config/packages/ ends up empty
-    if pkg_dir.exists():
-        remaining = list(pkg_dir.glob("*.yaml"))
-        if not remaining:
-            _drop_packages_include(config_dir / "configuration.yaml")
-            try:
-                pkg_dir.rmdir()
-                _LOGGER.info("Removed empty %s", pkg_dir)
-            except OSError:
-                pass
-
 
 def _drop_packages_include(config_yaml: Path) -> None:
     if not config_yaml.exists():
         return
     import re
-
     text = config_yaml.read_text(encoding="utf-8")
     new_text = re.sub(
         r"(?m)^[ \t]*packages:\s*!include_dir_named\s+packages\s*\r?\n",
