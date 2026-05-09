@@ -1,0 +1,381 @@
+# HeishaHub — sources adapter
+#
+# Central abstraction layer for ALL underlying entities. Every hardcoded
+# entity-ID is replaced by an input_text helper here so users can swap:
+#   - the heat pump (Heishamon → Vaillant Modbus → Daikin Altherma → …)
+#   - the heat meter (none → MQTT WMZ → M-Bus → integrated calculation)
+#   - the electricity meter (none → Shelly → IoTaWatt → utility meter)
+# without ever editing YAML.
+#
+# Defaults point to kamaradclimber/heishamon-homeassistant entity IDs so the
+# plug-and-play install works out of the box. Anything blank is treated as
+# "not configured" — downstream sensors fall back gracefully.
+#
+# ─── Two-layer design ────────────────────────────────────────────────────
+#   1. SOURCE HELPERS (input_text/input_select)  — UI-configurable
+#   2. ACTIVE-SOURCE TEMPLATE SENSORS            — derived, used by core
+#
+# All other packages (core, efficiency, advisor, cycles, control) read from
+# the active-source sensors only. This keeps the abstraction clean.
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 1. SOURCE HELPERS (UI-configurable)
+# ═══════════════════════════════════════════════════════════════════════════
+input_text:
+  # ─── Heat pump device entities (defaults: Heishamon/kamaradclimber) ─────
+  heishahub_src_inlet_temp:
+    name: HeishaHub source — inlet (return) temperature
+    icon: mdi:thermometer-low
+    max: 255
+    initial: sensor.panasonic_heat_pump_main_inlet_temperature
+
+  heishahub_src_outlet_temp:
+    name: HeishaHub source — outlet (supply) temperature
+    icon: mdi:thermometer-high
+    max: 255
+    initial: sensor.panasonic_heat_pump_main_outlet_temperature
+
+  heishahub_src_flow_rate:
+    name: HeishaHub source — water flow rate
+    icon: mdi:water-pump
+    max: 255
+    initial: sensor.panasonic_heat_pump_main_water_flow
+
+  heishahub_src_outdoor_temp:
+    name: HeishaHub source — outdoor temperature
+    icon: mdi:thermometer
+    max: 255
+    initial: sensor.panasonic_heat_pump_main_outside_temperature
+
+  heishahub_src_compressor_freq:
+    name: HeishaHub source — compressor frequency
+    icon: mdi:sine-wave
+    max: 255
+    initial: sensor.panasonic_heat_pump_main_compressor_frequency
+
+  heishahub_src_defrost_state:
+    name: HeishaHub source — defrost state (binary)
+    icon: mdi:snowflake-melt
+    max: 255
+    initial: binary_sensor.panasonic_heat_pump_main_defrost_state
+
+  heishahub_src_operating_mode:
+    name: HeishaHub source — operating mode (select)
+    icon: mdi:fire
+    max: 255
+    initial: select.panasonic_heat_pump_main_operating_mode_state
+
+  heishahub_src_pump_pressure:
+    name: HeishaHub source — water pressure
+    icon: mdi:gauge
+    max: 255
+    initial: sensor.panasonic_heat_pump_main_pump_pressure
+
+  heishahub_src_internal_power:
+    name: HeishaHub source — heat pump internal power consumption
+    icon: mdi:flash
+    max: 255
+    initial: sensor.panasonic_heat_pump_main_consumed_power
+
+  heishahub_src_aux_heater_state:
+    name: HeishaHub source — auxiliary electric heater state (binary)
+    icon: mdi:radiator
+    max: 255
+    initial: binary_sensor.panasonic_heat_pump_main_heater_state
+
+  heishahub_src_compressor_hours:
+    name: HeishaHub source — compressor running hours (lifetime)
+    icon: mdi:clock-outline
+    max: 255
+    initial: sensor.panasonic_heat_pump_main_compressor_running_hours
+
+  heishahub_src_compressor_starts:
+    name: HeishaHub source — compressor starts (lifetime)
+    icon: mdi:counter
+    max: 255
+    initial: sensor.panasonic_heat_pump_main_compressor_starts
+
+  heishahub_src_discharge_temp:
+    name: HeishaHub source — discharge temperature
+    icon: mdi:thermometer-high
+    max: 255
+    initial: sensor.panasonic_heat_pump_main_discharge_temperature
+
+  # ─── External meter entities (user fills in) ─────────────────────────────
+  # Power sensors (W) — alternative to the calculated thermal_power.
+  heishahub_src_external_thermal_power:
+    name: HeishaHub external thermal power sensor (entity-ID, optional)
+    icon: mdi:fire
+    max: 255
+    initial: ""
+
+  heishahub_src_external_electrical_power:
+    name: HeishaHub external electrical power sensor (entity-ID, e.g. Shelly)
+    icon: mdi:flash
+    max: 255
+    initial: ""
+
+  # Direct energy counters (kWh, total_increasing) — bypass the integration.
+  # If set and selected, the integrator is skipped and the meter is used as-is.
+  heishahub_src_external_thermal_energy:
+    name: HeishaHub external heat-meter (kWh, total_increasing)
+    icon: mdi:counter
+    max: 255
+    initial: ""
+
+  heishahub_src_external_electrical_energy:
+    name: HeishaHub external electricity-meter (kWh, total_increasing)
+    icon: mdi:counter
+    max: 255
+    initial: ""
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Source-mode selectors
+# ═══════════════════════════════════════════════════════════════════════════
+input_select:
+  heishahub_thermal_source:
+    name: HeishaHub — thermal source
+    icon: mdi:thermometer-water
+    options:
+      - calculated        # T_in/T_out × flow × cp (default, needs heat-pump entities)
+      - external_power    # external thermal power sensor (W) → integrated to kWh
+      - external_energy   # external heat meter (kWh) — bypass integration
+    initial: calculated
+
+  heishahub_electrical_source:
+    name: HeishaHub — electrical source
+    icon: mdi:flash
+    options:
+      - heat_pump_internal  # heat pump's own consumed-power reading
+      - external_power      # external power sensor (W) → integrated to kWh
+      - external_energy     # external utility meter (kWh) — bypass integration
+    initial: heat_pump_internal
+
+  heishahub_schema_variant:
+    name: HeishaHub — installation schematic
+    icon: mdi:graph-outline
+    options:
+      - a2w_hk1
+      - a2w_hk1_dhw
+      - a2w_hk1_hk2_dhw
+      - a2w_hk1_hk2_dhw_buffer
+    initial: a2w_hk1
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 2. ACTIVE-SOURCE TEMPLATE SENSORS (the only thing other packages read)
+# ═══════════════════════════════════════════════════════════════════════════
+template:
+  - sensor:
+
+      # ─── Facade reads (with availability guards) ─────────────────────────
+      # These resolve the configured entity-ID once and expose a stable name.
+      - name: "HeishaHub Source Inlet Temperature"
+        unique_id: heishahub_source_inlet_temp
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        availability: >-
+          {% set ent = states('input_text.heishahub_src_inlet_temp') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: "{{ states(states('input_text.heishahub_src_inlet_temp')) | float(0) }}"
+
+      - name: "HeishaHub Source Outlet Temperature"
+        unique_id: heishahub_source_outlet_temp
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        availability: >-
+          {% set ent = states('input_text.heishahub_src_outlet_temp') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: "{{ states(states('input_text.heishahub_src_outlet_temp')) | float(0) }}"
+
+      - name: "HeishaHub Source Flow Rate"
+        unique_id: heishahub_source_flow_rate
+        unit_of_measurement: "L/min"
+        state_class: measurement
+        availability: >-
+          {% set ent = states('input_text.heishahub_src_flow_rate') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: "{{ states(states('input_text.heishahub_src_flow_rate')) | float(0) }}"
+
+      - name: "HeishaHub Source Outdoor Temperature"
+        unique_id: heishahub_source_outdoor_temp
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        availability: >-
+          {% set ent = states('input_text.heishahub_src_outdoor_temp') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: "{{ states(states('input_text.heishahub_src_outdoor_temp')) | float(0) }}"
+
+      - name: "HeishaHub Source Compressor Frequency"
+        unique_id: heishahub_source_compressor_freq
+        unit_of_measurement: "Hz"
+        state_class: measurement
+        availability: >-
+          {% set ent = states('input_text.heishahub_src_compressor_freq') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: "{{ states(states('input_text.heishahub_src_compressor_freq')) | float(0) }}"
+
+      - name: "HeishaHub Source Operating Mode"
+        unique_id: heishahub_source_operating_mode
+        availability: >-
+          {% set ent = states('input_text.heishahub_src_operating_mode') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: "{{ states(states('input_text.heishahub_src_operating_mode')) }}"
+
+      - name: "HeishaHub Source Pump Pressure"
+        unique_id: heishahub_source_pump_pressure
+        unit_of_measurement: "bar"
+        device_class: pressure
+        state_class: measurement
+        availability: >-
+          {% set ent = states('input_text.heishahub_src_pump_pressure') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: "{{ states(states('input_text.heishahub_src_pump_pressure')) | float(0) }}"
+
+      - name: "HeishaHub Source Compressor Hours"
+        unique_id: heishahub_source_compressor_hours
+        unit_of_measurement: "h"
+        state_class: total_increasing
+        availability: >-
+          {% set ent = states('input_text.heishahub_src_compressor_hours') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: "{{ states(states('input_text.heishahub_src_compressor_hours')) | float(0) }}"
+
+      - name: "HeishaHub Source Compressor Starts"
+        unique_id: heishahub_source_compressor_starts
+        state_class: total_increasing
+        availability: >-
+          {% set ent = states('input_text.heishahub_src_compressor_starts') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: "{{ states(states('input_text.heishahub_src_compressor_starts')) | float(0) }}"
+
+      - name: "HeishaHub Source Discharge Temperature"
+        unique_id: heishahub_source_discharge_temp
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        availability: >-
+          {% set ent = states('input_text.heishahub_src_discharge_temp') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: "{{ states(states('input_text.heishahub_src_discharge_temp')) | float(0) }}"
+
+      # ─── Active thermal power (selected source, for live COP + integration) ──
+      # Returns 0 in `external_energy` mode — efficiency package will read
+      # the energy counter directly and bypass the integration in that case.
+      - name: "HeishaHub Thermal Power Active"
+        unique_id: heishahub_thermal_power_active
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: >-
+          {% set src = states('input_select.heishahub_thermal_source') %}
+          {% if src == 'external_power' %}
+            {% set ent = states('input_text.heishahub_src_external_thermal_power') %}
+            {% if ent and states(ent) not in ['unknown','unavailable','none',''] %}
+              {{ states(ent) | float(0) }}
+            {% else %}
+              0
+            {% endif %}
+          {% elif src == 'external_energy' %}
+            0
+          {% else %}
+            {{ states('sensor.heishahub_thermal_power') | float(0) }}
+          {% endif %}
+
+      # ─── Active electrical power (selected source) ──────────────────────
+      - name: "HeishaHub Electrical Power Active"
+        unique_id: heishahub_electrical_power_active
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: >-
+          {% set src = states('input_select.heishahub_electrical_source') %}
+          {% if src == 'external_power' %}
+            {% set ent = states('input_text.heishahub_src_external_electrical_power') %}
+            {% if ent and states(ent) not in ['unknown','unavailable','none',''] %}
+              {{ states(ent) | float(0) }}
+            {% else %}
+              0
+            {% endif %}
+          {% elif src == 'external_energy' %}
+            0
+          {% else %}
+            {% set ent = states('input_text.heishahub_src_internal_power') %}
+            {% if ent and states(ent) not in ['unknown','unavailable','none',''] %}
+              {{ states(ent) | float(0) }}
+            {% else %}
+              0
+            {% endif %}
+          {% endif %}
+
+      # ─── Active thermal energy (kWh, total_increasing) ──────────────────
+      # Used by utility_meter. In `external_energy` mode reads the meter
+      # directly; otherwise reads the integrator output.
+      - name: "HeishaHub Thermal Energy Active"
+        unique_id: heishahub_thermal_energy_active
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total_increasing
+        availability: >-
+          {% set src = states('input_select.heishahub_thermal_source') %}
+          {% if src == 'external_energy' %}
+            {% set ent = states('input_text.heishahub_src_external_thermal_energy') %}
+            {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+          {% else %}
+            {{ states('sensor.heishahub_thermal_energy')
+               not in ['unknown','unavailable','none'] }}
+          {% endif %}
+        state: >-
+          {% set src = states('input_select.heishahub_thermal_source') %}
+          {% if src == 'external_energy' %}
+            {{ states(states('input_text.heishahub_src_external_thermal_energy')) | float(0) }}
+          {% else %}
+            {{ states('sensor.heishahub_thermal_energy') | float(0) }}
+          {% endif %}
+
+      # ─── Active electrical energy (kWh, total_increasing) ───────────────
+      - name: "HeishaHub Electrical Energy Active"
+        unique_id: heishahub_electrical_energy_active
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state_class: total_increasing
+        availability: >-
+          {% set src = states('input_select.heishahub_electrical_source') %}
+          {% if src == 'external_energy' %}
+            {% set ent = states('input_text.heishahub_src_external_electrical_energy') %}
+            {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+          {% else %}
+            {{ states('sensor.heishahub_electrical_energy')
+               not in ['unknown','unavailable','none'] }}
+          {% endif %}
+        state: >-
+          {% set src = states('input_select.heishahub_electrical_source') %}
+          {% if src == 'external_energy' %}
+            {{ states(states('input_text.heishahub_src_external_electrical_energy')) | float(0) }}
+          {% else %}
+            {{ states('sensor.heishahub_electrical_energy') | float(0) }}
+          {% endif %}
+
+  - binary_sensor:
+
+      # ─── Defrost state (resolved via configurable source) ───────────────
+      - name: "HeishaHub Source Defrost"
+        unique_id: heishahub_source_defrost
+        availability: >-
+          {% set ent = states('input_text.heishahub_src_defrost_state') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: >-
+          {% set ent = states('input_text.heishahub_src_defrost_state') %}
+          {{ is_state(ent, 'on') }}
+
+      # ─── Aux heater state (resolved via configurable source) ────────────
+      - name: "HeishaHub Source Aux Heater"
+        unique_id: heishahub_source_aux_heater
+        availability: >-
+          {% set ent = states('input_text.heishahub_src_aux_heater_state') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: >-
+          {% set ent = states('input_text.heishahub_src_aux_heater_state') %}
+          {{ is_state(ent, 'on') }}

@@ -38,3 +38,15 @@ jobs:
         with:
           category: plugin
         continue-on-error: true
+
+  smoke-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pyyaml
+        run: pip install pyyaml
+      - name: Run smoke tests
+        run: python3 tests/smoke.py

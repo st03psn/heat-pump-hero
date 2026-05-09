@@ -36,9 +36,9 @@ existing building blocks into something usable:
 
 | Path | Purpose |
 |---|---|
-| `packages/heishahub_core.yaml` | Live sensors (thermal power, mode mapping, defrost, compressor running). |
-| `packages/heishahub_external.yaml` | UI helpers for external sensors (Shelly / heat meter) and active-power selector. |
-| `packages/heishahub_efficiency.yaml` | Energy integrals, utility_meter, COP / daily / monthly / SCOP. |
+| `packages/heishahub_sources.yaml` | **Source adapter layer.** Defines `input_text` helpers for every underlying entity-ID (heat pump and external meters), plus active-source dispatcher template sensors. The only file that names heat-pump-specific entities. |
+| `packages/heishahub_core.yaml` | Live sensors (thermal power, mode mapping, defrost, compressor running) — reads exclusively from `sensor.heishahub_source_*`. |
+| `packages/heishahub_efficiency.yaml` | Energy integrals, utility_meter (with tariff splits), COP / daily / monthly / SCOP, period comparisons. |
 | `packages/heishahub_cycles.yaml` | Cycle analysis: start/stop events, runtime/pause, counters, short-cycle detection. |
 | `packages/heishahub_advisor.yaml` | Data-driven optimization recommendations with plain-language messages and an aggregate traffic-light. |
 | `packages/heishahub_control.yaml` | Optional control automations (CCC, SoftStart, Solar-DHW, night Quiet-Mode) — master switch off by default. |
@@ -54,34 +54,63 @@ existing building blocks into something usable:
 
 ## Naming conventions
 
-- **Entities** introduced by HeishaHub: prefix `heishahub_` (e.g.
+- **HeishaHub-owned entities**: prefix `heishahub_` (e.g.
   `sensor.heishahub_scop`).
-- **Source entities** (kamaradclimber): prefix `panasonic_heat_pump_` —
-  never used directly in the dashboard, always wrapped via a template, so a
-  topic-prefix change is a single-file edit.
-- **Helpers**: all in `input_*.heishahub_*`.
+- **Source-facade entities** (resolved from configurable helpers):
+  prefix `heishahub_source_*` (e.g. `sensor.heishahub_source_inlet_temp`).
+  These are what every other package reads from.
+- **Source helpers** (UI-configurable entity-ID strings):
+  prefix `input_text.heishahub_src_*`.
+- **External meter helpers**:
+  prefix `input_text.heishahub_src_external_*`.
+- **Active-source dispatchers** (what utility_meter / COP read):
+  `sensor.heishahub_thermal_power_active`, `_thermal_energy_active`,
+  `_electrical_power_active`, `_electrical_energy_active`.
+- **Heat-pump native entities** (`panasonic_heat_pump_*`): only ever
+  appear as **defaults** in `heishahub_sources.yaml`, never directly
+  in any other file.
 - **Dashboard views**: `overview`, `schema`, `analysis`, `efficiency`,
   `optimization`, `config`.
 
-## Heishamon topic prefix
+## Source-adapter architecture
 
-Default is `panasonic_heat_pump`. If your firmware uses a different prefix,
-change it **only** in `packages/heishahub_core.yaml` via the variable
-`!secret heishahub_topic_prefix` (not in the dashboard, not scattered through
-templates).
+Everything HeishaHub reads is funneled through `packages/heishahub_sources.yaml`:
 
-## External-sensor mechanism
-
-`packages/heishahub_external.yaml` defines `input_text` helpers for the source
-entity-IDs. Templates read indirectly:
-
-```yaml
-{{ states(states('input_text.heishahub_shelly_entity')) | float(0) }}
+```
+input_text.heishahub_src_inlet_temp           ← user-configurable entity-ID
+   │  default: sensor.panasonic_heat_pump_main_inlet_temperature
+   ▼
+sensor.heishahub_source_inlet_temp            ← facade (resolved)
+   │
+   ▼
+sensor.heishahub_thermal_power                ← uses facade
+   │
+   ▼
+sensor.heishahub_thermal_power_active         ← respects source-mode selector
+   │
+   ▼ (integration: Riemann sum)
+sensor.heishahub_thermal_energy               ← kWh, total_increasing
+   │
+   ▼
+sensor.heishahub_thermal_energy_active        ← either integrator OR external kWh meter
+   │
+   ▼
+utility_meter.heishahub_thermal_*             ← daily/monthly/yearly + tariff splits
 ```
 
-This lets the user pick their Shelly power sensor in the HA UI without
-editing YAML. `input_select.heishahub_electrical_source` switches between
-`heishamon_internal` and `external_shelly` — the SCOP calculation follows.
+**Source modes** (`input_select.heishahub_thermal_source` / `_electrical_source`):
+
+| Mode | Behavior |
+|---|---|
+| `calculated` (thermal) | Uses T_in/T_out × flow × cp via the facades. Heat-pump must expose temperatures and flow. |
+| `heat_pump_internal` (electrical) | Reads the heat pump's own consumed-power sensor. |
+| `external_power` | Integrates a user-provided power sensor (W) → kWh. Use for Shelly/IoTaWatt. |
+| `external_energy` | Reads a user-provided kWh meter (`total_increasing`) directly — bypasses the integrator. Most accurate when you have a hardware heat meter or utility meter. |
+
+**Swapping the heat pump:** change the relevant `input_text.heishahub_src_*`
+helpers in the UI (Settings → Devices → Helpers). All read paths follow.
+Write paths in `heishahub_control.yaml` are still heat-pump-specific by
+nature — see the comment header in that file.
 
 ## COP / SCOP formulas
 
@@ -91,7 +120,8 @@ editing YAML. `input_select.heishahub_electrical_source` switches between
 - **SCOP / monthly / daily**: `utility_meter` counters yield per-period
   energy totals; efficiency = `thermal_kWh[period] / electrical_kWh[period]`.
 - **Tariff splits**: `utility_meter` with tariffs `heating`/`dhw`/`cooling`,
-  switched by a template on `select.panasonic_heat_pump_main_operating_mode`.
+  switched by an automation that follows `sensor.heishahub_operating_mode`
+  (which is itself derived from the configurable source-facade).
 
 ## Coexistence with HeishaMoNR
 

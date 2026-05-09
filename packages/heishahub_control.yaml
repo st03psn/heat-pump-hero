@@ -7,6 +7,17 @@
 # !!! IMPORTANT !!!
 # Only ONE system may write at a time. If HeishaMoNR is active, leave
 # every input_boolean.heishahub_ctrl_* OFF.
+#
+# ─── Note on heat-pump portability ──────────────────────────────────────
+# Read paths in HeishaHub are abstracted via heishahub_sources.yaml so
+# users can swap heat pumps without YAML edits. Write paths (the
+# select.* / button.* targets used here) are device-specific, since
+# every heat pump exposes different control actions. To adapt this
+# package to a non-Heishamon heat pump:
+#   1. Disable / delete the automations below.
+#   2. Add equivalents that target your heat pump's write entities,
+#      gated by the same input_boolean.heishahub_ctrl_* switches so
+#      the dashboard UI keeps working.
 
 input_boolean:
   heishahub_ctrl_master:

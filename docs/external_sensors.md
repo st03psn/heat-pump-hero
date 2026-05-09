@@ -1,4 +1,4 @@
-# External sensors
+# External sensors and source-adapter
 
 🌐 English (this file) · [Deutsch](de/external_sensors.md)
 
@@ -7,30 +7,60 @@ power from internal temperature sensors — both with 10–20 % tolerance. For
 trustworthy SCOP / monthly figures you need a real electricity meter and
 optionally a heat meter.
 
-HeishaHub keeps both sources — internal and external — available
-simultaneously and lets you switch the active one via dropdown, no YAML
-editing required.
+HeishaHub abstracts ALL sources behind a configurable adapter layer
+(`packages/heishahub_sources.yaml`). You can:
 
-## Electricity — Shelly
+- swap individual entity-IDs (e.g. point `heishahub_src_inlet_temp` at a
+  different temperature sensor) without YAML edits
+- switch source modes per metric (calculated / external power /
+  external energy meter)
+- swap the entire heat pump (Heishamon → Vaillant Modbus → Daikin Altherma
+  → …) by adjusting the `input_text.heishahub_src_*` helpers
+
+## Source modes
+
+Two `input_select` helpers control which counter feeds SCOP / utility_meter:
+
+### `input_select.heishahub_thermal_source`
+
+| Mode | Effect | When to use |
+|---|---|---|
+| `calculated` | thermal power = (T_out − T_in) × flow × cp | default — accurate enough on Heishamon |
+| `external_power` | integrate a user-provided thermal-power sensor (W) → kWh | rare, mostly for legacy heat-meter outputs |
+| `external_energy` | read a user-provided heat-meter (kWh `total_increasing`) **directly** — no integration | most accurate; bypasses every error in the calculation chain |
+
+### `input_select.heishahub_electrical_source`
+
+| Mode | Effect |
+|---|---|
+| `heat_pump_internal` | heat pump's own consumed-power sensor |
+| `external_power` | integrate a user-provided power sensor (W) → kWh |
+| `external_energy` | read a user-provided utility meter (kWh) directly |
+
+## Electricity — Shelly examples
 
 ### Shelly Pro 3EM (3-phase)
 
 1. Add the Shelly to HA (Shelly integration via HACS, or MQTT).
-2. Among others, you'll get
+2. Among others you'll get
    `sensor.shellypro3em_<id>_total_active_power` (W) and
-   `sensor.shellypro3em_<id>_total_energy` (kWh).
-3. Open *Settings → Devices & Services → Helpers*, edit
-   `heishahub_shelly_entity` and enter the **power sensor** (W), e.g.
-   `sensor.shellypro3em_xxx_total_active_power`.
-4. In the dashboard *Configuration → Source selection*: set
-   `Electrical source` to `external_shelly`.
+   `sensor.shellypro3em_<id>_total_energy` (kWh, total_increasing).
+3. **Mode `external_power`** (integrate from W):
+   - *Settings → Devices & Services → Helpers* →
+     edit `heishahub_src_external_electrical_power` and enter
+     `sensor.shellypro3em_xxx_total_active_power`
+   - Dashboard → *Configuration → Source modes* → `Electrical source mode`
+     = `external_power`
+4. **Mode `external_energy`** (recommended — read kWh directly):
+   - Edit `heishahub_src_external_electrical_energy` and enter
+     `sensor.shellypro3em_xxx_total_energy`
+   - Set source mode to `external_energy`. The integrator is bypassed.
 
 ### Shelly 1PM / EM (single phase)
 
-Same flow — enter the power-sensor entity-ID into
-`heishahub_shelly_entity`.
+Same flow with the single-phase entity-IDs.
 
-## Heat meter — MQTT
+## Heat meter — MQTT example
 
 Variant 1: **read out via M-Bus gateway** (e.g. Weidmann *amber*,
 Lobaro *MBus2MQTT*) — example topics:
@@ -38,7 +68,6 @@ Lobaro *MBus2MQTT*) — example topics:
 ```
 mbus/heatmeter1/energy_kwh   → 12345.67
 mbus/heatmeter1/power_w      → 4200
-mbus/heatmeter1/flow_lpm     → 12.5
 ```
 
 Wire them into HA via `mqtt sensor`:
@@ -60,14 +89,36 @@ mqtt:
       state_class: measurement
 ```
 
-Then enter into the helpers:
-- `heishahub_wmz_entity`        → `sensor.wmz_energy`
-- `heishahub_wmz_power_entity`  → `sensor.wmz_power`
+Then in the *Configuration* dashboard view:
+- `heishahub_src_external_thermal_energy` → `sensor.wmz_energy`
+- `heishahub_src_external_thermal_power`  → `sensor.wmz_power` (optional)
 
-Switch the source: *Configuration → Source selection* →
-`Thermal source` = `external_wmz`.
+Set `Thermal source mode` = `external_energy` (or `external_power` if you
+only have W and prefer integration).
 
 Variant 2: **direct pulse counter** on a Shelly input or ESPHome.
+
+## Swapping the heat pump
+
+If you replace Heishamon with another integration (Vaillant Modbus, Daikin
+Altherma, …), open *Configuration → Heat pump entities (configurable)* and
+set each `heishahub_src_*` helper to the new entity-ID. Example for
+a hypothetical Vaillant install:
+
+| Helper | Old (Heishamon) | New (Vaillant) |
+|---|---|---|
+| `heishahub_src_inlet_temp` | `sensor.panasonic_heat_pump_main_inlet_temperature` | `sensor.vaillant_arotherm_return_temp` |
+| `heishahub_src_outlet_temp` | `sensor.panasonic_heat_pump_main_outlet_temperature` | `sensor.vaillant_arotherm_supply_temp` |
+| `heishahub_src_flow_rate` | `sensor.panasonic_heat_pump_main_water_flow` | `sensor.vaillant_arotherm_flow_rate` |
+| ... | ... | ... |
+
+All HeishaHub sensors keep working because they read from
+`sensor.heishahub_source_*` (the resolved facade), never from the raw
+heat-pump entities directly.
+
+The control automations in `heishahub_control.yaml` are still
+heat-pump-specific (write paths) — see the comment in that file for
+adapting them.
 
 ## Source switch and history
 
@@ -83,8 +134,9 @@ on the first of a month keeps the periods clean.
 After switching to external sources:
 
 1. *Developer Tools → States* — `sensor.heishahub_electrical_power_active`
-   must read identically to your Shelly sensor (in W).
-2. `sensor.heishahub_thermal_power_active` should be plausible
-   (5–15 kW heating at 7 °C outdoor).
+   should read identically to your Shelly sensor (in W) when in
+   `external_power` mode.
+2. `sensor.heishahub_thermal_energy_active` should advance at the same
+   rate as your heat meter when in `external_energy` mode.
 3. `sensor.heishahub_cop_live` should sit between 2.0 and 5.0.
 4. After 24 h, `sensor.heishahub_cop_daily` shows a daily figure.

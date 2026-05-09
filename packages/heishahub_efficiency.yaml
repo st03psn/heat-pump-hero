@@ -4,7 +4,7 @@
 # resulting period COPs (TAZ/MAZ/JAZ in German parlance, also exposed as
 # SCOP for international users).
 #
-# Reads from the "active" sensors in heishahub_external.yaml so source
+# Reads from the "active" sensors in heishahub_sources.yaml so source
 # switching (Shelly / heat meter vs. internal) propagates here.
 #
 # Tariff splits: utility_meter tariffs heating/dhw/cooling are switched
@@ -39,32 +39,32 @@ sensor:
 utility_meter:
   # ── Thermal — no tariff (total) ──
   heishahub_thermal_daily:
-    source: sensor.heishahub_thermal_energy
+    source: sensor.heishahub_thermal_energy_active
     cycle: daily
   heishahub_thermal_monthly:
-    source: sensor.heishahub_thermal_energy
+    source: sensor.heishahub_thermal_energy_active
     cycle: monthly
   heishahub_thermal_yearly:
-    source: sensor.heishahub_thermal_energy
+    source: sensor.heishahub_thermal_energy_active
     cycle: yearly
 
   # ── Thermal — tariff splits (heating / dhw / cooling) ──
   heishahub_thermal_daily_split:
-    source: sensor.heishahub_thermal_energy
+    source: sensor.heishahub_thermal_energy_active
     cycle: daily
     tariffs:
       - heating
       - dhw
       - cooling
   heishahub_thermal_monthly_split:
-    source: sensor.heishahub_thermal_energy
+    source: sensor.heishahub_thermal_energy_active
     cycle: monthly
     tariffs:
       - heating
       - dhw
       - cooling
   heishahub_thermal_yearly_split:
-    source: sensor.heishahub_thermal_energy
+    source: sensor.heishahub_thermal_energy_active
     cycle: yearly
     tariffs:
       - heating
@@ -73,32 +73,32 @@ utility_meter:
 
   # ── Electrical — no tariff (total) ──
   heishahub_electrical_daily:
-    source: sensor.heishahub_electrical_energy
+    source: sensor.heishahub_electrical_energy_active
     cycle: daily
   heishahub_electrical_monthly:
-    source: sensor.heishahub_electrical_energy
+    source: sensor.heishahub_electrical_energy_active
     cycle: monthly
   heishahub_electrical_yearly:
-    source: sensor.heishahub_electrical_energy
+    source: sensor.heishahub_electrical_energy_active
     cycle: yearly
 
   # ── Electrical — tariff splits ──
   heishahub_electrical_daily_split:
-    source: sensor.heishahub_electrical_energy
+    source: sensor.heishahub_electrical_energy_active
     cycle: daily
     tariffs:
       - heating
       - dhw
       - cooling
   heishahub_electrical_monthly_split:
-    source: sensor.heishahub_electrical_energy
+    source: sensor.heishahub_electrical_energy_active
     cycle: monthly
     tariffs:
       - heating
       - dhw
       - cooling
   heishahub_electrical_yearly_split:
-    source: sensor.heishahub_electrical_energy
+    source: sensor.heishahub_electrical_energy_active
     cycle: yearly
     tariffs:
       - heating

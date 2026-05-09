@@ -80,8 +80,8 @@ template:
         unique_id: heishahub_advisor_spread
         icon: mdi:thermometer-lines
         state: >-
-          {% set tin = states('sensor.panasonic_heat_pump_main_inlet_temperature') | float(0) %}
-          {% set tout = states('sensor.panasonic_heat_pump_main_outlet_temperature') | float(0) %}
+          {% set tin = states('sensor.heishahub_source_inlet_temp') | float(0) %}
+          {% set tout = states('sensor.heishahub_source_outlet_temp') | float(0) %}
           {% set running = is_state('binary_sensor.heishahub_compressor_running','on') %}
           {% set dt = tout - tin %}
           {% set target = states('input_number.heishahub_advisor_dt_target_k') | float(5) %}
@@ -91,11 +91,11 @@ template:
           {% else %}ok{% endif %}
         attributes:
           metric: >-
-            {{ ((states('sensor.panasonic_heat_pump_main_outlet_temperature') | float(0))
-               - (states('sensor.panasonic_heat_pump_main_inlet_temperature') | float(0))) | round(1) }} K
+            {{ ((states('sensor.heishahub_source_outlet_temp') | float(0))
+               - (states('sensor.heishahub_source_inlet_temp') | float(0))) | round(1) }} K
           message: >-
-            {% set tin = states('sensor.panasonic_heat_pump_main_inlet_temperature') | float(0) %}
-            {% set tout = states('sensor.panasonic_heat_pump_main_outlet_temperature') | float(0) %}
+            {% set tin = states('sensor.heishahub_source_inlet_temp') | float(0) %}
+            {% set tout = states('sensor.heishahub_source_outlet_temp') | float(0) %}
             {% set dt = tout - tin %}
             {% set target = states('input_number.heishahub_advisor_dt_target_k') | float(5) %}
             {% if not is_state('binary_sensor.heishahub_compressor_running','on') %}
@@ -121,14 +121,14 @@ template:
         icon: mdi:snowflake-melt
         state: >-
           {% set defrost = is_state('binary_sensor.heishahub_defrost_active','on') %}
-          {% set tout = states('sensor.panasonic_heat_pump_main_outside_temperature') | float(0) %}
+          {% set tout = states('sensor.heishahub_source_outdoor_temp') | float(0) %}
           {% if defrost and tout > 7 %}warn
           {% else %}ok{% endif %}
         attributes:
-          metric: "{{ states('sensor.panasonic_heat_pump_main_outside_temperature') }} °C"
+          metric: "{{ states('sensor.heishahub_source_outdoor_temp') }} °C"
           message: >-
             {% if is_state('binary_sensor.heishahub_defrost_active','on')
-                  and states('sensor.panasonic_heat_pump_main_outside_temperature') | float(0) > 7 %}
+                  and states('sensor.heishahub_source_outdoor_temp') | float(0) > 7 %}
             Defrost cycle active above 7 °C outdoor — unusual. Likely causes:
             evaporator airflow blocked (leaves, snow, wall too close), fan
             issue, sensor drift. Check the evaporator fins.
@@ -146,14 +146,14 @@ template:
           {# Simplified heuristic: at outdoor < 0 °C the supply setpoint
              should be reachable without the auxiliary heater. If the heater
              runs, the curve is too flat. #}
-          {% set heater = is_state('binary_sensor.panasonic_heat_pump_main_heater_state','on') %}
-          {% set tout = states('sensor.panasonic_heat_pump_main_outside_temperature') | float(99) %}
+          {% set heater = is_state('binary_sensor.heishahub_source_aux_heater','on') %}
+          {% set tout = states('sensor.heishahub_source_outdoor_temp') | float(99) %}
           {% if heater and tout > -7 %}warn
           {% else %}ok{% endif %}
         attributes:
           message: >-
-            {% if is_state('binary_sensor.panasonic_heat_pump_main_heater_state','on')
-                  and states('sensor.panasonic_heat_pump_main_outside_temperature') | float(99) > -7 %}
+            {% if is_state('binary_sensor.heishahub_source_aux_heater','on')
+                  and states('sensor.heishahub_source_outdoor_temp') | float(99) > -7 %}
             Auxiliary electric heater active above -7 °C outdoor. Indicates
             either a too-flat heating curve or an overshooting supply
             setpoint. Raise the heating curve at the cold end or check the

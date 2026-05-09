@@ -25,28 +25,28 @@ views:
               {{ 'green' if is_state('switch.panasonic_heat_pump_main_heatpump_state','on') else 'disabled' }}
           - type: custom:mushroom-template-card
             primary: Mode
-            secondary: "{{ states('select.panasonic_heat_pump_main_operating_mode_state') }}"
+            secondary: "{{ states('sensor.heishahub_source_operating_mode') }}"
             icon: mdi:fire
             icon_color: orange
           - type: custom:mushroom-template-card
             primary: Outdoor temperature
-            secondary: "{{ states('sensor.panasonic_heat_pump_main_outside_temperature') }} °C"
+            secondary: "{{ states('sensor.heishahub_source_outdoor_temp') }} °C"
             icon: mdi:thermometer
             icon_color: blue
           - type: custom:mushroom-template-card
             primary: Supply / return
             secondary: >-
-              {{ states('sensor.panasonic_heat_pump_main_outlet_temperature') }} °C /
-              {{ states('sensor.panasonic_heat_pump_main_inlet_temperature') }} °C
+              {{ states('sensor.heishahub_source_outlet_temp') }} °C /
+              {{ states('sensor.heishahub_source_inlet_temp') }} °C
             icon: mdi:water-thermometer
             icon_color: red
           - type: custom:mushroom-template-card
             primary: Water pressure
-            secondary: "{{ states('sensor.panasonic_heat_pump_main_pump_pressure') }} bar"
+            secondary: "{{ states('sensor.heishahub_source_pump_pressure') }} bar"
             icon: mdi:gauge
           - type: custom:mushroom-template-card
             primary: Water flow
-            secondary: "{{ states('sensor.panasonic_heat_pump_main_water_flow') }} L/min"
+            secondary: "{{ states('sensor.heishahub_source_flow_rate') }} L/min"
             icon: mdi:water-pump
 
       - type: grid
@@ -54,17 +54,17 @@ views:
         cards:
           - type: custom:mushroom-template-card
             primary: Frequency
-            secondary: "{{ states('sensor.panasonic_heat_pump_main_compressor_frequency') }} Hz"
+            secondary: "{{ states('sensor.heishahub_source_compressor_freq') }} Hz"
             icon: mdi:sine-wave
             icon_color: |-
               {{ 'green' if is_state('binary_sensor.heishahub_compressor_running','on') else 'disabled' }}
           - type: custom:mushroom-template-card
             primary: Running hours
-            secondary: "{{ states('sensor.panasonic_heat_pump_main_compressor_running_hours') }} h"
+            secondary: "{{ states('sensor.heishahub_source_compressor_hours') }} h"
             icon: mdi:clock-outline
           - type: custom:mushroom-template-card
             primary: Starts
-            secondary: "{{ states('sensor.panasonic_heat_pump_main_compressor_starts') }}"
+            secondary: "{{ states('sensor.heishahub_source_compressor_starts') }}"
             icon: mdi:counter
           - type: custom:mushroom-template-card
             primary: Defrost
@@ -150,7 +150,7 @@ views:
             }
         sub_buttons:
           # ── Operating mode (top center, ~450/900 = 50%, ~35/520 = 7%) ──
-          - entity: select.panasonic_heat_pump_main_operating_mode_state
+          - entity: sensor.heishahub_source_operating_mode
             show_state: true
             show_name: false
             show_icon: false
@@ -166,7 +166,7 @@ views:
               }
 
           # ── Outdoor temperature (~110/900 = 12%, ~88/520 = 17%) ──
-          - entity: sensor.panasonic_heat_pump_main_outside_temperature
+          - entity: sensor.heishahub_source_outdoor_temp
             show_state: true
             show_name: false
             show_icon: false
@@ -182,7 +182,7 @@ views:
               }
 
           # ── Supply (outlet) temperature (~400/900 = 44%, ~140/520 = 27%) ──
-          - entity: sensor.panasonic_heat_pump_main_outlet_temperature
+          - entity: sensor.heishahub_source_outlet_temp
             show_state: true
             show_name: false
             show_icon: false
@@ -201,7 +201,7 @@ views:
               }
 
           # ── Discharge temperature (~240/900 = 27%, ~162/520 = 31%) ──
-          - entity: sensor.panasonic_heat_pump_main_discharge_temperature
+          - entity: sensor.heishahub_source_discharge_temp
             show_state: true
             show_name: false
             show_icon: false
@@ -219,7 +219,7 @@ views:
               }
 
           # ── Return (inlet) temperature (~400/900 = 44%, ~355/520 = 68%) ──
-          - entity: sensor.panasonic_heat_pump_main_inlet_temperature
+          - entity: sensor.heishahub_source_inlet_temp
             show_state: true
             show_name: false
             show_icon: false
@@ -238,7 +238,7 @@ views:
               }
 
           # ── Water flow (~260/900 = 29%, ~354/520 = 68%) ──
-          - entity: sensor.panasonic_heat_pump_main_water_flow
+          - entity: sensor.heishahub_source_flow_rate
             show_state: true
             show_name: false
             show_icon: false
@@ -256,7 +256,7 @@ views:
               }
 
           # ── Compressor frequency (~812/900 = 90%, ~389/520 = 75%) ──
-          - entity: sensor.panasonic_heat_pump_main_compressor_frequency
+          - entity: sensor.heishahub_source_compressor_freq
             show_state: true
             show_name: false
             show_icon: false
@@ -275,7 +275,7 @@ views:
               }
 
           # ── Compressor running hours (~780/900 = 87%, ~428/520 = 82%) ──
-          - entity: sensor.panasonic_heat_pump_main_compressor_running_hours
+          - entity: sensor.heishahub_source_compressor_hours
             show_state: true
             show_name: false
             show_icon: false
@@ -293,7 +293,7 @@ views:
               }
 
           # ── Compressor starts (~842/900 = 94%, ~428/520 = 82%) ──
-          - entity: sensor.panasonic_heat_pump_main_compressor_starts
+          - entity: sensor.heishahub_source_compressor_starts
             show_state: true
             show_name: false
             show_icon: false
@@ -333,7 +333,7 @@ views:
               .bubble-sub-button[data-state="on"] { display: flex; }
 
           # ── Water pressure (~65/900 = 7%, ~436/520 = 84%) ──
-          - entity: sensor.panasonic_heat_pump_main_pump_pressure
+          - entity: sensor.heishahub_source_pump_pressure
             show_state: true
             show_name: false
             show_icon: false
@@ -351,7 +351,7 @@ views:
               }
 
           # ── Water flow (pressure box, ~140/900 = 16%) ──
-          - entity: sensor.panasonic_heat_pump_main_water_flow
+          - entity: sensor.heishahub_source_flow_rate
             show_state: true
             show_name: false
             show_icon: false
@@ -451,27 +451,27 @@ views:
             apex_config:
               title: { text: "Hz / rpm / L-min" }
         series:
-          - entity: sensor.panasonic_heat_pump_main_outside_temperature
+          - entity: sensor.heishahub_source_outdoor_temp
             name: Outdoor
             yaxis_id: temp
             color: "#e0a800"
-          - entity: sensor.panasonic_heat_pump_main_inlet_temperature
+          - entity: sensor.heishahub_source_inlet_temp
             name: Return
             yaxis_id: temp
             color: "#7ec1ff"
-          - entity: sensor.panasonic_heat_pump_main_outlet_temperature
+          - entity: sensor.heishahub_source_outlet_temp
             name: Supply
             yaxis_id: temp
             color: "#d62728"
-          - entity: sensor.panasonic_heat_pump_main_discharge_temperature
+          - entity: sensor.heishahub_source_discharge_temp
             name: Discharge
             yaxis_id: temp
             color: "#2ca02c"
-          - entity: sensor.panasonic_heat_pump_main_compressor_frequency
+          - entity: sensor.heishahub_source_compressor_freq
             name: Compressor frequency
             yaxis_id: hz
             color: "#bcbd22"
-          - entity: sensor.panasonic_heat_pump_main_water_flow
+          - entity: sensor.heishahub_source_flow_rate
             name: Water flow
             yaxis_id: hz
             color: "#7fb3d5"
@@ -737,14 +737,16 @@ views:
         stat_types:
           - sum
         entities:
-          - sensor.heishahub_thermal_energy
-          - sensor.heishahub_electrical_energy
+          - sensor.heishahub_thermal_energy_active
+          - sensor.heishahub_electrical_energy_active
 
       - type: markdown
         content: |
-          **HA Energy Dashboard:** add `sensor.heishahub_thermal_energy` and
-          `sensor.heishahub_electrical_energy` as *Individual Devices* under
-          Settings → Energy. Both carry `device_class: energy`.
+          **HA Energy Dashboard:** add `sensor.heishahub_thermal_energy_active`
+          and `sensor.heishahub_electrical_energy_active` as *Individual
+          Devices* under Settings → Energy. These follow your selected source
+          (calculated / external power / external energy meter), so the
+          Energy Dashboard always shows the correct counter.
 
           **Multi-year comparison:** import the Grafana dashboard
           `efficiency_jaz_maz.json` for cross-year SCOP/MAZ charts
@@ -857,29 +859,85 @@ views:
     path: config
     icon: mdi:cog
     cards:
+      - type: markdown
+        content: |
+          ## Source adapter
+          HeishaHub reads everything via the configurable source helpers
+          below. Defaults match the kamaradclimber Heishamon integration —
+          if you use a different heat pump or different meters, change the
+          relevant entity-ID and HeishaHub follows automatically. No YAML
+          editing required.
+
+      # ── Source-mode selectors ──
       - type: entities
-        title: Source selection
+        title: Source modes
         entities:
-          - input_select.heishahub_thermal_source
-          - input_select.heishahub_electrical_source
-          - input_select.heishahub_schema_variant
+          - entity: input_select.heishahub_thermal_source
+            name: Thermal source mode
+          - entity: input_select.heishahub_electrical_source
+            name: Electrical source mode
+          - entity: input_select.heishahub_schema_variant
+            name: Installation schematic variant
+
+      # ── Heat pump device entities (UI-configurable) ──
       - type: entities
-        title: External sensors (entity-IDs)
+        title: Heat pump entities (configurable)
         entities:
-          - input_text.heishahub_shelly_entity
-          - input_text.heishahub_wmz_entity
-          - input_text.heishahub_wmz_power_entity
+          - entity: input_text.heishahub_src_inlet_temp
+            name: Inlet (return) T°
+          - entity: input_text.heishahub_src_outlet_temp
+            name: Outlet (supply) T°
+          - entity: input_text.heishahub_src_flow_rate
+            name: Water flow rate
+          - entity: input_text.heishahub_src_outdoor_temp
+            name: Outdoor T°
+          - entity: input_text.heishahub_src_compressor_freq
+            name: Compressor frequency
+          - entity: input_text.heishahub_src_compressor_hours
+            name: Compressor hours (lifetime)
+          - entity: input_text.heishahub_src_compressor_starts
+            name: Compressor starts (lifetime)
+          - entity: input_text.heishahub_src_discharge_temp
+            name: Discharge T°
+          - entity: input_text.heishahub_src_pump_pressure
+            name: Water pressure
+          - entity: input_text.heishahub_src_defrost_state
+            name: Defrost state (binary)
+          - entity: input_text.heishahub_src_aux_heater_state
+            name: Aux heater state (binary)
+          - entity: input_text.heishahub_src_operating_mode
+            name: Operating mode (select)
+          - entity: input_text.heishahub_src_internal_power
+            name: Internal power consumption (W)
+
+      # ── External meter entities (optional) ──
+      - type: entities
+        title: External meters (optional)
+        entities:
+          - entity: input_text.heishahub_src_external_thermal_power
+            name: External thermal power (W)
+          - entity: input_text.heishahub_src_external_thermal_energy
+            name: External heat meter (kWh, total_increasing)
+          - entity: input_text.heishahub_src_external_electrical_power
+            name: External electrical power (W)
+          - entity: input_text.heishahub_src_external_electrical_energy
+            name: External electricity meter (kWh, total_increasing)
+
+      # ── Heat-curve auto-entities (Heishamon-specific UI shortcut) ──
+      # Note: this filter pattern is heat-pump specific — adapt if you swap
+      # to a non-Heishamon heat pump.
       - type: custom:auto-entities
         card:
           type: entities
-          title: Heating curve — zone 1
+          title: Heating curve — zone 1 (Heishamon-specific)
         filter:
           include:
             - entity_id: number.panasonic_heat_pump_main_z1_heat_curve_*
+        show_empty: false
       - type: custom:auto-entities
         card:
           type: entities
-          title: Heating curve — zone 2 (if present)
+          title: Heating curve — zone 2 (if present, Heishamon-specific)
         filter:
           include:
             - entity_id: number.panasonic_heat_pump_main_z2_heat_curve_*

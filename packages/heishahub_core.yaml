@@ -1,37 +1,43 @@
 # HeishaHub — core package
 #
 # Template sensors for the live values shown on the dashboard.
+# Every sensor reads from `sensor.heishahub_source_*` (defined in the
+# sources adapter package) — there are NO hardcoded heat-pump entity IDs
+# in this file. Swap the heat pump by changing the `input_text.heishahub_src_*`
+# helpers in the UI; this package keeps working unchanged.
+#
 # Every sensor is `availability:`-guarded — missing sources do not produce
 # `unknown` spam.
 #
-# Assumes kamaradclimber/heishamon-homeassistant is installed with the
-# default topic prefix `panasonic_heat_pump`.
-#
 # HA Energy Dashboard:
-#   sensor.heishahub_thermal_energy and sensor.heishahub_electrical_energy
-#   (defined in heishahub_efficiency.yaml) carry device_class: energy and
-#   state_class: total_increasing so they appear as individual devices in
-#   Settings → Energy. Add them there manually after first install.
+#   sensor.heishahub_thermal_energy_active and
+#   sensor.heishahub_electrical_energy_active (defined in sources package)
+#   carry device_class: energy and state_class: total_increasing so they
+#   appear as individual devices in Settings → Energy. Add them there
+#   manually after first install.
 
 template:
   - sensor:
-      # ─── Live thermal power ───────────────────────────────────────────
+      # ─── Live thermal power (calculated from T_in/T_out × flow × cp) ──
+      # Used as the input to integration → kWh when thermal_source is
+      # `calculated`. Reads via the configurable source-facade entities,
+      # so swapping heat pump just means changing input_text helpers.
       - name: "HeishaHub Thermal Power"
         unique_id: heishahub_thermal_power
         unit_of_measurement: "W"
         device_class: power
         state_class: measurement
         availability: >-
-          {{ states('sensor.panasonic_heat_pump_main_inlet_temperature')
+          {{ states('sensor.heishahub_source_inlet_temp')
              not in ['unknown','unavailable','none']
-             and states('sensor.panasonic_heat_pump_main_outlet_temperature')
+             and states('sensor.heishahub_source_outlet_temp')
              not in ['unknown','unavailable','none']
-             and states('sensor.panasonic_heat_pump_main_water_flow')
+             and states('sensor.heishahub_source_flow_rate')
              not in ['unknown','unavailable','none'] }}
         state: >-
-          {% set tin = states('sensor.panasonic_heat_pump_main_inlet_temperature') | float(0) %}
-          {% set tout = states('sensor.panasonic_heat_pump_main_outlet_temperature') | float(0) %}
-          {% set flow = states('sensor.panasonic_heat_pump_main_water_flow') | float(0) %}
+          {% set tin = states('sensor.heishahub_source_inlet_temp') | float(0) %}
+          {% set tout = states('sensor.heishahub_source_outlet_temp') | float(0) %}
+          {% set flow = states('sensor.heishahub_source_flow_rate') | float(0) %}
           {% set power = (tout - tin) * flow * 4180 / 60 %}
           {{ [power, 0] | max | round(0) }}
 
@@ -39,17 +45,19 @@ template:
       - name: "HeishaHub Compressor Running"
         unique_id: heishahub_compressor_running
         state: >-
-          {{ states('sensor.panasonic_heat_pump_main_compressor_frequency')
+          {{ states('sensor.heishahub_source_compressor_freq')
              | float(0) > 0 }}
 
       # ─── Mode mapping (for clean display) ─────────────────────────────
+      # Reads the configurable operating-mode source. Common labels
+      # (Heat/Cool/DHW/Tank) are mapped to lowercase canonical values.
       - name: "HeishaHub Operating Mode"
         unique_id: heishahub_operating_mode
         availability: >-
-          {{ states('select.panasonic_heat_pump_main_operating_mode_state')
+          {{ states('sensor.heishahub_source_operating_mode')
              not in ['unknown','unavailable','none'] }}
         state: >-
-          {% set m = states('select.panasonic_heat_pump_main_operating_mode_state') %}
+          {% set m = states('sensor.heishahub_source_operating_mode') %}
           {% if 'Heat' in m %}heating
           {% elif 'Cool' in m %}cooling
           {% elif 'DHW' in m or 'Tank' in m %}dhw
@@ -57,10 +65,11 @@ template:
 
   - binary_sensor:
       # ─── Defrost active? (used to mask COP) ───────────────────────────
+      # Wraps the source-facade defrost binary sensor.
       - name: "HeishaHub Defrost Active"
         unique_id: heishahub_defrost_active
         availability: >-
-          {{ states('binary_sensor.panasonic_heat_pump_main_defrost_state')
+          {{ states('binary_sensor.heishahub_source_defrost')
              not in ['unknown','unavailable','none'] }}
         state: >-
-          {{ is_state('binary_sensor.panasonic_heat_pump_main_defrost_state','on') }}
+          {{ is_state('binary_sensor.heishahub_source_defrost','on') }}
