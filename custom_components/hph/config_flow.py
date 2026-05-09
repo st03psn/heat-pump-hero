@@ -127,6 +127,7 @@ class HphConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._data.update(
                 {
                     "indoor_temp_entity": user_input.get("indoor_temp_entity", ""),
+                    "outdoor_temp_entity": user_input.get("outdoor_temp_entity", ""),
                     "external_thermal_power": user_input.get("external_thermal_power", ""),
                     "external_electrical_power": user_input.get("external_electrical_power", ""),
                     "external_thermal_energy": user_input.get("external_thermal_energy", ""),
@@ -138,6 +139,7 @@ class HphConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         schema = vol.Schema(
             {
                 vol.Optional("indoor_temp_entity"): _temp_selector(),
+                vol.Optional("outdoor_temp_entity"): _temp_selector(),
                 vol.Optional("external_thermal_power"): _power_selector(),
                 vol.Optional("external_electrical_power"): _power_selector(),
                 vol.Optional("external_thermal_energy"): _energy_selector(),
@@ -211,6 +213,7 @@ class HphOptionsFlow(config_entries.OptionsFlow):
             self._data.update(
                 {
                     "indoor_temp_entity": user_input.get("indoor_temp_entity", ""),
+                    "outdoor_temp_entity": user_input.get("outdoor_temp_entity", ""),
                     "external_thermal_power": user_input.get("external_thermal_power", ""),
                     "external_electrical_power": user_input.get("external_electrical_power", ""),
                     "external_thermal_energy": user_input.get("external_thermal_energy", ""),
@@ -224,6 +227,10 @@ class HphOptionsFlow(config_entries.OptionsFlow):
                 vol.Optional(
                     "indoor_temp_entity",
                     default=self._data.get("indoor_temp_entity", ""),
+                ): _temp_selector(),
+                vol.Optional(
+                    "outdoor_temp_entity",
+                    default=self._data.get("outdoor_temp_entity", ""),
                 ): _temp_selector(),
                 vol.Optional(
                     "external_thermal_power",

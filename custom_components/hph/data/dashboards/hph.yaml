@@ -54,27 +54,11 @@ views:
                 entity: binary_sensor.hph_defrost_active
                 state: "on"
 
-      # ── Row B: Efficiency trend + COP values ─────────────────────────
-      - type: horizontal-stack
+      # ── Row B: KPI grid (COP + costs) — 3 columns ──────────────────────
+      - type: grid
+        columns: 3
+        square: false
         cards:
-          - type: custom:mushroom-template-card
-            primary: >-
-              {{ state_attr('sensor.hph_efficiency_trend','headline') | default('Efficiency trend') }}
-            secondary: >-
-              {% set m = states('sensor.hph_cop_change_month_pct') | float(0) %}
-              {% set y = states('sensor.hph_scop_change_year_pct') | float(0) %}
-              {{ '+' if m > 0 else '' }}{{ m }}% vs last month
-              · {{ '+' if y > 0 else '' }}{{ y }}% vs last year
-            icon: >-
-              {% set v = states('sensor.hph_cop_change_month_pct') | float(0) %}
-              {% if v > 5 %}mdi:rocket-launch{% elif v > 1 %}mdi:trending-up
-              {% elif v < -5 %}mdi:alert{% elif v < -1 %}mdi:trending-down
-              {% else %}mdi:trending-neutral{% endif %}
-            icon_color: >-
-              {% set s = states('sensor.hph_efficiency_trend') %}
-              {% if s == 'great' %}green{% elif s == 'better' %}light-green
-              {% elif s == 'worse' %}orange{% elif s == 'critical' %}red{% else %}grey{% endif %}
-
           - type: custom:mushroom-template-card
             primary: COP live
             secondary: "{{ states('sensor.hph_cop_live') | round(2, default=0) }}"
@@ -82,51 +66,45 @@ views:
             icon_color: >-
               {% set v = states('sensor.hph_cop_live') | float(0) %}
               {% if v >= 4 %}green{% elif v >= 3 %}yellow{% elif v > 0 %}orange{% else %}grey{% endif %}
+            fill_container: true
 
           - type: custom:mushroom-template-card
             primary: COP today
             secondary: "{{ states('sensor.hph_cop_daily') | round(2, default=0) }}"
             icon: mdi:calendar-today
+            fill_container: true
 
           - type: custom:mushroom-template-card
             primary: COP month
             secondary: "{{ states('sensor.hph_cop_monthly') | round(2, default=0) }}"
             icon: mdi:calendar-month
+            fill_container: true
 
           - type: custom:mushroom-template-card
-            primary: SCOP
+            primary: SCOP season
             secondary: "{{ states('sensor.hph_scop') | round(2, default=0) }}"
-            icon: mdi:calendar
+            icon: mdi:calendar-star
+            fill_container: true
 
-      # ── Row B2: Electricity costs ─────────────────────────────────────
-      - type: horizontal-stack
-        cards:
           - type: custom:mushroom-template-card
             primary: Cost today
-            secondary: >-
-              {{ states('sensor.hph_cost_today') | float(0) | round(2) }} €
-              ({{ states('sensor.hph_electricity_price_effective') | float(0) | round(1) }} ct/kWh)
+            secondary: "{{ states('sensor.hph_cost_today') | float(0) | round(2) }} €"
             icon: mdi:currency-eur
             icon_color: >-
               {% set v = states('sensor.hph_cost_today') | float(0) %}
               {% if v > 5 %}red{% elif v > 2 %}orange{% else %}green{% endif %}
+            fill_container: true
 
           - type: custom:mushroom-template-card
-            primary: Cost this month
-            secondary: >-
-              {{ states('sensor.hph_cost_monthly') | float(0) | round(2) }} €
-            icon: mdi:calendar-month-outline
-
-          - type: custom:mushroom-template-card
-            primary: Cost this season
-            secondary: >-
-              {{ states('sensor.hph_cost_seasonal') | float(0) | round(2) }} €
-            icon: mdi:calendar-blank-multiple
+            primary: Cost month
+            secondary: "{{ states('sensor.hph_cost_monthly') | float(0) | round(2) }} €"
+            icon: mdi:currency-eur
+            fill_container: true
             tap_action:
               action: navigate
               navigation_path: /hph/efficiency
 
-      # ── Row C: Schema & live values | Advisor summary ────────────────
+      # ── Row C: Schema & Advisor ──────────────────────────────────────────
       - type: horizontal-stack
         cards:
           - type: custom:mushroom-template-card
@@ -172,11 +150,11 @@ views:
               action: navigate
               navigation_path: /hph/optimization
 
-      # ── Row D: 7-day energy chart ────────────────────────────────────
+      # ── Row D: 7-day energy chart ────────────────────────────────────────
       - type: custom:apexcharts-card
         header:
           show: true
-          title: Energy — last 7 days (thermal vs electrical kWh)
+          title: Energy — last 7 days (kWh)
         graph_span: 7d
         span:
           end: day
@@ -199,12 +177,39 @@ views:
               align: start
         apex_config:
           chart:
-            height: 200px
+            height: 200
           yaxis:
             title:
               text: "kWh"
 
-      # ── Row E: 7-day cycling chart ───────────────────────────────────
+      # ── Row E: COP per month (13 months) — ported from dashboard-warmepumpe ─
+      - type: custom:apexcharts-card
+        header:
+          show: true
+          title: COP — last 13 months
+        graph_span: 13month
+        span:
+          end: month
+        series:
+          - entity: sensor.hph_cop_monthly
+            name: COP month
+            type: column
+            color: "#66bb6a"
+            statistics:
+              type: mean
+              period: month
+              align: start
+        apex_config:
+          chart:
+            height: 180
+          yaxis:
+            min: 0
+            max: 7
+            decimalsInFloat: 2
+            title:
+              text: "COP"
+
+      # ── Row F: Cycling last 7 days ───────────────────────────────────────
       - type: custom:apexcharts-card
         header:
           show: true

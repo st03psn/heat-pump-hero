@@ -102,7 +102,7 @@ sensor:
 
 - platform: integration
   source: sensor.hph_thermal_power_active
-  name: HeatPump Hero Thermal Energy
+  name: HPH Thermal Energy
   unique_id: hph_thermal_energy
   unit_prefix: k
   unit_time: h
@@ -112,7 +112,7 @@ sensor:
   state_class: total_increasing
 - platform: integration
   source: sensor.hph_electrical_power_active
-  name: HeatPump Hero Electrical Energy
+  name: HPH Electrical Energy
   unique_id: hph_electrical_energy
   unit_prefix: k
   unit_time: h

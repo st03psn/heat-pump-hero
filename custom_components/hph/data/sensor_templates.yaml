@@ -786,9 +786,21 @@ sensors:
   unit_of_measurement: °C
   device_class: temperature
   state_class: measurement
-  availability: '{% set ent = states(''text.hph_src_outdoor_temp'') %} {{ ent
-    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
-  state: '{{ states(states(''text.hph_src_outdoor_temp'')) | float(0) }}'
+  availability: >-
+    {% set ovr = states('text.hph_outdoor_temp_override_entity') %}
+    {% if ovr and states(ovr) not in ['unknown','unavailable','none',''] %}
+      true
+    {% else %}
+      {% set ent = states('text.hph_src_outdoor_temp') %}
+      {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+    {% endif %}
+  state: >-
+    {% set ovr = states('text.hph_outdoor_temp_override_entity') %}
+    {% if ovr and states(ovr) not in ['unknown','unavailable','none',''] %}
+      {{ states(ovr) | float(0) }}
+    {% else %}
+      {{ states(states('text.hph_src_outdoor_temp')) | float(0) }}
+    {% endif %}
   _source_package: hph_sources.yaml
 - name: HeatPump Hero Source Compressor Frequency
   unique_id: hph_source_compressor_freq
@@ -880,31 +892,54 @@ sensors:
     and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
   state: '{{ states(states(''text.hph_src_buffer_temp'')) | float(0) }}'
   _source_package: hph_sources.yaml
+# hph_thermal_power_active: live thermal power for COP live calculation.
+# external_power: use external power sensor directly.
+# external_energy: external energy meter has no live power → fall back to
+#   internal ΔT×flow calculation (still accurate for live COP).
+# else (calculated): always use internal calculation.
 - name: HeatPump Hero Thermal Power Active
   unique_id: hph_thermal_power_active
   unit_of_measurement: W
   device_class: power
   state_class: measurement
-  state: "{% set src = states('select.hph_thermal_source') %} {% if src == 'external_power'\
-    \ %}\n  {% set ent = states('text.hph_src_external_thermal_power') %}\n\
-    \  {% if ent and states(ent) not in ['unknown','unavailable','none',''] %}\n \
-    \   {{ states(ent) | float(0) }}\n  {% else %}\n    0\n  {% endif %}\n{% elif\
-    \ src == 'external_energy' %}\n  0\n{% else %}\n  {{ states('sensor.hph_thermal_power')\
-    \ | float(0) }}\n{% endif %}"
+  state: >-
+    {% set src = states('select.hph_thermal_source') %}
+    {% if src == 'external_power' %}
+      {% set ent = states('text.hph_src_external_thermal_power') %}
+      {% if ent and states(ent) not in ['unknown','unavailable','none',''] %}
+        {{ states(ent) | float(0) }}
+      {% else %}0{% endif %}
+    {% else %}
+      {{ states('sensor.hph_thermal_power') | float(0) }}
+    {% endif %}
   _source_package: hph_sources.yaml
+# hph_electrical_power_active: live electrical power for COP live.
+# external_power or external_energy + power entity set → use it.
+# external_energy without power entity → fall back to internal sensor.
+# else → internal sensor.
 - name: HeatPump Hero Electrical Power Active
   unique_id: hph_electrical_power_active
   unit_of_measurement: W
   device_class: power
   state_class: measurement
-  state: "{% set src = states('select.hph_electrical_source') %} {% if src ==\
-    \ 'external_power' %}\n  {% set ent = states('text.hph_src_external_electrical_power')\
-    \ %}\n  {% if ent and states(ent) not in ['unknown','unavailable','none',''] %}\n\
-    \    {{ states(ent) | float(0) }}\n  {% else %}\n    0\n  {% endif %}\n{% elif\
-    \ src == 'external_energy' %}\n  0\n{% else %}\n  {% set ent = states('text.hph_src_internal_power')\
-    \ %}\n  {% if ent and states(ent) not in ['unknown','unavailable','none',''] %}\n\
-    \    {{ states(ent) | float(0) }}\n  {% else %}\n    0\n  {% endif %}\n{% endif\
-    \ %}"
+  state: >-
+    {% set src = states('select.hph_electrical_source') %}
+    {% if src in ['external_power','external_energy'] %}
+      {% set ent = states('text.hph_src_external_electrical_power') %}
+      {% if ent and states(ent) not in ['unknown','unavailable','none',''] %}
+        {{ states(ent) | float(0) }}
+      {% else %}
+        {% set int_ent = states('text.hph_src_internal_power') %}
+        {% if int_ent and states(int_ent) not in ['unknown','unavailable','none',''] %}
+          {{ states(int_ent) | float(0) }}
+        {% else %}0{% endif %}
+      {% endif %}
+    {% else %}
+      {% set int_ent = states('text.hph_src_internal_power') %}
+      {% if int_ent and states(int_ent) not in ['unknown','unavailable','none',''] %}
+        {{ states(int_ent) | float(0) }}
+      {% else %}0{% endif %}
+    {% endif %}
   _source_package: hph_sources.yaml
 - name: HeatPump Hero Thermal Energy Active
   unique_id: hph_thermal_energy_active

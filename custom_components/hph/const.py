@@ -243,6 +243,9 @@ TEXT_HELPERS: Final[dict[str, dict[str, Any]]] = {
     # Export (hph_export.yaml)
     "hph_export_target_path": {"name": "Export target directory", "icon": "mdi:folder-download",
                                 "initial": "/config/www/hph_exports"},
+    # Outdoor temperature override (optional weather station)
+    "hph_outdoor_temp_override_entity": {"name": "Outdoor temperature — external sensor override (entity-ID, optional)",
+                                          "icon": "mdi:weather-partly-cloudy", "initial": ""},
     # Cost calculation
     "hph_electricity_price_entity": {"name": "Cost — electricity price sensor (entity-ID, optional)",
                                       "icon": "mdi:cash-multiple",

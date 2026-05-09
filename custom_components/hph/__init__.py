@@ -338,11 +338,12 @@ async def _apply_sensor_config(hass: HomeAssistant, data: dict) -> None:
 
     # Seed the external entity text helpers.
     _text_map = {
-        "text.hph_src_ext_thermal_power": external_thermal_power,
-        "text.hph_src_ext_thermal_energy": external_thermal_energy,
-        "text.hph_src_ext_electrical_power": external_electrical_power,
-        "text.hph_src_ext_electrical_energy": external_electrical_energy,
+        "text.hph_src_external_thermal_power": external_thermal_power,
+        "text.hph_src_external_thermal_energy": external_thermal_energy,
+        "text.hph_src_external_electrical_power": external_electrical_power,
+        "text.hph_src_external_electrical_energy": external_electrical_energy,
         "text.hph_indoor_temp_entity": data.get("indoor_temp_entity", ""),
+        "text.hph_outdoor_temp_override_entity": data.get("outdoor_temp_entity", ""),
     }
     for entity_id, value in _text_map.items():
         if value:
