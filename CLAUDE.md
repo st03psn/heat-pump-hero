@@ -65,7 +65,7 @@ release notes come from `CHANGELOG.md`.
 | Path | Purpose |
 |---|---|
 | `packages/hph_sources.yaml` | **Source adapter layer.** Defines `input_text` helpers for every underlying entity-ID (heat pump and external meters), plus active-source dispatcher template sensors. The only file that names heat-pump-specific entities. |
-| `packages/hph_models.yaml` | **Vendor & model selectors** with auto-fill automations. Vendor preset sets all 17 source helpers on selection; model selector sets compressor / flow / supply-T° thresholds for the chosen Panasonic generation (J/K/L/T-CAP/M) or other vendor. |
+| `packages/hph_models.yaml` | **Vendor & model selectors** with auto-fill automations. Vendor preset sets all 17 source helpers + 5 control write-target helpers on selection; model selector sets compressor / flow / supply-T° thresholds for the chosen Panasonic generation (J/K/L/T-CAP/M) or other vendor. |
 | `packages/hph_diagnostics.yaml` | **Panasonic fault-code analysis** — 30+ H/F codes mapped to plain-language descriptions, severity, model-specific commentary; ring buffer of last 5 events; recurrence detection; persistent-notification flow. |
 | `packages/hph_analysis.yaml` | **Analysis module** (L1 statistical observation). Indoor-temp deviation tracker + heating-curve recommendation surface (`recommendation_k` attribute on `sensor.hph_advisor_analysis`). |
 | `packages/hph_export.yaml` | Manual + scheduled export of long-term values to CSV/JSON/XLSX. Triggers `scripts/export_heishahub.py` via `shell_command`. |
@@ -75,6 +75,7 @@ release notes come from `CHANGELOG.md`.
 | `packages/hph_advisor.yaml` | Data-driven optimization recommendations with plain-language messages and an aggregate traffic-light. |
 | `packages/hph_control.yaml` | Optional control automations (CCC, SoftStart, Solar-DHW, night Quiet-Mode) — master switch off by default. |
 | `packages/hph_control_extensions.yaml` | v0.7 control extensions: adaptive heating curve (self-learning), price-driven DHW, weather-forecast pre-heating. All gated behind `input_boolean.hph_ctrl_master`. |
+| `packages/hph_programs.yaml` | v0.8 multi-day / scheduled service programs: configurable legionella schedule (weekday/hour/target/hold) and screed dry-out (3 profiles per ISO EN 1264-4 / DIN 18560-1). Same master-switch gating as control automations, default off. |
 | `dashboards/hph.yaml` | Lovelace dashboard YAML (storage or YAML mode). |
 | `dashboards/assets/*.svg` | Installation-schematic templates (Bubble-Card backgrounds). |
 | `blueprints/hph_setup.yaml` | Script blueprint to seed helpers and verify install. |
@@ -94,19 +95,25 @@ release notes come from `CHANGELOG.md`.
 - **Source-facade entities** (resolved from configurable helpers):
   prefix `hph_source_*` (e.g. `sensor.hph_source_inlet_temp`).
   These are what every other package reads from.
-- **Source helpers** (UI-configurable entity-ID strings):
+- **Source helpers** (UI-configurable entity-ID strings, READ paths):
   prefix `input_text.hph_src_*`.
+- **Control write helpers** (UI-configurable entity-ID strings, WRITE
+  paths used by control automations and programs):
+  prefix `input_text.hph_ctrl_write_*`. Defined in `hph_models.yaml`.
 - **External meter helpers**:
   prefix `input_text.hph_src_external_*`.
 - **Active-source dispatchers** (what utility_meter / COP read):
   `sensor.hph_thermal_power_active`, `_thermal_energy_active`,
   `_electrical_power_active`, `_electrical_energy_active`.
 - **Heat-pump native entities** (`panasonic_heat_pump_*`) are allowed in
-  three places only: defaults in `hph_sources.yaml`, vendor-preset
-  auto-fill payloads in `hph_models.yaml`, write targets in
-  `hph_control*.yaml`. The whitelist is enforced by
-  `tests/smoke.py:ALLOWED_HARDCODE` — adding any other location requires
-  updating the whitelist with a one-line justification.
+  two places only: defaults in `hph_sources.yaml` and vendor-preset
+  auto-fill payloads in `hph_models.yaml`. As of v0.8 control
+  automations and programs resolve write targets via
+  `input_text.hph_ctrl_write_*` helpers, so `hph_control*.yaml` and
+  `hph_programs.yaml` MUST stay free of hard-coded vendor entity-IDs.
+  The whitelist is enforced by `tests/smoke.py:ALLOWED_HARDCODE` —
+  adding any other location requires updating the whitelist with a
+  one-line justification.
 - **Dashboard views**: `overview`, `schema`, `analysis`, `efficiency`,
   `optimization`, `config`.
 

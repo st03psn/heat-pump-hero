@@ -65,14 +65,17 @@ For detailed per-release changes, see [`CHANGELOG.md`](../CHANGELOG.md).
 - Price-driven DHW (Tibber / aWATTar — sensor-agnostic)
 - Weather-forecast pre-heating (cold-front anticipation)
 
-## v0.8 — advisor extensions
+## ✅ v0.8 — advisor extensions & programs (current)
 
-- [ ] Pump-curve recommendation (spread histogram)
-- [ ] Efficiency-drift detection (year-over-year, weather-adjusted)
-- [ ] DHW timing recommendation (usage pattern)
-- [ ] Configurable legionella program
-- [ ] Screed dry-out program (for new builds)
-- [ ] Control automations vendor adapter (write paths swappable)
+- Pump-curve recommendation (7-day spread mean/stdev)
+- Efficiency-drift detection (year-over-year SCOP)
+- DHW timing recommendation (fires/day rolling mean + start-hour buffer)
+- Configurable legionella program (weekday/hour/target/hold)
+- Screed dry-out program — three profiles (functional 3 d /
+  combined 10 d / DIN 18560-1 28 d)
+- Control automations vendor adapter (write-target input_text helpers,
+  vendor-preset auto-fill extended)
+- Second Heishamon vendor preset — bundled MQTT YAML naming (`aquarea_*`)
 
 ## v0.9 — Python custom integration (HACS plug-and-play)
 

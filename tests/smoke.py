@@ -36,9 +36,7 @@ BLUEPRINT_FILE = ROOT / "blueprints" / "hph_setup.yaml"
 # Files allowed to contain hardcoded heat-pump entity references.
 ALLOWED_HARDCODE = {
     "packages/hph_sources.yaml": "default values for the source-adapter helpers",
-    "packages/hph_control.yaml": "heat-pump-specific write targets (documented)",
-    "packages/hph_models.yaml": "vendor-preset auto-fill payloads (write per-vendor entity-IDs into helpers)",
-    "packages/hph_control_extensions.yaml": "heat-pump-specific write targets (heat curve / DHW button) — documented",
+    "packages/hph_models.yaml": "vendor-preset auto-fill payloads (write per-vendor entity-IDs into helpers, including write-path helpers)",
 }
 
 # Dashboard exceptions: the main on/off switch and heat-curve auto-entities

@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>HeatPump Hero v0.8 — Dashboard Mockup</title>
+<style>
+  /* HA dark theme approximation */
+  :root {
+    --ha-card-bg: #1c1c1c;
+    --ha-card-border: rgba(255,255,255,0.05);
+    --primary-text: #e1e1e1;
+    --secondary-text: #9b9b9b;
+    --divider: rgba(255,255,255,0.08);
+    --accent: #03a9f4;
+    --green: #4caf50;
+    --orange: #ff9800;
+    --red: #f44336;
+    --yellow: #fdd835;
+    --blue: #2196f3;
+    --grey: #757575;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #111;
+    color: var(--primary-text);
+    font-family: 'Roboto', 'Segoe UI', sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .app-header {
+    background: #1f1f1f;
+    border-bottom: 1px solid var(--divider);
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    height: 64px;
+  }
+  .app-header h1 {
+    font-size: 18px;
+    font-weight: 400;
+    margin: 0;
+    color: var(--primary-text);
+  }
+  .app-header .breadcrumb {
+    color: var(--secondary-text);
+    margin-left: 12px;
+    font-size: 13px;
+  }
+  .tabs {
+    background: #1f1f1f;
+    border-bottom: 1px solid var(--divider);
+    padding: 0 16px;
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+  }
+  .tab {
+    padding: 14px 18px;
+    color: var(--secondary-text);
+    font-size: 14px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .tab .badge {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 6px;
+    margin-left: 4px;
+    vertical-align: top;
+  }
+  .view {
+    padding: 16px;
+    max-width: 1240px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  .view.full > * { grid-column: 1 / -1; }
+  .span-2 { grid-column: 1 / -1; }
+  .card {
+    background: var(--ha-card-bg);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid var(--ha-card-border);
+  }
+  .card-title {
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0 0 14px 0;
+    color: var(--primary-text);
+  }
+  .card-section {
+    color: var(--secondary-text);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 14px 0 6px 0;
+    padding-top: 8px;
+    border-top: 1px solid var(--divider);
+  }
+  .card-section:first-child { padding-top: 0; border-top: none; margin-top: 0; }
+
+  /* Mushroom-style template card */
+  .mushroom {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--ha-card-bg);
+    border-radius: 12px;
+    padding: 14px 16px;
+    border: 1px solid var(--ha-card-border);
+  }
+  .mushroom .icon-wrap {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 22px;
+  }
+  .mushroom .icon-wrap.green  { background: rgba(76,175,80,0.18);  color: var(--green); }
+  .mushroom .icon-wrap.red    { background: rgba(244,67,54,0.18);  color: var(--red); }
+  .mushroom .icon-wrap.orange { background: rgba(255,152,0,0.18);  color: var(--orange); }
+  .mushroom .icon-wrap.blue   { background: rgba(33,150,243,0.18); color: var(--blue); }
+  .mushroom .icon-wrap.grey   { background: rgba(117,117,117,0.18); color: var(--grey); }
+  .mushroom .icon-wrap.yellow { background: rgba(253,216,53,0.18); color: var(--yellow); }
+  .mushroom .text .primary {
+    font-size: 15px;
+    color: var(--primary-text);
+    font-weight: 500;
+  }
+  .mushroom .text .secondary {
+    font-size: 12.5px;
+    color: var(--secondary-text);
+    margin-top: 2px;
+    line-height: 1.45;
+  }
+
+  /* Entities card row */
+  .entity-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--divider);
+  }
+  .entity-row:last-child { border-bottom: none; }
+  .entity-row .label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--primary-text);
+  }
+  .entity-row .icon {
+    color: var(--secondary-text);
+    width: 22px;
+    text-align: center;
+  }
+  .entity-row .value {
+    color: var(--secondary-text);
+    font-size: 13px;
+  }
+  .entity-row .value .pill {
+    background: rgba(33,150,243,0.18);
+    color: var(--blue);
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-size: 11.5px;
+  }
+  .entity-row .value .pill.green  { background: rgba(76,175,80,0.18); color: var(--green); }
+  .entity-row .value .pill.orange { background: rgba(255,152,0,0.18); color: var(--orange); }
+  .entity-row .value .pill.red    { background: rgba(244,67,54,0.18); color: var(--red); }
+  .entity-row .value .pill.grey   { background: rgba(117,117,117,0.18); color: var(--grey); }
+  .entity-row .toggle {
+    width: 36px;
+    height: 18px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 9px;
+    position: relative;
+  }
+  .entity-row .toggle::after {
+    content: '';
+    width: 14px;
+    height: 14px;
+    background: #888;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+  }
+  .entity-row .toggle.on { background: rgba(76,175,80,0.4); }
+  .entity-row .toggle.on::after { left: 20px; background: var(--green); }
+
+  .markdown-card {
+    background: var(--ha-card-bg);
+    border-radius: 12px;
+    padding: 16px 20px;
+    border: 1px solid var(--ha-card-border);
+  }
+  .markdown-card h3 {
+    font-size: 15px;
+    font-weight: 500;
+    margin: 18px 0 6px 0;
+    color: var(--primary-text);
+  }
+  .markdown-card h3:first-child { margin-top: 0; }
+  .markdown-card p {
+    color: var(--secondary-text);
+    margin: 4px 0 12px 0;
+  }
+  table.profile {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  table.profile th, table.profile td {
+    padding: 6px 10px;
+    text-align: right;
+    border-bottom: 1px solid var(--divider);
+  }
+  table.profile th {
+    color: var(--secondary-text);
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+  }
+  table.profile td:first-child, table.profile th:first-child {
+    text-align: left;
+    color: var(--secondary-text);
+  }
+
+  .horizontal-stack {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .section-divider {
+    grid-column: 1 / -1;
+    color: var(--secondary-text);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 24px 4px 4px 4px;
+    border-bottom: 1px solid var(--divider);
+  }
+
+  .legend-note {
+    background: rgba(33,150,243,0.07);
+    border-left: 3px solid var(--accent);
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    font-size: 12.5px;
+    color: var(--secondary-text);
+    margin: 4px 0 12px 0;
+  }
+  .legend-note strong { color: var(--primary-text); }
+
+  /* Mobile preview */
+  .mobile-preview {
+    max-width: 380px;
+    margin: 0 auto;
+  }
+  .mobile-preview .card,
+  .mobile-preview .mushroom { margin-bottom: 12px; }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <h1>HeatPump Hero</h1>
+  <span class="breadcrumb">→ Dashboard preview (v0.8 mockup)</span>
+</div>
+
+<div class="tabs">
+  <div class="tab">Overview</div>
+  <div class="tab">Schematic</div>
+  <div class="tab">Analysis</div>
+  <div class="tab">Efficiency</div>
+  <div class="tab">Optimization <span class="badge">3 new</span></div>
+  <div class="tab active">Programs <span class="badge">new</span></div>
+  <div class="tab">Mobile</div>
+  <div class="tab">Configuration</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- PROGRAMS VIEW                                                          -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<div class="view">
+
+  <div class="markdown-card span-2">
+    <h3>Service programs</h3>
+    <p>Multi-day and scheduled service programs. All gated by the master
+    switch <em>Control master</em> — you must enable both the master and the
+    per-program switch for anything to actually run. The status cards below
+    show the current state at a glance.</p>
+    <p>Programs write directly to the heat pump via the configured control
+    write-helpers (see Configuration → Control write targets). If a program
+    does nothing when triggered, double-check those helpers point at
+    existing entities.</p>
+  </div>
+
+  <!-- Status mushroom cards (horizontal-stack) -->
+  <div class="span-2 horizontal-stack">
+    <div class="mushroom">
+      <div class="icon-wrap blue">🦠</div>
+      <div class="text">
+        <div class="primary">Legionella program</div>
+        <div class="secondary">Armed — awaiting first run</div>
+      </div>
+    </div>
+    <div class="mushroom">
+      <div class="icon-wrap grey">🏠</div>
+      <div class="text">
+        <div class="primary">Screed dry-out</div>
+        <div class="secondary">Disabled</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card span-2">
+    <div class="card-title">Master switch (required for all control + programs)</div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">🤖</span>Control master switch</div>
+      <div class="toggle on"></div>
+    </div>
+  </div>
+
+  <!-- Legionella controls -->
+  <div class="card">
+    <div class="card-title">Legionella — weekly DHW boost</div>
+    <div class="card-section">Schedule</div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">🦠</span>Enable program</div>
+      <div class="toggle on"></div>
+    </div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">📅</span>Weekday</div>
+      <div class="value"><span class="pill">sun</span></div>
+    </div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">🕒</span>Start hour (0-23)</div>
+      <div class="value">3</div>
+    </div>
+
+    <div class="card-section">Tank target</div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">🌡️</span>Target temperature (°C)</div>
+      <div class="value">65</div>
+    </div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">⏳</span>Hold duration above target (min)</div>
+      <div class="value">30</div>
+    </div>
+
+    <div class="card-section">Status</div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">🔍</span>Status</div>
+      <div class="value"><span class="pill blue">pending</span></div>
+    </div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">📜</span>Last successful run</div>
+      <div class="value">—</div>
+    </div>
+  </div>
+
+  <!-- Screed controls -->
+  <div class="card">
+    <div class="card-title">Screed dry-out program</div>
+
+    <div class="card-section">Profile selection (pick BEFORE arming)</div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">📈</span>Profile</div>
+      <div class="value"><span class="pill">functional_3d</span></div>
+    </div>
+
+    <div class="card-section">Arm / disarm</div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">▶️</span>Enable program (arming triggers Day 1)</div>
+      <div class="toggle"></div>
+    </div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">⚡</span>Currently running (status flag)</div>
+      <div class="toggle"></div>
+    </div>
+
+    <div class="card-section">Status</div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">🗓️</span>Program start</div>
+      <div class="value">—</div>
+    </div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">📅</span>Current day index</div>
+      <div class="value">0</div>
+    </div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">🌡️</span>Today's supply target (°C)</div>
+      <div class="value">unavailable</div>
+    </div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">🔍</span>Status</div>
+      <div class="value"><span class="pill grey">disabled</span></div>
+    </div>
+  </div>
+
+  <!-- Profile reference -->
+  <div class="markdown-card span-2">
+    <h3>Profile reference</h3>
+    <table class="profile">
+      <thead>
+        <tr>
+          <th>Day</th>
+          <th>functional_3d</th>
+          <th>combined_10d</th>
+          <th>din_18560_28d</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>25 °C</td><td>25 °C</td><td>25 °C</td></tr>
+        <tr><td>2</td><td>45 °C</td><td>45 °C</td><td>25 °C</td></tr>
+        <tr><td>3</td><td>25 °C</td><td>25 °C</td><td>25 °C</td></tr>
+        <tr><td>4</td><td><em>end</em></td><td>40 °C</td><td>30 °C</td></tr>
+        <tr><td>5</td><td></td><td>40 °C</td><td>35 °C</td></tr>
+        <tr><td>6</td><td></td><td>40 °C</td><td>45 °C</td></tr>
+        <tr><td>7-24</td><td></td><td>40 / 35 / 30 / 25 then end</td><td>50 °C</td></tr>
+        <tr><td>25-28</td><td></td><td></td><td>45 / 35 / 30 / 25</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:14px;"><strong>functional_3d</strong> — ISO EN 1264-4 §4.4.2 functional heating, minimum proof of operation.</p>
+    <p><strong>combined_10d</strong> — common compromise: 3 d functional + 7 d curing taper.</p>
+    <p><strong>din_18560_28d</strong> — full 28-day cement-screed protocol per DIN 18560-1.</p>
+    <p>The current day's target is pushed to the configured Z1 heat-curve target_high entity at 00:01 daily. Curve is NOT restored on program end — note your pre-program values from Configuration → Heating curve.</p>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- OPTIMIZATION VIEW SNIPPET — new advisor rows + thresholds              -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<div class="section-divider" style="max-width:1240px; margin: 0 auto;">
+  Optimization view — relevant changes (excerpt)
+</div>
+
+<div class="view">
+
+  <div class="card span-2">
+    <div class="card-title">Advisor — recommendations</div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">🔁</span>Cycling</div>
+      <div class="value"><span class="pill green">ok</span></div>
+    </div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">🌡️</span>Supply/return spread</div>
+      <div class="value"><span class="pill green">ok</span></div>
+    </div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">❄️</span>Defrost behaviour</div>
+      <div class="value"><span class="pill green">ok</span></div>
+    </div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">🔥</span>Heating curve / aux heater</div>
+      <div class="value"><span class="pill green">ok</span></div>
+    </div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">🚿</span>DHW run length</div>
+      <div class="value"><span class="pill green">ok</span></div>
+    </div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">🌡️</span>Heating limit (auto-detected)</div>
+      <div class="value"><span class="pill blue">info</span></div>
+    </div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">📉</span>Water pressure trend (leak detection)</div>
+      <div class="value"><span class="pill green">ok</span></div>
+    </div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">🩺</span>Diagnostics</div>
+      <div class="value"><span class="pill green">ok</span></div>
+    </div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">📊</span>Analysis (indoor temp deviation)</div>
+      <div class="value"><span class="pill blue">info</span></div>
+    </div>
+    <div style="background:rgba(33,150,243,0.06); border-radius:8px; padding:0 8px; margin: 6px -8px;">
+      <div class="entity-row">
+        <div class="label"><span class="icon">🔧</span>Pump curve (7-day spread mean / stdev) <span style="color: var(--accent); font-size: 10px; margin-left: 6px;">v0.8</span></div>
+        <div class="value"><span class="pill blue">info</span></div>
+      </div>
+      <div class="entity-row">
+        <div class="label"><span class="icon">📉</span>Efficiency drift (year-over-year SCOP) <span style="color: var(--accent); font-size: 10px; margin-left: 6px;">v0.8</span></div>
+        <div class="value"><span class="pill blue">info</span></div>
+      </div>
+      <div class="entity-row">
+        <div class="label"><span class="icon">🕒</span>DHW timing (fires per day) <span style="color: var(--accent); font-size: 10px; margin-left: 6px;">v0.8</span></div>
+        <div class="value"><span class="pill blue">info</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card span-2">
+    <div class="card-title">Advisor thresholds (power-user tweaks)</div>
+    <div class="entity-row"><div class="label">Short-cycle warn (%)</div><div class="value">25</div></div>
+    <div class="entity-row"><div class="label">Short-cycle critical (%)</div><div class="value">50</div></div>
+    <div class="entity-row"><div class="label">Target supply/return spread (K)</div><div class="value">5</div></div>
+    <div class="entity-row"><div class="label">DHW minimum run time (min)</div><div class="value">20</div></div>
+    <div class="card-section">v0.8 advisors</div>
+    <div class="entity-row"><div class="label">Efficiency drift warn (% YoY)</div><div class="value">−10</div></div>
+    <div class="entity-row"><div class="label">Efficiency drift critical (% YoY)</div><div class="value">−20</div></div>
+    <div class="entity-row"><div class="label">DHW max desired fires per day</div><div class="value">2</div></div>
+    <div class="entity-row"><div class="label">Pump-curve min samples (7d)</div><div class="value">200</div></div>
+  </div>
+
+  <div class="markdown-card span-2">
+    <h3>Pump curve (v0.8)</h3>
+    <p>Not enough running-time samples yet (47 of 200 required) — recommendation populates after a few days of operation.</p>
+    <h3>Efficiency drift (v0.8)</h3>
+    <p>No previous-year SCOP yet — drift detection populates after one full heating season.</p>
+    <h3>DHW timing (v0.8)</h3>
+    <p>No DHW activity recorded yet — recommendation populates after the first DHW boosts.</p>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- MOBILE VIEW SNIPPET — conditional cards (only shown when relevant)    -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<div class="section-divider" style="max-width:1240px; margin: 0 auto;">
+  Mobile view — new conditional cards
+</div>
+
+<div class="view full">
+  <div class="legend-note span-2">
+    <strong>Conditional behaviour:</strong> Legionella card only shown when status ≠ <em>disabled</em>.
+    Screed card only shown while a program is <em>running</em>. Both deep-link to the Programs view on tap.
+  </div>
+
+  <div class="span-2 mobile-preview">
+    <div class="mushroom">
+      <div class="icon-wrap green">💡</div>
+      <div class="text">
+        <div class="primary">Advisor</div>
+        <div class="secondary">🟢 all clear</div>
+      </div>
+    </div>
+    <div class="mushroom">
+      <div class="icon-wrap blue">🦠</div>
+      <div class="text">
+        <div class="primary">Legionella</div>
+        <div class="secondary">🔵 awaiting first run</div>
+      </div>
+    </div>
+    <div class="mushroom" style="opacity: 0.4;">
+      <div class="icon-wrap orange">🏠</div>
+      <div class="text">
+        <div class="primary">Screed running</div>
+        <div class="secondary">(only shown when status = running — hidden here)</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- CONFIGURATION VIEW SNIPPET — Control write targets                    -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<div class="section-divider" style="max-width:1240px; margin: 0 auto;">
+  Configuration view — new section
+</div>
+
+<div class="view full">
+  <div class="legend-note span-2">
+    Auto-filled by the vendor preset. Override here only if your install
+    uses non-standard entity-IDs (e.g. renamed entities, second heat-pump
+    unit). All control automations and programs write through these helpers.
+  </div>
+
+  <div class="card span-2">
+    <div class="card-title">Control write targets (v0.8 vendor adapter)</div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">🔇</span>Quiet-mode select</div>
+      <div class="value">select.panasonic_heat_pump_main_quiet_mode</div>
+    </div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">🚿</span>Force-DHW button</div>
+      <div class="value">button.panasonic_heat_pump_main_force_dhw</div>
+    </div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">🌡️</span>Z1 heat-curve target_high (number)</div>
+      <div class="value">number.panasonic_heat_pump_main_z1_heat_curve_target_high_temp</div>
+    </div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">🌡️</span>Z1 heat-curve target_low (number)</div>
+      <div class="value">number.panasonic_heat_pump_main_z1_heat_curve_target_low_temp</div>
+    </div>
+    <div class="entity-row">
+      <div class="label"><span class="icon">⚙️</span>DHW target temperature (number)</div>
+      <div class="value">number.panasonic_heat_pump_main_dhw_target_temperature</div>
+    </div>
+  </div>
+</div>
+
+<div style="text-align:center; padding: 30px 16px; color: var(--secondary-text); font-size: 12px;">
+  HeatPump Hero v0.8 — dashboard mockup<br>
+  Approximation of the Lovelace dark theme with mushroom-card / entities-card rendering.
+  Actual styling depends on installed HACS frontend cards (mushroom, button-card, card-mod).
+</div>
+
+</body>
+</html>

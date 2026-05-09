@@ -939,6 +939,12 @@ views:
             name: Diagnostics (active fault / recurrence)
           - entity: sensor.hph_advisor_analysis
             name: Analysis (indoor temp deviation, curve recommendation)
+          - entity: sensor.hph_advisor_pump_curve
+            name: Pump curve (7-day spread mean / stdev)
+          - entity: sensor.hph_advisor_efficiency_drift
+            name: Efficiency drift (year-over-year SCOP)
+          - entity: sensor.hph_advisor_dhw_timing
+            name: DHW timing (fires per day)
         state_color: true
 
       # ── Analysis recommendation card ──
@@ -1037,6 +1043,15 @@ views:
           ### Water pressure trend
           {{ state_attr('sensor.hph_advisor_pressure_trend','message') }}
 
+          ### Pump curve (v0.8)
+          {{ state_attr('sensor.hph_advisor_pump_curve','message') }}
+
+          ### Efficiency drift (v0.8)
+          {{ state_attr('sensor.hph_advisor_efficiency_drift','message') }}
+
+          ### DHW timing (v0.8)
+          {{ state_attr('sensor.hph_advisor_dhw_timing','message') }}
+
       - type: entities
         title: Control strategies (HeishaMoNR parity)
         entities:
@@ -1084,6 +1099,161 @@ views:
           - input_number.hph_advisor_short_cycle_crit_pct
           - input_number.hph_advisor_dt_target_k
           - input_number.hph_advisor_dhw_min_runtime_min
+          - type: section
+            label: v0.8 advisors
+          - input_number.hph_advisor_drift_warn_pct
+          - input_number.hph_advisor_drift_crit_pct
+          - input_number.hph_advisor_dhw_max_fires_per_day
+          - input_number.hph_advisor_pump_spread_min_samples
+
+  # ════════════════════════════════════════════════════════════════════════
+  # 5b) PROGRAMS — multi-day / scheduled service programs (v0.8)
+  # ════════════════════════════════════════════════════════════════════════
+  - title: Programs
+    path: programs
+    icon: mdi:calendar-clock
+    cards:
+      - type: markdown
+        content: |
+          ## Service programs
+          Multi-day and scheduled service programs. All gated by the
+          master switch `Control master` — you must enable both the master
+          and the per-program switch for anything to actually run. The
+          status cards below show the current state at a glance.
+
+          Programs write directly to the heat pump via the configured
+          control write-helpers (see Configuration → Control write
+          targets). If a program does nothing when triggered, double-check
+          those helpers point at existing entities.
+
+      # ── Status cards ──
+      - type: horizontal-stack
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Legionella program
+            secondary: |-
+              {% set s = states('sensor.hph_prog_legionella_status') %}
+              {% if s == 'disabled' %}Disabled
+              {% elif s == 'pending' %}Armed — awaiting first run
+              {% elif s == 'ok' %}OK — last run within window
+              {% elif s == 'due' %}Due this week
+              {% elif s == 'overdue' %}Overdue — last run >8 days ago
+              {% else %}{{ s }}{% endif %}
+            icon: mdi:bacteria
+            icon_color: |-
+              {% set s = states('sensor.hph_prog_legionella_status') %}
+              {% if s == 'overdue' %}red
+              {% elif s == 'due' %}orange
+              {% elif s == 'ok' %}green
+              {% elif s == 'pending' %}blue
+              {% else %}grey{% endif %}
+            multiline_secondary: true
+            fill_container: true
+
+          - type: custom:mushroom-template-card
+            primary: Screed dry-out
+            secondary: |-
+              {% set s = states('sensor.hph_prog_screed_status') %}
+              {% set d = states('input_number.hph_prog_screed_day') | int(0) %}
+              {% set t = states('sensor.hph_prog_screed_target') %}
+              {% if s == 'disabled' %}Disabled
+              {% elif s == 'armed' %}Armed — not yet running
+              {% elif s == 'running' %}Day {{ d }} — target {{ t }} °C
+              {% else %}{{ s }}{% endif %}
+            icon: mdi:home-floor-a
+            icon_color: |-
+              {% set s = states('sensor.hph_prog_screed_status') %}
+              {% if s == 'running' %}orange
+              {% elif s == 'armed' %}blue
+              {% else %}grey{% endif %}
+            multiline_secondary: true
+            fill_container: true
+
+      # ── Master-switch reminder ──
+      - type: entities
+        title: Master switch (required for all control + programs)
+        entities:
+          - entity: input_boolean.hph_ctrl_master
+            name: Control master switch
+
+      # ── Legionella controls ──
+      - type: entities
+        title: Legionella — weekly DHW boost
+        entities:
+          - type: section
+            label: Schedule
+          - entity: input_boolean.hph_prog_legionella
+            name: Enable program
+          - entity: input_select.hph_prog_legionella_weekday
+            name: Weekday
+          - entity: input_number.hph_prog_legionella_hour
+            name: Start hour (0-23)
+          - type: section
+            label: Tank target
+          - entity: input_number.hph_prog_legionella_target_c
+            name: Target temperature (°C)
+          - entity: input_number.hph_prog_legionella_hold_min
+            name: Hold duration above target (min)
+          - type: section
+            label: Status
+          - entity: sensor.hph_prog_legionella_status
+            name: Status
+          - entity: input_datetime.hph_prog_legionella_last_run
+            name: Last successful run
+
+      # ── Screed dry-out controls ──
+      - type: entities
+        title: Screed dry-out program
+        entities:
+          - type: section
+            label: Profile selection (pick BEFORE arming)
+          - entity: input_select.hph_prog_screed_profile
+            name: Profile
+          - type: section
+            label: Arm / disarm
+          - entity: input_boolean.hph_prog_screed
+            name: Enable program (arming triggers Day 1)
+          - entity: input_boolean.hph_prog_screed_active
+            name: Currently running (status flag)
+          - type: section
+            label: Status
+          - entity: input_datetime.hph_prog_screed_start
+            name: Program start
+          - entity: input_number.hph_prog_screed_day
+            name: Current day index
+          - entity: sensor.hph_prog_screed_target
+            name: Today's supply target (°C)
+          - entity: sensor.hph_prog_screed_status
+            name: Status
+
+      # ── Profile reference ──
+      - type: markdown
+        title: Profile reference
+        content: |
+          | Day | functional_3d | combined_10d | din_18560_28d |
+          |---:|---:|---:|---:|
+          | 1 | 25 °C | 25 °C | 25 °C |
+          | 2 | 45 °C | 45 °C | 25 °C |
+          | 3 | 25 °C | 25 °C | 25 °C |
+          | 4 | end | 40 °C | 30 °C |
+          | 5 |  | 40 °C | 35 °C |
+          | 6 |  | 40 °C | 45 °C |
+          | 7-24 |  | 40 / 35 / 30 / 25 then end | 50 °C |
+          | 25-28 |  |  | 45 / 35 / 30 / 25 |
+
+          **functional_3d** — ISO EN 1264-4 §4.4.2 functional heating,
+          minimum proof of operation.
+
+          **combined_10d** — common compromise: 3 d functional + 7 d
+          curing taper.
+
+          **din_18560_28d** — full 28-day cement-screed protocol per
+          DIN 18560-1.
+
+          The current day's target is pushed to the configured Z1
+          heat-curve target_high entity at 00:01 daily. Curve is NOT
+          restored on program end — note your pre-program values from
+          Configuration → Heating curve.
 
   # ════════════════════════════════════════════════════════════════════════
   # 6) MOBILE — slim, single-column layout for phones
@@ -1237,6 +1407,47 @@ views:
             tap_action:
               action: navigate
               navigation_path: /hph/optimization
+
+          # ── Programs status (v0.8) ──
+          - type: conditional
+            conditions:
+              - entity: sensor.hph_prog_legionella_status
+                state_not: disabled
+            card:
+              type: custom:mushroom-template-card
+              primary: Legionella
+              secondary: >-
+                {% set s = states('sensor.hph_prog_legionella_status') %}
+                {% if s == 'overdue' %}🔴 overdue
+                {% elif s == 'due' %}🟡 due this week
+                {% elif s == 'pending' %}🔵 awaiting first run
+                {% else %}🟢 ok{% endif %}
+              icon: mdi:bacteria
+              icon_color: |-
+                {% set s = states('sensor.hph_prog_legionella_status') %}
+                {% if s == 'overdue' %}red
+                {% elif s == 'due' %}orange
+                {% elif s == 'pending' %}blue
+                {% else %}green{% endif %}
+              tap_action:
+                action: navigate
+                navigation_path: /hph/programs
+
+          - type: conditional
+            conditions:
+              - entity: sensor.hph_prog_screed_status
+                state: running
+            card:
+              type: custom:mushroom-template-card
+              primary: Screed running
+              secondary: >-
+                Day {{ states('input_number.hph_prog_screed_day') }} —
+                target {{ states('sensor.hph_prog_screed_target') }} °C
+              icon: mdi:home-floor-a
+              icon_color: orange
+              tap_action:
+                action: navigate
+                navigation_path: /hph/programs
             fill_container: true
 
   # ════════════════════════════════════════════════════════════════════════
@@ -1371,6 +1582,25 @@ views:
             name: Operating mode (select)
           - entity: input_text.hph_src_internal_power
             name: Internal power consumption (W)
+
+      # ── Control write targets (v0.8 vendor adapter) ──
+      # Auto-filled by the vendor preset above; override here only if
+      # your install uses non-standard entity-IDs (e.g. renamed entities,
+      # second heat-pump unit). All control automations and programs
+      # write through these helpers.
+      - type: entities
+        title: Control write targets (v0.8 vendor adapter)
+        entities:
+          - entity: input_text.hph_ctrl_write_quiet_mode
+            name: Quiet-mode select
+          - entity: input_text.hph_ctrl_write_force_dhw
+            name: Force-DHW button
+          - entity: input_text.hph_ctrl_write_z1_curve_high
+            name: Z1 heat-curve target_high (number)
+          - entity: input_text.hph_ctrl_write_z1_curve_low
+            name: Z1 heat-curve target_low (number)
+          - entity: input_text.hph_ctrl_write_dhw_target
+            name: DHW target temperature (number)
 
       # ── External meter entities (optional) ──
       - type: entities

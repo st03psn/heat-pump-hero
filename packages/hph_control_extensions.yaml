@@ -184,20 +184,20 @@ automation:
           high_max: "{{ states('input_number.hph_ctrl_adaptive_supply_max_c') | float(50) }}"
           low_min: "{{ states('input_number.hph_ctrl_adaptive_supply_min_c') | float(22) }}"
           low_max: "{{ states('input_number.hph_ctrl_adaptive_supply_max_c') | float(50) - 5 }}"
-          cur_high: "{{ states('number.panasonic_heat_pump_main_z1_heat_curve_target_high_temp') | float(35) }}"
-          cur_low: "{{ states('number.panasonic_heat_pump_main_z1_heat_curve_target_low_temp') | float(25) }}"
+          cur_high: "{{ states(states('input_text.hph_ctrl_write_z1_curve_high')) | float(35) }}"
+          cur_low: "{{ states(states('input_text.hph_ctrl_write_z1_curve_low')) | float(25) }}"
           new_high: >-
             {{ [[cur_high + step, high_min] | max, high_max] | min | round(1) }}
           new_low: >-
             {{ [[cur_low + step, low_min] | max, low_max] | min | round(1) }}
       - service: number.set_value
         target:
-          entity_id: number.panasonic_heat_pump_main_z1_heat_curve_target_high_temp
+          entity_id: "{{ states('input_text.hph_ctrl_write_z1_curve_high') }}"
         data:
           value: "{{ new_high }}"
       - service: number.set_value
         target:
-          entity_id: number.panasonic_heat_pump_main_z1_heat_curve_target_low_temp
+          entity_id: "{{ states('input_text.hph_ctrl_write_z1_curve_low') }}"
         data:
           value: "{{ new_low }}"
       - service: input_datetime.set_datetime
@@ -262,7 +262,7 @@ automation:
     action:
       - service: button.press
         target:
-          entity_id: button.panasonic_heat_pump_main_force_dhw
+          entity_id: "{{ states('input_text.hph_ctrl_write_force_dhw') }}"
       - service: counter.increment
         target:
           entity_id: counter.hph_ctrl_price_dhw_fires_today
@@ -332,10 +332,10 @@ automation:
           entity_id: input_boolean.hph_ctrl_forecast_preheat_active
       - variables:
           boost: "{{ states('input_number.hph_ctrl_forecast_boost_k') | float(2) }}"
-          cur_high: "{{ states('number.panasonic_heat_pump_main_z1_heat_curve_target_high_temp') | float(35) }}"
+          cur_high: "{{ states(states('input_text.hph_ctrl_write_z1_curve_high')) | float(35) }}"
       - service: number.set_value
         target:
-          entity_id: number.panasonic_heat_pump_main_z1_heat_curve_target_high_temp
+          entity_id: "{{ states('input_text.hph_ctrl_write_z1_curve_high') }}"
         data:
           value: "{{ (cur_high + boost) | round(1) }}"
       - service: persistent_notification.create
@@ -347,7 +347,7 @@ automation:
       - delay: "04:00:00"
       - service: number.set_value
         target:
-          entity_id: number.panasonic_heat_pump_main_z1_heat_curve_target_high_temp
+          entity_id: "{{ states('input_text.hph_ctrl_write_z1_curve_high') }}"
         data:
           value: "{{ cur_high }}"
       - service: input_boolean.turn_off

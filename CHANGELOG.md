@@ -3,6 +3,98 @@
 All notable changes to HeatPump Hero. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] — 2026-05-09
+
+### Added — advisor extensions
+
+`packages/hph_advisor.yaml` — three new advisors aggregated into the
+summary traffic-light:
+
+- **Pump-curve recommendation** (`hph_advisor_pump_curve`). Reads the
+  rolling 7-day mean and standard deviation of the supply/return spread,
+  sampled only while the compressor runs. Recommends pump-speed
+  adjustment when mean is >2.5 K off the target_dt setpoint; flags
+  high-variance / PWM behaviour as informational. New supporting
+  sensors: `sensor.hph_water_spread`, `sensor.hph_spread_7d_mean`,
+  `sensor.hph_spread_7d_stdev`. New thresholds:
+  `input_number.hph_advisor_pump_spread_min_samples` (default 200).
+- **Efficiency-drift detection** (`hph_advisor_efficiency_drift`).
+  Reads `sensor.hph_scop_change_year_pct` (already exposed by the
+  efficiency package). Critical at ≤ −20 % YoY, warn at ≤ −10 %.
+  Message explicitly calls out HDD weather-adjustment caveat so users
+  don't chase phantom regressions caused by mild winters.
+- **DHW timing recommendation** (`hph_advisor_dhw_timing`).
+  Tracks DHW boost frequency via `counter.hph_dhw_fires_today` (new),
+  rolled into a 7-day rolling mean (`sensor.hph_dhw_fires_7d_mean`)
+  through a daily snapshot at 23:59. Captures the last 14 DHW start
+  hours into `input_text.hph_dhw_start_hours` for visibility.
+
+### Added — programs (new package `hph_programs.yaml`)
+
+Multi-day / scheduled service programs separated from regular control
+automations. Both gated by `input_boolean.hph_ctrl_master`,
+individually toggleable, default OFF.
+
+- **Legionella program** — weekly anti-legionella DHW boost. Configurable
+  weekday, start hour, target temperature (55-75 °C, default 65), and
+  hold duration (10-120 min, default 30). Logs last successful run;
+  status sensor exposes ok/due/overdue/disabled. Skips if a recent run
+  is logged within 6 days (DST safety).
+- **Screed dry-out program** — three profiles per ISO EN 1264-4 /
+  DIN 18560-1: `functional_3d` (3-day functional), `combined_10d`
+  (3-day functional + 7-day curing), `din_18560_28d` (full 28-day
+  cement-screed protocol). Daily target supply temperature is pushed to
+  the configured Z1 heat-curve target_high write entity at 00:01.
+  Status + per-day target sensors visible in the dashboard.
+
+### Added — control vendor adapter
+
+`packages/hph_models.yaml` now also defines write-target helpers:
+`input_text.hph_ctrl_write_quiet_mode`, `_force_dhw`,
+`_z1_curve_high`, `_z1_curve_low`, `_dhw_target`. All control
+automations in `hph_control.yaml`, `hph_control_extensions.yaml`, and
+`hph_programs.yaml` now resolve write targets at runtime through these
+helpers. Vendor-preset auto-fill extended to set them alongside the
+read helpers. Service domains (select / button / number) remain
+hard-coded per write target — bridging different domains across vendors
+still requires forking the relevant action.
+
+### Added — second Heishamon vendor preset
+
+`panasonic_heishamon_mqtt` — for users who imported HeishaMon's bundled
+MQTT YAML packages directly (entity prefix `aquarea_*`) instead of
+installing kamaradclimber's custom integration. Auto-fills all 17 read
+helpers and all 5 write helpers in one click.
+
+### Added — dashboard surface
+
+`dashboards/hph.yaml`:
+
+- **Optimization view** — three new advisors appended to the
+  recommendations entities list and the markdown detail card; new
+  thresholds (`hph_advisor_drift_warn_pct`, `_drift_crit_pct`,
+  `_dhw_max_fires_per_day`, `_pump_spread_min_samples`) added to the
+  power-user threshold card.
+- **New "Programs" view** (`path: programs`, icon `mdi:calendar-clock`)
+  — status mushroom cards for legionella + screed, full bedien-blocks
+  for both, profile-reference table for the screed protocols.
+- **Configuration view** — new "Control write targets" entities card
+  exposing the five `input_text.hph_ctrl_write_*` helpers.
+- **Mobile view** — two new conditional mushroom cards: legionella
+  status (only shown when not disabled) and screed-running indicator
+  (only when `running`). Both deep-link to `/hph/programs`.
+
+### Notes
+
+- `hph_advisor.yaml` summary now aggregates 12 advisors (was 9).
+- Read paths in `hph_control.yaml` migrated from
+  `sensor.panasonic_heat_pump_main_z1_water_temperature` to the
+  source-facade `sensor.hph_source_dhw_temp` for the Solar-DHW boost.
+- The new write-helper layer is an additive change: existing installs
+  retain their previous behaviour because defaults match the kamaradclimber
+  entity-IDs, and the helpers are picked up automatically on any
+  vendor-preset re-apply.
+
 ## [0.7.1] — 2026-05-09
 
 ### Changed
