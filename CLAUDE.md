@@ -22,15 +22,9 @@ existing building blocks into something usable:
 1. **Universality.** Every template is `availability:`-guarded. A zone-1-only
    installation must work as well as a fully equipped one (zone 2 + DHW +
    buffer + solar + pool). No `unknown` sensors.
-2. **Plug-and-play.** Standard users install via HACS plus a setup blueprint;
-   no YAML editing required. Power users can still tweak everything in YAML.
-3. **External sensors first-class.** Shelly metering plugs and MQTT heat
-   meters are not after-thoughts; they are equal-priority sources to the
-   internal Heishamon estimates, selectable via `input_select`.
-4. **Long-term resilience.** Multi-year SCOP via `utility_meter` plus LTS;
-   InfluxDB mirroring for Grafana multi-year comparison.
-5. **Readable YAML.** No generated templates, no macro magic — a human
-   reviewer must be able to follow the dashboard YAML in five minutes.
+2. **Readable YAML.** No `!include` indirection inside templates, no Jinja
+   `{% import %}`/`{% from %}`, no YAML anchors/aliases for non-trivial
+   structure. Each card and sensor is self-contained at its top level.
 
 ## Repository layout
 
@@ -39,20 +33,25 @@ existing building blocks into something usable:
 | `packages/hph_sources.yaml` | **Source adapter layer.** Defines `input_text` helpers for every underlying entity-ID (heat pump and external meters), plus active-source dispatcher template sensors. The only file that names heat-pump-specific entities. |
 | `packages/hph_models.yaml` | **Vendor & model selectors** with auto-fill automations. Vendor preset sets all 17 source helpers on selection; model selector sets compressor / flow / supply-T° thresholds for the chosen Panasonic generation (J/K/L/T-CAP/M) or other vendor. |
 | `packages/hph_diagnostics.yaml` | **Panasonic fault-code analysis** — 30+ H/F codes mapped to plain-language descriptions, severity, model-specific commentary; ring buffer of last 5 events; recurrence detection; persistent-notification flow. |
+| `packages/hph_analysis.yaml` | **Analysis module** (L1 statistical observation). Indoor-temp deviation tracker + heating-curve recommendation surface (`recommendation_k` attribute on `sensor.hph_advisor_analysis`). |
+| `packages/hph_export.yaml` | Manual + scheduled export of long-term values to CSV/JSON/XLSX. Triggers `scripts/export_heishahub.py` via `shell_command`. |
 | `packages/hph_core.yaml` | Live sensors (thermal power, mode mapping, defrost, compressor running) — reads exclusively from `sensor.hph_source_*`. |
 | `packages/hph_efficiency.yaml` | Energy integrals, utility_meter (with tariff splits), COP / daily / monthly / SCOP, period comparisons. |
 | `packages/hph_cycles.yaml` | Cycle analysis: start/stop events, runtime/pause, counters, short-cycle detection. |
 | `packages/hph_advisor.yaml` | Data-driven optimization recommendations with plain-language messages and an aggregate traffic-light. |
 | `packages/hph_control.yaml` | Optional control automations (CCC, SoftStart, Solar-DHW, night Quiet-Mode) — master switch off by default. |
+| `packages/hph_control_extensions.yaml` | v0.7 control extensions: adaptive heating curve (self-learning), price-driven DHW, weather-forecast pre-heating. All gated behind `input_boolean.hph_ctrl_master`. |
 | `dashboards/hph.yaml` | Lovelace dashboard YAML (storage or YAML mode). |
 | `dashboards/assets/*.svg` | Installation-schematic templates (Bubble-Card backgrounds). |
 | `blueprints/hph_setup.yaml` | Script blueprint to seed helpers and verify install. |
-| `scripts/install.sh` | Optional bash installer for SSH users. |
+| `scripts/install.sh` and `scripts/*.py` | Optional bash installer + Python helpers for export, import, and heating-curve regression. |
 | `grafana/*.json` | Grafana dashboards (import-ready). |
 | `grafana/telegraf_mqtt.conf` | Telegraf config for MQTT → InfluxDB. |
-| `docs/` | Installation and tweaking documentation. |
-| `tests/` | HA CI smoke tests. |
-| `.github/workflows/` | YAML / JSON validation, release automation. |
+| `docs/` | Installation, tweaking, vendor recipes, diagnostics, export/import, database, naming, integration mockups. |
+| `tests/` | Local smoke tests + HA Docker check_config harness. |
+| `.github/workflows/` | YAML / JSON validation, smoke, Docker check_config. |
+
+*(Source of truth: `ls packages/ scripts/ docs/` — this table drifts; PRs welcome.)*
 
 ## Naming conventions
 
@@ -68,9 +67,12 @@ existing building blocks into something usable:
 - **Active-source dispatchers** (what utility_meter / COP read):
   `sensor.hph_thermal_power_active`, `_thermal_energy_active`,
   `_electrical_power_active`, `_electrical_energy_active`.
-- **Heat-pump native entities** (`panasonic_heat_pump_*`): only ever
-  appear as **defaults** in `hph_sources.yaml`, never directly
-  in any other file.
+- **Heat-pump native entities** (`panasonic_heat_pump_*`) are allowed in
+  three places only: defaults in `hph_sources.yaml`, vendor-preset
+  auto-fill payloads in `hph_models.yaml`, write targets in
+  `hph_control*.yaml`. The whitelist is enforced by
+  `tests/smoke.py:ALLOWED_HARDCODE` — adding any other location requires
+  updating the whitelist with a one-line justification.
 - **Dashboard views**: `overview`, `schema`, `analysis`, `efficiency`,
   `optimization`, `config`.
 
@@ -126,11 +128,12 @@ The diagnostics package (`hph_diagnostics.yaml`) reads
 - An automation that timestamps every change, appends to the buffer, and
   raises / dismisses a persistent notification
 
-Severity classification (bad → good): `critical` / `warn` / `info` / `none`.
-
-Adding a new code: extend the `message` template's chained `{% elif %}`
-in `hph_diagnostics_current_error`. Add it to the `critical` or
-`warn` array if applicable. Document in `docs/diagnostics.md`.
+Severity classification: `critical` / `warn` / `info` / `none`. The
+classification arrays and per-code message branches live in
+`hph_diagnostics_current_error` (in `hph_diagnostics.yaml`);
+`tests/smoke.py:test_diagnostics_consistency` enforces every classified
+code has a message branch. Adding a code: extend the YAML, run smoke.
+Document the code in `docs/diagnostics.md`.
 
 Adding model-specific commentary: extend the `model_note` template
 similarly — it reads `input_select.hph_pump_model` so per-model
@@ -201,9 +204,11 @@ specific layout — there is no shared coordinate system across variants.
 ## Coexistence with HeishaMoNR
 
 Both systems can listen on the same MQTT broker simultaneously — only
-**one** of them must write. The recommendation in the docs is: HeishaMoNR
-controls, Heat Pump Hero reads only (kamaradclimber `number.*`/`select.*`
-disabled). For pure Heat Pump Hero setups this constraint does not apply.
+**one** of them must write to the heat pump. If you run HeishaMoNR for
+control, leave every `input_boolean.hph_ctrl_*` off (including the v0.7
+extensions: `adaptive_curve`, `price_dhw`, `forecast_preheat`) and
+disable the kamaradclimber `number.*`/`select.*` entities. For pure
+Heat Pump Hero installs no constraint applies — HPH is the writer.
 
 ## Advisor design
 
@@ -213,12 +218,21 @@ The advisor produces **recommendations, not commands**. Each sensor:
 - `attributes.message` — plain-language explanation with a concrete next step
 - `attributes.metric` — the relevant measurement supporting the diagnosis
 
-Thresholds are **always** exposed via `input_number.hph_advisor_*`. No
-hard-coded magic numbers in templates — if a value should be tunable, expose
-it as a helper.
+All advisor `attributes.message` text and persistent_notification body
+text is English. The bilingual policy applies to repo-level docs, not
+to entity attributes — those follow the dashboard-string policy.
 
-New advisor sensors follow the same schema and are added to the
-`hph_advisor_summary` aggregation.
+Thresholds are **always** exposed via `input_number.hph_advisor_*`. No
+hard-coded magic numbers in templates — if a value should be tunable,
+expose it as a helper.
+
+New advisor sensors follow the schema above. They may live in any
+`packages/hph_*.yaml`, but **must** be added (by `unique_id`) to the
+`hph_advisor_summary` aggregation in `hph_advisor.yaml`.
+`tests/smoke.py:test_advisor_summary_consistency` scans all packages
+and verifies every aggregated advisor is declared somewhere — it does
+not verify the reverse, so an isolated advisor not listed in the
+summary is silently invisible.
 
 ## Control design
 
@@ -232,19 +246,82 @@ Control automations (CCC, SoftStart, etc.) are **always**:
 Rationale: a misconfigured control automation can damage the heat pump or
 hurt comfort. Activation must be deliberate.
 
+## YAML conventions
+
+**Automation `mode`**: `single` (default) for state-triggered reactions
+that must not overlap; `queued: <N>` only for event-loggers (e.g.
+`hph_diag_log_error_change` uses `queued: 5` for fault-code event
+bursts); avoid `parallel` and `restart` unless you can articulate why.
+
+**`input_text` `max:`**: defaults to `max: 255` (entity-IDs fit). For
+JSON ring buffers (e.g. `hph_diag_error_history`), `max:` must
+accommodate the serialized payload — current 5-event buffer at ~50
+chars/event fits in 255; bumping the buffer size means bumping `max:`.
+
+**New `packages/hph_*.yaml` files**: create when adding a new feature
+axis (analysis vs. diagnostics vs. control) or a feature so distinct
+it deserves opt-in/out. Otherwise extend the matching existing file.
+New packages need a top-of-file comment explaining what reads them and
+what writes via them, plus a one-liner in the Repository layout table.
+
+**Hot-path templates**: For templates that depend on sensors updating
+at ≥ 1 Hz (e.g. `compressor_freq`, `water_flow`), prefer
+`trigger:`-based template sensors with an explicit time interval over
+default state-triggered ones. State-triggered templates re-evaluate on
+every dependency update — for `hph_thermal_power` (3 fast-updating
+dependencies) this means hundreds of evaluations per minute.
+
+## Definition of Done
+
+Before any commit:
+
+1. `py tests/smoke.py` exits 0
+2. If a new sensor was added: it has a `unique_id`, a `state_class`
+   where applicable, and an `availability:` guard if it depends on the
+   source-adapter
+3. If a new advisor was added: it appears in `hph_advisor_summary`
+4. If a new `persistent_notification` was added: it has
+   `notification_id: hph_<scope>` so dismiss-on-clear works
+5. If a write target on a `panasonic_*` entity was added: the package
+   is in `tests/smoke.py:ALLOWED_HARDCODE`
+6. If a YAML feature requiring HA > the current `hacs.json:homeassistant`
+   was used: bump `hacs.json` + add a CHANGELOG note
+7. `CHANGELOG.md` has an entry under the appropriate version block
+8. Commit message follows `feat|fix|refactor|chore|docs(scope): summary`
+   and the body explains *why* (1-3 paragraphs typical for non-trivial
+   changes)
+
 ## Releasing
 
 - SemVer; tags `v0.x.y`.
-- `release.yml` builds release notes from conventional commits.
-- HACS picks up every tag automatically.
+- `CHANGELOG.md` is the source of release notes — update it in the same
+  commit as the version bump.
+- HACS picks up every tag automatically once the repo is registered as
+  a HACS-default plugin (currently custom-repo only).
+
+SemVer scope (post v1.0):
+
+- **MAJOR**: rename of any `unique_id`, removal of a helper, change of
+  a CSV/export column, breaking dashboard YAML schema
+- **MINOR**: new advisor / new package / new dashboard view / new
+  vendor preset / model addition
+- **PATCH**: threshold default change, fault-code addition, dashboard
+  polish, doc fixes
 
 ## Bilingual policy
 
 English is the primary language for all repository content (README, docs,
 code comments, commit messages, issue templates). German translations live
 alongside as `*.de.md` (root) or `docs/de/*.md`. User-facing dashboard
-strings are currently English; a German translation layer will follow as a
-theme or helper variant.
+strings are English-only. Per-language UI variants are not feasible in
+pure YAML — they require the Python custom integration on the v0.9
+roadmap (see `docs/hacs_path.md`).
+
+## Line endings
+
+The repo uses LF line endings. Add `.gitattributes` with
+`* text=auto eol=lf` if the warnings start mattering. Don't bypass with
+`core.autocrlf` settings on a per-developer basis.
 
 ## Vocabulary
 
