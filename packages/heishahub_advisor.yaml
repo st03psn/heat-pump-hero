@@ -196,8 +196,86 @@ template:
             inefficient and hygienically borderline. Increase tank
             hysteresis or check the anti-legionella schedule.
 
+      # ─── Pressure delta vs 7-day mean (used by Advisor 7) ─────────────
+      - name: "HeishaHub Pressure Delta 7d"
+        unique_id: heishahub_pressure_delta_7d
+        unit_of_measurement: "bar"
+        state_class: measurement
+        availability: >-
+          {{ states('sensor.heishahub_source_pump_pressure')
+             not in ['unknown','unavailable','none']
+             and states('sensor.heishahub_pressure_7d_mean')
+             not in ['unknown','unavailable','none'] }}
+        state: >-
+          {% set cur = states('sensor.heishahub_source_pump_pressure') | float(0) %}
+          {% set mean = states('sensor.heishahub_pressure_7d_mean') | float(0) %}
+          {{ (cur - mean) | round(2) }}
+
       # ════════════════════════════════════════════════════════════════════
-      # 6) Heating limit — auto-detected from operation
+      # 6) Diagnostics (active fault + recurrence)
+      # ════════════════════════════════════════════════════════════════════
+      - name: "HeishaHub Advisor Diagnostics"
+        unique_id: heishahub_advisor_diagnostics
+        icon: mdi:medical-bag
+        state: >-
+          {% set sev = state_attr('sensor.heishahub_diagnostics_current_error','severity') %}
+          {% set rec = states('sensor.heishahub_diagnostics_recurrence') | int(0) %}
+          {% if sev == 'critical' %}critical
+          {% elif sev == 'warn' %}warn
+          {% elif rec >= 3 %}warn
+          {% elif sev == 'info' %}info
+          {% else %}ok{% endif %}
+        attributes:
+          metric: >-
+            {{ states('sensor.heishahub_diagnostics_current_error') }}
+            (recurrences in last 5: {{ states('sensor.heishahub_diagnostics_recurrence') }})
+          message: >-
+            {% set cur = states('sensor.heishahub_diagnostics_current_error') %}
+            {% set rec = states('sensor.heishahub_diagnostics_recurrence') | int(0) %}
+            {% if cur == 'ok' and rec == 0 %}
+            No active or recurring fault.
+            {% elif cur == 'ok' and rec > 0 %}
+            No active fault, but the same code has appeared {{ rec }} times in
+            the recent history. Investigate root cause even if the unit recovered.
+            {% else %}
+            Active fault: {{ cur }}.
+            {{ state_attr('sensor.heishahub_diagnostics_current_error','message') }}
+            {% set mn = state_attr('sensor.heishahub_diagnostics_current_error','model_note') %}
+            {% if mn and mn | trim != '' %} {{ mn }}{% endif %}
+            {% endif %}
+
+      # ════════════════════════════════════════════════════════════════════
+      # 7) Water-pressure trend (slow leak detection)
+      # ════════════════════════════════════════════════════════════════════
+      # Uses the rolling change-over-time of pump_pressure to detect a
+      # slow loss. A drop > 0.2 bar over 7 days while the unit was idle
+      # half the time is a strong leak indicator.
+      - name: "HeishaHub Advisor Pressure Trend"
+        unique_id: heishahub_advisor_pressure_trend
+        icon: mdi:gauge-low
+        state: >-
+          {% set delta = states('sensor.heishahub_pressure_delta_7d') | float(0) %}
+          {% if delta < -0.4 %}critical
+          {% elif delta < -0.2 %}warn
+          {% else %}ok{% endif %}
+        attributes:
+          metric: "{{ states('sensor.heishahub_pressure_delta_7d') }} bar over 7 d"
+          message: >-
+            {% set delta = states('sensor.heishahub_pressure_delta_7d') | float(0) %}
+            {% if delta < -0.4 %}
+            Water pressure dropped {{ (-delta) | round(2) }} bar in 7 days —
+            a strong leak indicator. Inspect joints, expansion vessel pressure,
+            and the auto-air-vent. Top up only after locating the leak.
+            {% elif delta < -0.2 %}
+            Water pressure trending down ({{ (-delta) | round(2) }} bar / 7 d).
+            Could be a slow leak or normal expansion-vessel air absorption —
+            re-check in another week.
+            {% else %}
+            Pressure stable.
+            {% endif %}
+
+      # ════════════════════════════════════════════════════════════════════
+      # 8) Heating limit — auto-detected from operation
       # ════════════════════════════════════════════════════════════════════
       # The "heating limit" is the outdoor temperature above which the
       # heat pump should stop heating altogether. We estimate it as a
@@ -256,7 +334,9 @@ template:
             states('sensor.heishahub_advisor_defrost'),
             states('sensor.heishahub_advisor_heat_curve'),
             states('sensor.heishahub_advisor_dhw_runtime'),
-            states('sensor.heishahub_advisor_heating_limit')
+            states('sensor.heishahub_advisor_heating_limit'),
+            states('sensor.heishahub_advisor_diagnostics'),
+            states('sensor.heishahub_advisor_pressure_trend')
           ] %}
           {% if 'critical' in advisors %}critical
           {% elif 'warn' in advisors %}warn
@@ -268,7 +348,9 @@ template:
                 states('sensor.heishahub_advisor_defrost'),
                 states('sensor.heishahub_advisor_heat_curve'),
                 states('sensor.heishahub_advisor_dhw_runtime'),
-                states('sensor.heishahub_advisor_heating_limit')]
+                states('sensor.heishahub_advisor_heating_limit'),
+                states('sensor.heishahub_advisor_diagnostics'),
+                states('sensor.heishahub_advisor_pressure_trend')]
                | select('in', ['warn','critical']) | list | count }}
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -293,6 +375,19 @@ sensor:
       days: 7
     keep_last_sample: true
     precision: 1
+
+  # 7-day pressure delta (last reading - mean) for leak detection.
+  # Negative values mean pressure has dropped vs the 7-day average.
+  - platform: statistics
+    name: "HeishaHub Pressure 7-day Mean"
+    unique_id: heishahub_pressure_7d_mean
+    entity_id: sensor.heishahub_source_pump_pressure
+    state_characteristic: mean
+    sampling_size: 5000
+    max_age:
+      days: 7
+    keep_last_sample: true
+    precision: 2
 
 automation:
   - id: heishahub_record_heating_limit

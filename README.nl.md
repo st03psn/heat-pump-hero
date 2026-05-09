@@ -17,9 +17,10 @@ over meerdere jaren.
 
 ## Status
 
-🟢 **v0.3 — beta** — feature-compleet voor de typische HK1- tot HK1+HK2+DHW+Buffer-installatie.
-Source-adapter-laag maakt elke teller verwisselbaar (andere warmtepomp,
-warmtemeter, elektriciteitsmeter) via UI-helpers.
+🟢 **v0.4 — beta** — diagnostics module, vendor & model selectors met
+auto-fill, **Panasonic M-serie (R290 vlaggenschip) ondersteund**,
+slow-leak detectie, integration UI mockup. Zie [CHANGELOG.md](CHANGELOG.md)
+voor release notes.
 
 ## Functies
 

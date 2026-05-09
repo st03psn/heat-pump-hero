@@ -2,80 +2,91 @@
 
 🌐 English (this file) · [Deutsch](de/roadmap.md)
 
-## v0.1 — skeleton ✅
+For detailed per-release changes, see [`CHANGELOG.md`](../CHANGELOG.md).
 
-- [x] Repository structure, HACS manifest, MIT license
-- [x] Packages: sources / core / efficiency / cycles / advisor / control
-- [x] Dashboard with 6 views (Overview, Schema, Analysis, Efficiency,
-  Optimization, Configuration)
-- [x] Setup blueprint (diagnostic)
-- [x] CLI installer `scripts/install.sh`
-- [x] Telegraf MQTT bridge config
-- [x] CI: yamllint, JSON validation, HACS action
-- [x] Bilingual docs (English primary, German secondary)
+## ✅ v0.1 — skeleton
 
-## v0.2 — universal & usable ✅ (current)
+- Repository structure, HACS manifest, MIT license
+- 6 packages: sources / core / efficiency / cycles / advisor / control
+- Dashboard with 6 views
+- Setup blueprint, CLI installer, Telegraf bridge config
+- CI: yamllint, JSON validation, HACS action
+- Bilingual docs (EN / DE)
 
-- [x] Bubble-Card SVG schematic with live hotspots (HK1 + HK1+DHW variants)
-- [x] **Source-adapter layer** — every entity read is UI-configurable;
-  swap heat pump or meter without YAML edits
-- [x] Tariff splits in `utility_meter` (heating/dhw/cooling separate)
-- [x] HA Energy Dashboard integration via `_active` energy sensors
-- [x] Real Grafana Flux queries (overview + multi-year SCOP/MAZ)
-- [x] Period-comparison sensors and trend headlines
-  (vs last month, vs last year, in %)
-- [x] External meter modes: `external_power` (W → integrate)
-  and `external_energy` (kWh, bypass integrator)
+## ✅ v0.2 — universal counters
 
-## v0.3 — long-term insight
+- Bubble-Card SVG schematic with live hotspots (HK1 + HK1+DHW)
+- Source-adapter layer — swap heat pump / meter via UI
+- Tariff splits (heating / DHW / cooling)
+- HA Energy Dashboard integration
+- Real Grafana Flux queries
+- Period-comparison sensors (vs last month / last year)
 
-- [ ] Schematic variants for HK1+HK2+DHW and HK1+HK2+DHW+buffer
-- [ ] Mobile-optimized dashboard layout
-- [ ] Heatmap card (outdoor × hour-of-day × COP) — instantly shows where
-  efficiency drops
-- [ ] Auto-detect heating-limit temperature from data
-- [ ] Year-over-year comparison cards (same calendar month last year)
-  via long-term statistics
-- [ ] README screenshots, video walkthrough
-- [ ] Smoke tests cover the new sensors and source-mode switching
+## ✅ v0.3 — auto-detection & polish
 
-## v0.4 — advisor extensions
+- Auto-detected schematic variant (4 conditional cards)
+- COP heatmap + outdoor T° vs COP scatter
+- Auto-detected heating limit
+- Mobile dashboard view
+- HK1+HK2+DHW and HK1+HK2+DHW+Buffer SVGs
+- NL translation, HACS path doc, vendor recipes
 
-- [ ] Heating-curve recommendation derived from data (linear regression
-  of supply temp vs. outdoor temp)
-- [ ] Pump-curve recommendation (spread histogram)
-- [ ] Water-pressure trend detection (slow leak warning)
-- [ ] Efficiency-drift detection (year-over-year, weather-adjusted)
-- [ ] DHW timing recommendation (based on usage pattern)
+## ✅ v0.4 — diagnostics & vendor support (current)
+
+- Panasonic fault-code diagnostics (30+ H/F codes, model-specific notes)
+- Vendor preset selector with auto-fill (7 vendors)
+- Heat-pump model selector with auto thresholds
+- **Panasonic M-series (R290 flagship) supported**
+- Water-pressure trend advisor (slow-leak detection)
+- Integration UI mockup (config flow + main panel)
+- HA min version corrected to 2024.4
+- HA Docker check_config CI
 
 ## v0.5 — control extensions
 
+- [ ] Heating-curve recommendation derived from data (linear regression
+  of supply temp vs outdoor temp)
+- [ ] Pump-curve recommendation (spread histogram)
+- [ ] Efficiency-drift detection (year-over-year, weather-adjusted)
+- [ ] DHW timing recommendation (usage pattern)
 - [ ] Adaptive heating curve (self-learning from indoor sensors)
-- [ ] Price-driven DHW (Tibber / aWATTar integration)
+- [ ] Price-driven DHW (Tibber / aWATTar)
 - [ ] Configurable legionella program
 - [ ] Weather-forecast pre-heating
 - [ ] Screed dry-out program (for new builds)
-- [ ] Control automations adapter — abstract write paths so non-Heishamon
-  heat pumps can plug in their own write entities
+- [ ] Control automations vendor adapter (write paths swappable)
 
-## v1.0 — stable & documented
+## v0.6 — Python custom integration (HACS plug-and-play)
 
-- [ ] Full HA-CI test suite with mocked MQTT
-- [ ] Internationalization (EN, NL — typical Heishamon communities)
-- [ ] Submission to the HACS default repository
-- [ ] Zone 2 / buffer / solar / pool fully tested with beta users
-- [ ] Adapter recipes for non-Heishamon heat pumps (Daikin Altherma,
-  Vaillant aroTHERM, Stiebel Eltron WPL, generic Modbus)
+- [ ] `custom_components/heishahub/` skeleton
+- [ ] Config flow for first-run setup (3 steps: vendor / model / extras)
+- [ ] Programmatic helper registration (no input_select / input_text YAML)
+- [ ] Programmatic sensor registration (replaces `template:` packages)
+- [ ] Dashboard auto-registration via `lovelace.dashboards`
+- [ ] Per-platform translations `translations/{en,de,nl}.json` →
+  follows HA `hass.config.language` automatically
+- [ ] Repairs panel for missing frontend cards (apexcharts, mushroom, …)
+- [ ] HACS-default-repository submission
+
+## v1.0 — stable
+
+- [ ] Full HA-CI test suite with mocked MQTT and assertions on advisor states
+- [ ] Beta-tester program for Daikin / Vaillant / Stiebel installs
+- [ ] Video walkthrough
+- [ ] Adapter recipes for non-Panasonic vendors validated by users
+- [ ] Per-locale dashboard strings via integration translations
 
 ## Out of scope
 
-- A dedicated Python custom integration (kamaradclimber covers entities — no
-  need to duplicate work).
-- Cloud features (HeishaHub stays 100 % local).
-- Standalone control without an underlying heat-pump integration.
+- Cloud features (HeishaHub stays 100 % local)
+- Replacing kamaradclimber/heishamon-homeassistant — we wrap it, not
+  duplicate it
+- Standalone control without an underlying heat-pump integration
 
 ## Contributing
 
 Issues with concrete use-cases very welcome. Before opening a PR, please
-read the design principles in [CLAUDE.md](../CLAUDE.md), in particular the
-universality, advisor schema, and source-adapter conventions.
+read the design principles in [CLAUDE.md](../CLAUDE.md), in particular
+the universality, advisor schema, source-adapter, and diagnostics
+conventions. Per-vendor recipes in `docs/vendors/` are great
+first contributions.

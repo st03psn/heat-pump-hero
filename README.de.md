@@ -17,38 +17,53 @@ Schema mit Live-Hotspots und sauber gerechnete Effizienz-Kennzahlen
 
 ## Status
 
-🚧 **Pre-alpha (v0.1)** — Skelett mit erster funktionsfähiger HK1-Übersicht,
-Live-COP und Basis-Graphen. Bubble-Schema, Grafana-Boards und Auto-Setup-
-Blueprint folgen iterativ.
+🟢 **v0.4 — beta** — Diagnostics-Modul, Hersteller-/Modell-Selector mit
+Auto-Fill, **Panasonic M-Serie (R290-Flagschiff) unterstützt**,
+Leckage-Erkennung, Integration-UI-Mockup. Siehe [CHANGELOG.md](CHANGELOG.md)
+für Release-Notes und [docs/roadmap.md](docs/roadmap.md) für was kommt.
 
-## Features (v0.1 → roadmap)
+## Features
 
-**Visualisierung & Status**
-- ✅ Status-Dashboard (Übersicht, Heishamon-Web-UI-Layout)
-- ✅ Live-COP & thermische/elektrische Energie
-- ✅ Universal: HK2/DHW/Puffer/Solar/Pool optional, Auto-Hide
-- ✅ Externe Sensoren (Shelly, WMZ) per UI-Dropdown
-- 🟡 Service-Cloud-Stil-Graphen (ApexCharts) — Basis vorhanden, Feinschliff folgt
-- 🟡 Anlagen-Schema (Bubble-Card + SVG) — Platzhalter
-- 🟡 JAZ/MAZ/TAZ + Energy-Dashboard-Integration
+**Diagnose & Hersteller-Support** _(neu in v0.4)_
+- ✅ Panasonic-Fehlercode-Analyse: 30+ H/F-Codes mit Klartext und Schweregrad,
+  modellspezifische Hinweise (J-H23, R32/R290-H99, J/K-H62 Falschalarme)
+- ✅ Wiederholungs-Erkennung (gleicher Code N× im 5-Event-Ringpuffer)
+- ✅ Persistent notification bei Fehler, automatisch entfernt nach Klärung
+- ✅ Hersteller-Preset-Selector — füllt alle 17 Source-Helper auf einen Klick:
+  Heishamon / Daikin / MELCloud / Vaillant / Stiebel / generic
+- ✅ Wärmepumpen-Modell-Selector — Panasonic J / K / L / T-CAP / **M (R290)**
+  + andere — setzt Verdichter min/max Hz, Min-Volumenstrom, Max-Vorlauf-T° automatisch
+- ✅ Wasserdruck-Trend-Advisor (langsame Leckage)
 
-**Takt-Analyse & Optimierung**
-- ✅ Zyklus-Tracking (Starts/h, Laufzeiten, Pausen)
-- ✅ Short-Cycle-Erkennung mit konfigurierbarer Schwelle
-- ✅ Datengetriebener **Advisor** mit Klartext-Empfehlungen:
-  Taktung, Spreizung VL/RL, Defrost-Verhalten, Heizkurve/Heizstab,
-  DHW-Lauflänge — Sammel-Ampel im Dashboard
-- ✅ **Steuerungs-Strategien (HeishaMoNR-Parität)**: CCC (Compressor Cycle
-  Control), SoftStart, Solar-DHW-Boost, Nacht-Quiet-Mode — alle als
-  HA-Automations, einzeln ein-/ausschaltbar, Master-Schalter
+**Visualisierung**
+- ✅ 7-View-Dashboard: Übersicht, Schema, Auswertung, Effizienz, Optimierung, Mobile, Konfiguration
+- ✅ Bubble-Card-SVG-Schema mit Live-Hotspots, 4 Varianten — Auto-Detection
+- ✅ ApexCharts: Temperaturen, Verdichter, COP, Heatmap (Tag × Stunde), Außen-T° vs. COP
+- ✅ Eigene Mobile-Ansicht (single column)
 
-**Langzeit & Export**
-- ⏳ Grafana-Boards für Mehrjahres-Effizienz
-- ⏳ Setup-Blueprint für Ein-Klick-Deploy
+**Effizienz**
+- ✅ Live-COP (Defrost-maskiert), tägliche/monatliche/jährliche COP, JAZ
+- ✅ Tarif-Splits (Heizen / DHW / Kühlen)
+- ✅ Periodvergleich vs. Vormonat / Vorjahr in % mit Trend-Headlines
+- ✅ HA-Energy-Dashboard via `*_active`-Energiesensoren
+
+**Universalität (Source-Adapter)**
+- ✅ Jede Entity-ID per UI änderbar — Wärmepumpe oder Zähler tauschen ohne YAML
+- ✅ 3 Thermal-Modi: `calculated` / `external_power` / `external_energy` (kWh-Zähler)
+- ✅ 3 Elektrik-Modi: `heat_pump_internal` / `external_power` / `external_energy`
+
+**Takt-Analyse & Advisor**
+- ✅ Zyklus-Tracking, Short-Cycle-Erkennung, Auto-Heizgrenze
+- ✅ Datengetriebener Advisor (8 Regeln) mit Klartext-Empfehlungen
+- ✅ Steuerungs-Strategien (CCC, SoftStart, Solar-DHW, Quiet-Mode) — Master-Schalter aus per Default
+
+**Langzeit**
+- ✅ Grafana: Übersicht + Mehrjahres-JAZ/MAZ mit echten Flux-Queries
+- ✅ Telegraf MQTT → InfluxDB Bridge-Config
 
 ## Voraussetzungen
 
-- Home Assistant 2025.4 oder neuer
+- Home Assistant **2024.4** oder neuer
 - Heishamon-Hardware (Egyras/IgorYbema-Firmware) am MQTT-Broker
   (Default-Topic-Prefix `panasonic_heat_pump`)
 - HACS installiert

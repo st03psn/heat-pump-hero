@@ -1,0 +1,209 @@
+# HeishaHub — diagnostics
+#
+# Panasonic Aquarea fault-code analysis. Maps the active error code from
+# `sensor.heishahub_source_error_code` to a human-readable description,
+# severity, and (where relevant) model-specific commentary.
+#
+# References:
+#   - Panasonic Aquarea service manuals (J/K/L/T-CAP/M)
+#   - Heishamon firmware error topic spec (Egyras / IgorYbema)
+#   - Community-collected H23/F-code FAQs
+#
+# Codes covered:
+#   - H00 ... H99   "soft" faults (sensor / communication / protection)
+#   - F-codes       compressor / refrigerant cycle (more critical)
+#
+# The advisor surfaces:
+#   - active error (state + plain-language message)
+#   - last 5 errors history (input_text JSON ring buffer)
+#   - recurrence pattern (same code N times in 24 h → critical)
+
+input_text:
+  heishahub_diag_error_history:
+    name: Diagnostics — error history (JSON, last 5)
+    icon: mdi:history
+    max: 255
+    initial: "[]"
+
+input_datetime:
+  heishahub_diag_last_error_time:
+    name: Diagnostics — last error timestamp
+    icon: mdi:clock-alert-outline
+    has_date: true
+    has_time: true
+
+template:
+  - sensor:
+      # ════════════════════════════════════════════════════════════════════
+      # Active error → description + severity
+      # State: error code (H00 / NORMAL / "" all map to "ok")
+      # ════════════════════════════════════════════════════════════════════
+      - name: "HeishaHub Diagnostics Current Error"
+        unique_id: heishahub_diagnostics_current_error
+        icon: |-
+          {% set s = states('sensor.heishahub_diagnostics_current_error') %}
+          {% if s in ['ok','unknown','unavailable','','none'] %}mdi:check-circle
+          {% elif s.startswith('F') %}mdi:alert-octagon
+          {% elif s in ['H21','H62','H63','H64','H65','H75','H98','H99'] %}mdi:alert
+          {% else %}mdi:information-outline{% endif %}
+        state: >-
+          {% set raw = states('sensor.heishahub_source_error_code') | upper %}
+          {% set raw = raw | replace(' ','') | replace('NO_ERROR','OK')
+                          | replace('NORMAL','OK') | replace('NONE','OK') %}
+          {% if raw in ['','OK','UNKNOWN','UNAVAILABLE','0','H00'] %}ok
+          {% else %}{{ raw }}{% endif %}
+        attributes:
+          severity: >-
+            {% set s = states('sensor.heishahub_diagnostics_current_error') %}
+            {% set critical = ['F12','F14','F22','F23','F24','F27','F41','F46',
+                               'H21','H62','H63','H64','H65','H75','H98','H99'] %}
+            {% set warn = ['H15','H20','H23','H27','H42','H67','H68','H70','H72',
+                           'H74','H76','H90','H91','H95',
+                           'F15','F16','F20','F25','F36','F37','F40','F42','F45','F48','F95'] %}
+            {% if s == 'ok' %}none
+            {% elif s in critical %}critical
+            {% elif s in warn %}warn
+            {% else %}info{% endif %}
+          model_note: >-
+            {% set s = states('sensor.heishahub_diagnostics_current_error') %}
+            {% set m = states('input_select.heishahub_pump_model') %}
+            {% if s == 'H23' and m == 'panasonic_j_aqj' %}
+            H23 is a known weak point on the J-series — refrigerant-cycle abnormality.
+            Check refrigerant charge, expansion valve, and discharge sensor before
+            assuming a leak. Service-manual procedure differs between J generations.
+            {% elif s == 'H99' and m in ['panasonic_l_aql','panasonic_m_aqm','panasonic_tcap'] %}
+            H99 freeze protection on R32/R290 units — verify minimum flow rate
+            ({{ states('input_number.heishahub_model_min_flow_lpm') }} L/min) and
+            that no zone valve is fully closed during heat-up.
+            {% elif s == 'H62' %}
+            Water-flow switch alarm — check pump speed, dirt traps, air pockets.
+            On J/K-series this is also a common false alarm during defrost.
+            {% else %}{% endif %}
+          message: >-
+            {% set s = states('sensor.heishahub_diagnostics_current_error') %}
+            {% if s == 'ok' %}
+            No active fault.
+            {% elif s == 'H12' %}H12: capacity mismatch indoor/outdoor unit.
+            {% elif s == 'H15' %}H15: compressor temperature sensor open.
+            {% elif s == 'H20' %}H20: pump abnormality — check pump and water flow.
+            {% elif s == 'H21' %}H21: float switch / water leakage — inspect indoor unit drain pan, check for leaks.
+            {% elif s == 'H23' %}H23: refrigerant-cycle abnormality — discharge temp / pressure / TXV — service required.
+            {% elif s == 'H27' %}H27: service valve abnormality.
+            {% elif s == 'H28' %}H28: solar sensor abnormality.
+            {% elif s == 'H31' %}H31: swimming-pool sensor abnormality.
+            {% elif s == 'H36' %}H36: buffer-tank sensor abnormality.
+            {% elif s == 'H38' %}H38: brand mismatch indoor/outdoor.
+            {% elif s == 'H42' %}H42: compressor low-pressure protection.
+            {% elif s == 'H43' %}H43: zone 1 sensor abnormality.
+            {% elif s == 'H44' %}H44: zone 2 sensor abnormality.
+            {% elif s == 'H62' %}H62: water flow switch — flow too low or stuck switch.
+            {% elif s == 'H63' %}H63: low refrigerant pressure protection.
+            {% elif s == 'H64' %}H64: high refrigerant pressure protection — check air-side cleanness.
+            {% elif s == 'H65' %}H65: water-circulation pump abnormality during defrost.
+            {% elif s == 'H67' %}H67: external thermistor 1 abnormality.
+            {% elif s == 'H68' %}H68: external thermistor 2 abnormality.
+            {% elif s == 'H70' %}H70: backup heater overload protection.
+            {% elif s == 'H72' %}H72: tank temperature sensor abnormality.
+            {% elif s == 'H74' %}H74: PCB communication error.
+            {% elif s == 'H75' %}H75: low-temperature protection — water freeze risk.
+            {% elif s == 'H76' %}H76: remote control communication error.
+            {% elif s == 'H90' %}H90: indoor↔outdoor communication error.
+            {% elif s == 'H91' %}H91: tank booster heater overload.
+            {% elif s == 'H95' %}H95: power supply error.
+            {% elif s == 'H98' %}H98: high-pressure protection — same family as H64.
+            {% elif s == 'H99' %}H99: heat-exchanger freeze protection — flow / glycol issue.
+            {% elif s == 'F12' %}F12: pressure-switch activated (older boards).
+            {% elif s == 'F14' %}F14: compressor revolution failure.
+            {% elif s == 'F15' %}F15: outdoor fan motor lock.
+            {% elif s == 'F16' %}F16: total operating current protection.
+            {% elif s == 'F20' %}F20: compressor overheat.
+            {% elif s == 'F22' %}F22: transistor module overheat.
+            {% elif s == 'F23' %}F23: DC peak detection — inverter fault.
+            {% elif s == 'F24' %}F24: refrigeration cycle abnormality (different fault from H23).
+            {% elif s == 'F25' %}F25: cooling/heating cycle changeover failure.
+            {% elif s == 'F27' %}F27: pressure switch faulty.
+            {% elif s == 'F36' %}F36: outdoor temperature sensor abnormality.
+            {% elif s == 'F37' %}F37: water inlet temperature sensor abnormality.
+            {% elif s == 'F40' %}F40: compressor discharge temperature sensor abnormality.
+            {% elif s == 'F41' %}F41: power factor correction abnormality.
+            {% elif s == 'F42' %}F42: heat-exchanger temperature sensor abnormality.
+            {% elif s == 'F45' %}F45: water outlet temperature sensor abnormality.
+            {% elif s == 'F46' %}F46: current transformer disconnected.
+            {% elif s == 'F48' %}F48: evaporator outlet sensor abnormality.
+            {% elif s == 'F95' %}F95: high outdoor temperature protection (cooling).
+            {% else %}Unknown fault code "{{ s }}" — refer to the service manual for your model.{% endif %}
+
+      # ─── Recurrence pattern: same error within 24 h ──────────────────
+      - name: "HeishaHub Diagnostics Recurrence"
+        unique_id: heishahub_diagnostics_recurrence
+        state: >-
+          {% set hist = states('input_text.heishahub_diag_error_history') %}
+          {% set cur = states('sensor.heishahub_diagnostics_current_error') %}
+          {% if hist and hist not in ['unknown','unavailable',''] %}
+            {% set arr = hist | from_json(default=[]) %}
+            {% set count = arr | selectattr('code','eq',cur) | list | count %}
+            {{ count }}
+          {% else %}0{% endif %}
+
+automation:
+  # ────────────────────────────────────────────────────────────────────
+  # On error-code change: log to history, ping persistent notification.
+  # ────────────────────────────────────────────────────────────────────
+  - id: heishahub_diag_log_error_change
+    alias: HeishaHub diagnostics — log error change
+    mode: queued
+    max: 5
+    trigger:
+      - platform: state
+        entity_id: sensor.heishahub_diagnostics_current_error
+    condition:
+      - condition: template
+        value_template: "{{ trigger.from_state.state != trigger.to_state.state }}"
+      - condition: template
+        value_template: "{{ trigger.to_state.state not in ['unknown','unavailable',''] }}"
+    action:
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.heishahub_diag_last_error_time
+        data:
+          datetime: "{{ now().isoformat() }}"
+      - variables:
+          new_code: "{{ trigger.to_state.state }}"
+          old_history: "{{ states('input_text.heishahub_diag_error_history') | from_json(default=[]) }}"
+          new_event: >-
+            {{
+              {'code': new_code,
+               'time': now().isoformat(),
+               'severity': state_attr('sensor.heishahub_diagnostics_current_error','severity')
+              }
+            }}
+          new_history_full: "{{ [new_event] + old_history }}"
+          new_history: "{{ new_history_full[:5] }}"
+      - service: input_text.set_value
+        target:
+          entity_id: input_text.heishahub_diag_error_history
+        data:
+          value: "{{ new_history | tojson }}"
+      - choose:
+          - conditions:
+              - condition: template
+                value_template: "{{ new_code == 'ok' }}"
+            sequence:
+              - service: persistent_notification.dismiss
+                data:
+                  notification_id: heishahub_active_error
+        default:
+          - service: persistent_notification.create
+            data:
+              notification_id: heishahub_active_error
+              title: "HeishaHub — heat-pump fault {{ new_code }}"
+              message: >-
+                **{{ state_attr('sensor.heishahub_diagnostics_current_error','severity') | upper }}**:
+                {{ state_attr('sensor.heishahub_diagnostics_current_error','message') }}
+
+                {% set m = state_attr('sensor.heishahub_diagnostics_current_error','model_note') %}
+                {% if m and m | trim != '' %}
+                **Model note:** {{ m }}
+                {% endif %}
+
+                See the [Diagnostics view](/heishahub/optimization) for history.

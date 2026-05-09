@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  HeishaHub — Mockup of the future custom_components/heishahub config flow.
+  This is a design proposal for v1.0 — what the UI-driven setup would look
+  like once HeishaHub becomes a real Python integration. Today this is
+  approximated by the input_select.heishahub_vendor_preset dropdown plus
+  the heishahub_setup blueprint, both available now in v0.4.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 760" font-family="'Roboto','Segoe UI',Arial,sans-serif">
+  <rect width="1100" height="760" fill="#0f1923"/>
+
+  <!-- HA-style window chrome -->
+  <rect x="40" y="40" width="1020" height="680" rx="14" fill="#111d2e" stroke="#2a3f54" stroke-width="1"/>
+  <rect x="40" y="40" width="1020" height="48" rx="14" fill="#1a2733" stroke="#2a3f54" stroke-width="1"/>
+  <text x="60" y="70" fill="#8ca8c0" font-size="14" font-weight="600">⚙ Set up Home Assistant Integration</text>
+  <circle cx="1030" cy="64" r="8" fill="none" stroke="#5a7a96" stroke-width="1.5"/>
+  <line x1="1024" y1="58" x2="1036" y2="70" stroke="#5a7a96" stroke-width="1.5"/>
+  <line x1="1036" y1="58" x2="1024" y2="70" stroke="#5a7a96" stroke-width="1.5"/>
+
+  <!-- Step indicator -->
+  <g transform="translate(60,110)">
+    <text x="0" y="0" fill="#5a7a96" font-size="11" letter-spacing="1.5">STEP 2 OF 3 · CONFIGURE</text>
+    <rect x="0" y="14" width="120" height="4" rx="2" fill="#2980b9"/>
+    <rect x="124" y="14" width="120" height="4" rx="2" fill="#2980b9"/>
+    <rect x="248" y="14" width="120" height="4" rx="2" fill="#3d5166"/>
+  </g>
+
+  <!-- Main heading -->
+  <g transform="translate(60,160)">
+    <text x="0" y="0" fill="#ffffff" font-size="22" font-weight="600">HeishaHub — Heat-pump dashboard</text>
+    <text x="0" y="28" fill="#8ca8c0" font-size="13">Detected your heat pump. Confirm the model and pick which sources HeishaHub should use.</text>
+  </g>
+
+  <!-- Card 1: vendor / model -->
+  <g transform="translate(60,230)">
+    <rect width="980" height="170" rx="10" fill="#1a252f" stroke="#2a3f54" stroke-width="1"/>
+    <text x="20" y="28" fill="#8ca8c0" font-size="11" font-weight="600" letter-spacing="0.5">VENDOR &amp; MODEL</text>
+    <line x1="20" y1="38" x2="960" y2="38" stroke="#2a3f54"/>
+
+    <!-- Detected callout -->
+    <rect x="20" y="52" width="940" height="40" rx="6" fill="#0d2b1a" stroke="#15803d"/>
+    <circle cx="40" cy="72" r="8" fill="#15803d"/>
+    <path d="M 36 72 L 39 75 L 45 69" stroke="#ffffff" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <text x="60" y="76" fill="#84cc16" font-size="13">Found 47 entities under topic prefix <tspan font-family="monospace" fill="#ffffff">panasonic_heat_pump</tspan> — kamaradclimber/heishamon-homeassistant integration is active.</text>
+
+    <!-- Vendor dropdown -->
+    <text x="20" y="120" fill="#8ca8c0" font-size="12">Vendor / connection</text>
+    <rect x="20" y="128" width="460" height="36" rx="6" fill="#0f1923" stroke="#3d5166"/>
+    <text x="34" y="151" fill="#ffffff" font-size="13">Panasonic Heishamon (kamaradclimber)</text>
+    <path d="M 460 142 l 6 6 6 -6" stroke="#5a7a96" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <!-- Model dropdown -->
+    <text x="500" y="120" fill="#8ca8c0" font-size="12">Heat-pump model</text>
+    <rect x="500" y="128" width="460" height="36" rx="6" fill="#0f1923" stroke="#3d5166"/>
+    <text x="514" y="151" fill="#ffffff" font-size="13">Panasonic L-series (R32) — Aquarea L</text>
+    <path d="M 940 142 l 6 6 6 -6" stroke="#5a7a96" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <!-- Card 2: detection -->
+  <g transform="translate(60,420)">
+    <rect width="980" height="160" rx="10" fill="#1a252f" stroke="#2a3f54" stroke-width="1"/>
+    <text x="20" y="28" fill="#8ca8c0" font-size="11" font-weight="600" letter-spacing="0.5">AUTO-DETECTED COMPONENTS</text>
+    <line x1="20" y1="38" x2="960" y2="38" stroke="#2a3f54"/>
+
+    <!-- Toggles (HA style) -->
+    <g transform="translate(20,60)">
+      <text x="0" y="14" fill="#ffffff" font-size="13">Zone 1 (HK1)</text>
+      <text x="0" y="34" fill="#5a7a96" font-size="11">always present · sensor.panasonic_heat_pump_main_z1_water_temperature</text>
+      <rect x="900" y="0" width="44" height="22" rx="11" fill="#2980b9"/>
+      <circle cx="932" cy="11" r="9" fill="#ffffff"/>
+    </g>
+
+    <g transform="translate(20,90)">
+      <text x="0" y="14" fill="#ffffff" font-size="13">Zone 2 (HK2)</text>
+      <text x="0" y="34" fill="#84cc16" font-size="11">✓ detected · sensor.panasonic_heat_pump_main_z2_water_temperature reports 31.2 °C</text>
+      <rect x="900" y="0" width="44" height="22" rx="11" fill="#2980b9"/>
+      <circle cx="932" cy="11" r="9" fill="#ffffff"/>
+    </g>
+
+    <g transform="translate(20,120)">
+      <text x="0" y="14" fill="#ffffff" font-size="13">DHW tank</text>
+      <text x="0" y="34" fill="#84cc16" font-size="11">✓ detected · sensor.panasonic_heat_pump_main_dhw_temperature reports 48.7 °C</text>
+      <rect x="900" y="0" width="44" height="22" rx="11" fill="#2980b9"/>
+      <circle cx="932" cy="11" r="9" fill="#ffffff"/>
+    </g>
+  </g>
+
+  <!-- Footer / actions -->
+  <g transform="translate(60,610)">
+    <rect width="980" height="80" rx="10" fill="#0f1923" stroke="#2a3f54" stroke-width="1"/>
+    <rect x="20" y="20" width="160" height="40" rx="6" fill="transparent" stroke="#3d5166"/>
+    <text x="100" y="46" text-anchor="middle" fill="#8ca8c0" font-size="13">Back</text>
+    <rect x="800" y="20" width="160" height="40" rx="6" fill="#2980b9"/>
+    <text x="880" y="46" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="600">Submit</text>
+  </g>
+
+  <text x="1050" y="745" text-anchor="end" fill="#3d5166" font-size="9" opacity="0.6">HeishaHub config-flow mockup · v1.0 design preview · v0.4 ships YAML-based equivalent</text>
+</svg>

@@ -37,6 +37,8 @@ existing building blocks into something usable:
 | Path | Purpose |
 |---|---|
 | `packages/heishahub_sources.yaml` | **Source adapter layer.** Defines `input_text` helpers for every underlying entity-ID (heat pump and external meters), plus active-source dispatcher template sensors. The only file that names heat-pump-specific entities. |
+| `packages/heishahub_models.yaml` | **Vendor & model selectors** with auto-fill automations. Vendor preset sets all 17 source helpers on selection; model selector sets compressor / flow / supply-T° thresholds for the chosen Panasonic generation (J/K/L/T-CAP/M) or other vendor. |
+| `packages/heishahub_diagnostics.yaml` | **Panasonic fault-code analysis** — 30+ H/F codes mapped to plain-language descriptions, severity, model-specific commentary; ring buffer of last 5 events; recurrence detection; persistent-notification flow. |
 | `packages/heishahub_core.yaml` | Live sensors (thermal power, mode mapping, defrost, compressor running) — reads exclusively from `sensor.heishahub_source_*`. |
 | `packages/heishahub_efficiency.yaml` | Energy integrals, utility_meter (with tariff splits), COP / daily / monthly / SCOP, period comparisons. |
 | `packages/heishahub_cycles.yaml` | Cycle analysis: start/stop events, runtime/pause, counters, short-cycle detection. |
@@ -111,6 +113,52 @@ utility_meter.heishahub_thermal_*             ← daily/monthly/yearly + tariff 
 helpers in the UI (Settings → Devices → Helpers). All read paths follow.
 Write paths in `heishahub_control.yaml` are still heat-pump-specific by
 nature — see the comment header in that file.
+
+## Diagnostics module
+
+The diagnostics package (`heishahub_diagnostics.yaml`) reads
+`sensor.heishahub_source_error_code` and produces:
+
+- `sensor.heishahub_diagnostics_current_error` — state = code, attributes
+  hold severity / message / model-specific commentary
+- `sensor.heishahub_diagnostics_recurrence` — count of same code in the
+  last 5 events (ring buffer in `input_text.heishahub_diag_error_history`)
+- An automation that timestamps every change, appends to the buffer, and
+  raises / dismisses a persistent notification
+
+Severity classification (bad → good): `critical` / `warn` / `info` / `none`.
+
+Adding a new code: extend the `message` template's chained `{% elif %}`
+in `heishahub_diagnostics_current_error`. Add it to the `critical` or
+`warn` array if applicable. Document in `docs/diagnostics.md`.
+
+Adding model-specific commentary: extend the `model_note` template
+similarly — it reads `input_select.heishahub_pump_model` so per-model
+guidance is keyed off the same selector that drives compressor / flow
+thresholds.
+
+## Vendor presets and model selector
+
+`heishahub_models.yaml` defines two independent selectors:
+
+1. **`input_select.heishahub_vendor_preset`** — when changed (away from
+   `keep_current`), an automation auto-fills all 17 `input_text.heishahub_src_*`
+   helpers with the entity-ID convention of the chosen vendor. Resets
+   itself to `keep_current` after 2 s so re-import doesn't re-clobber.
+
+2. **`input_select.heishahub_pump_model`** — drives a separate automation
+   that sets `input_number.heishahub_model_compressor_min_hz/max_hz`,
+   `_min_flow_lpm`, and `_max_supply_c` to typical values for that
+   generation. Power users can override after the fact.
+
+Adding a vendor preset: append a new option to the `input_select`,
+add a `choose:` branch to `heishahub_vendor_preset_apply`, and create
+a recipe in `docs/vendors/<name>.md`.
+
+Adding a model: append a new option, add the threshold logic to
+`heishahub_model_apply_thresholds`, update the description and
+refrigerant template sensors. Document the model in
+`docs/vendors/panasonic_heishamon.md` (or the relevant vendor file).
 
 ## Schema auto-detection
 

@@ -37,6 +37,7 @@ BLUEPRINT_FILE = ROOT / "blueprints" / "heishahub_setup.yaml"
 ALLOWED_HARDCODE = {
     "packages/heishahub_sources.yaml": "default values for the source-adapter helpers",
     "packages/heishahub_control.yaml": "heat-pump-specific write targets (documented)",
+    "packages/heishahub_models.yaml": "vendor-preset auto-fill payloads (write per-vendor entity-IDs into helpers)",
 }
 
 # Dashboard exceptions: the main on/off switch and heat-curve auto-entities
@@ -195,6 +196,83 @@ def test_utility_meter_active_source() -> int:
     return failures
 
 
+# ─── Test 5: every advisor that summary aggregates is actually defined ───
+def test_advisor_summary_consistency() -> int:
+    section("Advisor summary aggregates only sensors that exist")
+    failures = 0
+
+    advisor_pkg = ROOT / "packages" / "heishahub_advisor.yaml"
+    text = advisor_pkg.read_text(encoding="utf-8")
+
+    # Find unique_ids declared in the file
+    declared = set(re.findall(r"unique_id:\s*(heishahub_advisor_\w+)", text))
+
+    # Find advisor entities the summary reads
+    summary_block_match = re.search(
+        r"unique_id:\s*heishahub_advisor_summary.*?attributes:",
+        text,
+        flags=re.S,
+    )
+    if not summary_block_match:
+        fail("advisor summary block not found")
+        return 1
+
+    summary_block = text[summary_block_match.start():summary_block_match.end()]
+    referenced = set(re.findall(r"sensor\.(heishahub_advisor_\w+)", summary_block))
+    referenced.discard("heishahub_advisor_summary")
+
+    missing = referenced - declared
+    if missing:
+        for m in missing:
+            fail(f"advisor summary references {m} which is not defined in advisor.yaml")
+        failures += len(missing)
+    else:
+        ok(f"advisor summary aggregates {len(referenced)} declared advisors")
+
+    return failures
+
+
+# ─── Test 6: diagnostics package self-consistency ────────────────────────
+def test_diagnostics_consistency() -> int:
+    section("Diagnostics module self-consistency")
+    failures = 0
+
+    diag = load_yaml(ROOT / "packages" / "heishahub_diagnostics.yaml")
+
+    # Find the current_error template sensor
+    current_error_def = None
+    for block in diag.get("template", []):
+        for s in block.get("sensor", []) or []:
+            if s.get("unique_id") == "heishahub_diagnostics_current_error":
+                current_error_def = s
+                break
+
+    if not current_error_def:
+        fail("heishahub_diagnostics_current_error not declared")
+        return 1
+    ok("heishahub_diagnostics_current_error declared")
+
+    # Severity arrays should reference codes that appear in the message
+    state_text = str(current_error_def.get("attributes", {}).get("severity", ""))
+    msg_text = str(current_error_def.get("attributes", {}).get("message", ""))
+
+    # Extract severity arrays
+    sev_codes = set(re.findall(r"['\"]([HF]\d{2})['\"]", state_text))
+    msg_codes = set(re.findall(r"== '([HF]\d{2})'", msg_text))
+
+    missing_in_msg = sev_codes - msg_codes
+    # H00 is mapped to 'ok' so it doesn't need a per-code branch
+    missing_in_msg.discard("H00")
+    if missing_in_msg:
+        for m in sorted(missing_in_msg):
+            fail(f"severity lists {m} but no message branch handles it")
+        failures += len(missing_in_msg)
+    else:
+        ok(f"all {len(sev_codes)} codes in severity lists have message branches")
+
+    return failures
+
+
 def main() -> int:
     print(f"HeishaHub smoke tests · root: {ROOT}")
     failures = 0
@@ -202,6 +280,8 @@ def main() -> int:
     failures += test_source_adapter_contract()
     failures += test_source_facade_resolution()
     failures += test_utility_meter_active_source()
+    failures += test_advisor_summary_consistency()
+    failures += test_diagnostics_consistency()
 
     print()
     if failures:

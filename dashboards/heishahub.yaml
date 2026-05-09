@@ -933,7 +933,46 @@ views:
             name: DHW run length
           - entity: sensor.heishahub_advisor_heating_limit
             name: Heating limit (auto-detected)
+          - entity: sensor.heishahub_advisor_pressure_trend
+            name: Water pressure trend (leak detection)
+          - entity: sensor.heishahub_advisor_diagnostics
+            name: Diagnostics (active fault / recurrence)
         state_color: true
+
+      # ── Active fault / diagnostics card ──
+      - type: custom:mushroom-template-card
+        primary: |-
+          {% set s = states('sensor.heishahub_diagnostics_current_error') %}
+          {% if s == 'ok' %}No active fault
+          {% else %}Fault: {{ s }}{% endif %}
+        secondary: >-
+          {{ state_attr('sensor.heishahub_diagnostics_current_error','message') }}
+        icon: |-
+          {% set sev = state_attr('sensor.heishahub_diagnostics_current_error','severity') %}
+          {% if sev == 'critical' %}mdi:alert-octagon
+          {% elif sev == 'warn' %}mdi:alert
+          {% elif sev == 'info' %}mdi:information-outline
+          {% else %}mdi:check-circle{% endif %}
+        icon_color: |-
+          {% set sev = state_attr('sensor.heishahub_diagnostics_current_error','severity') %}
+          {% if sev == 'critical' %}red
+          {% elif sev == 'warn' %}orange
+          {% elif sev == 'info' %}blue
+          {% else %}green{% endif %}
+        multiline_secondary: true
+        fill_container: true
+
+      - type: entities
+        title: Diagnostics — detail
+        entities:
+          - entity: sensor.heishahub_diagnostics_current_error
+            name: Active fault code
+          - entity: sensor.heishahub_diagnostics_recurrence
+            name: Recurrences (last 5 events)
+          - entity: input_datetime.heishahub_diag_last_error_time
+            name: Last error timestamp
+          - entity: input_text.heishahub_diag_error_history
+            name: Recent error history (JSON)
 
       - type: entities
         title: Heating limit — observed
@@ -965,6 +1004,12 @@ views:
 
           ### Heating limit
           {{ state_attr('sensor.heishahub_advisor_heating_limit','message') }}
+
+          ### Diagnostics
+          {{ state_attr('sensor.heishahub_advisor_diagnostics','message') }}
+
+          ### Water pressure trend
+          {{ state_attr('sensor.heishahub_advisor_pressure_trend','message') }}
 
       - type: entities
         title: Control strategies (HeishaMoNR parity)
@@ -1105,6 +1150,25 @@ views:
                 color: "#bcbd22"
                 stroke_width: 1.5
 
+          # ── Active fault (only shown when present) ──
+          - type: conditional
+            conditions:
+              - entity: sensor.heishahub_diagnostics_current_error
+                state_not: ok
+            card:
+              type: custom:mushroom-template-card
+              primary: |-
+                Fault: {{ states('sensor.heishahub_diagnostics_current_error') }}
+              secondary: >-
+                {{ state_attr('sensor.heishahub_diagnostics_current_error','message') }}
+              icon: mdi:alert-octagon
+              icon_color: red
+              multiline_secondary: true
+              fill_container: true
+              tap_action:
+                action: navigate
+                navigation_path: /heishahub/optimization
+
           # ── Advisor verdict ──
           - type: custom:mushroom-template-card
             primary: Advisor
@@ -1138,6 +1202,32 @@ views:
           relevant entity-ID and HeishaHub follows automatically. No YAML
           editing required.
 
+      # ── Vendor preset & model selector (1-click setup) ──
+      - type: entities
+        title: Vendor & model
+        entities:
+          - entity: input_select.heishahub_vendor_preset
+            name: Vendor preset (auto-fills source helpers)
+            secondary_info: last-changed
+          - entity: input_select.heishahub_pump_model
+            name: Heat-pump model
+          - entity: sensor.heishahub_model_description
+            name: Model description
+          - entity: sensor.heishahub_model_refrigerant
+            name: Refrigerant
+
+      - type: entities
+        title: Model thresholds (auto-set on model change, override OK)
+        entities:
+          - entity: input_number.heishahub_model_compressor_min_hz
+            name: Compressor min Hz
+          - entity: input_number.heishahub_model_compressor_max_hz
+            name: Compressor max Hz
+          - entity: input_number.heishahub_model_min_flow_lpm
+            name: Minimum water flow (L/min)
+          - entity: input_number.heishahub_model_max_supply_c
+            name: Maximum supply temperature (°C)
+
       # ── Source-mode selectors ──
       - type: entities
         title: Source modes
@@ -1169,6 +1259,8 @@ views:
             name: DHW target temperature
           - entity: input_text.heishahub_src_buffer_temp
             name: Buffer tank temperature (blank if absent)
+          - entity: input_text.heishahub_src_error_code
+            name: Error / fault code source
           - type: divider
           - entity: binary_sensor.heishahub_has_hk2
             name: HK2 detected

@@ -83,6 +83,12 @@ input_text:
     max: 255
     initial: binary_sensor.panasonic_heat_pump_main_heater_state
 
+  heishahub_src_error_code:
+    name: HeishaHub source — current error code (Heishamon-style)
+    icon: mdi:alert-circle-outline
+    max: 255
+    initial: sensor.panasonic_heat_pump_main_error
+
   heishahub_src_compressor_hours:
     name: HeishaHub source — compressor running hours (lifetime)
     icon: mdi:clock-outline
@@ -294,6 +300,15 @@ template:
           {% set ent = states('input_text.heishahub_src_discharge_temp') %}
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
         state: "{{ states(states('input_text.heishahub_src_discharge_temp')) | float(0) }}"
+
+      # ─── Error-code facade ───────────────────────────────────────────────
+      - name: "HeishaHub Source Error Code"
+        unique_id: heishahub_source_error_code
+        icon: mdi:alert-circle-outline
+        availability: >-
+          {% set ent = states('input_text.heishahub_src_error_code') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: "{{ states(states('input_text.heishahub_src_error_code')) | string | upper }}"
 
       # ─── Optional component facades (HK1/HK2 zone temps, DHW, buffer) ───
       - name: "HeishaHub Source Zone 1 Temperature"

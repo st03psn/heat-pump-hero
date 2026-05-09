@@ -16,9 +16,10 @@ installation schematic with live hotspots, and proper efficiency metrics
 
 ## Status
 
-🟢 **v0.3 — beta** — feature-complete for the typical HK1 / HK1+DHW install.
-Source-adapter layer makes every counter swappable (different heat pump,
-heat meter, electricity meter) via UI helpers. Smoke-tested.
+🟢 **v0.4 — beta** — diagnostics module, vendor & model selectors with
+auto-fill, **Panasonic M-series (R290 flagship) supported**, slow-leak
+detection, integration UI mockup. See [CHANGELOG.md](CHANGELOG.md) for
+release notes and [docs/roadmap.md](docs/roadmap.md) for what's coming.
 
 ## Screenshots
 
@@ -28,6 +29,19 @@ heat meter, electricity meter) via UI helpers. Smoke-tested.
 reference install is online — see [docs/screenshots/](docs/screenshots/).)*
 
 ## Features
+
+**Diagnostics & vendor support** _(new in v0.4)_
+- ✅ Panasonic fault-code analysis: 30+ H/F codes mapped to plain-language
+  descriptions and severity, with model-specific commentary (J-series H23,
+  R32/R290 H99, J/K H62 false alarms)
+- ✅ Recurrence detection (same code N× in 5-event ring buffer)
+- ✅ Persistent notification on fault, dismissed automatically when cleared
+- ✅ Vendor preset selector — auto-fills all 17 source helpers in one
+  click for Heishamon / Daikin / MELCloud / Vaillant / Stiebel / generic
+- ✅ Heat-pump model selector — Panasonic J / K / L / T-CAP / **M (R290)**
+  plus other vendors — auto-sets compressor min/max Hz, minimum flow,
+  maximum supply temperature
+- ✅ Water-pressure trend advisor (slow-leak detection)
 
 **Visualization**
 - ✅ 7-view dashboard: Overview, Schematic, Analysis, Efficiency,

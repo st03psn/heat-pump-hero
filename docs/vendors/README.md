@@ -11,6 +11,7 @@ HeishaHub works with anything that produces HA entities.
 | Vendor / firmware | Protocol | Recipe |
 |---|---|---|
 | **Panasonic Aquarea + Heishamon** (Egyras / IgorYbema) | MQTT | [panasonic_heishamon.md](panasonic_heishamon.md) — default, plug-and-play |
+| Panasonic models supported via Heishamon | MQTT | J · K · L · T-CAP · **M (R290 flagship, community fork)** — see panasonic_heishamon.md for per-model thresholds |
 
 ## Tested community alternatives
 
