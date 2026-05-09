@@ -41,7 +41,7 @@ existing building blocks into something usable:
 
 Local before commit:
 
-- `py tests/smoke.py` — 6-section structural check (must exit 0)
+- `python3 tests/smoke.py` — 6-section structural check (must exit 0). On Windows, `py tests/smoke.py` works too via the Python launcher.
 - `yamllint -d "{extends: relaxed, rules: {line-length: disable, truthy: disable, comments: disable}}" .` — same config CI uses
 - `python -m json.tool grafana/<file>.json` — Grafana JSON validation (per file)
 
@@ -279,9 +279,7 @@ The advisor produces **recommendations, not commands**. Each sensor:
 - `attributes.message` — plain-language explanation with a concrete next step
 - `attributes.metric` — the relevant measurement supporting the diagnosis
 
-All advisor `attributes.message` text and persistent_notification body
-text is English. Until v1.0 the entire repo (docs, code, dashboards,
-attributes, notifications) is English-only — see [CONTRIBUTING.md](CONTRIBUTING.md).
+Advisor messages and persistent_notification bodies are English.
 
 Thresholds are **always** exposed via `input_number.hph_advisor_*`. No
 hard-coded magic numbers in templates — if a value should be tunable,
@@ -387,6 +385,9 @@ Anti-patterns to reject in review:
 
 - `{{ states('X') | float }}` without default — silently 0 on `unknown`
   while masking the real problem
+- `states.sensor.X.state` (property access) — raises `AttributeError`
+  when the entity doesn't exist; `states('sensor.X')` returns `'unknown'`
+  cleanly. Always use the function form.
 - `availability:` omitted on a sensor that depends on the source-adapter
 - Hardcoded `panasonic_*` entity IDs in templates outside the three
   whitelisted files (see Naming conventions)
@@ -395,7 +396,7 @@ Anti-patterns to reject in review:
 
 Before any commit:
 
-1. `py tests/smoke.py` exits 0
+1. `python3 tests/smoke.py` exits 0
 2. If a new sensor was added: it has a `unique_id`, a `state_class`
    where applicable, and an `availability:` guard if it depends on the
    source-adapter
