@@ -965,3 +965,12 @@ sensors:
     source: "{% if states('select.hph_schema_variant') == 'auto' %}\n  auto-detected\n\
       {% else %}\n  manual override\n{% endif %}"
   _source_package: hph_sources.yaml
+- name: HeatPump Hero Efficiency Trend
+  unique_id: hph_efficiency_trend
+  icon: "{% set v = states('sensor.hph_cop_change_month_pct') | float(0) %} {% if v > 5 %}mdi:rocket-launch {% elif v > 1 %}mdi:trending-up {% elif v < -5 %}mdi:alert {% elif v < -1 %}mdi:trending-down {% else %}mdi:trending-neutral{% endif %}"
+  state: "{% set v = states('sensor.hph_cop_change_month_pct') | float(0) %} {% if v > 5 %}great {% elif v > 1 %}better {% elif v < -5 %}critical {% elif v < -1 %}worse {% else %}stable{% endif %}"
+  attributes:
+    month_pct: "{{ states('sensor.hph_cop_change_month_pct') }}"
+    year_pct: "{{ states('sensor.hph_scop_change_year_pct') }}"
+    headline: "{% set m = states('sensor.hph_cop_change_month_pct') | float(0) %} {% set y = states('sensor.hph_scop_change_year_pct') | float(0) %} {% set m_prev = states('sensor.hph_cop_last_month') | float(0) %} {% set y_prev = states('sensor.hph_cop_last_year') | float(0) %} {% set parts = [] %} {% if m_prev > 0.1 %} {% if m > 0 %}{% set parts = parts + ['+ ' ~ m ~ '% vs last month'] %}{% elif m < 0 %}{% set parts = parts + [m ~ '% vs last month'] %}{% endif %} {% endif %} {% if y_prev > 0.1 %} {% if y > 0 %}{% set parts = parts + ['+ ' ~ y ~ '% vs last year'] %}{% elif y < 0 %}{% set parts = parts + [y ~ '% vs last year'] %}{% endif %} {% endif %} {% if parts | length == 0 %}Trend stable — not enough data yet.{% else %}{{ parts | join(' · ') }}{% endif %}"
+  _source_package: hph_efficiency.yaml

@@ -31,6 +31,20 @@ recorder:
       - number.hph_cycle_last_pause_min
 
 sensor:
+# 7-day rolling average of the observed heating limit (outdoor temp at compressor
+# stop after ≥30-min run). Used by the advisor and the Optimization dashboard.
+# platform: statistics cannot be registered via Python API — stays in YAML.
+- platform: statistics
+  name: "HeatPump Hero Heating Limit Smoothed"
+  unique_id: hph_heating_limit_smoothed
+  entity_id: number.hph_heating_limit_observed_c
+  state_characteristic: average_linear
+  sampling_size: 50
+  max_age:
+    days: 7
+  keep_last_sample: true
+  precision: 1
+
 - platform: integration
   source: sensor.hph_thermal_power_active
   name: HeatPump Hero Thermal Energy

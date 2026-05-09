@@ -12,100 +12,104 @@ views:
   - title: Overview
     path: overview
     icon: mdi:view-dashboard
-    type: sections
-    sections:
-      - type: grid
-        title: System status
+    cards:
+      - type: horizontal-stack
         cards:
-          - type: custom:mushroom-template-card
-            primary: Operation
-            secondary: "{{ states('switch.panasonic_heat_pump_main_heatpump_state') }}"
-            icon: mdi:power
-            icon_color: |-
-              {{ 'green' if is_state('switch.panasonic_heat_pump_main_heatpump_state','on') else 'disabled' }}
-          - type: custom:mushroom-template-card
-            primary: Mode
-            secondary: "{{ states('sensor.hph_source_operating_mode') }}"
-            icon: mdi:fire
-            icon_color: orange
-          - type: custom:mushroom-template-card
-            primary: Outdoor temperature
-            secondary: "{{ states('sensor.hph_source_outdoor_temp') }} °C"
-            icon: mdi:thermometer
-            icon_color: blue
-          - type: custom:mushroom-template-card
-            primary: Supply / return
-            secondary: >-
-              {{ states('sensor.hph_source_outlet_temp') }} °C /
-              {{ states('sensor.hph_source_inlet_temp') }} °C
-            icon: mdi:water-thermometer
-            icon_color: red
-          - type: custom:mushroom-template-card
-            primary: Water pressure
-            secondary: "{{ states('sensor.hph_source_pump_pressure') }} bar"
-            icon: mdi:gauge
-          - type: custom:mushroom-template-card
-            primary: Water flow
-            secondary: "{{ states('sensor.hph_source_flow_rate') }} L/min"
-            icon: mdi:water-pump
+          - type: vertical-stack
+            cards:
+              - type: markdown
+                content: "### System status"
+              - type: custom:mushroom-template-card
+                primary: Operation
+                secondary: "{{ states('switch.panasonic_heat_pump_main_heatpump_state') }}"
+                icon: mdi:power
+                icon_color: |-
+                  {{ 'green' if is_state('switch.panasonic_heat_pump_main_heatpump_state','on') else 'disabled' }}
+              - type: custom:mushroom-template-card
+                primary: Mode
+                secondary: "{{ states('sensor.hph_source_operating_mode') }}"
+                icon: mdi:fire
+                icon_color: orange
+              - type: custom:mushroom-template-card
+                primary: Outdoor temperature
+                secondary: "{{ states('sensor.hph_source_outdoor_temp') }} °C"
+                icon: mdi:thermometer
+                icon_color: blue
+              - type: custom:mushroom-template-card
+                primary: Supply / return
+                secondary: >-
+                  {{ states('sensor.hph_source_outlet_temp') }} °C /
+                  {{ states('sensor.hph_source_inlet_temp') }} °C
+                icon: mdi:water-thermometer
+                icon_color: red
+              - type: custom:mushroom-template-card
+                primary: Water pressure
+                secondary: "{{ states('sensor.hph_source_pump_pressure') }} bar"
+                icon: mdi:gauge
+              - type: custom:mushroom-template-card
+                primary: Water flow
+                secondary: "{{ states('sensor.hph_source_flow_rate') }} L/min"
+                icon: mdi:water-pump
 
-      - type: grid
-        title: Compressor
-        cards:
-          - type: custom:mushroom-template-card
-            primary: Frequency
-            secondary: "{{ states('sensor.hph_source_compressor_freq') }} Hz"
-            icon: mdi:sine-wave
-            icon_color: |-
-              {{ 'green' if is_state('binary_sensor.hph_compressor_running','on') else 'disabled' }}
-          - type: custom:mushroom-template-card
-            primary: Running hours
-            secondary: "{{ states('sensor.hph_source_compressor_hours') }} h"
-            icon: mdi:clock-outline
-          - type: custom:mushroom-template-card
-            primary: Starts
-            secondary: "{{ states('sensor.hph_source_compressor_starts') }}"
-            icon: mdi:counter
-          - type: custom:mushroom-template-card
-            primary: Defrost
-            secondary: >-
-              {{ 'Active' if is_state('binary_sensor.hph_defrost_active','on') else 'Off' }}
-            icon: mdi:snowflake-melt
-            icon_color: |-
-              {{ 'cyan' if is_state('binary_sensor.hph_defrost_active','on') else 'disabled' }}
+          - type: vertical-stack
+            cards:
+              - type: markdown
+                content: "### Compressor"
+              - type: custom:mushroom-template-card
+                primary: Frequency
+                secondary: "{{ states('sensor.hph_source_compressor_freq') }} Hz"
+                icon: mdi:sine-wave
+                icon_color: |-
+                  {{ 'green' if is_state('binary_sensor.hph_compressor_running','on') else 'disabled' }}
+              - type: custom:mushroom-template-card
+                primary: Running hours
+                secondary: "{{ states('sensor.hph_source_compressor_hours') }} h"
+                icon: mdi:clock-outline
+              - type: custom:mushroom-template-card
+                primary: Starts
+                secondary: "{{ states('sensor.hph_source_compressor_starts') }}"
+                icon: mdi:counter
+              - type: custom:mushroom-template-card
+                primary: Defrost
+                secondary: >-
+                  {{ 'Active' if is_state('binary_sensor.hph_defrost_active','on') else 'Off' }}
+                icon: mdi:snowflake-melt
+                icon_color: |-
+                  {{ 'cyan' if is_state('binary_sensor.hph_defrost_active','on') else 'disabled' }}
 
-      - type: grid
-        title: Efficiency
-        cards:
-          - type: custom:mushroom-template-card
-            primary: COP (live)
-            secondary: "{{ states('sensor.hph_cop_live') }}"
-            icon: mdi:gauge
-            icon_color: |-
-              {% set v = states('sensor.hph_cop_live') | float(0) %}
-              {% if v >= 4 %}green{% elif v >= 3 %}yellow{% elif v > 0 %}orange{% else %}disabled{% endif %}
-          - type: custom:mushroom-template-card
-            primary: COP (today)
-            secondary: "{{ states('sensor.hph_cop_daily') }}"
-            icon: mdi:calendar-today
-          - type: custom:mushroom-template-card
-            primary: COP (month)
-            secondary: "{{ states('sensor.hph_cop_monthly') }}"
-            icon: mdi:calendar-month
-          - type: custom:mushroom-template-card
-            primary: SCOP
-            secondary: "{{ states('sensor.hph_scop') }}"
-            icon: mdi:calendar
-          - type: custom:mushroom-template-card
-            primary: Thermal energy (today)
-            secondary: "{{ states('sensor.hph_thermal_daily') }} kWh"
-            icon: mdi:fire
-            icon_color: red
-          - type: custom:mushroom-template-card
-            primary: Electrical energy (today)
-            secondary: "{{ states('sensor.hph_electrical_daily') }} kWh"
-            icon: mdi:flash
-            icon_color: yellow
+          - type: vertical-stack
+            cards:
+              - type: markdown
+                content: "### Efficiency"
+              - type: custom:mushroom-template-card
+                primary: COP (live)
+                secondary: "{{ states('sensor.hph_cop_live') }}"
+                icon: mdi:gauge
+                icon_color: |-
+                  {% set v = states('sensor.hph_cop_live') | float(0) %}
+                  {% if v >= 4 %}green{% elif v >= 3 %}yellow{% elif v > 0 %}orange{% else %}disabled{% endif %}
+              - type: custom:mushroom-template-card
+                primary: COP (today)
+                secondary: "{{ states('sensor.hph_cop_daily') }}"
+                icon: mdi:calendar-today
+              - type: custom:mushroom-template-card
+                primary: COP (month)
+                secondary: "{{ states('sensor.hph_cop_monthly') }}"
+                icon: mdi:calendar-month
+              - type: custom:mushroom-template-card
+                primary: SCOP
+                secondary: "{{ states('sensor.hph_scop') }}"
+                icon: mdi:calendar
+              - type: custom:mushroom-template-card
+                primary: Thermal energy (today)
+                secondary: "{{ states('sensor.hph_thermal_daily') }} kWh"
+                icon: mdi:fire
+                icon_color: red
+              - type: custom:mushroom-template-card
+                primary: Electrical energy (today)
+                secondary: "{{ states('sensor.hph_electrical_daily') }} kWh"
+                icon: mdi:flash
+                icon_color: yellow
 
   # ════════════════════════════════════════════════════════════════════════
   # 2) SCHEMATIC — auto-detected variant + Bubble-Card SVG with hotspots
