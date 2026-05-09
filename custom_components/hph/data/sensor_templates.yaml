@@ -660,31 +660,6 @@ sensors:
     \ %} {% if prev > 0.1 %}\n  {{ ((cur - prev) / prev * 100) | round(1) }}\n{% else\
     \ %}\n  0\n{% endif %}"
   _source_package: hph_efficiency.yaml
-- name: HeatPump Hero Efficiency Trend
-  unique_id: hph_efficiency_trend
-  icon: '{% set v = states(''sensor.hph_cop_change_month_pct'') | float(0) %} {% if
-    v > 5 %}mdi:rocket-launch {% elif v > 1 %}mdi:trending-up {% elif v < -5 %}mdi:alert
-    {% elif v < -1 %}mdi:trending-down {% else %}mdi:trending-neutral{% endif %}'
-  state: '{% set v = states(''sensor.hph_cop_change_month_pct'') | float(0) %} {%
-    if v > 5 %}great {% elif v > 1 %}better {% elif v < -5 %}critical {% elif v <
-    -1 %}worse {% else %}stable{% endif %}'
-  attributes:
-    month_pct: '{{ states(''sensor.hph_cop_change_month_pct'') }}'
-    year_pct: '{{ states(''sensor.hph_scop_change_year_pct'') }}'
-    headline: "{% set m = states('sensor.hph_cop_change_month_pct') | float(0) %}\
-      \ {% set y = states('sensor.hph_scop_change_year_pct') | float(0) %} {% set\
-      \ m_prev = states('sensor.hph_cop_last_month') | float(0) %} {% set y_prev =\
-      \ states('sensor.hph_cop_last_year') | float(0) %} {% set parts = [] %} {% if\
-      \ m_prev > 0.1 %}\n  {% if m > 0 %}\n    {% set parts = parts + ['\U0001F4C8\
-      \ ' ~ m ~ '% better than last month'] %}\n  {% elif m < 0 %}\n    {% set parts\
-      \ = parts + ['\U0001F4C9 ' ~ (m | abs) ~ '% worse than last month'] %}\n  {%\
-      \ endif %}\n{% endif %} {% if y_prev > 0.1 %}\n  {% if y > 0 %}\n    {% set\
-      \ parts = parts + ['\U0001F3C6 ' ~ y ~ '% better than last year'] %}\n  {% elif\
-      \ y < 0 %}\n    {% set parts = parts + ['⚠️ ' ~ (y | abs) ~ '% worse than last\
-      \ year'] %}\n  {% endif %}\n{% endif %} {% if parts | length == 0 %}\n  Trend\
-      \ stable — not enough data for comparison yet.\n{% else %}\n  {{ parts | join('\
-      \ · ') }}\n{% endif %}"
-  _source_package: hph_efficiency.yaml
 - name: HeatPump Hero Model Refrigerant
   unique_id: hph_model_refrigerant
   icon: mdi:gas-cylinder
