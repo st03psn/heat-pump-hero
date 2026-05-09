@@ -6,6 +6,12 @@
 #
 # Assumes kamaradclimber/heishamon-homeassistant is installed with the
 # default topic prefix `panasonic_heat_pump`.
+#
+# HA Energy Dashboard:
+#   sensor.heishahub_thermal_energy and sensor.heishahub_electrical_energy
+#   (defined in heishahub_efficiency.yaml) carry device_class: energy and
+#   state_class: total_increasing so they appear as individual devices in
+#   Settings → Energy. Add them there manually after first install.
 
 template:
   - sensor:

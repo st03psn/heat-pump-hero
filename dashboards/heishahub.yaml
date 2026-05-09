@@ -491,36 +491,138 @@ views:
             color: "#17a2b8"
 
   # ════════════════════════════════════════════════════════════════════════
-  # 4) EFFICIENCY — period KPIs and multi-year trend
+  # 4) EFFICIENCY — period KPIs, tariff splits, multi-year trend
   # ════════════════════════════════════════════════════════════════════════
   - title: Efficiency
     path: efficiency
     icon: mdi:chart-bar
     cards:
+      # ── Overall KPIs ──
       - type: entities
-        title: Current KPIs
+        title: Overall COP / SCOP
         entities:
-          - sensor.heishahub_scop
-          - sensor.heishahub_cop_monthly
-          - sensor.heishahub_cop_daily
-          - sensor.heishahub_cop_live
-          - sensor.heishahub_thermal_yearly
-          - sensor.heishahub_electrical_yearly
-          - sensor.heishahub_thermal_monthly
-          - sensor.heishahub_electrical_monthly
+          - entity: sensor.heishahub_scop
+            name: SCOP (year to date)
+          - entity: sensor.heishahub_cop_monthly
+            name: COP this month
+          - entity: sensor.heishahub_cop_daily
+            name: COP today
+          - entity: sensor.heishahub_cop_live
+            name: COP live
+
+      # ── Mode-split COP ──
+      - type: entities
+        title: COP by mode
+        entities:
+          - entity: sensor.heishahub_cop_yearly_heating
+            name: SCOP heating (year)
+          - entity: sensor.heishahub_cop_monthly_heating
+            name: COP heating (month)
+          - entity: sensor.heishahub_cop_yearly_dhw
+            name: SCOP DHW (year)
+          - entity: sensor.heishahub_cop_monthly_dhw
+            name: COP DHW (month)
+
+      # ── Energy totals ──
+      - type: entities
+        title: Energy totals
+        entities:
+          - entity: sensor.heishahub_thermal_yearly
+            name: Thermal (year)
+          - entity: sensor.heishahub_electrical_yearly
+            name: Electrical (year)
+          - entity: sensor.heishahub_thermal_monthly
+            name: Thermal (month)
+          - entity: sensor.heishahub_electrical_monthly
+            name: Electrical (month)
+          - entity: sensor.heishahub_thermal_daily
+            name: Thermal (today)
+          - entity: sensor.heishahub_electrical_daily
+            name: Electrical (today)
+
+      # ── Energy split by mode (this month) ──
+      - type: entities
+        title: Energy by mode — this month
+        entities:
+          - entity: sensor.heishahub_thermal_monthly_split_heating
+            name: Thermal — heating
+          - entity: sensor.heishahub_electrical_monthly_split_heating
+            name: Electrical — heating
+          - entity: sensor.heishahub_thermal_monthly_split_dhw
+            name: Thermal — DHW
+          - entity: sensor.heishahub_electrical_monthly_split_dhw
+            name: Electrical — DHW
+          - entity: sensor.heishahub_thermal_monthly_split_cooling
+            name: Thermal — cooling
+          - entity: sensor.heishahub_electrical_monthly_split_cooling
+            name: Electrical — cooling
+
+      # ── 30-day bar chart ──
+      - type: custom:apexcharts-card
+        header:
+          show: true
+          title: Daily energy — last 30 days
+          show_states: true
+        graph_span: 30d
+        chart_type: bar
+        yaxis:
+          - id: energy
+            decimals: 1
+            apex_config:
+              title: { text: "kWh" }
+        series:
+          - entity: sensor.heishahub_thermal_daily
+            name: Thermal
+            type: column
+            color: "#d62728"
+            statistics:
+              type: state
+              period: day
+          - entity: sensor.heishahub_electrical_daily
+            name: Electrical
+            type: column
+            color: "#bcbd22"
+            statistics:
+              type: state
+              period: day
+
+      # ── COP trend (30 days) ──
+      - type: custom:apexcharts-card
+        header:
+          show: true
+          title: COP trend — last 30 days
+        graph_span: 30d
+        yaxis:
+          - min: 0
+            max: 6
+            decimals: 1
+        series:
+          - entity: sensor.heishahub_cop_daily
+            name: COP daily
+            color: "#17a2b8"
+            statistics:
+              type: state
+              period: day
+
+      # ── Statistics graph (built-in) ──
       - type: statistics-graph
-        title: Energy (30 days)
+        title: Cumulative energy (30 days)
         days_to_show: 30
         stat_types:
           - sum
         entities:
           - sensor.heishahub_thermal_energy
           - sensor.heishahub_electrical_energy
+
       - type: markdown
         content: |
-          **Multi-year comparison:** for SCOP/monthly trend across multiple
-          years, import the Grafana dashboard `efficiency_jaz_maz.json` (see
-          [docs/installation.md](/local/heishahub/installation.md)).
+          **HA Energy Dashboard:** add `sensor.heishahub_thermal_energy` and
+          `sensor.heishahub_electrical_energy` as *Individual Devices* under
+          Settings → Energy. Both carry `device_class: energy`.
+
+          **Multi-year comparison:** import the Grafana dashboard
+          `efficiency_jaz_maz.json` for cross-year SCOP/MAZ charts
+          (see [docs/installation.md](/local/heishahub/installation.md)).
 
   # ════════════════════════════════════════════════════════════════════════
   # 5) OPTIMIZATION — cycle analysis + advisor + control switches
