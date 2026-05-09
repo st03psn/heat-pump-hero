@@ -3,7 +3,7 @@
 > Universal Home Assistant package for Panasonic Aquarea heat pumps with
 > Heishamon — dashboard, statistics, optimization advisor, control automations.
 
-🌐 **Languages:** English (this file) · [Deutsch](README.de.md)
+🌐 **Languages:** English (this file) · [Deutsch](README.de.md) · [Nederlands](README.nl.md)
 
 [![Validate](https://github.com/st03psn/HeishaHub/actions/workflows/validate.yml/badge.svg)](https://github.com/st03psn/HeishaHub/actions/workflows/validate.yml)
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)

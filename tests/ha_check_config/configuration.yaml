@@ -1,0 +1,93 @@
+# Minimal HA configuration for `hass --script check_config` validation.
+# This file exists *only* for CI: it stubs out every entity HeishaHub
+# expects to find by default (kamaradclimber/heishamon entities) so the
+# `availability:` guards in our packages don't fail to resolve, and so
+# automation triggers can be parsed.
+
+default_config:
+
+# Stub out the kamaradclimber/heishamon entities our source-adapter
+# defaults reference. Each one exposes a fixed plausible value so the
+# template sensors compute clean numbers and the smoke test confirms
+# the whole package graph compiles.
+template:
+  - sensor:
+      - name: panasonic_heat_pump_main_inlet_temperature
+        unique_id: stub_pany_inlet
+        unit_of_measurement: "°C"
+        state: "32.0"
+      - name: panasonic_heat_pump_main_outlet_temperature
+        unique_id: stub_pany_outlet
+        unit_of_measurement: "°C"
+        state: "38.0"
+      - name: panasonic_heat_pump_main_water_flow
+        unique_id: stub_pany_flow
+        unit_of_measurement: "L/min"
+        state: "14.0"
+      - name: panasonic_heat_pump_main_outside_temperature
+        unique_id: stub_pany_outside
+        unit_of_measurement: "°C"
+        state: "5.0"
+      - name: panasonic_heat_pump_main_compressor_frequency
+        unique_id: stub_pany_freq
+        unit_of_measurement: "Hz"
+        state: "45"
+      - name: panasonic_heat_pump_main_compressor_running_hours
+        unique_id: stub_pany_hours
+        unit_of_measurement: "h"
+        state: "10000"
+      - name: panasonic_heat_pump_main_compressor_starts
+        unique_id: stub_pany_starts
+        state: "5000"
+      - name: panasonic_heat_pump_main_discharge_temperature
+        unique_id: stub_pany_discharge
+        unit_of_measurement: "°C"
+        state: "60.0"
+      - name: panasonic_heat_pump_main_pump_pressure
+        unique_id: stub_pany_pressure
+        unit_of_measurement: "bar"
+        state: "1.8"
+      - name: panasonic_heat_pump_main_consumed_power
+        unique_id: stub_pany_power
+        unit_of_measurement: "W"
+        state: "1500"
+      - name: panasonic_heat_pump_main_z1_water_temperature
+        unique_id: stub_pany_z1
+        unit_of_measurement: "°C"
+        state: "32.0"
+      - name: panasonic_heat_pump_main_z2_water_temperature
+        unique_id: stub_pany_z2
+        unit_of_measurement: "°C"
+        state: "unknown"
+      - name: panasonic_heat_pump_main_dhw_temperature
+        unique_id: stub_pany_dhw
+        unit_of_measurement: "°C"
+        state: "48.0"
+      - name: panasonic_heat_pump_main_dhw_target_temperature
+        unique_id: stub_pany_dhw_target
+        unit_of_measurement: "°C"
+        state: "50.0"
+      - name: panasonic_heat_pump_main_buffer_temperature
+        unique_id: stub_pany_buffer
+        unit_of_measurement: "°C"
+        state: "unknown"
+
+  - binary_sensor:
+      - name: panasonic_heat_pump_main_defrost_state
+        unique_id: stub_pany_defrost
+        state: "off"
+      - name: panasonic_heat_pump_main_heater_state
+        unique_id: stub_pany_heater
+        state: "off"
+
+# Stubs for select / switch / button entities referenced in control package.
+# These are write-targets — they only need to exist so YAML compiles.
+input_select:
+  panasonic_heat_pump_main_operating_mode_state_stub:
+    name: stub mode
+    options: ["Heat", "Cool", "DHW", "Heat+DHW"]
+    initial: Heat
+
+# Allow our packages to be loaded.
+homeassistant:
+  packages: !include_dir_named ../../packages

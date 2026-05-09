@@ -50,3 +50,20 @@ jobs:
         run: pip install pyyaml
       - name: Run smoke tests
         run: python3 tests/smoke.py
+
+  ha-check-config:
+    name: HA check_config (Docker)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate against Home Assistant ${{ matrix.ha_version }}
+        env:
+          HA_IMAGE: ghcr.io/home-assistant/home-assistant:stable
+        run: |
+          set -e
+          docker pull "$HA_IMAGE"
+          docker run --rm \
+            -v "${GITHUB_WORKSPACE}:/repo" \
+            -w /repo \
+            "$HA_IMAGE" \
+            python -m homeassistant --script check_config -c /repo/tests/ha_check_config -i

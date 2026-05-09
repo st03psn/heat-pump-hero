@@ -1,6 +1,6 @@
 # HeishaHub
 
-🌐 English (this file) · [Deutsch](info.de.md)
+🌐 English (this file) · [Deutsch](info.de.md) · [Nederlands](info.nl.md)
 
 Bundle package for **Heishamon** in Home Assistant: dashboard laid out like
 the Heishamon web UI, Service-Cloud-style analytical graphs, installation
@@ -22,6 +22,11 @@ multi-year comparison.
 - Control strategies (CCC, SoftStart, Solar-DHW, night Quiet-Mode) — HA
   automations with master switch, off by default
 - Optional: Grafana boards for multi-year SCOP comparison
+
+## Requirements
+
+- Home Assistant **2024.4** or newer
+- Heishamon hardware connected to an MQTT broker
 
 ## Installation
 
