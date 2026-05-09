@@ -490,6 +490,69 @@ views:
             name: COP (live)
             color: "#17a2b8"
 
+      # ── Heatmap: COP by day-of-week × hour-of-day (last 30 days) ──
+      # Reveals when the system is least efficient (e.g. cold mornings,
+      # DHW pulls in the evening).
+      - type: custom:apexcharts-card
+        header:
+          show: true
+          title: COP heatmap — day-of-week × hour-of-day (30 days)
+        chart_type: scatter
+        graph_span: 30d
+        apex_config:
+          chart:
+            type: heatmap
+            height: 320
+          dataLabels:
+            enabled: false
+          plotOptions:
+            heatmap:
+              colorScale:
+                ranges:
+                  - { from: 0,   to: 1,   color: "#7f1d1d", name: "very poor (<1)" }
+                  - { from: 1,   to: 2,   color: "#dc2626", name: "poor (1-2)" }
+                  - { from: 2,   to: 3,   color: "#f59e0b", name: "marginal (2-3)" }
+                  - { from: 3,   to: 4,   color: "#facc15", name: "ok (3-4)" }
+                  - { from: 4,   to: 5,   color: "#84cc16", name: "good (4-5)" }
+                  - { from: 5,   to: 100, color: "#15803d", name: "excellent (5+)" }
+          xaxis:
+            type: category
+        series:
+          - entity: sensor.heishahub_cop_live
+            name: COP
+            type: line
+            group_by:
+              func: avg
+              duration: 1h
+              fill: null
+
+      # ── Scatter: outdoor T° vs daily COP (correlation lens) ──
+      - type: custom:apexcharts-card
+        header:
+          show: true
+          title: COP vs outdoor temperature — correlation
+        chart_type: scatter
+        graph_span: 30d
+        apex_config:
+          chart:
+            height: 280
+          xaxis:
+            title: { text: "Outdoor T° (°C)" }
+            type: numeric
+          yaxis:
+            title: { text: "COP" }
+            min: 0
+            max: 6
+        series:
+          - entity: sensor.heishahub_cop_daily
+            name: Daily COP
+            color: "#17a2b8"
+            type: scatter
+            statistics:
+              type: state
+              period: day
+            extend_to: false
+
   # ════════════════════════════════════════════════════════════════════════
   # 4) EFFICIENCY — period KPIs, comparisons, tariff splits, multi-year trend
   # ════════════════════════════════════════════════════════════════════════
@@ -811,7 +874,19 @@ views:
             name: Heating curve / aux heater
           - entity: sensor.heishahub_advisor_dhw_runtime
             name: DHW run length
+          - entity: sensor.heishahub_advisor_heating_limit
+            name: Heating limit (auto-detected)
         state_color: true
+
+      - type: entities
+        title: Heating limit — observed
+        entities:
+          - entity: sensor.heishahub_heating_limit_smoothed
+            name: Smoothed (7-day rolling avg)
+          - entity: input_number.heishahub_heating_limit_observed_c
+            name: Last observation
+          - entity: input_number.heishahub_advisor_heating_limit_target_c
+            name: Target setpoint
 
       - type: markdown
         title: Recommendation detail
@@ -830,6 +905,9 @@ views:
 
           ### DHW
           {{ state_attr('sensor.heishahub_advisor_dhw_runtime','message') }}
+
+          ### Heating limit
+          {{ state_attr('sensor.heishahub_advisor_heating_limit','message') }}
 
       - type: entities
         title: Control strategies (HeishaMoNR parity)
@@ -853,7 +931,142 @@ views:
           - input_number.heishahub_advisor_dhw_min_runtime_min
 
   # ════════════════════════════════════════════════════════════════════════
-  # 6) CONFIGURATION
+  # 6) MOBILE — slim, single-column layout for phones
+  # ════════════════════════════════════════════════════════════════════════
+  - title: Mobile
+    path: mobile
+    icon: mdi:cellphone
+    type: panel
+    badges: []
+    cards:
+      - type: vertical-stack
+        cards:
+          # ── Hero card ──
+          - type: custom:mushroom-template-card
+            primary: HeishaHub
+            secondary: |-
+              {% set s = states('sensor.heishahub_efficiency_trend') %}
+              {% if s == 'great' %}🚀 great
+              {% elif s == 'better' %}📈 trending up
+              {% elif s == 'critical' %}⚠️ check advisor
+              {% elif s == 'worse' %}📉 trending down
+              {% else %}— stable —{% endif %}
+              · COP live {{ states('sensor.heishahub_cop_live') }}
+            icon: mdi:heat-pump
+            icon_color: |-
+              {% set s = states('sensor.heishahub_efficiency_trend') %}
+              {% if s == 'great' %}green
+              {% elif s == 'better' %}light-green
+              {% elif s == 'critical' %}red
+              {% elif s == 'worse' %}orange
+              {% else %}grey{% endif %}
+            multiline_secondary: true
+            fill_container: true
+
+          # ── Compact KPI strip ──
+          - type: custom:mushroom-chips-card
+            chips:
+              - type: template
+                icon: mdi:thermometer
+                icon_color: blue
+                content: "{{ states('sensor.heishahub_source_outdoor_temp') }}°"
+              - type: template
+                icon: mdi:water-thermometer
+                icon_color: red
+                content: "{{ states('sensor.heishahub_source_outlet_temp') }}°"
+              - type: template
+                icon: mdi:water-pump
+                icon_color: blue
+                content: "{{ states('sensor.heishahub_source_flow_rate') }}"
+              - type: template
+                icon: mdi:sine-wave
+                icon_color: |-
+                  {{ 'green' if is_state('binary_sensor.heishahub_compressor_running','on') else 'disabled' }}
+                content: "{{ states('sensor.heishahub_source_compressor_freq') }}Hz"
+              - type: template
+                icon: mdi:gauge
+                icon_color: |-
+                  {% set v = states('sensor.heishahub_cop_live') | float(0) %}
+                  {% if v >= 4 %}green{% elif v >= 3 %}yellow{% elif v > 0 %}orange{% else %}disabled{% endif %}
+                content: "{{ states('sensor.heishahub_cop_live') }}"
+              - type: template
+                icon: mdi:snowflake-melt
+                icon_color: |-
+                  {{ 'cyan' if is_state('binary_sensor.heishahub_defrost_active','on') else 'disabled' }}
+                content: ""
+
+          # ── Compact period-COP grid ──
+          - type: grid
+            columns: 3
+            square: false
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Today
+                secondary: "COP {{ states('sensor.heishahub_cop_daily') }}"
+                icon: mdi:calendar-today
+                fill_container: true
+              - type: custom:mushroom-template-card
+                primary: Month
+                secondary: "COP {{ states('sensor.heishahub_cop_monthly') }}"
+                icon: mdi:calendar-month
+                fill_container: true
+              - type: custom:mushroom-template-card
+                primary: Year
+                secondary: "SCOP {{ states('sensor.heishahub_scop') }}"
+                icon: mdi:calendar
+                fill_container: true
+
+          # ── Live trend ──
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: Last 6h
+            graph_span: 6h
+            apex_config:
+              chart: { height: 200 }
+              legend: { show: false }
+            yaxis:
+              - id: temp
+                decimals: 1
+              - id: hz
+                opposite: true
+                decimals: 0
+            series:
+              - entity: sensor.heishahub_source_outlet_temp
+                name: Supply
+                yaxis_id: temp
+                color: "#d62728"
+                stroke_width: 2
+              - entity: sensor.heishahub_source_inlet_temp
+                name: Return
+                yaxis_id: temp
+                color: "#7ec1ff"
+                stroke_width: 2
+              - entity: sensor.heishahub_source_compressor_freq
+                name: Hz
+                yaxis_id: hz
+                color: "#bcbd22"
+                stroke_width: 1.5
+
+          # ── Advisor verdict ──
+          - type: custom:mushroom-template-card
+            primary: Advisor
+            secondary: >-
+              {% set s = states('sensor.heishahub_advisor_summary') %}
+              {% if s == 'critical' %}🔴 action required
+              {% elif s == 'warn' %}🟡 {{ state_attr('sensor.heishahub_advisor_summary','warn_count') }} warning(s)
+              {% else %}🟢 all clear{% endif %}
+            icon: mdi:lightbulb-on
+            icon_color: |-
+              {% set s = states('sensor.heishahub_advisor_summary') %}
+              {% if s == 'critical' %}red{% elif s == 'warn' %}yellow{% else %}green{% endif %}
+            tap_action:
+              action: navigate
+              navigation_path: /heishahub/optimization
+            fill_container: true
+
+  # ════════════════════════════════════════════════════════════════════════
+  # 7) CONFIGURATION
   # ════════════════════════════════════════════════════════════════════════
   - title: Configuration
     path: config

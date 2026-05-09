@@ -34,6 +34,19 @@ input_number:
     max: 60
     step: 1
     initial: 20
+  heishahub_advisor_heating_limit_target_c:
+    name: Advisor — heating limit target (°C)
+    min: 5
+    max: 25
+    step: 0.5
+    initial: 16
+  heishahub_heating_limit_observed_c:
+    name: Heating limit — last observed (°C)
+    icon: mdi:thermometer-off
+    min: -30
+    max: 30
+    step: 0.1
+    initial: 0
 
 template:
   - sensor:
@@ -184,7 +197,54 @@ template:
             hysteresis or check the anti-legionella schedule.
 
       # ════════════════════════════════════════════════════════════════════
-      # 6) Aggregate traffic-light (for the dashboard overview)
+      # 6) Heating limit — auto-detected from operation
+      # ════════════════════════════════════════════════════════════════════
+      # The "heating limit" is the outdoor temperature above which the
+      # heat pump should stop heating altogether. We estimate it as a
+      # rolling smoothed value of the outdoor temp captured at the END of
+      # long compressor runs (≥30 min) — see automation in this same
+      # package. The advisor compares observed vs user-set target.
+      - name: "HeishaHub Advisor Heating Limit"
+        unique_id: heishahub_advisor_heating_limit
+        icon: mdi:thermometer-off
+        state: >-
+          {% set obs = states('sensor.heishahub_heating_limit_smoothed') | float(0) %}
+          {% set target = states('input_number.heishahub_advisor_heating_limit_target_c') | float(16) %}
+          {% set diff = obs - target %}
+          {% if obs == 0 %}info
+          {% elif diff > 3 %}warn
+          {% elif diff < -5 %}info
+          {% else %}ok{% endif %}
+        attributes:
+          observed: "{{ states('sensor.heishahub_heating_limit_smoothed') }} °C"
+          target: "{{ states('input_number.heishahub_advisor_heating_limit_target_c') }} °C"
+          metric: >-
+            obs {{ states('sensor.heishahub_heating_limit_smoothed') }} °C /
+            target {{ states('input_number.heishahub_advisor_heating_limit_target_c') }} °C
+          message: >-
+            {% set obs = states('sensor.heishahub_heating_limit_smoothed') | float(0) %}
+            {% set target = states('input_number.heishahub_advisor_heating_limit_target_c') | float(16) %}
+            {% set diff = obs - target %}
+            {% if obs == 0 %}
+            Not enough compressor cycles ≥30 min observed yet — heating-limit
+            estimate populates once a few full runs are recorded.
+            {% elif diff > 3 %}
+            Heating limit observed at {{ obs }} °C — well above your target
+            of {{ target }} °C. The heat pump runs even on warm days.
+            Likely causes: heating curve too steep, room thermostat
+            pulling supply, DHW priority too aggressive. Consider lowering
+            the heating limit / curve, or raising the target setpoint.
+            {% elif diff < -5 %}
+            Compressor stops at {{ obs }} °C, well below the target of
+            {{ target }} °C — possibly normal in deep winter, or your target
+            is set too high. No action needed.
+            {% else %}
+            Heating limit ({{ obs }} °C observed) matches your target
+            ({{ target }} °C) — good calibration.
+            {% endif %}
+
+      # ════════════════════════════════════════════════════════════════════
+      # 7) Aggregate traffic-light (for the dashboard overview)
       # ════════════════════════════════════════════════════════════════════
       - name: "HeishaHub Advisor Summary"
         unique_id: heishahub_advisor_summary
@@ -195,7 +255,8 @@ template:
             states('sensor.heishahub_advisor_spread'),
             states('sensor.heishahub_advisor_defrost'),
             states('sensor.heishahub_advisor_heat_curve'),
-            states('sensor.heishahub_advisor_dhw_runtime')
+            states('sensor.heishahub_advisor_dhw_runtime'),
+            states('sensor.heishahub_advisor_heating_limit')
           ] %}
           {% if 'critical' in advisors %}critical
           {% elif 'warn' in advisors %}warn
@@ -206,5 +267,61 @@ template:
                 states('sensor.heishahub_advisor_spread'),
                 states('sensor.heishahub_advisor_defrost'),
                 states('sensor.heishahub_advisor_heat_curve'),
-                states('sensor.heishahub_advisor_dhw_runtime')]
+                states('sensor.heishahub_advisor_dhw_runtime'),
+                states('sensor.heishahub_advisor_heating_limit')]
                | select('in', ['warn','critical']) | list | count }}
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Heating-limit observation: rolling smoothed average of outdoor temp at
+# the end of compressor runs ≥ 30 min.
+#
+# The flow:
+#   1. Automation captures outdoor temp at compressor stop into
+#      input_number.heishahub_heating_limit_observed_c
+#   2. The statistics platform sensor below maintains a 7-day rolling
+#      average → heishahub_heating_limit_smoothed
+#   3. Advisor (above) compares smoothed vs user target.
+# ═══════════════════════════════════════════════════════════════════════════
+sensor:
+  - platform: statistics
+    name: "HeishaHub Heating Limit Smoothed"
+    unique_id: heishahub_heating_limit_smoothed
+    entity_id: input_number.heishahub_heating_limit_observed_c
+    state_characteristic: average_linear
+    sampling_size: 50
+    max_age:
+      days: 7
+    keep_last_sample: true
+    precision: 1
+
+automation:
+  - id: heishahub_record_heating_limit
+    alias: HeishaHub — record heating-limit observation
+    description: >
+      Captures the outdoor temperature at the end of each compressor run
+      that lasted at least 30 minutes. The 7-day rolling average of this
+      value is the heating-limit estimate.
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.heishahub_compressor_running
+        from: "on"
+        to: "off"
+    condition:
+      - condition: template
+        value_template: >-
+          {{ states('input_number.heishahub_cycle_last_duration_min') | float(0) >= 30 }}
+      - condition: template
+        value_template: >-
+          {{ states('sensor.heishahub_source_outdoor_temp')
+             not in ['unknown','unavailable','none'] }}
+      # Only record while in heating mode — DHW pulls confound the value.
+      - condition: state
+        entity_id: sensor.heishahub_operating_mode
+        state: heating
+    action:
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.heishahub_heating_limit_observed_c
+        data:
+          value: "{{ states('sensor.heishahub_source_outdoor_temp') | float(0) }}"

@@ -16,35 +16,65 @@ installation schematic with live hotspots, and proper efficiency metrics
 
 ## Status
 
-🚧 **Pre-alpha (v0.1)** — skeleton with first working HK1 overview, live COP,
-cycle analysis, optimization advisor, and HeishaMoNR-parity control
-automations. Bubble-Card schematic, Grafana boards, and one-click setup
-blueprint follow iteratively.
+🟢 **v0.3 — beta** — feature-complete for the typical HK1 / HK1+DHW install.
+Source-adapter layer makes every counter swappable (different heat pump,
+heat meter, electricity meter) via UI helpers. Smoke-tested.
 
-## Features (v0.1 → roadmap)
+## Screenshots
 
-**Visualization & status**
-- ✅ Status dashboard (overview, Heishamon-web-UI layout)
-- ✅ Live COP & thermal/electrical energy
-- ✅ Universal: zone 2 / DHW / buffer / solar / pool optional, auto-hide
-- ✅ External sensors (Shelly, heat meter) selectable via UI dropdown
-- 🟡 Service-Cloud-style graphs (ApexCharts) — basic in place, polish ongoing
-- 🟡 Installation schematic (Bubble-Card + SVG) — placeholder
-- 🟡 SCOP / monthly / daily COP + Energy-Dashboard integration
+![Overview](docs/screenshots/overview.svg)
 
-**Cycle analysis & optimization**
-- ✅ Cycle tracking (starts/h, run times, pauses)
+*(screenshot is a placeholder; will be replaced with a real PNG once a
+reference install is online — see [docs/screenshots/](docs/screenshots/).)*
+
+## Features
+
+**Visualization**
+- ✅ 7-view dashboard: Overview, Schematic, Analysis, Efficiency,
+  Optimization, Mobile, Configuration
+- ✅ **Bubble-Card SVG schematic** with live hotspots — 4 variants:
+  HK1, HK1+DHW, HK1+HK2+DHW, HK1+HK2+DHW+Buffer
+- ✅ ApexCharts: temperatures, compressor, COP, heatmap (day-of-week ×
+  hour), outdoor-T° vs COP scatter
+- ✅ **Mobile view** — single-column layout for phones
+- ✅ Heishamon-web-UI-style overview with Mushroom cards
+
+**Counters & efficiency**
+- ✅ Live COP (defrost-masked), daily / monthly / yearly COP, SCOP
+- ✅ **Tariff splits** in utility_meter (heating / DHW / cooling separate)
+- ✅ Period comparisons: vs last month / vs last year, in % with
+  trend headlines
+- ✅ HA Energy Dashboard integration via `*_active` energy sensors
+
+**Source-adapter (universal)**
+- ✅ Every entity-ID is UI-configurable — swap heat pump or meter
+  without YAML edits
+- ✅ 3 thermal source modes: `calculated` / `external_power` /
+  `external_energy` (kWh meter bypasses integration)
+- ✅ 3 electrical source modes: `heat_pump_internal` / `external_power` /
+  `external_energy`
+- ✅ Defaults match Heishamon out of the box; zone 2 / DHW / buffer /
+  solar / pool optional with auto-hide
+
+**Cycle analysis & advisor**
+- ✅ Cycle tracking (starts/h, run/pause times)
 - ✅ Short-cycle detection with configurable threshold
+- ✅ **Auto-detected heating limit** (rolling smoothed avg of outdoor
+  temp at end of compressor runs ≥ 30 min)
 - ✅ Data-driven **advisor** with plain-language recommendations:
-  cycling, supply/return spread, defrost behaviour, heat curve / aux heater,
-  DHW run length — aggregate traffic-light tile in dashboard
-- ✅ **Control strategies (HeishaMoNR parity)**: CCC (Compressor Cycle
-  Control), SoftStart, Solar-DHW boost, night Quiet-Mode — all as HA
-  automations, individually toggleable, master switch
+  cycling, supply/return spread, defrost, heat curve / aux heater,
+  DHW run length, heating limit — aggregate traffic-light tile
+
+**Control strategies (HeishaMoNR parity)**
+- ✅ CCC (Compressor Cycle Control), SoftStart, Solar-DHW boost,
+  night Quiet-Mode — all individually toggleable, master switch
+  required, default off
 
 **Long-term & export**
-- ⏳ Grafana boards for multi-year efficiency
-- ⏳ Setup blueprint for one-click deploy
+- ✅ Grafana boards: overview + multi-year SCOP / MAZ with real
+  Flux queries
+- ✅ Telegraf MQTT → InfluxDB bridge config
+- ✅ Setup blueprint and CLI installer
 
 ## Requirements
 
