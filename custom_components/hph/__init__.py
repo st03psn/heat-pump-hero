@@ -15,6 +15,7 @@ from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.issue_registry import IssueSeverity, async_create_issue
 
 from .bootstrap import (
     async_clean_deployed_files,
@@ -204,6 +205,65 @@ async def _apply_sensor_config(hass: HomeAssistant, data: dict) -> None:
             )
 
 
+_REQUIRED_FRONTEND_CARDS = [
+    ("mushroom",       "www/community/lovelace-mushroom/mushroom.js",           "piitaya/lovelace-mushroom"),
+    ("apexcharts-card","www/community/apexcharts-card/apexcharts-card.js",      "RomRider/apexcharts-card"),
+    ("bubble-card",    "www/community/Bubble-Card/bubble-card.js",              "Clooos/Bubble-Card"),
+    ("button-card",    "www/community/button-card/button-card.js",              "custom-cards/button-card"),
+    ("auto-entities",  "www/community/lovelace-auto-entities/auto-entities.js", "thomasloven/lovelace-auto-entities"),
+    ("card-mod",       "www/community/lovelace-card-mod/card-mod.js",           "thomasloven/lovelace-card-mod"),
+]
+
+# Vendor presets that map to a specific HA integration domain we can check.
+_VENDOR_INTEGRATION_MAP: dict[str, str] = {
+    "panasonic_heishamon": "panasonic_heishamon",
+}
+
+
+def _check_frontend_cards_sync(config_dir_path: str) -> list[tuple[str, str, str]]:
+    """Return list of (card_name, rel_path, hacs_repo) for missing cards."""
+    from pathlib import Path
+    config_dir = Path(config_dir_path)
+    missing = []
+    for card_name, rel_path, hacs_repo in _REQUIRED_FRONTEND_CARDS:
+        if not (config_dir / rel_path).exists():
+            missing.append((card_name, rel_path, hacs_repo))
+    return missing
+
+
+async def _async_check_prerequisites(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Create HA Repairs issues for missing frontend cards and vendor integrations."""
+    # Check frontend cards in executor (file I/O).
+    missing_cards = await hass.async_add_executor_job(
+        _check_frontend_cards_sync, hass.config.path()
+    )
+    for card_name, _rel, hacs_repo in missing_cards:
+        async_create_issue(
+            hass,
+            DOMAIN,
+            f"missing_frontend_card_{card_name.replace('-', '_')}",
+            is_fixable=False,
+            severity=IssueSeverity.WARNING,
+            translation_key="missing_frontend_card",
+            translation_placeholders={"card_name": card_name, "hacs_repo": hacs_repo},
+            learn_more_url="https://hacs.xyz/",
+        )
+
+    # Check vendor integration.
+    vendor = entry.data.get("vendor_preset", "")
+    integration_domain = _VENDOR_INTEGRATION_MAP.get(vendor)
+    if integration_domain and integration_domain not in hass.config.components:
+        async_create_issue(
+            hass,
+            DOMAIN,
+            f"missing_vendor_integration_{integration_domain}",
+            is_fixable=False,
+            severity=IssueSeverity.ERROR,
+            translation_key="missing_vendor_integration",
+            translation_placeholders={"vendor": vendor},
+        )
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up HeatPump Hero from a config entry."""
     _LOGGER.info("Setting up HeatPump Hero entry %s", entry.entry_id)
@@ -227,6 +287,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await async_register_dashboard(hass)
     except Exception as exc:  # noqa: BLE001
         _LOGGER.warning("Dashboard auto-registration failed: %s", exc)
+
+    # Surface missing prerequisites as HA Repairs entries.
+    hass.async_create_task(_async_check_prerequisites(hass, entry))
 
     # Apply chosen vendor preset (one-shot on first install).
     preset = entry.data.get("vendor_preset")

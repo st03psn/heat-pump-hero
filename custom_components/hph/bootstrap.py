@@ -4,7 +4,6 @@ Deploys the minimal set of files needed for the integration to function:
   - hph_efficiency.yaml → <config>/packages/   (utility_meter platform config)
   - hph/dashboard.yaml  → <config>/hph/        (Lovelace YAML dashboard)
   - *.svg               → <config>/www/hph/     (dashboard assets)
-  - blueprint           → <config>/blueprints/script/hph/ (legacy)
 
 Also handles:
   - One-time migration: removes hph_*.yaml files previously deployed by
@@ -36,7 +35,6 @@ _PKG_DIR = Path(__file__).parent
 _DATA_DIR = _PKG_DIR / "data"
 _DATA_DASHBOARD = _DATA_DIR / "dashboards" / "hph.yaml"
 _DATA_ASSETS = _DATA_DIR / "dashboards" / "assets"
-_DATA_BLUEPRINT = _DATA_DIR / "blueprints" / "hph_setup.yaml"
 _DATA_EFFICIENCY = _DATA_DIR / "packages" / "hph_efficiency.yaml"
 
 
@@ -55,7 +53,6 @@ def _deploy_sync(config_dir: Path) -> dict[str, Any]:
         "migrated_removed": [],
         "dashboard": [],
         "assets": [],
-        "blueprint": [],
         "efficiency": False,
     }
 
@@ -96,13 +93,6 @@ def _deploy_sync(config_dir: Path) -> dict[str, Any]:
             shutil.copyfile(src, dst)
             deployed["assets"].append(src.name)
 
-    # 5. Setup blueprint (legacy)
-    bp_dst = config_dir / "blueprints" / "script" / "hph"
-    bp_dst.mkdir(parents=True, exist_ok=True)
-    if _DATA_BLUEPRINT.exists():
-        shutil.copyfile(_DATA_BLUEPRINT, bp_dst / _DATA_BLUEPRINT.name)
-        deployed["blueprint"].append(_DATA_BLUEPRINT.name)
-
     if deployed["migrated_removed"]:
         _LOGGER.info(
             "Migration: removed %d old automation packages: %s",
@@ -110,7 +100,7 @@ def _deploy_sync(config_dir: Path) -> dict[str, Any]:
             ", ".join(deployed["migrated_removed"]),
         )
     _LOGGER.info(
-        "HPH bootstrap done: dashboard=%s, %d assets, efficiency=%s, %d old packages removed",
+        "HPH bootstrap done: dashboard=%s assets=%d efficiency=%s removed=%d",
         bool(deployed["dashboard"]),
         len(deployed["assets"]),
         deployed["efficiency"],
@@ -255,15 +245,6 @@ def _clean_sync(config_dir: Path) -> None:
             _LOGGER.info("Removed %s", asset_dir)
         except OSError as exc:
             _LOGGER.warning("Could not remove %s: %s", asset_dir, exc)
-
-    # 4. Blueprint
-    bp_dir = config_dir / "blueprints" / "script" / "hph"
-    if bp_dir.exists():
-        try:
-            shutil.rmtree(bp_dir)
-            _LOGGER.info("Removed %s", bp_dir)
-        except OSError as exc:
-            _LOGGER.warning("Could not remove %s: %s", bp_dir, exc)
 
 
 def _drop_packages_include(config_yaml: Path) -> None:

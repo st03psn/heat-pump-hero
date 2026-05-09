@@ -45,6 +45,61 @@ sensor:
   keep_last_sample: true
   precision: 1
 
+- platform: statistics
+  name: "HeatPump Hero Spread 7-day Mean"
+  unique_id: hph_spread_7d_mean
+  entity_id: sensor.hph_water_spread
+  state_characteristic: mean
+  sampling_size: 5000
+  max_age:
+    days: 7
+  keep_last_sample: true
+  precision: 2
+
+- platform: statistics
+  name: "HeatPump Hero Spread 7-day Stdev"
+  unique_id: hph_spread_7d_stdev
+  entity_id: sensor.hph_water_spread
+  state_characteristic: standard_deviation
+  sampling_size: 5000
+  max_age:
+    days: 7
+  keep_last_sample: true
+  precision: 2
+
+- platform: statistics
+  name: "HeatPump Hero DHW Fires 7-day Mean"
+  unique_id: hph_dhw_fires_7d_mean
+  entity_id: number.hph_dhw_fires_yesterday
+  state_characteristic: mean
+  sampling_size: 14
+  max_age:
+    days: 7
+  keep_last_sample: true
+  precision: 2
+
+- platform: statistics
+  name: "HeatPump Hero Pressure 7-day Mean"
+  unique_id: hph_pressure_7d_mean
+  entity_id: sensor.hph_source_pump_pressure
+  state_characteristic: mean
+  sampling_size: 5000
+  max_age:
+    days: 7
+  keep_last_sample: true
+  precision: 2
+
+- platform: statistics
+  name: "HPH Indoor Deviation Smoothed"
+  unique_id: hph_indoor_deviation_smoothed
+  entity_id: sensor.hph_indoor_temp_deviation
+  state_characteristic: average_linear
+  sampling_size: 1000
+  max_age:
+    hours: 168
+  keep_last_sample: true
+  precision: 2
+
 - platform: integration
   source: sensor.hph_thermal_power_active
   name: HeatPump Hero Thermal Energy

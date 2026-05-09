@@ -35,6 +35,16 @@
       "single_instance_allowed": "HeatPump Hero is a single-instance integration — there can only be one entry."
     }
   },
+  "issues": {
+    "missing_frontend_card": {
+      "title": "Missing Lovelace card: {card_name}",
+      "description": "The HeatPump Hero dashboard requires the **{card_name}** Lovelace card. Install `{hacs_repo}` via HACS → Frontend, then reload the browser tab."
+    },
+    "missing_vendor_integration": {
+      "title": "Vendor integration not loaded: {vendor}",
+      "description": "HeatPump Hero is configured for vendor preset `{vendor}`, but that integration is not loaded. Ensure the `{vendor}` custom integration is installed and set up, then restart Home Assistant."
+    }
+  },
   "options": {
     "step": {
       "init": {

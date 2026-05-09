@@ -965,6 +965,21 @@ sensors:
     source: "{% if states('select.hph_schema_variant') == 'auto' %}\n  auto-detected\n\
       {% else %}\n  manual override\n{% endif %}"
   _source_package: hph_sources.yaml
+- name: HeatPump Hero Water Spread
+  unique_id: hph_water_spread
+  icon: mdi:thermometer-lines
+  unit_of_measurement: "K"
+  device_class: temperature
+  state_class: measurement
+  availability: >-
+    {{ is_state('binary_sensor.hph_compressor_running', 'on')
+       and states('sensor.hph_source_inlet_temp') not in ['unknown','unavailable','none']
+       and states('sensor.hph_source_outlet_temp') not in ['unknown','unavailable','none'] }}
+  state: >-
+    {{ ((states('sensor.hph_source_outlet_temp') | float(0))
+        - (states('sensor.hph_source_inlet_temp') | float(0)))
+       | round(2) }}
+  _source_package: hph_advisor.yaml
 - name: HeatPump Hero Efficiency Trend
   unique_id: hph_efficiency_trend
   icon: "{% set v = states('sensor.hph_cop_change_month_pct') | float(0) %} {% if v > 5 %}mdi:rocket-launch {% elif v > 1 %}mdi:trending-up {% elif v < -5 %}mdi:alert {% elif v < -1 %}mdi:trending-down {% else %}mdi:trending-neutral{% endif %}"
