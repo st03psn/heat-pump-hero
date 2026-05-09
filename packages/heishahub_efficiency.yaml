@@ -222,3 +222,216 @@ template:
           {% set t = states('sensor.heishahub_thermal_yearly_split_dhw') | float(0) %}
           {% set e = states('sensor.heishahub_electrical_yearly_split_dhw') | float(0) %}
           {{ (t / e) | round(2) if e > 0.1 else 0 }}
+
+      # ════════════════════════════════════════════════════════════════════
+      # COMPARISON SENSORS — last period (via utility_meter `last_period`)
+      # ════════════════════════════════════════════════════════════════════
+
+      # ─── COP last month (uses utility_meter last_period attribute) ───────
+      - name: "HeishaHub COP Last Month"
+        unique_id: heishahub_cop_last_month
+        unit_of_measurement: "x"
+        state: >-
+          {% set t = state_attr('sensor.heishahub_thermal_monthly','last_period') | float(0) %}
+          {% set e = state_attr('sensor.heishahub_electrical_monthly','last_period') | float(0) %}
+          {{ (t / e) | round(2) if e > 0.1 else 0 }}
+
+      # ─── COP last year ───────────────────────────────────────────────────
+      - name: "HeishaHub COP Last Year"
+        unique_id: heishahub_cop_last_year
+        unit_of_measurement: "x"
+        state: >-
+          {% set t = state_attr('sensor.heishahub_thermal_yearly','last_period') | float(0) %}
+          {% set e = state_attr('sensor.heishahub_electrical_yearly','last_period') | float(0) %}
+          {{ (t / e) | round(2) if e > 0.1 else 0 }}
+
+      # ─── Energy last month (raw kWh) ─────────────────────────────────────
+      - name: "HeishaHub Thermal Last Month"
+        unique_id: heishahub_thermal_last_month
+        unit_of_measurement: "kWh"
+        state_class: measurement
+        state: "{{ state_attr('sensor.heishahub_thermal_monthly','last_period') | float(0) | round(2) }}"
+
+      - name: "HeishaHub Electrical Last Month"
+        unique_id: heishahub_electrical_last_month
+        unit_of_measurement: "kWh"
+        state_class: measurement
+        state: "{{ state_attr('sensor.heishahub_electrical_monthly','last_period') | float(0) | round(2) }}"
+
+      - name: "HeishaHub Thermal Last Year"
+        unique_id: heishahub_thermal_last_year
+        unit_of_measurement: "kWh"
+        state_class: measurement
+        state: "{{ state_attr('sensor.heishahub_thermal_yearly','last_period') | float(0) | round(2) }}"
+
+      - name: "HeishaHub Electrical Last Year"
+        unique_id: heishahub_electrical_last_year
+        unit_of_measurement: "kWh"
+        state_class: measurement
+        state: "{{ state_attr('sensor.heishahub_electrical_yearly','last_period') | float(0) | round(2) }}"
+
+      # ════════════════════════════════════════════════════════════════════
+      # PERCENT-CHANGE SENSORS — current vs previous period
+      # ════════════════════════════════════════════════════════════════════
+
+      # ─── COP change month-over-month (%) ────────────────────────────────
+      # Positive value = better than last month, negative = worse
+      - name: "HeishaHub COP Change Month %"
+        unique_id: heishahub_cop_change_month_pct
+        unit_of_measurement: "%"
+        state_class: measurement
+        icon: >-
+          {% set v = states('sensor.heishahub_cop_change_month_pct') | float(0) %}
+          {% if v > 1 %}mdi:trending-up
+          {% elif v < -1 %}mdi:trending-down
+          {% else %}mdi:trending-neutral{% endif %}
+        state: >-
+          {% set cur = states('sensor.heishahub_cop_monthly') | float(0) %}
+          {% set prev = states('sensor.heishahub_cop_last_month') | float(0) %}
+          {% if prev > 0.1 %}
+            {{ ((cur - prev) / prev * 100) | round(1) }}
+          {% else %}
+            0
+          {% endif %}
+        attributes:
+          current: "{{ states('sensor.heishahub_cop_monthly') }}"
+          previous: "{{ states('sensor.heishahub_cop_last_month') }}"
+          message: >-
+            {% set cur = states('sensor.heishahub_cop_monthly') | float(0) %}
+            {% set prev = states('sensor.heishahub_cop_last_month') | float(0) %}
+            {% if prev <= 0.1 %}
+              No data for previous month yet.
+            {% else %}
+              {% set pct = ((cur - prev) / prev * 100) | round(1) %}
+              {% if pct > 0 %}
+                {{ pct }}% better than last month (COP {{ cur }} vs {{ prev }}).
+              {% elif pct < 0 %}
+                {{ pct | abs }}% worse than last month (COP {{ cur }} vs {{ prev }}).
+              {% else %}
+                Unchanged from last month (COP {{ cur }}).
+              {% endif %}
+            {% endif %}
+
+      # ─── SCOP change year-over-year (%) ─────────────────────────────────
+      - name: "HeishaHub SCOP Change Year %"
+        unique_id: heishahub_scop_change_year_pct
+        unit_of_measurement: "%"
+        state_class: measurement
+        icon: >-
+          {% set v = states('sensor.heishahub_scop_change_year_pct') | float(0) %}
+          {% if v > 1 %}mdi:trending-up
+          {% elif v < -1 %}mdi:trending-down
+          {% else %}mdi:trending-neutral{% endif %}
+        state: >-
+          {% set cur = states('sensor.heishahub_scop') | float(0) %}
+          {% set prev = states('sensor.heishahub_cop_last_year') | float(0) %}
+          {% if prev > 0.1 %}
+            {{ ((cur - prev) / prev * 100) | round(1) }}
+          {% else %}
+            0
+          {% endif %}
+        attributes:
+          current: "{{ states('sensor.heishahub_scop') }}"
+          previous: "{{ states('sensor.heishahub_cop_last_year') }}"
+          message: >-
+            {% set cur = states('sensor.heishahub_scop') | float(0) %}
+            {% set prev = states('sensor.heishahub_cop_last_year') | float(0) %}
+            {% if prev <= 0.1 %}
+              No SCOP data for previous year yet — needs at least one full year.
+            {% else %}
+              {% set pct = ((cur - prev) / prev * 100) | round(1) %}
+              {% if pct > 0 %}
+                {{ pct }}% better than previous year (SCOP {{ cur }} vs {{ prev }}).
+              {% elif pct < 0 %}
+                {{ pct | abs }}% worse than previous year (SCOP {{ cur }} vs {{ prev }}).
+              {% else %}
+                Same as previous year (SCOP {{ cur }}).
+              {% endif %}
+            {% endif %}
+
+      # ─── Thermal energy change month-over-month (%) ─────────────────────
+      - name: "HeishaHub Thermal Change Month %"
+        unique_id: heishahub_thermal_change_month_pct
+        unit_of_measurement: "%"
+        state_class: measurement
+        state: >-
+          {% set cur = states('sensor.heishahub_thermal_monthly') | float(0) %}
+          {% set prev = state_attr('sensor.heishahub_thermal_monthly','last_period') | float(0) %}
+          {% if prev > 0.1 %}
+            {{ ((cur - prev) / prev * 100) | round(1) }}
+          {% else %}
+            0
+          {% endif %}
+
+      # ─── Electrical energy change month-over-month (%) ──────────────────
+      - name: "HeishaHub Electrical Change Month %"
+        unique_id: heishahub_electrical_change_month_pct
+        unit_of_measurement: "%"
+        state_class: measurement
+        state: >-
+          {% set cur = states('sensor.heishahub_electrical_monthly') | float(0) %}
+          {% set prev = state_attr('sensor.heishahub_electrical_monthly','last_period') | float(0) %}
+          {% if prev > 0.1 %}
+            {{ ((cur - prev) / prev * 100) | round(1) }}
+          {% else %}
+            0
+          {% endif %}
+
+      # ════════════════════════════════════════════════════════════════════
+      # AGGREGATE COMPARISON SUMMARY — single sensor with trend message
+      # Used for the dashboard "headline" card.
+      # ════════════════════════════════════════════════════════════════════
+      - name: "HeishaHub Efficiency Trend"
+        unique_id: heishahub_efficiency_trend
+        icon: >-
+          {% set v = states('sensor.heishahub_cop_change_month_pct') | float(0) %}
+          {% if v > 5 %}mdi:rocket-launch
+          {% elif v > 1 %}mdi:trending-up
+          {% elif v < -5 %}mdi:alert
+          {% elif v < -1 %}mdi:trending-down
+          {% else %}mdi:trending-neutral{% endif %}
+        state: >-
+          {% set v = states('sensor.heishahub_cop_change_month_pct') | float(0) %}
+          {% if v > 5 %}great
+          {% elif v > 1 %}better
+          {% elif v < -5 %}critical
+          {% elif v < -1 %}worse
+          {% else %}stable{% endif %}
+        attributes:
+          month_pct: "{{ states('sensor.heishahub_cop_change_month_pct') }}"
+          year_pct: "{{ states('sensor.heishahub_scop_change_year_pct') }}"
+          headline: >-
+            {% set m = states('sensor.heishahub_cop_change_month_pct') | float(0) %}
+            {% set y = states('sensor.heishahub_scop_change_year_pct') | float(0) %}
+            {% set m_prev = states('sensor.heishahub_cop_last_month') | float(0) %}
+            {% set y_prev = states('sensor.heishahub_cop_last_year') | float(0) %}
+            {% set parts = [] %}
+            {% if m_prev > 0.1 %}
+              {% if m > 0 %}
+                {% set parts = parts + ['📈 ' ~ m ~ '% better than last month'] %}
+              {% elif m < 0 %}
+                {% set parts = parts + ['📉 ' ~ (m | abs) ~ '% worse than last month'] %}
+              {% endif %}
+            {% endif %}
+            {% if y_prev > 0.1 %}
+              {% if y > 0 %}
+                {% set parts = parts + ['🏆 ' ~ y ~ '% better than last year'] %}
+              {% elif y < 0 %}
+                {% set parts = parts + ['⚠️ ' ~ (y | abs) ~ '% worse than last year'] %}
+              {% endif %}
+            {% endif %}
+            {% if parts | length == 0 %}
+              Trend stable — not enough data for comparison yet.
+            {% else %}
+              {{ parts | join(' · ') }}
+            {% endif %}
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Note on year-over-year (same calendar month last year) comparisons:
+# The HA `statistics` template platform computes statistics over a rolling
+# window, not a calendar-aligned period — not a great fit. For the v0.2
+# release we rely on `utility_meter`'s `last_period` attribute, which gives
+# clean previous-period totals (last full month / last full year).
+# True same-calendar-month comparison is best done in Grafana via Flux,
+# which is already provided in grafana/efficiency_jaz_maz.json.
+# ═══════════════════════════════════════════════════════════════════════════
