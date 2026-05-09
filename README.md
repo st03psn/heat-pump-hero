@@ -16,9 +16,9 @@ installation schematic with live hotspots, and proper efficiency metrics
 
 ## Status
 
-🟢 **v0.6 — beta** — renamed to Heat Pump Hero. Adds analysis module
-(L1 statistical observation + L2 regression script), installer DB
-prompt + prereq check. See [CHANGELOG.md](CHANGELOG.md).
+🟢 **v0.7 — beta** — control extensions: adaptive heating curve
+(self-learning), price-driven DHW (Tibber/aWATTar), weather-forecast
+pre-heating. All gated, capped, transparent. See [CHANGELOG.md](CHANGELOG.md).
 
 ## Screenshots
 

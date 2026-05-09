@@ -3,6 +3,48 @@
 All notable changes to Heat Pump Hero. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and Heat Pump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] — 2026-05-09
+
+### Added — control extensions
+
+`packages/hph_control_extensions.yaml` (new) — three opt-in,
+master-switch-gated, well-bounded control automations:
+
+**1. Adaptive heating curve (self-learning)**
+- Reads `sensor.hph_advisor_analysis.recommendation_k` (from L1 analysis)
+- Weekly (Sunday 04:00) shifts heating curve by min(|rec_k|, max_step_k);
+  default cap ±0.5 K per cycle
+- Hard-bounded to absolute supply-temp limits (default 22-50 °C)
+- 6-day cooldown so manual adjustments aren't overwritten
+- Persistent notification on every change for full transparency
+
+**2. Price-driven DHW (Tibber / aWATTar)**
+- Configurable price + daily-mean price entity sources
+- Fires DHW boost when current < daily_mean × threshold (default 0.85)
+- Only when DHW tank is ≥5 K below target
+- Daily fire limit (default 1) with auto-reset counter
+
+**3. Weather-forecast pre-heating**
+- Configurable forecast temperature entity (e.g. OpenWeatherMap 6h ahead)
+- Boosts curve by N K (default 2 K) for 4 hours when forecast drop ≥ N K
+  (default 8 K) and current outdoor > 0 °C
+- Auto-reverts after the boost window
+- State sensor `input_boolean.hph_ctrl_forecast_preheat_active` indicates
+  whether a boost is currently running
+
+All three are individually toggleable, off by default, and require
+the global `input_boolean.hph_ctrl_master` to also be on.
+
+### Changed
+
+- `tests/smoke.py`: `hph_control_extensions.yaml` whitelisted in
+  ALLOWED_HARDCODE because it writes to Heishamon-specific heat-curve
+  number entities and the DHW force button (documented vendor-specific
+  write paths)
+- Configuration view: new "Control extensions (v0.7)" section with
+  3 sub-sections (adaptive / price / forecast) for the new helpers
+- Roadmap: v0.7 marked complete; v0.8 = Python custom integration
+
 ## [0.6.0] — 2026-05-09
 
 ### Added — rebrand and analysis layer

@@ -17,9 +17,9 @@ over meerdere jaren.
 
 ## Status
 
-🟢 **v0.6 — beta** — hernoemd naar Heat Pump Hero. Toegevoegd: analysemodule
-(L1 statistische observatie + L2 regressie-script), installer met
-DB-keuze + prereq-check. Zie [CHANGELOG.md](CHANGELOG.md).
+🟢 **v0.7 — beta** — control-uitbreidingen: adaptieve stooklijn
+(zelflerend), prijs-gestuurde SWW (Tibber/aWATTar), weersvoorspelling
+voor-verwarmen. Allemaal gated, gecapped, transparant. Zie [CHANGELOG.md](CHANGELOG.md).
 
 ## Functies
 

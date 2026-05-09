@@ -61,21 +61,22 @@ For detailed per-release changes, see [`CHANGELOG.md`](../CHANGELOG.md).
 - Installer pre-flight check + DB choice prompt
 - Installer ships export / import / heating-curve scripts to `/config/scripts/`
 
-## v0.7 — control extensions
+## ✅ v0.7 — control extensions (current)
 
-- [ ] Heating-curve recommendation derived from data (linear regression
-  of supply temp vs outdoor temp)
+- Adaptive heating curve (self-learning, weekly, capped per-step)
+- Price-driven DHW (Tibber / aWATTar — sensor-agnostic)
+- Weather-forecast pre-heating (cold-front anticipation)
+
+## v0.8 — advisor extensions
+
 - [ ] Pump-curve recommendation (spread histogram)
 - [ ] Efficiency-drift detection (year-over-year, weather-adjusted)
 - [ ] DHW timing recommendation (usage pattern)
-- [ ] Adaptive heating curve (self-learning from indoor sensors)
-- [ ] Price-driven DHW (Tibber / aWATTar)
 - [ ] Configurable legionella program
-- [ ] Weather-forecast pre-heating
 - [ ] Screed dry-out program (for new builds)
 - [ ] Control automations vendor adapter (write paths swappable)
 
-## v0.8 — Python custom integration (HACS plug-and-play)
+## v0.9 — Python custom integration (HACS plug-and-play)
 
 - [ ] `custom_components/hph/` skeleton
 - [ ] Config flow for first-run setup (3 steps: vendor / model / extras)

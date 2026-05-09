@@ -1051,6 +1051,33 @@ views:
           - input_number.hph_ctrl_solar_pv_threshold_w
 
       - type: entities
+        title: Control extensions (v0.7) — adaptive curve / price / forecast
+        entities:
+          - type: section
+            label: Adaptive heating curve (self-learning, weekly)
+          - input_boolean.hph_ctrl_adaptive_curve
+          - input_number.hph_ctrl_adaptive_max_step_k
+          - input_number.hph_ctrl_adaptive_supply_min_c
+          - input_number.hph_ctrl_adaptive_supply_max_c
+          - input_datetime.hph_ctrl_adaptive_last_run
+          - type: section
+            label: Price-driven DHW (Tibber / aWATTar)
+          - input_boolean.hph_ctrl_price_dhw
+          - input_text.hph_ctrl_price_entity
+          - input_text.hph_ctrl_price_mean_entity
+          - input_number.hph_ctrl_price_threshold_factor
+          - input_number.hph_ctrl_price_max_per_day
+          - counter.hph_ctrl_price_dhw_fires_today
+          - input_datetime.hph_ctrl_price_dhw_last_fire
+          - type: section
+            label: Weather-forecast pre-heating
+          - input_boolean.hph_ctrl_forecast_preheat
+          - input_text.hph_ctrl_forecast_entity
+          - input_number.hph_ctrl_forecast_drop_threshold_k
+          - input_number.hph_ctrl_forecast_boost_k
+          - input_boolean.hph_ctrl_forecast_preheat_active
+
+      - type: entities
         title: Advisor thresholds (power-user tweaks)
         entities:
           - input_number.hph_advisor_short_cycle_warn_pct

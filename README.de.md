@@ -17,9 +17,9 @@ Schema mit Live-Hotspots und sauber gerechnete Effizienz-Kennzahlen
 
 ## Status
 
-🟢 **v0.6 — beta** — umbenannt zu Heat Pump Hero. Neu: Analyse-Modul
-(L1 statistische Beobachtung + L2 Regressions-Script), Installer mit
-DB-Auswahl + Prereq-Check. Siehe [CHANGELOG.md](CHANGELOG.md).
+🟢 **v0.7 — beta** — Control-Extensions: adaptive Heizkurve
+(selbstlernend), preisgesteuertes DHW (Tibber/aWATTar), Wetter-
+Vorausschau. Alle gated, capped, transparent. Siehe [CHANGELOG.md](CHANGELOG.md).
 
 ## Features
 

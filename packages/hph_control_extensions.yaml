@@ -1,0 +1,356 @@
+# Heat Pump Hero — control extensions (v0.7)
+#
+# Three optional control automations, all gated behind:
+#   1. input_boolean.hph_ctrl_master (global master switch)
+#   2. input_boolean.hph_ctrl_<name> (per-strategy switch)
+# All default off. Each writes to heat-pump-specific entities — the write
+# targets here assume Heishamon/kamaradclimber. For other vendors, fork
+# the relevant automation and re-target.
+#
+# Strategies:
+#   1. ADAPTIVE CURVE  — weekly: read sensor.hph_advisor_analysis
+#      recommendation_k, shift heating curve by min(rec_k, ±max_step_k).
+#      Hard-bounded to safe absolute supply temps.
+#   2. PRICE-DRIVEN DHW — when configured price sensor (Tibber/aWATTar)
+#      drops below daily_mean × threshold AND DHW tank is below target,
+#      force DHW. Max once per day.
+#   3. WEATHER-FORECAST PRE-HEAT — if forecast shows significant temp
+#      drop in next N hours, temporarily raise target_high by N K
+#      to charge thermal mass before the cold front.
+
+input_boolean:
+  hph_ctrl_adaptive_curve:
+    name: HPH Control — adaptive heating curve (self-learning)
+    icon: mdi:auto-fix
+    initial: false
+
+  hph_ctrl_price_dhw:
+    name: HPH Control — price-driven DHW (Tibber/aWATTar)
+    icon: mdi:currency-eur
+    initial: false
+
+  hph_ctrl_forecast_preheat:
+    name: HPH Control — weather-forecast pre-heating
+    icon: mdi:weather-snowy
+    initial: false
+
+  hph_ctrl_forecast_preheat_active:
+    name: HPH Control — forecast pre-heat is currently boosting
+    icon: mdi:weather-snowy-heavy
+    initial: false
+
+input_number:
+  # Adaptive curve safety limits
+  hph_ctrl_adaptive_max_step_k:
+    name: Adaptive curve — max step per cycle (K)
+    min: 0.1
+    max: 2.0
+    step: 0.1
+    initial: 0.5
+    icon: mdi:plus-minus
+
+  hph_ctrl_adaptive_supply_min_c:
+    name: Adaptive curve — absolute supply T° lower bound (°C)
+    min: 18
+    max: 35
+    step: 0.5
+    initial: 22
+    icon: mdi:thermometer-low
+
+  hph_ctrl_adaptive_supply_max_c:
+    name: Adaptive curve — absolute supply T° upper bound (°C)
+    min: 35
+    max: 70
+    step: 0.5
+    initial: 50
+    icon: mdi:thermometer-high
+
+  # Price-driven DHW
+  hph_ctrl_price_threshold_factor:
+    name: Price-DHW — fire when below daily mean × this factor
+    min: 0.5
+    max: 1.0
+    step: 0.05
+    initial: 0.85
+    icon: mdi:percent
+
+  hph_ctrl_price_max_per_day:
+    name: Price-DHW — max forced DHW boosts per day
+    min: 1
+    max: 4
+    step: 1
+    initial: 1
+    icon: mdi:counter
+
+  # Weather forecast pre-heat
+  hph_ctrl_forecast_drop_threshold_k:
+    name: Forecast pre-heat — outdoor T° drop trigger (K in next 6h)
+    min: 3
+    max: 15
+    step: 0.5
+    initial: 8
+    icon: mdi:thermometer-chevron-down
+
+  hph_ctrl_forecast_boost_k:
+    name: Forecast pre-heat — temporary curve boost (K)
+    min: 1
+    max: 5
+    step: 0.5
+    initial: 2
+    icon: mdi:plus-thick
+
+input_text:
+  hph_ctrl_price_entity:
+    name: Price-DHW — current price sensor (entity-ID)
+    icon: mdi:currency-eur
+    max: 255
+    initial: ""
+
+  hph_ctrl_price_mean_entity:
+    name: Price-DHW — daily mean price sensor (entity-ID)
+    icon: mdi:percent
+    max: 255
+    initial: ""
+
+  hph_ctrl_forecast_entity:
+    name: Forecast pre-heat — forecast temperature sensor (entity-ID)
+    icon: mdi:weather-cloudy-clock
+    max: 255
+    initial: ""
+
+input_datetime:
+  hph_ctrl_adaptive_last_run:
+    name: Adaptive curve — last application
+    icon: mdi:clock-check-outline
+    has_date: true
+    has_time: true
+
+  hph_ctrl_price_dhw_last_fire:
+    name: Price-DHW — last force-DHW timestamp
+    icon: mdi:clock-check-outline
+    has_date: true
+    has_time: true
+
+counter:
+  hph_ctrl_price_dhw_fires_today:
+    name: Price-DHW — fires today
+    icon: mdi:counter
+    initial: 0
+    restore: true
+
+automation:
+  # ────────────────────────────────────────────────────────────────────
+  # 1) ADAPTIVE HEATING CURVE — weekly (Sunday 04:00)
+  # Reads the L1 advisor recommendation_k and shifts curve by min(|rec_k|, max_step_k).
+  # Heishamon-specific: writes to z1_heat_curve_target_high/low_temp.
+  # ────────────────────────────────────────────────────────────────────
+  - id: hph_ctrl_adaptive_curve_apply
+    alias: HPH adaptive curve — apply weekly
+    mode: single
+    trigger:
+      - platform: time
+        at: "04:00:00"
+    condition:
+      - condition: time
+        weekday: [sun]
+      - condition: state
+        entity_id: input_boolean.hph_ctrl_master
+        state: "on"
+      - condition: state
+        entity_id: input_boolean.hph_ctrl_adaptive_curve
+        state: "on"
+      - condition: template
+        value_template: >-
+          {% set r = state_attr('sensor.hph_advisor_analysis','recommendation_k') | float(0) %}
+          {{ r | abs >= 0.3 }}
+      # Don't act if user just changed something manually (last 24 h)
+      - condition: template
+        value_template: >-
+          {% set last = states('input_datetime.hph_ctrl_adaptive_last_run') %}
+          {% if last in ['unknown','unavailable',''] %}
+            {{ true }}
+          {% else %}
+            {{ (now() - as_datetime(last)).total_seconds() > 86400 * 6 }}
+          {% endif %}
+    action:
+      - variables:
+          rec_k: "{{ state_attr('sensor.hph_advisor_analysis','recommendation_k') | float(0) }}"
+          max_step: "{{ states('input_number.hph_ctrl_adaptive_max_step_k') | float(0.5) }}"
+          # Capped step in the same direction as the recommendation
+          step: >-
+            {% if rec_k > 0 %}{{ [rec_k, max_step] | min }}
+            {% else %}{{ [rec_k, -max_step] | max }}{% endif %}
+          high_min: "{{ states('input_number.hph_ctrl_adaptive_supply_min_c') | float(22) + 5 }}"
+          high_max: "{{ states('input_number.hph_ctrl_adaptive_supply_max_c') | float(50) }}"
+          low_min: "{{ states('input_number.hph_ctrl_adaptive_supply_min_c') | float(22) }}"
+          low_max: "{{ states('input_number.hph_ctrl_adaptive_supply_max_c') | float(50) - 5 }}"
+          cur_high: "{{ states('number.panasonic_heat_pump_main_z1_heat_curve_target_high_temp') | float(35) }}"
+          cur_low: "{{ states('number.panasonic_heat_pump_main_z1_heat_curve_target_low_temp') | float(25) }}"
+          new_high: >-
+            {{ [[cur_high + step, high_min] | max, high_max] | min | round(1) }}
+          new_low: >-
+            {{ [[cur_low + step, low_min] | max, low_max] | min | round(1) }}
+      - service: number.set_value
+        target:
+          entity_id: number.panasonic_heat_pump_main_z1_heat_curve_target_high_temp
+        data:
+          value: "{{ new_high }}"
+      - service: number.set_value
+        target:
+          entity_id: number.panasonic_heat_pump_main_z1_heat_curve_target_low_temp
+        data:
+          value: "{{ new_low }}"
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.hph_ctrl_adaptive_last_run
+        data:
+          datetime: "{{ now().isoformat() }}"
+      - service: persistent_notification.create
+        data:
+          notification_id: hph_adaptive_curve
+          title: HPH adaptive curve applied
+          message: >-
+            Heating curve shifted by **{{ step }} K** (recommendation was
+            {{ rec_k }} K). Target high {{ cur_high }} → {{ new_high }} °C,
+            target low {{ cur_low }} → {{ new_low }} °C. Next adjustment
+            possible after 6 days. Disable
+            input_boolean.hph_ctrl_adaptive_curve to halt self-learning.
+
+  # ────────────────────────────────────────────────────────────────────
+  # 2) PRICE-DRIVEN DHW — every hour, fire DHW if price is good
+  # ────────────────────────────────────────────────────────────────────
+  - id: hph_ctrl_price_dhw_check
+    alias: HPH price-DHW — hourly check
+    mode: single
+    trigger:
+      - platform: time_pattern
+        minutes: 5
+    condition:
+      - condition: state
+        entity_id: input_boolean.hph_ctrl_master
+        state: "on"
+      - condition: state
+        entity_id: input_boolean.hph_ctrl_price_dhw
+        state: "on"
+      - condition: template
+        value_template: >-
+          {% set ent = states('input_text.hph_ctrl_price_entity') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+      - condition: template
+        value_template: >-
+          {% set ent = states('input_text.hph_ctrl_price_mean_entity') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+      # Below threshold * mean
+      - condition: template
+        value_template: >-
+          {% set price = states(states('input_text.hph_ctrl_price_entity')) | float(0) %}
+          {% set mean  = states(states('input_text.hph_ctrl_price_mean_entity')) | float(0) %}
+          {% set fac   = states('input_number.hph_ctrl_price_threshold_factor') | float(0.85) %}
+          {{ mean > 0 and price < mean * fac }}
+      # DHW tank cool enough to benefit
+      - condition: template
+        value_template: >-
+          {% set t = states('sensor.hph_source_dhw_temp') | float(99) %}
+          {% set tgt = states(states('input_text.hph_src_dhw_target_temp')) | float(50) %}
+          {{ t < tgt - 5 }}
+      # Daily limit
+      - condition: template
+        value_template: >-
+          {% set max = states('input_number.hph_ctrl_price_max_per_day') | int(1) %}
+          {% set fired = states('counter.hph_ctrl_price_dhw_fires_today') | int(0) %}
+          {{ fired < max }}
+    action:
+      - service: button.press
+        target:
+          entity_id: button.panasonic_heat_pump_main_force_dhw
+      - service: counter.increment
+        target:
+          entity_id: counter.hph_ctrl_price_dhw_fires_today
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.hph_ctrl_price_dhw_last_fire
+        data:
+          datetime: "{{ now().isoformat() }}"
+      - service: persistent_notification.create
+        data:
+          notification_id: hph_price_dhw
+          title: HPH price-DHW fired
+          message: >-
+            DHW boost forced — current price
+            {{ states(states('input_text.hph_ctrl_price_entity')) }}
+            is below daily mean ×
+            {{ states('input_number.hph_ctrl_price_threshold_factor') }}.
+
+  # Reset daily counter at midnight
+  - id: hph_ctrl_price_dhw_reset_daily
+    alias: HPH price-DHW — reset daily fire counter
+    mode: single
+    trigger:
+      - platform: time
+        at: "00:01:00"
+    action:
+      - service: counter.reset
+        target:
+          entity_id: counter.hph_ctrl_price_dhw_fires_today
+
+  # ────────────────────────────────────────────────────────────────────
+  # 3) WEATHER-FORECAST PRE-HEAT — temporary curve boost before cold drop
+  # ────────────────────────────────────────────────────────────────────
+  # Reads the user-configured forecast entity (e.g. sensor.openweathermap_forecast_temperature
+  # 6h ahead, or a Met.no template) and if the projected drop exceeds threshold,
+  # bumps z1_heat_curve_target_high temporarily by boost_k for 4 hours.
+  - id: hph_ctrl_forecast_preheat_enable
+    alias: HPH forecast pre-heat — boost on cold drop
+    mode: single
+    trigger:
+      - platform: time_pattern
+        minutes: 15
+    condition:
+      - condition: state
+        entity_id: input_boolean.hph_ctrl_master
+        state: "on"
+      - condition: state
+        entity_id: input_boolean.hph_ctrl_forecast_preheat
+        state: "on"
+      - condition: template
+        value_template: >-
+          {% set ent = states('input_text.hph_ctrl_forecast_entity') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+      - condition: template
+        value_template: >-
+          {% set cur = states('sensor.hph_source_outdoor_temp') | float(99) %}
+          {% set fc  = states(states('input_text.hph_ctrl_forecast_entity')) | float(99) %}
+          {% set thr = states('input_number.hph_ctrl_forecast_drop_threshold_k') | float(8) %}
+          {{ (cur - fc) >= thr and cur > 0 }}
+      # Don't double-fire: only if state is "ok" (no boost active)
+      - condition: state
+        entity_id: input_boolean.hph_ctrl_forecast_preheat_active
+        state: "off"
+    action:
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.hph_ctrl_forecast_preheat_active
+      - variables:
+          boost: "{{ states('input_number.hph_ctrl_forecast_boost_k') | float(2) }}"
+          cur_high: "{{ states('number.panasonic_heat_pump_main_z1_heat_curve_target_high_temp') | float(35) }}"
+      - service: number.set_value
+        target:
+          entity_id: number.panasonic_heat_pump_main_z1_heat_curve_target_high_temp
+        data:
+          value: "{{ (cur_high + boost) | round(1) }}"
+      - service: persistent_notification.create
+        data:
+          notification_id: hph_forecast_preheat
+          title: HPH forecast pre-heat engaged
+          message: >-
+            Curve boosted by {{ boost }} K for 4 hours — cold front incoming.
+      - delay: "04:00:00"
+      - service: number.set_value
+        target:
+          entity_id: number.panasonic_heat_pump_main_z1_heat_curve_target_high_temp
+        data:
+          value: "{{ cur_high }}"
+      - service: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.hph_ctrl_forecast_preheat_active
+
