@@ -169,7 +169,7 @@ class HphConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class HphOptionsFlow(config_entries.OptionsFlow):
-    """Re-run the wizard for an existing config entry."""
+    """Full 3-step reconfigure wizard (vendor → sensors → done)."""
 
     def __init__(self) -> None:
         self._data: dict[str, Any] = {}
@@ -181,7 +181,7 @@ class HphOptionsFlow(config_entries.OptionsFlow):
 
         if user_input is not None:
             self._data.update(user_input)
-            return self.async_create_entry(title="", data=self._data)
+            return await self.async_step_sensors()
 
         schema = vol.Schema(
             {
@@ -204,3 +204,43 @@ class HphOptionsFlow(config_entries.OptionsFlow):
             }
         )
         return self.async_show_form(step_id="init", data_schema=schema)
+
+    async def async_step_sensors(self, user_input: dict[str, Any] | None = None) -> Any:
+        """Step 2 — reconfigure optional external sensors."""
+        if user_input is not None:
+            self._data.update(
+                {
+                    "indoor_temp_entity": user_input.get("indoor_temp_entity", ""),
+                    "external_thermal_power": user_input.get("external_thermal_power", ""),
+                    "external_electrical_power": user_input.get("external_electrical_power", ""),
+                    "external_thermal_energy": user_input.get("external_thermal_energy", ""),
+                    "external_electrical_energy": user_input.get("external_electrical_energy", ""),
+                }
+            )
+            return self.async_create_entry(title="", data=self._data)
+
+        schema = vol.Schema(
+            {
+                vol.Optional(
+                    "indoor_temp_entity",
+                    default=self._data.get("indoor_temp_entity", ""),
+                ): _temp_selector(),
+                vol.Optional(
+                    "external_thermal_power",
+                    default=self._data.get("external_thermal_power", ""),
+                ): _power_selector(),
+                vol.Optional(
+                    "external_electrical_power",
+                    default=self._data.get("external_electrical_power", ""),
+                ): _power_selector(),
+                vol.Optional(
+                    "external_thermal_energy",
+                    default=self._data.get("external_thermal_energy", ""),
+                ): _energy_selector(),
+                vol.Optional(
+                    "external_electrical_energy",
+                    default=self._data.get("external_electrical_energy", ""),
+                ): _energy_selector(),
+            }
+        )
+        return self.async_show_form(step_id="sensors", data_schema=schema)

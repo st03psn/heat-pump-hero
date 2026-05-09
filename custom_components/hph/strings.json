@@ -38,11 +38,22 @@
   "options": {
     "step": {
       "init": {
-        "title": "HeatPump Hero — settings",
-        "description": "Adjust vendor preset and pump model. Changes take effect on next reload (HA does this automatically).",
+        "title": "HeatPump Hero — vendor & model",
+        "description": "Change vendor preset or heat-pump model. The next step lets you update external sensors.",
         "data": {
           "vendor_preset": "Vendor preset",
           "pump_model": "Heat-pump model"
+        }
+      },
+      "sensors": {
+        "title": "HeatPump Hero — external sensors",
+        "description": "Optional: Shelly / IoTaWatt power meter, MBus heat meter, indoor reference thermometer. Leave blank to keep current settings.",
+        "data": {
+          "indoor_temp_entity": "Indoor reference temperature sensor",
+          "external_thermal_power": "External thermal power (W)",
+          "external_electrical_power": "External electrical power (W)",
+          "external_thermal_energy": "External thermal energy meter (kWh)",
+          "external_electrical_energy": "External electrical energy meter (kWh)"
         }
       }
     }

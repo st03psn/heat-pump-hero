@@ -113,7 +113,7 @@ views:
   # The active variant is auto-detected from which optional components
   # report data (HK2 / DHW / Buffer) and is exposed as
   # sensor.hph_schema_variant_active. Manual override via
-  # input_select.hph_schema_variant (option "auto" follows detection).
+  # select.hph_schema_variant (option "auto" follows detection).
   #
   # Each variant has its own conditional Bubble-Card with the correct
   # SVG background and variant-specific hotspot positions.
@@ -156,7 +156,7 @@ views:
           - entity: binary_sensor.hph_has_buffer
             name: Buffer tank detected
           - type: divider
-          - entity: input_select.hph_schema_variant
+          - entity: select.hph_schema_variant
             name: Variant selector (auto / manual override)
 
       # ═══════════════════════════════════════════════════════════════════
@@ -895,13 +895,13 @@ views:
         title: Cycle analysis (today)
         entities:
           - sensor.hph_cycles_per_hour
-          - counter.hph_cycles_today
-          - counter.hph_short_cycles_today
+          - number.hph_cycles_today
+          - number.hph_short_cycles_today
           - sensor.hph_short_cycle_ratio
           - sensor.hph_avg_cycle_duration_24h
-          - input_number.hph_cycle_last_duration_min
-          - input_number.hph_cycle_last_pause_min
-          - input_number.hph_cycle_short_threshold_min
+          - number.hph_cycle_last_duration_min
+          - number.hph_cycle_last_pause_min
+          - number.hph_cycle_short_threshold_min
 
       - type: custom:apexcharts-card
         header:
@@ -909,10 +909,10 @@ views:
           title: Cycling — last 7 days
         graph_span: 7d
         series:
-          - entity: counter.hph_cycles_today
+          - entity: number.hph_cycles_today
             name: Cycles/day
             type: column
-          - entity: counter.hph_short_cycles_today
+          - entity: number.hph_short_cycles_today
             name: Short cycles/day
             type: column
             color: "#d62728"
@@ -1001,9 +1001,9 @@ views:
             name: Active fault code
           - entity: sensor.hph_diagnostics_recurrence
             name: Recurrences (last 5 events)
-          - entity: input_datetime.hph_diag_last_error_time
+          - entity: datetime.hph_diag_last_error_time
             name: Last error timestamp
-          - entity: input_text.hph_diag_error_history
+          - entity: text.hph_diag_error_history
             name: Recent error history (JSON)
 
       - type: entities
@@ -1011,9 +1011,9 @@ views:
         entities:
           - entity: sensor.hph_heating_limit_smoothed
             name: Smoothed (7-day rolling avg)
-          - entity: input_number.hph_heating_limit_observed_c
+          - entity: number.hph_heating_limit_observed_c
             name: Last observation
-          - entity: input_number.hph_advisor_heating_limit_target_c
+          - entity: number.hph_advisor_heating_limit_target_c
             name: Target setpoint
 
       - type: markdown
@@ -1055,56 +1055,56 @@ views:
       - type: entities
         title: Control strategies (HeishaMoNR parity)
         entities:
-          - input_boolean.hph_ctrl_master
-          - input_boolean.hph_ctrl_ccc
-          - input_number.hph_ctrl_ccc_min_pause_min
-          - input_number.hph_ctrl_ccc_min_runtime_min
-          - input_boolean.hph_ctrl_softstart
-          - input_boolean.hph_ctrl_quiet_night
-          - input_boolean.hph_ctrl_solar_dhw
-          - input_text.hph_ctrl_pv_surplus_entity
-          - input_number.hph_ctrl_solar_pv_threshold_w
+          - switch.hph_ctrl_master
+          - switch.hph_ctrl_ccc
+          - number.hph_ctrl_ccc_min_pause_min
+          - number.hph_ctrl_ccc_min_runtime_min
+          - switch.hph_ctrl_softstart
+          - switch.hph_ctrl_quiet_night
+          - switch.hph_ctrl_solar_dhw
+          - text.hph_ctrl_pv_surplus_entity
+          - number.hph_ctrl_solar_pv_threshold_w
 
       - type: entities
         title: Control extensions (v0.7) — adaptive curve / price / forecast
         entities:
           - type: section
             label: Adaptive heating curve (self-learning, weekly)
-          - input_boolean.hph_ctrl_adaptive_curve
-          - input_number.hph_ctrl_adaptive_max_step_k
-          - input_number.hph_ctrl_adaptive_supply_min_c
-          - input_number.hph_ctrl_adaptive_supply_max_c
-          - input_datetime.hph_ctrl_adaptive_last_run
+          - switch.hph_ctrl_adaptive_curve
+          - number.hph_ctrl_adaptive_max_step_k
+          - number.hph_ctrl_adaptive_supply_min_c
+          - number.hph_ctrl_adaptive_supply_max_c
+          - datetime.hph_ctrl_adaptive_last_run
           - type: section
             label: Price-driven DHW (Tibber / aWATTar)
-          - input_boolean.hph_ctrl_price_dhw
-          - input_text.hph_ctrl_price_entity
-          - input_text.hph_ctrl_price_mean_entity
-          - input_number.hph_ctrl_price_threshold_factor
-          - input_number.hph_ctrl_price_max_per_day
-          - counter.hph_ctrl_price_dhw_fires_today
-          - input_datetime.hph_ctrl_price_dhw_last_fire
+          - switch.hph_ctrl_price_dhw
+          - text.hph_ctrl_price_entity
+          - text.hph_ctrl_price_mean_entity
+          - number.hph_ctrl_price_threshold_factor
+          - number.hph_ctrl_price_max_per_day
+          - number.hph_ctrl_price_dhw_fires_today
+          - datetime.hph_ctrl_price_dhw_last_fire
           - type: section
             label: Weather-forecast pre-heating
-          - input_boolean.hph_ctrl_forecast_preheat
-          - input_text.hph_ctrl_forecast_entity
-          - input_number.hph_ctrl_forecast_drop_threshold_k
-          - input_number.hph_ctrl_forecast_boost_k
-          - input_boolean.hph_ctrl_forecast_preheat_active
+          - switch.hph_ctrl_forecast_preheat
+          - text.hph_ctrl_forecast_entity
+          - number.hph_ctrl_forecast_drop_threshold_k
+          - number.hph_ctrl_forecast_boost_k
+          - switch.hph_ctrl_forecast_preheat_active
 
       - type: entities
         title: Advisor thresholds (power-user tweaks)
         entities:
-          - input_number.hph_advisor_short_cycle_warn_pct
-          - input_number.hph_advisor_short_cycle_crit_pct
-          - input_number.hph_advisor_dt_target_k
-          - input_number.hph_advisor_dhw_min_runtime_min
+          - number.hph_advisor_short_cycle_warn_pct
+          - number.hph_advisor_short_cycle_crit_pct
+          - number.hph_advisor_dt_target_k
+          - number.hph_advisor_dhw_min_runtime_min
           - type: section
             label: v0.8 advisors
-          - input_number.hph_advisor_drift_warn_pct
-          - input_number.hph_advisor_drift_crit_pct
-          - input_number.hph_advisor_dhw_max_fires_per_day
-          - input_number.hph_advisor_pump_spread_min_samples
+          - number.hph_advisor_drift_warn_pct
+          - number.hph_advisor_drift_crit_pct
+          - number.hph_advisor_dhw_max_fires_per_day
+          - number.hph_advisor_pump_spread_min_samples
 
   # ════════════════════════════════════════════════════════════════════════
   # 5b) PROGRAMS — multi-day / scheduled service programs (v0.8)
@@ -1154,7 +1154,7 @@ views:
             primary: Screed dry-out
             secondary: |-
               {% set s = states('sensor.hph_prog_screed_status') %}
-              {% set d = states('input_number.hph_prog_screed_day') | int(0) %}
+              {% set d = states('number.hph_prog_screed_day') | int(0) %}
               {% set t = states('sensor.hph_prog_screed_target') %}
               {% if s == 'disabled' %}Disabled
               {% elif s == 'armed' %}Armed — not yet running
@@ -1173,7 +1173,7 @@ views:
       - type: entities
         title: Master switch (required for all control + programs)
         entities:
-          - entity: input_boolean.hph_ctrl_master
+          - entity: switch.hph_ctrl_master
             name: Control master switch
 
       # ── Legionella controls ──
@@ -1182,23 +1182,23 @@ views:
         entities:
           - type: section
             label: Schedule
-          - entity: input_boolean.hph_prog_legionella
+          - entity: switch.hph_prog_legionella
             name: Enable program
-          - entity: input_select.hph_prog_legionella_weekday
+          - entity: select.hph_prog_legionella_weekday
             name: Weekday
-          - entity: input_number.hph_prog_legionella_hour
+          - entity: number.hph_prog_legionella_hour
             name: Start hour (0-23)
           - type: section
             label: Tank target
-          - entity: input_number.hph_prog_legionella_target_c
+          - entity: number.hph_prog_legionella_target_c
             name: Target temperature (°C)
-          - entity: input_number.hph_prog_legionella_hold_min
+          - entity: number.hph_prog_legionella_hold_min
             name: Hold duration above target (min)
           - type: section
             label: Status
           - entity: sensor.hph_prog_legionella_status
             name: Status
-          - entity: input_datetime.hph_prog_legionella_last_run
+          - entity: datetime.hph_prog_legionella_last_run
             name: Last successful run
 
       # ── Screed dry-out controls ──
@@ -1207,19 +1207,19 @@ views:
         entities:
           - type: section
             label: Profile selection (pick BEFORE arming)
-          - entity: input_select.hph_prog_screed_profile
+          - entity: select.hph_prog_screed_profile
             name: Profile
           - type: section
             label: Arm / disarm
-          - entity: input_boolean.hph_prog_screed
+          - entity: switch.hph_prog_screed
             name: Enable program (arming triggers Day 1)
-          - entity: input_boolean.hph_prog_screed_active
+          - entity: switch.hph_prog_screed_active
             name: Currently running (status flag)
           - type: section
             label: Status
-          - entity: input_datetime.hph_prog_screed_start
+          - entity: datetime.hph_prog_screed_start
             name: Program start
-          - entity: input_number.hph_prog_screed_day
+          - entity: number.hph_prog_screed_day
             name: Current day index
           - entity: sensor.hph_prog_screed_target
             name: Today's supply target (°C)
@@ -1441,7 +1441,7 @@ views:
               type: custom:mushroom-template-card
               primary: Screed running
               secondary: >-
-                Day {{ states('input_number.hph_prog_screed_day') }} —
+                Day {{ states('number.hph_prog_screed_day') }} —
                 target {{ states('sensor.hph_prog_screed_target') }} °C
               icon: mdi:home-floor-a
               icon_color: orange
@@ -1470,10 +1470,10 @@ views:
       - type: entities
         title: Vendor & model
         entities:
-          - entity: input_select.hph_vendor_preset
+          - entity: select.hph_vendor_preset
             name: Vendor preset (auto-fills source helpers)
             secondary_info: last-changed
-          - entity: input_select.hph_pump_model
+          - entity: select.hph_pump_model
             name: Heat-pump model
           - entity: sensor.hph_model_description
             name: Model description
@@ -1483,24 +1483,24 @@ views:
       - type: entities
         title: Model thresholds (auto-set on model change, override OK)
         entities:
-          - entity: input_number.hph_model_compressor_min_hz
+          - entity: number.hph_model_compressor_min_hz
             name: Compressor min Hz
-          - entity: input_number.hph_model_compressor_max_hz
+          - entity: number.hph_model_compressor_max_hz
             name: Compressor max Hz
-          - entity: input_number.hph_model_min_flow_lpm
+          - entity: number.hph_model_min_flow_lpm
             name: Minimum water flow (L/min)
-          - entity: input_number.hph_model_max_supply_c
+          - entity: number.hph_model_max_supply_c
             name: Maximum supply temperature (°C)
 
       # ── Source-mode selectors ──
       - type: entities
         title: Source modes
         entities:
-          - entity: input_select.hph_thermal_source
+          - entity: select.hph_thermal_source
             name: Thermal source mode
-          - entity: input_select.hph_electrical_source
+          - entity: select.hph_electrical_source
             name: Electrical source mode
-          - entity: input_select.hph_schema_variant
+          - entity: select.hph_schema_variant
             name: Schematic variant (auto / manual)
           - entity: sensor.hph_schema_variant_active
             name: Schematic — active
@@ -1514,35 +1514,35 @@ views:
       - type: entities
         title: Analysis (recommendations from observation)
         entities:
-          - entity: input_text.hph_indoor_temp_entity
+          - entity: text.hph_indoor_temp_entity
             name: Indoor reference sensor (entity-ID)
-          - entity: input_text.hph_indoor_target_entity
+          - entity: text.hph_indoor_target_entity
             name: Indoor target sensor (entity-ID, optional)
-          - entity: input_number.hph_indoor_target_default
+          - entity: number.hph_indoor_target_default
             name: Fallback indoor target (°C)
-          - entity: input_number.hph_analysis_window_days
+          - entity: number.hph_analysis_window_days
             name: Observation window (days)
-          - entity: input_number.hph_analysis_dead_band_k
+          - entity: number.hph_analysis_dead_band_k
             name: Dead band (K)
           - entity: sensor.hph_indoor_deviation_smoothed
             name: Smoothed deviation
-          - entity: input_text.hph_heating_curve_recommendation
+          - entity: text.hph_heating_curve_recommendation
             name: Heating-curve script output
 
       - type: entities
         title: Optional components
         entities:
-          - entity: input_text.hph_src_zone1_temp
+          - entity: text.hph_src_zone1_temp
             name: Zone 1 temperature
-          - entity: input_text.hph_src_zone2_temp
+          - entity: text.hph_src_zone2_temp
             name: Zone 2 temperature (blank if absent)
-          - entity: input_text.hph_src_dhw_temp
+          - entity: text.hph_src_dhw_temp
             name: DHW tank temperature (blank if absent)
-          - entity: input_text.hph_src_dhw_target_temp
+          - entity: text.hph_src_dhw_target_temp
             name: DHW target temperature
-          - entity: input_text.hph_src_buffer_temp
+          - entity: text.hph_src_buffer_temp
             name: Buffer tank temperature (blank if absent)
-          - entity: input_text.hph_src_error_code
+          - entity: text.hph_src_error_code
             name: Error / fault code source
           - type: divider
           - entity: binary_sensor.hph_has_hk2
@@ -1556,31 +1556,31 @@ views:
       - type: entities
         title: Heat pump entities (configurable)
         entities:
-          - entity: input_text.hph_src_inlet_temp
+          - entity: text.hph_src_inlet_temp
             name: Inlet (return) T°
-          - entity: input_text.hph_src_outlet_temp
+          - entity: text.hph_src_outlet_temp
             name: Outlet (supply) T°
-          - entity: input_text.hph_src_flow_rate
+          - entity: text.hph_src_flow_rate
             name: Water flow rate
-          - entity: input_text.hph_src_outdoor_temp
+          - entity: text.hph_src_outdoor_temp
             name: Outdoor T°
-          - entity: input_text.hph_src_compressor_freq
+          - entity: text.hph_src_compressor_freq
             name: Compressor frequency
-          - entity: input_text.hph_src_compressor_hours
+          - entity: text.hph_src_compressor_hours
             name: Compressor hours (lifetime)
-          - entity: input_text.hph_src_compressor_starts
+          - entity: text.hph_src_compressor_starts
             name: Compressor starts (lifetime)
-          - entity: input_text.hph_src_discharge_temp
+          - entity: text.hph_src_discharge_temp
             name: Discharge T°
-          - entity: input_text.hph_src_pump_pressure
+          - entity: text.hph_src_pump_pressure
             name: Water pressure
-          - entity: input_text.hph_src_defrost_state
+          - entity: text.hph_src_defrost_state
             name: Defrost state (binary)
-          - entity: input_text.hph_src_aux_heater_state
+          - entity: text.hph_src_aux_heater_state
             name: Aux heater state (binary)
-          - entity: input_text.hph_src_operating_mode
+          - entity: text.hph_src_operating_mode
             name: Operating mode (select)
-          - entity: input_text.hph_src_internal_power
+          - entity: text.hph_src_internal_power
             name: Internal power consumption (W)
 
       # ── Control write targets (v0.8 vendor adapter) ──
@@ -1591,43 +1591,43 @@ views:
       - type: entities
         title: Control write targets (v0.8 vendor adapter)
         entities:
-          - entity: input_text.hph_ctrl_write_quiet_mode
+          - entity: text.hph_ctrl_write_quiet_mode
             name: Quiet-mode select
-          - entity: input_text.hph_ctrl_write_force_dhw
+          - entity: text.hph_ctrl_write_force_dhw
             name: Force-DHW button
-          - entity: input_text.hph_ctrl_write_z1_curve_high
+          - entity: text.hph_ctrl_write_z1_curve_high
             name: Z1 heat-curve target_high (number)
-          - entity: input_text.hph_ctrl_write_z1_curve_low
+          - entity: text.hph_ctrl_write_z1_curve_low
             name: Z1 heat-curve target_low (number)
-          - entity: input_text.hph_ctrl_write_dhw_target
+          - entity: text.hph_ctrl_write_dhw_target
             name: DHW target temperature (number)
 
       # ── External meter entities (optional) ──
       - type: entities
         title: External meters (optional)
         entities:
-          - entity: input_text.hph_src_external_thermal_power
+          - entity: text.hph_src_external_thermal_power
             name: External thermal power (W)
-          - entity: input_text.hph_src_external_thermal_energy
+          - entity: text.hph_src_external_thermal_energy
             name: External heat meter (kWh, total_increasing)
-          - entity: input_text.hph_src_external_electrical_power
+          - entity: text.hph_src_external_electrical_power
             name: External electrical power (W)
-          - entity: input_text.hph_src_external_electrical_energy
+          - entity: text.hph_src_external_electrical_energy
             name: External electricity meter (kWh, total_increasing)
 
       # ── Export / scheduled task ──
       - type: entities
         title: Export (long-term values for external analysis)
         entities:
-          - entity: input_select.hph_export_format
+          - entity: select.hph_export_format
             name: Format
-          - entity: input_select.hph_export_period
+          - entity: select.hph_export_period
             name: Period
-          - entity: input_text.hph_export_target_path
+          - entity: text.hph_export_target_path
             name: Target directory
-          - entity: input_select.hph_export_schedule
+          - entity: select.hph_export_schedule
             name: Schedule
-          - entity: input_datetime.hph_export_last_run
+          - entity: datetime.hph_export_last_run
             name: Last run
           - entity: script.hph_export_now
             name: ▶ Export now (manual)
@@ -1641,9 +1641,9 @@ views:
       - type: entities
         title: Multi-platform bridge (read-only)
         entities:
-          - entity: input_boolean.hph_bridge_enabled
+          - entity: switch.hph_bridge_enabled
             name: Bridge enabled
-          - entity: input_text.hph_bridge_prefix
+          - entity: text.hph_bridge_prefix
             name: MQTT topic prefix
           - entity: sensor.hph_bridge_last_publish
             name: Last publish

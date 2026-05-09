@@ -7,6 +7,15 @@
 #
 # Do not edit — managed by the HeatPump Hero integration.
 
+# Exclude ephemeral HPH helpers from the recorder — they are operational/config
+# state with no long-term analytics value; excluding them keeps the DB lean.
+recorder:
+  exclude:
+    entity_globs:
+      - text.hph_*        # source config, write helpers, JSON ring buffers
+      - button.hph_*      # trigger-only, no meaningful state history
+      - datetime.hph_*    # operational timestamps; low analytics value
+
 sensor:
 - platform: integration
   source: sensor.hph_thermal_power_active
