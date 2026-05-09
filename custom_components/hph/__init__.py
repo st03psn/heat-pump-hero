@@ -353,13 +353,17 @@ async def _apply_sensor_config(hass: HomeAssistant, data: dict) -> None:
             )
 
 
+# (card_name, url_substring, hacs_repo, fs_fallback_path)
+# url_substring is matched against registered Lovelace resource URLs.
+# fs_fallback_path is checked against <config>/www/community/ if the
+# resource store is not accessible.
 _REQUIRED_FRONTEND_CARDS = [
-    ("mushroom",       "www/community/lovelace-mushroom/mushroom.js",           "piitaya/lovelace-mushroom"),
-    ("apexcharts-card","www/community/apexcharts-card/apexcharts-card.js",      "RomRider/apexcharts-card"),
-    ("bubble-card",    "www/community/Bubble-Card/bubble-card.js",              "Clooos/Bubble-Card"),
-    ("button-card",    "www/community/button-card/button-card.js",              "custom-cards/button-card"),
-    ("auto-entities",  "www/community/lovelace-auto-entities/auto-entities.js", "thomasloven/lovelace-auto-entities"),
-    ("card-mod",       "www/community/lovelace-card-mod/card-mod.js",           "thomasloven/lovelace-card-mod"),
+    ("mushroom",        "lovelace-mushroom/mushroom",           "piitaya/lovelace-mushroom",          "www/community/lovelace-mushroom/mushroom.js"),
+    ("apexcharts-card", "apexcharts-card/apexcharts-card",     "RomRider/apexcharts-card",            "www/community/apexcharts-card/apexcharts-card.js"),
+    ("bubble-card",     "Bubble-Card/bubble-card",             "Clooos/Bubble-Card",                  "www/community/Bubble-Card/bubble-card.js"),
+    ("button-card",     "button-card/button-card",             "custom-cards/button-card",            "www/community/button-card/button-card.js"),
+    ("auto-entities",   "lovelace-auto-entities/auto-entities","thomasloven/lovelace-auto-entities",  "www/community/lovelace-auto-entities/auto-entities.js"),
+    ("card-mod",        "lovelace-card-mod/card-mod",          "thomasloven/lovelace-card-mod",       "www/community/lovelace-card-mod/card-mod.js"),
 ]
 
 # Vendor presets that map to a specific HA integration domain we can check.
@@ -368,24 +372,41 @@ _VENDOR_INTEGRATION_MAP: dict[str, str] = {
 }
 
 
-def _check_frontend_cards_sync(config_dir_path: str) -> list[tuple[str, str, str]]:
-    """Return list of (card_name, rel_path, hacs_repo) for missing cards."""
+def _missing_cards_from_filesystem(config_dir_path: str, cards: list) -> list[tuple[str, str, str]]:
+    """Filesystem fallback: check www/community/ paths."""
     from pathlib import Path
     config_dir = Path(config_dir_path)
-    missing = []
-    for card_name, rel_path, hacs_repo in _REQUIRED_FRONTEND_CARDS:
-        if not (config_dir / rel_path).exists():
-            missing.append((card_name, rel_path, hacs_repo))
-    return missing
+    return [
+        (name, url_sub, repo)
+        for name, url_sub, repo, fs_path in cards
+        if not (config_dir / fs_path).exists()
+    ]
 
 
 async def _async_check_prerequisites(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Create HA Repairs issues for missing frontend cards and vendor integrations."""
-    # Check frontend cards in executor (file I/O).
-    missing_cards = await hass.async_add_executor_job(
-        _check_frontend_cards_sync, hass.config.path()
-    )
-    for card_name, _rel, hacs_repo in missing_cards:
+    # Prefer the Lovelace resource store (same source as Settings → Dashboards → Resources).
+    missing_cards: list[tuple[str, str, str]] = []
+    lovelace_resources = hass.data.get("lovelace_resources")
+    if lovelace_resources is not None:
+        try:
+            registered_urls: list[str] = [
+                item.get("url", "") for item in lovelace_resources.async_items()
+            ]
+            for card_name, url_sub, hacs_repo, _fs in _REQUIRED_FRONTEND_CARDS:
+                if not any(url_sub in url for url in registered_urls):
+                    missing_cards.append((card_name, url_sub, hacs_repo))
+        except Exception as exc:  # noqa: BLE001
+            _LOGGER.debug("Could not read Lovelace resource store, falling back to filesystem: %s", exc)
+            missing_cards = await hass.async_add_executor_job(
+                _missing_cards_from_filesystem, hass.config.path(), _REQUIRED_FRONTEND_CARDS
+            )
+    else:
+        missing_cards = await hass.async_add_executor_job(
+            _missing_cards_from_filesystem, hass.config.path(), _REQUIRED_FRONTEND_CARDS
+        )
+
+    for card_name, _url_sub, hacs_repo in missing_cards:
         async_create_issue(
             hass,
             DOMAIN,

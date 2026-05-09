@@ -335,15 +335,6 @@ NUMBER_HELPERS: Final[dict[str, dict[str, Any]]] = {
                                  "icon": "mdi:thermometer-high", "min": 35, "max": 80,
                                  "step": 1, "initial": 55},
     # Programs
-    "hph_prog_legionella_target_c": {"name": "Legionella — target DHW temperature (°C)",
-                                       "icon": "mdi:thermometer-high",
-                                       "min": 55, "max": 75, "step": 1, "initial": 65},
-    "hph_prog_legionella_hold_min": {"name": "Legionella — hold duration above target (minutes)",
-                                       "icon": "mdi:timer-sand",
-                                       "min": 10, "max": 120, "step": 5, "initial": 30},
-    "hph_prog_legionella_hour": {"name": "Legionella — start hour (0-23)",
-                                   "icon": "mdi:clock-outline",
-                                   "min": 0, "max": 23, "step": 1, "initial": 3},
     "hph_prog_screed_day": {"name": "Screed dry-out — current day index (0 = not running)",
                               "icon": "mdi:calendar-today",
                               "min": 0, "max": 60, "step": 1, "initial": 0},
@@ -375,10 +366,6 @@ SELECT_HELPERS: Final[dict[str, dict[str, Any]]] = {
                         "options": list(PUMP_MODELS.keys()),
                         "initial": "panasonic_l_aql"},
     # Programs
-    "hph_prog_legionella_weekday": {"name": "Legionella — weekday",
-                                      "icon": "mdi:calendar-week",
-                                      "options": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
-                                      "initial": "sun"},
     "hph_prog_screed_profile": {"name": "Screed dry-out — profile",
                                   "icon": "mdi:chart-line",
                                   "options": ["functional_3d", "combined_10d", "din_18560_28d"],
@@ -406,7 +393,6 @@ SWITCH_HELPERS: Final[dict[str, dict[str, Any]]] = {
                          "icon": "mdi:robot-outline", "initial": False},
     "hph_ctrl_ccc": {"name": "Compressor Cycle Control (CCC)",
                       "icon": "mdi:repeat-variant", "initial": False},
-    "hph_ctrl_softstart": {"name": "SoftStart", "icon": "mdi:trending-up", "initial": False},
     "hph_ctrl_solar_dhw": {"name": "Solar-DHW boost", "icon": "mdi:solar-power-variant", "initial": False},
     "hph_ctrl_quiet_night": {"name": "Night quiet mode", "icon": "mdi:weather-night", "initial": False},
     # Control extensions
@@ -419,8 +405,6 @@ SWITCH_HELPERS: Final[dict[str, dict[str, Any]]] = {
     "hph_ctrl_forecast_preheat_active": {"name": "HPH Control — forecast pre-heat is currently boosting",
                                             "icon": "mdi:weather-snowy-heavy", "initial": False},
     # Programs
-    "hph_prog_legionella": {"name": "HPH Program — legionella schedule",
-                              "icon": "mdi:bacteria", "initial": False},
     "hph_prog_screed": {"name": "HPH Program — screed dry-out",
                          "icon": "mdi:home-floor-a", "initial": False},
     "hph_prog_screed_active": {"name": "HPH Program — screed program currently running",
@@ -445,8 +429,6 @@ DATETIME_HELPERS: Final[dict[str, dict[str, Any]]] = {
                                        "icon": "mdi:clock-check-outline", "has_date": True, "has_time": True},
     "hph_prog_screed_start": {"name": "Screed dry-out — program start",
                                 "icon": "mdi:calendar-start", "has_date": True, "has_time": True},
-    "hph_prog_legionella_last_run": {"name": "Legionella — last successful run",
-                                       "icon": "mdi:history", "has_date": True, "has_time": True},
 }
 
 # ─── Counter helpers (mapped onto HA Counter via Number-with-restore) ────
