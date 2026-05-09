@@ -48,7 +48,7 @@ For detailed per-release changes, see [`CHANGELOG.md`](../CHANGELOG.md).
 - Naming proposal doc
 - M-series compressor min Hz corrected (12 → 16, empirical)
 
-## ✅ v0.6 — rebrand + analysis (current)
+## ✅ v0.6 — rebrand + analysis
 
 - Rebrand `HeishaHub` → **HeatPump Hero (HPH)** across the entire
   codebase (entity IDs, files, docs, mockups)
@@ -57,9 +57,8 @@ For detailed per-release changes, see [`CHANGELOG.md`](../CHANGELOG.md).
 - Analysis module Layer 2 — Python regression script fits supply
   vs outdoor temp, plain-language verdict
 - Installer pre-flight check + DB choice prompt
-- Installer ships export / import / heating-curve scripts to `/config/scripts/`
 
-## ✅ v0.7 — control extensions (current)
+## ✅ v0.7 — control extensions
 
 - Adaptive heating curve (self-learning, weekly, capped per-step)
 - Price-driven DHW (Tibber / aWATTar — sensor-agnostic)
@@ -75,80 +74,79 @@ For detailed per-release changes, see [`CHANGELOG.md`](../CHANGELOG.md).
 - Auto-clear-on-disable (empty retained payloads)
 - Hardware-abstraction guarantee: topic names stable across
   vendor / integration swaps
-- Read-only by design; control extensions remain HA-exclusive
 
-## ✅ v0.8 — advisor extensions & programs (current)
+## ✅ v0.8 — advisor extensions & programs
 
 - Pump-curve recommendation (7-day spread mean/stdev)
 - Efficiency-drift detection (year-over-year SCOP)
 - DHW timing recommendation (fires/day rolling mean + start-hour buffer)
 - Configurable legionella program (weekday/hour/target/hold)
-- Screed dry-out program — three profiles (functional 3 d /
-  combined 10 d / DIN 18560-1 28 d)
-- Control automations vendor adapter (write-target input_text helpers,
-  vendor-preset auto-fill extended)
+- Screed dry-out program — three profiles (functional 3d /
+  combined 10d / DIN 18560-1 28d)
+- Control automations vendor adapter (write-target text helpers)
 - Second Heishamon vendor preset — bundled MQTT YAML naming (`aquarea_*`)
 
 ### v0.8 follow-ups (still open)
 
-Items added by v0.7.2 bridge that didn't make the v0.8 cut:
-
-- [ ] Weather-source-adapter package (`hph_weather.yaml`) — analog to
-  the heat-pump source-adapter, swappable weather providers (DWD /
-  OpenWeatherMap / Met.no / local weather station)
-- [ ] DWD recipe (`docs/weather/dwd.md`) — recommended provider for
-  DE users; license-free MOSMIX (T° / RH / solar) + monthly heating
-  degree days (HGT) + climate normals
-- [ ] Efficiency-drift weather-adjustment via
-  `sensor.hph_scop_weather_adjusted` — uses HGT to normalize the YoY
-  comparison (current advisor flags the unweighted drift but calls out
-  the caveat in the message)
+- [ ] Weather-source-adapter package — swappable weather providers
+  (DWD / OpenWeatherMap / Met.no / local weather station)
+- [ ] DWD recipe (`docs/weather/dwd.md`) — recommended for DE users
+- [ ] Efficiency-drift weather-adjustment via `sensor.hph_scop_weather_adjusted`
 - [ ] Optional defrost-forecast advisor — RH + T° → icing likelihood
-- [ ] Add `sensor.hph_weather_*` and `_scop_weather_adjusted` to the
-  v0.7.2 bridge whitelist (5-line patch)
+- [ ] Add `sensor.hph_weather_*` and `_scop_weather_adjusted` to bridge whitelist
 
-## ⏳ v0.9 — Python custom integration (HACS plug-and-play, in progress)
+## ✅ v0.9 — Python custom integration (HACS plug-and-play)
 
-Phased delivery to keep regression risk manageable:
+Released as v0.9.0-rc3. User testing phase.
 
-### Phase 1 — skeleton + config-flow + helpers + dashboard auto-register (current)
+### ✅ Phase 1 — skeleton + config-flow + helpers + dashboard auto-register
 
-- ✅ `custom_components/hph/` skeleton with manifest, __init__,
-  bootstrap, services
-- ✅ Config flow (4-step wizard: vendor / model / optional external
-  sensors / confirm) and options flow
-- ✅ Programmatic helper registration via text / number / select /
-  switch / datetime / button platforms — replaces all v0.8
-  input_*/counter YAML
-- ✅ Dashboard auto-registration via
-  `frontend.async_register_built_in_panel`
-- ✅ Aggressive UI-uninstall (`async_remove_entry`) removes every
-  file the integration ever wrote; recorder DB stays
-- ✅ HACS metadata (`hacs.json`) updated to integration category
+- `custom_components/hph/` skeleton with manifest, __init__, bootstrap,
+  services
+- Config flow (4-step wizard: vendor / model / optional external sensors /
+  confirm) and options flow
+- Programmatic helper registration via text / number / select / switch /
+  datetime / button platforms — replaces all v0.8 input_*/counter YAML
+- Dashboard auto-registration via `frontend.async_register_built_in_panel`
+- Aggressive UI-uninstall (`async_remove_entry`) removes every file the
+  integration ever wrote; recorder DB stays
+- HACS metadata updated to integration category
 
-### Phase 2 — port template sensors
+### ✅ Phase 2 — template sensor + binary_sensor platforms
 
-- [ ] Source-facade sensors (~20 in `hph_sources.yaml`) →
-  `sensor/sources.py`
-- [ ] Core, efficiency, cycles, diagnostics, advisor, schema, model,
-  analysis, programs, bridge sensors → respective `sensor/*.py`
-- [ ] `sensor.hph_*` and `binary_sensor.hph_*` entity_ids preserved
-  — recorder history continuity guaranteed via stable unique_ids
+- All 72 `sensor.hph_*` and 6 `binary_sensor.hph_*` entities registered
+  programmatically via `sensor.py` / `binary_sensor.py`
+- Jinja templates bundled internally (`data/sensor_templates.yaml`) and
+  rendered at runtime via `async_track_template_result`
+- All `unique_id`s preserved — recorder history continuity guaranteed
+- No YAML sensors deployed to user's config dir
 
-### Phase 3 — port automations + bootstrap removal
+### ✅ Phase 3 — Python automation coordinators, zero YAML deployment
 
-- [ ] All automations move to async event listeners / coordinators
-- [ ] Counter increments restored (cycles, dhw_fires, etc.)
-- [ ] `bootstrap.py` and `data/` directory deleted — integration
-  becomes fully self-contained, no YAML deployment to user's
-  config dir
-- [ ] One-time migration: detect leftover `<config>/packages/hph_*.yaml`
-  from earlier bootstrap installs and clean them up
+All 23 automations ported to Python coordinators in `coordinators/`:
 
-### Phase 4 — polish (after user testing)
+| Coordinator | Automations |
+|---|---|
+| `cycles.py` | cycle start/stop, daily counter reset |
+| `advisor.py` | DHW fire tracking, heating-limit record, daily rollover |
+| `diagnostics.py` | error-change log + persistent notification |
+| `control.py` | CCC, SoftStart, Solar-DHW, quiet night on/off |
+| `control_ext.py` | adaptive curve, price-DHW, forecast preheat |
+| `programs.py` | legionella weekly program, screed arm + daily advance |
+| `bridge.py` | MQTT bridge publish/clear |
+| `export.py` | scheduled export (daily / weekly / monthly) |
+| `efficiency.py` | tariff switch (operating mode → utility meter) |
+| `models.py` | model threshold apply, vendor preset re-apply |
 
-- [ ] Per-platform translations `translations/{en,de,nl}.json` →
-  follows HA `hass.config.language` automatically
+`hph.export_now` service implemented in Python (CSV snapshot).
+
+Bootstrap now deploys only `hph_efficiency.yaml` (utility_meter +
+integration sensor platform config — HA limitation, no Python API for
+these) plus dashboard + assets. Migration removes old automation packages.
+
+### ⏳ Phase 4 — polish (after user testing)
+
+- [ ] Per-platform translations `translations/{en,de,nl}.json`
 - [ ] Repairs panel for missing frontend cards (apexcharts, mushroom, …)
 - [ ] pytest-based test suite mocking HA core
 - [ ] HACS-default-repository submission
@@ -160,17 +158,13 @@ Phased delivery to keep regression risk manageable:
 - [ ] Video walkthrough
 - [ ] Adapter recipes for non-Panasonic vendors validated by users
 - [ ] Per-locale dashboard strings via integration translations
-- [ ] **Translations of repo docs** (README / docs / info) into DE and NL —
-  resumes at v1.0 with a defined sync workflow
-- [ ] **Logo & brand**: design a mark that combines heat, pump, and
-  hero — superhero-stylised heat pump or a hero figure with a heat-pump
-  emblem; SVG + PNG assets for README, HACS listing, dashboard header
+- [ ] Translations of repo docs (README / docs / info) into DE and NL
+- [ ] Logo & brand: SVG + PNG assets for README, HACS listing, dashboard header
 
 ## Out of scope
 
 - Cloud features (HeatPump Hero stays 100 % local)
-- Replacing kamaradclimber/heishamon-homeassistant — we wrap it, not
-  duplicate it
+- Replacing kamaradclimber/heishamon-homeassistant — we wrap it, not duplicate it
 - Standalone control without an underlying heat-pump integration
 
 ## Contributing
@@ -178,5 +172,4 @@ Phased delivery to keep regression risk manageable:
 Issues with concrete use-cases very welcome. Before opening a PR, please
 read the design principles in [CLAUDE.md](../CLAUDE.md), in particular
 the universality, advisor schema, source-adapter, and diagnostics
-conventions. Per-vendor recipes in `docs/vendors/` are great
-first contributions.
+conventions. Per-vendor recipes in `docs/vendors/` are great first contributions.
