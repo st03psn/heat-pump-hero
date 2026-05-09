@@ -5,6 +5,30 @@ export_now:
     format / period / target path settings configured under the
     Configuration view.
 
+backup_config:
+  name: Backup configuration
+  description: >-
+    Snapshot all HeatPump Hero helper states (thresholds, source mappings,
+    control settings, program parameters) to a timestamped JSON file at
+    <config>/hph/config_backup_YYYY-MM-DD_HH-MM-SS.json.
+    Use this before updating, reinstalling, or migrating to a new HA instance.
+
+restore_config:
+  name: Restore configuration
+  description: >-
+    Restore HeatPump Hero helper states from a previously created backup file.
+    Reads the JSON and replays every entity value via the appropriate HA service.
+  fields:
+    file_path:
+      name: Backup file path
+      description: >-
+        Path to the backup JSON file. Absolute path or relative to the
+        HA config directory (e.g. hph/config_backup_2026-01-14_08-00-00.json).
+      required: true
+      example: "hph/config_backup_2026-01-14_08-00-00.json"
+      selector:
+        text:
+
 run_legionella_now:
   name: Run legionella program now
   description: >-

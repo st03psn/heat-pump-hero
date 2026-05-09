@@ -23,10 +23,16 @@ from .bootstrap import (
     async_register_dashboard,
 )
 from .const import (
+    COUNTER_HELPERS,
     DASHBOARD_URL_PATH,
     DATA_HASS_CONFIG,
+    DATETIME_HELPERS,
     DOMAIN,
+    NUMBER_HELPERS,
     PLATFORMS,
+    SELECT_HELPERS,
+    SWITCH_HELPERS,
+    TEXT_HELPERS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -74,6 +80,15 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
         await _do_export(hass)
 
     hass.services.async_register(DOMAIN, "export_now", _export_now)
+
+    async def _backup_config(call: Any) -> None:
+        await _do_backup_config(hass)
+
+    async def _restore_config(call: Any) -> None:
+        await _do_restore_config(hass, call)
+
+    hass.services.async_register(DOMAIN, "backup_config", _backup_config)
+    hass.services.async_register(DOMAIN, "restore_config", _restore_config)
 
     return True
 
@@ -150,6 +165,139 @@ async def _do_export(hass: HomeAssistant) -> None:
         _LOGGER.info("HPH export written to %s", target_path)
     except Exception as exc:  # noqa: BLE001
         _LOGGER.warning("HPH export failed: %s", exc)
+
+
+# ─── Backup / Restore ─────────────────────────────────────────────────────────
+
+# Entity domains for each helper category.
+_BACKUP_DOMAINS: dict[str, tuple[str, dict]] = {
+    "number":   ("number",   {**NUMBER_HELPERS, **COUNTER_HELPERS}),
+    "select":   ("select",   SELECT_HELPERS),
+    "switch":   ("switch",   SWITCH_HELPERS),
+    "text":     ("text",     TEXT_HELPERS),
+    "datetime": ("datetime", DATETIME_HELPERS),
+}
+
+# Services that write a value back for each domain.
+_RESTORE_SERVICE: dict[str, tuple[str, str]] = {
+    "number":   ("number",   "set_value"),
+    "select":   ("select",   "select_option"),
+    "switch":   ("switch",   "turn_on"),      # special-cased below
+    "text":     ("text",     "set_value"),
+    "datetime": ("datetime", "set_value"),
+}
+
+
+async def _do_backup_config(hass: HomeAssistant) -> None:
+    """Serialize all HPH helper states to a timestamped JSON file."""
+    import json
+    from pathlib import Path
+
+    from homeassistant.util import dt as dt_util
+
+    now = dt_util.now()
+    snapshot: dict[str, Any] = {
+        "hph_backup_version": 1,
+        "timestamp": now.isoformat(),
+        "entities": {},
+    }
+
+    for category, (domain, helpers) in _BACKUP_DOMAINS.items():
+        for uid in helpers:
+            entity_id = f"{domain}.{uid}"
+            state = hass.states.get(entity_id)
+            if state is None or state.state in ("unknown", "unavailable"):
+                continue
+            snapshot["entities"][entity_id] = state.state
+
+    ts = now.strftime("%Y-%m-%d_%H-%M-%S")
+    out_path = Path(hass.config.path("hph", f"config_backup_{ts}.json"))
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    await hass.async_add_executor_job(
+        out_path.write_text, json.dumps(snapshot, indent=2, ensure_ascii=False), "utf-8"
+    )
+    _LOGGER.info("HPH config backup written to %s (%d entities)", out_path, len(snapshot["entities"]))
+    await hass.services.async_call(
+        "persistent_notification", "create",
+        {
+            "notification_id": "hph_backup_done",
+            "title": "HeatPump Hero — config backup",
+            "message": f"Backup written to `{out_path.relative_to(hass.config.path())}` "
+                       f"({len(snapshot['entities'])} entities).",
+        },
+        blocking=True,
+    )
+
+
+async def _do_restore_config(hass: HomeAssistant, call: Any) -> None:
+    """Restore HPH helper states from a backup JSON file."""
+    import json
+    from pathlib import Path
+
+    file_path = call.data.get("file_path", "")
+    if not file_path:
+        _LOGGER.error("restore_config: file_path is required")
+        return
+
+    path = Path(file_path)
+    if not path.is_absolute():
+        path = Path(hass.config.path()) / path
+
+    try:
+        raw = await hass.async_add_executor_job(path.read_text, "utf-8")
+        snapshot = json.loads(raw)
+    except Exception as exc:  # noqa: BLE001
+        _LOGGER.error("restore_config: cannot read %s — %s", path, exc)
+        return
+
+    if snapshot.get("hph_backup_version") != 1:
+        _LOGGER.warning("restore_config: unknown backup version, attempting anyway")
+
+    entities: dict[str, str] = snapshot.get("entities", {})
+    restored = 0
+    skipped = 0
+
+    for entity_id, value in entities.items():
+        domain = entity_id.split(".")[0]
+        svc_info = _RESTORE_SERVICE.get(domain)
+        if svc_info is None:
+            skipped += 1
+            continue
+
+        svc_domain, svc_name = svc_info
+        try:
+            if domain == "switch":
+                svc_name = "turn_on" if value == "on" else "turn_off"
+                await hass.services.async_call(
+                    svc_domain, svc_name, {"entity_id": entity_id}, blocking=False
+                )
+            elif domain in ("number", "text", "datetime"):
+                await hass.services.async_call(
+                    svc_domain, svc_name,
+                    {"entity_id": entity_id, "value": value},
+                    blocking=False,
+                )
+            elif domain == "select":
+                await hass.services.async_call(
+                    svc_domain, svc_name,
+                    {"entity_id": entity_id, "option": value},
+                    blocking=False,
+                )
+            restored += 1
+        except Exception as exc:  # noqa: BLE001
+            _LOGGER.warning("restore_config: could not restore %s = %r — %s", entity_id, value, exc)
+            skipped += 1
+
+    _LOGGER.info("HPH config restore done: %d restored, %d skipped", restored, skipped)
+    await hass.services.async_call(
+        "persistent_notification", "create",
+        {
+            "notification_id": "hph_restore_done",
+            "title": "HeatPump Hero — config restore",
+            "message": f"Restored {restored} entities from `{path.name}` ({skipped} skipped).",
+        },
+        blocking=True,
+    )
 
 
 async def _apply_sensor_config(hass: HomeAssistant, data: dict) -> None:
