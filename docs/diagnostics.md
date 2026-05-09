@@ -2,10 +2,10 @@
 
 🌐 English (this file)
 
-HeishaHub's diagnostics module reads `sensor.heishahub_source_error_code`
+Heat Pump Hero's diagnostics module reads `sensor.hph_source_error_code`
 and maps the value to a human-readable description, severity, and
 model-specific commentary. The result is exposed as
-`sensor.heishahub_diagnostics_current_error` with these attributes:
+`sensor.hph_diagnostics_current_error` with these attributes:
 
 - `state` — the active code (e.g. `H23`) or `ok`
 - `severity` — `critical | warn | info | none`
@@ -14,13 +14,13 @@ model-specific commentary. The result is exposed as
   (currently J-series H23, R32/R290 H99, J/K-series H62 false alarms)
 
 Plus:
-- `sensor.heishahub_diagnostics_recurrence` — count of the same code in the
+- `sensor.hph_diagnostics_recurrence` — count of the same code in the
   last 5 events
-- `input_text.heishahub_diag_error_history` — JSON ring buffer of the last
+- `input_text.hph_diag_error_history` — JSON ring buffer of the last
   5 events with timestamps
-- `input_datetime.heishahub_diag_last_error_time` — time of the most recent
+- `input_datetime.hph_diag_last_error_time` — time of the most recent
   fault
-- An advisor (`sensor.heishahub_advisor_diagnostics`) folds active fault +
+- An advisor (`sensor.hph_advisor_diagnostics`) folds active fault +
   recurrence into the aggregate traffic-light tile.
 
 ## Severity classification
@@ -100,7 +100,7 @@ The advisor adds extra context for these combinations:
   Check refrigerant charge, expansion valve, and discharge sensor before
   assuming a leak."
 - **`H99` + L/T-CAP/M** → "Freeze protection on R32/R290 units. Verify
-  minimum flow rate (model-dependent — see `input_number.heishahub_model_min_flow_lpm`)
+  minimum flow rate (model-dependent — see `input_number.hph_model_min_flow_lpm`)
   and that no zone valve is fully closed during heat-up."
 - **`H62` (any model)** → "Water-flow switch alarm. Check pump speed,
   dirt traps, air pockets. On J/K-series this is also a common false
@@ -111,8 +111,8 @@ Add more via PR — model-specific patterns are a perfect community contribution
 ## Notification flow
 
 When the active code changes:
-1. Timestamp written to `input_datetime.heishahub_diag_last_error_time`
-2. Event appended to JSON ring buffer (`input_text.heishahub_diag_error_history`)
+1. Timestamp written to `input_datetime.hph_diag_last_error_time`
+2. Event appended to JSON ring buffer (`input_text.hph_diag_error_history`)
 3. Persistent notification is created (severity + message + model note)
 4. When the code returns to `ok`, the notification is dismissed
 
@@ -129,5 +129,5 @@ when one is present; the Mobile view shows a red fault tile.
 | Vaillant mypyllant | `sensor.<system_id>_diagnostic_error` |
 | Stiebel ISG | parameters under `sensor.isg_error_*` |
 
-Set the right entity in `input_text.heishahub_src_error_code` (Configuration
+Set the right entity in `input_text.hph_src_error_code` (Configuration
 view → Optional components).

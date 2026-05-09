@@ -1,7 +1,7 @@
-# HeishaHub — setup script blueprint
+# Heat Pump Hero — setup script blueprint
 #
 # Run via: Settings → Automations & Scenes → Blueprints →
-#          "HeishaHub Setup" → Create script → Run.
+#          "Heat Pump Hero Setup" → Create script → Run.
 #
 # What it does:
 #   1. Probes whether the Heishamon integration has produced entities.
@@ -12,12 +12,12 @@
 #   - Does not write files (use scripts/install.sh or copy by hand).
 #   - Does not modify configuration.yaml.
 blueprint:
-  name: HeishaHub Setup
+  name: Heat Pump Hero Setup
   description: >
-    Initializes HeishaHub helpers and verifies the installation. Run once
+    Initializes Heat Pump Hero helpers and verifies the installation. Run once
     after copying the packages and the dashboard.
   domain: script
-  source_url: https://github.com/st03psn/HeishaHub/blob/main/blueprints/heishahub_setup.yaml
+  source_url: https://github.com/st03psn/heat-pump-hero/blob/main/blueprints/hph_setup.yaml
 
   input:
     topic_prefix:
@@ -38,45 +38,45 @@ sequence:
   - alias: Set default thermal source
     service: input_select.select_option
     target:
-      entity_id: input_select.heishahub_thermal_source
+      entity_id: input_select.hph_thermal_source
     data:
       option: calculated
 
   - alias: Set default electrical source
     service: input_select.select_option
     target:
-      entity_id: input_select.heishahub_electrical_source
+      entity_id: input_select.hph_electrical_source
     data:
       option: heat_pump_internal
 
   - alias: Set schema variant to auto (follows detection)
     service: input_select.select_option
     target:
-      entity_id: input_select.heishahub_schema_variant
+      entity_id: input_select.hph_schema_variant
     data:
       option: auto
 
   - alias: Status notification
     service: persistent_notification.create
     data:
-      notification_id: heishahub_setup
-      title: HeishaHub Setup
+      notification_id: hph_setup
+      title: Heat Pump Hero Setup
       message: >
         {% if found %}
         ✅ Heishamon entities detected.
 
         Auto-detection results:
-        - Zone 2: {{ 'present' if is_state('binary_sensor.heishahub_has_hk2','on') else 'not detected' }}
-        - DHW tank: {{ 'present' if is_state('binary_sensor.heishahub_has_dhw','on') else 'not detected' }}
-        - Buffer tank: {{ 'present' if is_state('binary_sensor.heishahub_has_buffer','on') else 'not detected' }}
+        - Zone 2: {{ 'present' if is_state('binary_sensor.hph_has_hk2','on') else 'not detected' }}
+        - DHW tank: {{ 'present' if is_state('binary_sensor.hph_has_dhw','on') else 'not detected' }}
+        - Buffer tank: {{ 'present' if is_state('binary_sensor.hph_has_buffer','on') else 'not detected' }}
 
-        Schematic auto-selected: `{{ states('sensor.heishahub_schema_variant_active') }}`
+        Schematic auto-selected: `{{ states('sensor.hph_schema_variant_active') }}`
 
         Next steps:
         1. Settings → Dashboards → Add Dashboard → From YAML →
-           paste the contents of `dashboards/heishahub.yaml`.
+           paste the contents of `dashboards/hph.yaml`.
         2. (Optional) external meters — Settings → Devices & Services
-           → Helpers, fill `heishahub_src_external_*` entries and switch
+           → Helpers, fill `hph_src_external_*` entries and switch
            the matching source mode to `external_power` or `external_energy`.
         3. (Optional) import the Grafana dashboards from `grafana/`.
         {% else %}

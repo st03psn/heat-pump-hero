@@ -7,7 +7,7 @@
 
 Eine Wärmepumpe arbeitet am effizientesten, wenn sie **lange, gleichmäßig**
 läuft, **selten** taktet und mit **niedriger Vorlauftemperatur** auskommt.
-HeishaHub liefert drei Werkzeuge, um genau das zu erreichen:
+Heat Pump Hero liefert drei Werkzeuge, um genau das zu erreichen:
 
 1. **Takt-Analyse** — misst Zyklen, Laufzeiten, Pausen.
 2. **Advisor** — wertet diese Daten aus und gibt Klartext-Empfehlungen.
@@ -16,17 +16,17 @@ HeishaHub liefert drei Werkzeuge, um genau das zu erreichen:
 
 ## Takt-Analyse
 
-Sensoren in `packages/heishahub_cycles.yaml`:
+Sensoren in `packages/hph_cycles.yaml`:
 
 | Sensor | Bedeutung |
 |---|---|
-| `counter.heishahub_cycles_today` | Anzahl Verdichter-Starts heute |
-| `counter.heishahub_short_cycles_today` | Davon kürzer als Schwelle (Default 10 min) |
-| `sensor.heishahub_short_cycle_ratio` | Anteil Short-Cycles (%) |
-| `sensor.heishahub_cycles_per_hour` | Starts pro Stunde (gleitend) |
-| `sensor.heishahub_avg_cycle_duration_24h` | Durchschnittliche Laufzeit |
-| `input_number.heishahub_cycle_last_duration_min` | Letzter Lauf (min) |
-| `input_number.heishahub_cycle_last_pause_min` | Letzte Pause (min) |
+| `counter.hph_cycles_today` | Anzahl Verdichter-Starts heute |
+| `counter.hph_short_cycles_today` | Davon kürzer als Schwelle (Default 10 min) |
+| `sensor.hph_short_cycle_ratio` | Anteil Short-Cycles (%) |
+| `sensor.hph_cycles_per_hour` | Starts pro Stunde (gleitend) |
+| `sensor.hph_avg_cycle_duration_24h` | Durchschnittliche Laufzeit |
+| `input_number.hph_cycle_last_duration_min` | Letzter Lauf (min) |
+| `input_number.hph_cycle_last_pause_min` | Letzte Pause (min) |
 
 **Was ist „normal"?**
 - Übergangszeit (5–10 °C außen): 4–8 Starts/Tag, Laufzeit 60–120 min
@@ -38,7 +38,7 @@ Wasservolumen, zu steile Heizkurve oder hydraulische Probleme.
 
 ## Advisor
 
-`packages/heishahub_advisor.yaml`. Jeder Advisor-Sensor hat:
+`packages/hph_advisor.yaml`. Jeder Advisor-Sensor hat:
 
 - `state ∈ { ok, warn, critical, info }`
 - `attributes.message` — Erklärung in Klartext
@@ -63,10 +63,10 @@ Wasservolumen, zu steile Heizkurve oder hydraulische Probleme.
 
 ## Control — Steuerungs-Strategien
 
-`packages/heishahub_control.yaml`. **Standard: alles AUS.** Aktivierung über
+`packages/hph_control.yaml`. **Standard: alles AUS.** Aktivierung über
 zwei Schalter:
 
-1. `input_boolean.heishahub_ctrl_master` — Globaler Schalter
+1. `input_boolean.hph_ctrl_master` — Globaler Schalter
 2. Einzelne Strategien — siehe unten
 
 ### Compressor Cycle Control (CCC)
@@ -74,7 +74,7 @@ zwei Schalter:
 **Problem**: WP schaltet nach kurzer Pause sofort wieder ein → kurze Zyklen,
 hoher Verschleiß, schlechter COP.
 
-**HeishaHub-Lösung**: Wenn die letzte Pause kürzer als
+**Heat Pump Hero-Lösung**: Wenn die letzte Pause kürzer als
 `ctrl_ccc_min_pause_min` (Default 15 min) war, wird nach dem Neustart der
 Quiet-Mode 3 für 5 Minuten aktiviert — das reduziert die maximale
 Frequenz und gibt der Anlage Zeit zur Modulation, statt voll hochzufahren
@@ -88,14 +88,14 @@ anpassen.
 **Problem**: Anfahrspitzen bei tiefen Außentemperaturen verursachen
 hohen Strom-Peak und ggf. Ansprechen des EVU-Schutzes.
 
-**HeishaHub-Lösung**: Beim Verdichter-Start Quiet-Mode 2 für 10 Minuten →
+**Heat Pump Hero-Lösung**: Beim Verdichter-Start Quiet-Mode 2 für 10 Minuten →
 sanfter Frequenz-Hochlauf.
 
 ### Solar-DHW-Boost
 
 **Problem**: PV-Überschuss verpufft, während die WP später teuer DHW macht.
 
-**HeishaHub-Lösung**: Wenn der PV-Überschuss-Sensor (Entity-ID in
+**Heat Pump Hero-Lösung**: Wenn der PV-Überschuss-Sensor (Entity-ID in
 `ctrl_pv_surplus_entity` eintragen) länger als 5 Min über
 `ctrl_solar_pv_threshold_w` (Default 1500 W) liegt **und** der Tank noch
 nicht voll ist, wird `force_dhw` ausgelöst.
@@ -126,10 +126,10 @@ Heizlast-Probleme zu erwarten sind.
 
 ## Eigene Advisor-Regeln hinzufügen
 
-Power-User: in `packages/heishahub_advisor.yaml` einen neuen
+Power-User: in `packages/hph_advisor.yaml` einen neuen
 `template.sensor`-Block ergänzen, der gleiches Schema einhält
 (`state`, `attributes.message`, `attributes.metric`). Anschließend in
-`heishahub_advisor_summary` hinzufügen, damit die Sammel-Ampel den neuen
+`hph_advisor_summary` hinzufügen, damit die Sammel-Ampel den neuen
 Sensor mit auswertet.
 
 PRs für allgemein nützliche Regeln willkommen — siehe

@@ -1,10 +1,10 @@
-# HeishaHub — efficiency
+# Heat Pump Hero — efficiency
 #
 # Live COP, energy integrals, daily/monthly/yearly utility_meters, and the
 # resulting period COPs (TAZ/MAZ/JAZ in German parlance, also exposed as
 # SCOP for international users).
 #
-# Reads from the "active" sensors in heishahub_sources.yaml so source
+# Reads from the "active" sensors in hph_sources.yaml so source
 # switching (Shelly / heat meter vs. internal) propagates here.
 #
 # Tariff splits: utility_meter tariffs heating/dhw/cooling are switched
@@ -14,9 +14,9 @@
 sensor:
   # ─── Energy integrals (Riemann sum → kWh) ──────────────────────────────
   - platform: integration
-    source: sensor.heishahub_thermal_power_active
-    name: "HeishaHub Thermal Energy"
-    unique_id: heishahub_thermal_energy
+    source: sensor.hph_thermal_power_active
+    name: "Heat Pump Hero Thermal Energy"
+    unique_id: hph_thermal_energy
     unit_prefix: k
     unit_time: h
     method: left
@@ -25,9 +25,9 @@ sensor:
     state_class: total_increasing
 
   - platform: integration
-    source: sensor.heishahub_electrical_power_active
-    name: "HeishaHub Electrical Energy"
-    unique_id: heishahub_electrical_energy
+    source: sensor.hph_electrical_power_active
+    name: "Heat Pump Hero Electrical Energy"
+    unique_id: hph_electrical_energy
     unit_prefix: k
     unit_time: h
     method: left
@@ -38,33 +38,33 @@ sensor:
 # ─── Utility meters — daily / monthly / yearly (with tariff splits) ────
 utility_meter:
   # ── Thermal — no tariff (total) ──
-  heishahub_thermal_daily:
-    source: sensor.heishahub_thermal_energy_active
+  hph_thermal_daily:
+    source: sensor.hph_thermal_energy_active
     cycle: daily
-  heishahub_thermal_monthly:
-    source: sensor.heishahub_thermal_energy_active
+  hph_thermal_monthly:
+    source: sensor.hph_thermal_energy_active
     cycle: monthly
-  heishahub_thermal_yearly:
-    source: sensor.heishahub_thermal_energy_active
+  hph_thermal_yearly:
+    source: sensor.hph_thermal_energy_active
     cycle: yearly
 
   # ── Thermal — tariff splits (heating / dhw / cooling) ──
-  heishahub_thermal_daily_split:
-    source: sensor.heishahub_thermal_energy_active
+  hph_thermal_daily_split:
+    source: sensor.hph_thermal_energy_active
     cycle: daily
     tariffs:
       - heating
       - dhw
       - cooling
-  heishahub_thermal_monthly_split:
-    source: sensor.heishahub_thermal_energy_active
+  hph_thermal_monthly_split:
+    source: sensor.hph_thermal_energy_active
     cycle: monthly
     tariffs:
       - heating
       - dhw
       - cooling
-  heishahub_thermal_yearly_split:
-    source: sensor.heishahub_thermal_energy_active
+  hph_thermal_yearly_split:
+    source: sensor.hph_thermal_energy_active
     cycle: yearly
     tariffs:
       - heating
@@ -72,33 +72,33 @@ utility_meter:
       - cooling
 
   # ── Electrical — no tariff (total) ──
-  heishahub_electrical_daily:
-    source: sensor.heishahub_electrical_energy_active
+  hph_electrical_daily:
+    source: sensor.hph_electrical_energy_active
     cycle: daily
-  heishahub_electrical_monthly:
-    source: sensor.heishahub_electrical_energy_active
+  hph_electrical_monthly:
+    source: sensor.hph_electrical_energy_active
     cycle: monthly
-  heishahub_electrical_yearly:
-    source: sensor.heishahub_electrical_energy_active
+  hph_electrical_yearly:
+    source: sensor.hph_electrical_energy_active
     cycle: yearly
 
   # ── Electrical — tariff splits ──
-  heishahub_electrical_daily_split:
-    source: sensor.heishahub_electrical_energy_active
+  hph_electrical_daily_split:
+    source: sensor.hph_electrical_energy_active
     cycle: daily
     tariffs:
       - heating
       - dhw
       - cooling
-  heishahub_electrical_monthly_split:
-    source: sensor.heishahub_electrical_energy_active
+  hph_electrical_monthly_split:
+    source: sensor.hph_electrical_energy_active
     cycle: monthly
     tariffs:
       - heating
       - dhw
       - cooling
-  heishahub_electrical_yearly_split:
-    source: sensor.heishahub_electrical_energy_active
+  hph_electrical_yearly_split:
+    source: sensor.hph_electrical_energy_active
     cycle: yearly
     tariffs:
       - heating
@@ -109,118 +109,118 @@ automation:
   # ─── Tariff switch: follow operating mode ────────────────────────────────
   # Switches all six split utility_meters in one call whenever the heat pump
   # changes mode. Default/unknown → heating (safe fallback).
-  - id: heishahub_tariff_switch
-    alias: HeishaHub — tariff switch (mode → heating/dhw/cooling)
+  - id: hph_tariff_switch
+    alias: Heat Pump Hero — tariff switch (mode → heating/dhw/cooling)
     mode: single
     trigger:
       - platform: state
-        entity_id: sensor.heishahub_operating_mode
+        entity_id: sensor.hph_operating_mode
     action:
       - variables:
           tariff: >-
-            {% set m = states('sensor.heishahub_operating_mode') %}
+            {% set m = states('sensor.hph_operating_mode') %}
             {% if m == 'dhw' %}dhw
             {% elif m == 'cooling' %}cooling
             {% else %}heating{% endif %}
       - service: utility_meter.select_tariff
         target:
           entity_id:
-            - sensor.heishahub_thermal_daily_split
-            - sensor.heishahub_thermal_monthly_split
-            - sensor.heishahub_thermal_yearly_split
-            - sensor.heishahub_electrical_daily_split
-            - sensor.heishahub_electrical_monthly_split
-            - sensor.heishahub_electrical_yearly_split
+            - sensor.hph_thermal_daily_split
+            - sensor.hph_thermal_monthly_split
+            - sensor.hph_thermal_yearly_split
+            - sensor.hph_electrical_daily_split
+            - sensor.hph_electrical_monthly_split
+            - sensor.hph_electrical_yearly_split
         data:
           tariff: "{{ tariff }}"
 
 template:
   - sensor:
       # ─── Live COP ────────────────────────────────────────────────────────
-      - name: "HeishaHub COP Live"
-        unique_id: heishahub_cop_live
+      - name: "Heat Pump Hero COP Live"
+        unique_id: hph_cop_live
         unit_of_measurement: "x"
         state_class: measurement
         availability: >-
-          {{ states('sensor.heishahub_thermal_power_active')
+          {{ states('sensor.hph_thermal_power_active')
              not in ['unknown','unavailable','none']
-             and states('sensor.heishahub_electrical_power_active')
+             and states('sensor.hph_electrical_power_active')
              not in ['unknown','unavailable','none'] }}
         state: >-
-          {% if is_state('binary_sensor.heishahub_defrost_active','on') %}
+          {% if is_state('binary_sensor.hph_defrost_active','on') %}
             0
           {% else %}
-            {% set t = states('sensor.heishahub_thermal_power_active') | float(0) %}
-            {% set e = states('sensor.heishahub_electrical_power_active') | float(0) %}
+            {% set t = states('sensor.hph_thermal_power_active') | float(0) %}
+            {% set e = states('sensor.hph_electrical_power_active') | float(0) %}
             {{ (t / e) | round(2) if e > 50 else 0 }}
           {% endif %}
 
       # ─── Daily COP (TAZ) — total ─────────────────────────────────────────
-      - name: "HeishaHub COP Daily"
-        unique_id: heishahub_cop_daily
+      - name: "Heat Pump Hero COP Daily"
+        unique_id: hph_cop_daily
         unit_of_measurement: "x"
         state_class: measurement
         state: >-
-          {% set t = states('sensor.heishahub_thermal_daily') | float(0) %}
-          {% set e = states('sensor.heishahub_electrical_daily') | float(0) %}
+          {% set t = states('sensor.hph_thermal_daily') | float(0) %}
+          {% set e = states('sensor.hph_electrical_daily') | float(0) %}
           {{ (t / e) | round(2) if e > 0.1 else 0 }}
 
       # ─── Monthly COP (MAZ) — total ───────────────────────────────────────
-      - name: "HeishaHub COP Monthly"
-        unique_id: heishahub_cop_monthly
+      - name: "Heat Pump Hero COP Monthly"
+        unique_id: hph_cop_monthly
         unit_of_measurement: "x"
         state_class: measurement
         state: >-
-          {% set t = states('sensor.heishahub_thermal_monthly') | float(0) %}
-          {% set e = states('sensor.heishahub_electrical_monthly') | float(0) %}
+          {% set t = states('sensor.hph_thermal_monthly') | float(0) %}
+          {% set e = states('sensor.hph_electrical_monthly') | float(0) %}
           {{ (t / e) | round(2) if e > 0.1 else 0 }}
 
       # ─── Yearly COP / SCOP (JAZ) — total ─────────────────────────────────
-      - name: "HeishaHub SCOP"
-        unique_id: heishahub_scop
+      - name: "Heat Pump Hero SCOP"
+        unique_id: hph_scop
         unit_of_measurement: "x"
         state_class: measurement
         state: >-
-          {% set t = states('sensor.heishahub_thermal_yearly') | float(0) %}
-          {% set e = states('sensor.heishahub_electrical_yearly') | float(0) %}
+          {% set t = states('sensor.hph_thermal_yearly') | float(0) %}
+          {% set e = states('sensor.hph_electrical_yearly') | float(0) %}
           {{ (t / e) | round(2) if e > 0.1 else 0 }}
 
       # ─── COP per mode — heating ───────────────────────────────────────────
-      - name: "HeishaHub COP Monthly Heating"
-        unique_id: heishahub_cop_monthly_heating
+      - name: "Heat Pump Hero COP Monthly Heating"
+        unique_id: hph_cop_monthly_heating
         unit_of_measurement: "x"
         state_class: measurement
         state: >-
-          {% set t = states('sensor.heishahub_thermal_monthly_split_heating') | float(0) %}
-          {% set e = states('sensor.heishahub_electrical_monthly_split_heating') | float(0) %}
+          {% set t = states('sensor.hph_thermal_monthly_split_heating') | float(0) %}
+          {% set e = states('sensor.hph_electrical_monthly_split_heating') | float(0) %}
           {{ (t / e) | round(2) if e > 0.1 else 0 }}
 
-      - name: "HeishaHub COP Yearly Heating"
-        unique_id: heishahub_cop_yearly_heating
+      - name: "Heat Pump Hero COP Yearly Heating"
+        unique_id: hph_cop_yearly_heating
         unit_of_measurement: "x"
         state_class: measurement
         state: >-
-          {% set t = states('sensor.heishahub_thermal_yearly_split_heating') | float(0) %}
-          {% set e = states('sensor.heishahub_electrical_yearly_split_heating') | float(0) %}
+          {% set t = states('sensor.hph_thermal_yearly_split_heating') | float(0) %}
+          {% set e = states('sensor.hph_electrical_yearly_split_heating') | float(0) %}
           {{ (t / e) | round(2) if e > 0.1 else 0 }}
 
       # ─── COP per mode — DHW ───────────────────────────────────────────────
-      - name: "HeishaHub COP Monthly DHW"
-        unique_id: heishahub_cop_monthly_dhw
+      - name: "Heat Pump Hero COP Monthly DHW"
+        unique_id: hph_cop_monthly_dhw
         unit_of_measurement: "x"
         state_class: measurement
         state: >-
-          {% set t = states('sensor.heishahub_thermal_monthly_split_dhw') | float(0) %}
-          {% set e = states('sensor.heishahub_electrical_monthly_split_dhw') | float(0) %}
+          {% set t = states('sensor.hph_thermal_monthly_split_dhw') | float(0) %}
+          {% set e = states('sensor.hph_electrical_monthly_split_dhw') | float(0) %}
           {{ (t / e) | round(2) if e > 0.1 else 0 }}
 
-      - name: "HeishaHub COP Yearly DHW"
-        unique_id: heishahub_cop_yearly_dhw
+      - name: "Heat Pump Hero COP Yearly DHW"
+        unique_id: hph_cop_yearly_dhw
         unit_of_measurement: "x"
         state_class: measurement
         state: >-
-          {% set t = states('sensor.heishahub_thermal_yearly_split_dhw') | float(0) %}
-          {% set e = states('sensor.heishahub_electrical_yearly_split_dhw') | float(0) %}
+          {% set t = states('sensor.hph_thermal_yearly_split_dhw') | float(0) %}
+          {% set e = states('sensor.hph_electrical_yearly_split_dhw') | float(0) %}
           {{ (t / e) | round(2) if e > 0.1 else 0 }}
 
       # ════════════════════════════════════════════════════════════════════
@@ -228,47 +228,47 @@ template:
       # ════════════════════════════════════════════════════════════════════
 
       # ─── COP last month (uses utility_meter last_period attribute) ───────
-      - name: "HeishaHub COP Last Month"
-        unique_id: heishahub_cop_last_month
+      - name: "Heat Pump Hero COP Last Month"
+        unique_id: hph_cop_last_month
         unit_of_measurement: "x"
         state: >-
-          {% set t = state_attr('sensor.heishahub_thermal_monthly','last_period') | float(0) %}
-          {% set e = state_attr('sensor.heishahub_electrical_monthly','last_period') | float(0) %}
+          {% set t = state_attr('sensor.hph_thermal_monthly','last_period') | float(0) %}
+          {% set e = state_attr('sensor.hph_electrical_monthly','last_period') | float(0) %}
           {{ (t / e) | round(2) if e > 0.1 else 0 }}
 
       # ─── COP last year ───────────────────────────────────────────────────
-      - name: "HeishaHub COP Last Year"
-        unique_id: heishahub_cop_last_year
+      - name: "Heat Pump Hero COP Last Year"
+        unique_id: hph_cop_last_year
         unit_of_measurement: "x"
         state: >-
-          {% set t = state_attr('sensor.heishahub_thermal_yearly','last_period') | float(0) %}
-          {% set e = state_attr('sensor.heishahub_electrical_yearly','last_period') | float(0) %}
+          {% set t = state_attr('sensor.hph_thermal_yearly','last_period') | float(0) %}
+          {% set e = state_attr('sensor.hph_electrical_yearly','last_period') | float(0) %}
           {{ (t / e) | round(2) if e > 0.1 else 0 }}
 
       # ─── Energy last month (raw kWh) ─────────────────────────────────────
-      - name: "HeishaHub Thermal Last Month"
-        unique_id: heishahub_thermal_last_month
+      - name: "Heat Pump Hero Thermal Last Month"
+        unique_id: hph_thermal_last_month
         unit_of_measurement: "kWh"
         state_class: measurement
-        state: "{{ state_attr('sensor.heishahub_thermal_monthly','last_period') | float(0) | round(2) }}"
+        state: "{{ state_attr('sensor.hph_thermal_monthly','last_period') | float(0) | round(2) }}"
 
-      - name: "HeishaHub Electrical Last Month"
-        unique_id: heishahub_electrical_last_month
+      - name: "Heat Pump Hero Electrical Last Month"
+        unique_id: hph_electrical_last_month
         unit_of_measurement: "kWh"
         state_class: measurement
-        state: "{{ state_attr('sensor.heishahub_electrical_monthly','last_period') | float(0) | round(2) }}"
+        state: "{{ state_attr('sensor.hph_electrical_monthly','last_period') | float(0) | round(2) }}"
 
-      - name: "HeishaHub Thermal Last Year"
-        unique_id: heishahub_thermal_last_year
+      - name: "Heat Pump Hero Thermal Last Year"
+        unique_id: hph_thermal_last_year
         unit_of_measurement: "kWh"
         state_class: measurement
-        state: "{{ state_attr('sensor.heishahub_thermal_yearly','last_period') | float(0) | round(2) }}"
+        state: "{{ state_attr('sensor.hph_thermal_yearly','last_period') | float(0) | round(2) }}"
 
-      - name: "HeishaHub Electrical Last Year"
-        unique_id: heishahub_electrical_last_year
+      - name: "Heat Pump Hero Electrical Last Year"
+        unique_id: hph_electrical_last_year
         unit_of_measurement: "kWh"
         state_class: measurement
-        state: "{{ state_attr('sensor.heishahub_electrical_yearly','last_period') | float(0) | round(2) }}"
+        state: "{{ state_attr('sensor.hph_electrical_yearly','last_period') | float(0) | round(2) }}"
 
       # ════════════════════════════════════════════════════════════════════
       # PERCENT-CHANGE SENSORS — current vs previous period
@@ -276,29 +276,29 @@ template:
 
       # ─── COP change month-over-month (%) ────────────────────────────────
       # Positive value = better than last month, negative = worse
-      - name: "HeishaHub COP Change Month %"
-        unique_id: heishahub_cop_change_month_pct
+      - name: "Heat Pump Hero COP Change Month %"
+        unique_id: hph_cop_change_month_pct
         unit_of_measurement: "%"
         state_class: measurement
         icon: >-
-          {% set v = states('sensor.heishahub_cop_change_month_pct') | float(0) %}
+          {% set v = states('sensor.hph_cop_change_month_pct') | float(0) %}
           {% if v > 1 %}mdi:trending-up
           {% elif v < -1 %}mdi:trending-down
           {% else %}mdi:trending-neutral{% endif %}
         state: >-
-          {% set cur = states('sensor.heishahub_cop_monthly') | float(0) %}
-          {% set prev = states('sensor.heishahub_cop_last_month') | float(0) %}
+          {% set cur = states('sensor.hph_cop_monthly') | float(0) %}
+          {% set prev = states('sensor.hph_cop_last_month') | float(0) %}
           {% if prev > 0.1 %}
             {{ ((cur - prev) / prev * 100) | round(1) }}
           {% else %}
             0
           {% endif %}
         attributes:
-          current: "{{ states('sensor.heishahub_cop_monthly') }}"
-          previous: "{{ states('sensor.heishahub_cop_last_month') }}"
+          current: "{{ states('sensor.hph_cop_monthly') }}"
+          previous: "{{ states('sensor.hph_cop_last_month') }}"
           message: >-
-            {% set cur = states('sensor.heishahub_cop_monthly') | float(0) %}
-            {% set prev = states('sensor.heishahub_cop_last_month') | float(0) %}
+            {% set cur = states('sensor.hph_cop_monthly') | float(0) %}
+            {% set prev = states('sensor.hph_cop_last_month') | float(0) %}
             {% if prev <= 0.1 %}
               No data for previous month yet.
             {% else %}
@@ -313,29 +313,29 @@ template:
             {% endif %}
 
       # ─── SCOP change year-over-year (%) ─────────────────────────────────
-      - name: "HeishaHub SCOP Change Year %"
-        unique_id: heishahub_scop_change_year_pct
+      - name: "Heat Pump Hero SCOP Change Year %"
+        unique_id: hph_scop_change_year_pct
         unit_of_measurement: "%"
         state_class: measurement
         icon: >-
-          {% set v = states('sensor.heishahub_scop_change_year_pct') | float(0) %}
+          {% set v = states('sensor.hph_scop_change_year_pct') | float(0) %}
           {% if v > 1 %}mdi:trending-up
           {% elif v < -1 %}mdi:trending-down
           {% else %}mdi:trending-neutral{% endif %}
         state: >-
-          {% set cur = states('sensor.heishahub_scop') | float(0) %}
-          {% set prev = states('sensor.heishahub_cop_last_year') | float(0) %}
+          {% set cur = states('sensor.hph_scop') | float(0) %}
+          {% set prev = states('sensor.hph_cop_last_year') | float(0) %}
           {% if prev > 0.1 %}
             {{ ((cur - prev) / prev * 100) | round(1) }}
           {% else %}
             0
           {% endif %}
         attributes:
-          current: "{{ states('sensor.heishahub_scop') }}"
-          previous: "{{ states('sensor.heishahub_cop_last_year') }}"
+          current: "{{ states('sensor.hph_scop') }}"
+          previous: "{{ states('sensor.hph_cop_last_year') }}"
           message: >-
-            {% set cur = states('sensor.heishahub_scop') | float(0) %}
-            {% set prev = states('sensor.heishahub_cop_last_year') | float(0) %}
+            {% set cur = states('sensor.hph_scop') | float(0) %}
+            {% set prev = states('sensor.hph_cop_last_year') | float(0) %}
             {% if prev <= 0.1 %}
               No SCOP data for previous year yet — needs at least one full year.
             {% else %}
@@ -350,13 +350,13 @@ template:
             {% endif %}
 
       # ─── Thermal energy change month-over-month (%) ─────────────────────
-      - name: "HeishaHub Thermal Change Month %"
-        unique_id: heishahub_thermal_change_month_pct
+      - name: "Heat Pump Hero Thermal Change Month %"
+        unique_id: hph_thermal_change_month_pct
         unit_of_measurement: "%"
         state_class: measurement
         state: >-
-          {% set cur = states('sensor.heishahub_thermal_monthly') | float(0) %}
-          {% set prev = state_attr('sensor.heishahub_thermal_monthly','last_period') | float(0) %}
+          {% set cur = states('sensor.hph_thermal_monthly') | float(0) %}
+          {% set prev = state_attr('sensor.hph_thermal_monthly','last_period') | float(0) %}
           {% if prev > 0.1 %}
             {{ ((cur - prev) / prev * 100) | round(1) }}
           {% else %}
@@ -364,13 +364,13 @@ template:
           {% endif %}
 
       # ─── Electrical energy change month-over-month (%) ──────────────────
-      - name: "HeishaHub Electrical Change Month %"
-        unique_id: heishahub_electrical_change_month_pct
+      - name: "Heat Pump Hero Electrical Change Month %"
+        unique_id: hph_electrical_change_month_pct
         unit_of_measurement: "%"
         state_class: measurement
         state: >-
-          {% set cur = states('sensor.heishahub_electrical_monthly') | float(0) %}
-          {% set prev = state_attr('sensor.heishahub_electrical_monthly','last_period') | float(0) %}
+          {% set cur = states('sensor.hph_electrical_monthly') | float(0) %}
+          {% set prev = state_attr('sensor.hph_electrical_monthly','last_period') | float(0) %}
           {% if prev > 0.1 %}
             {{ ((cur - prev) / prev * 100) | round(1) }}
           {% else %}
@@ -381,30 +381,30 @@ template:
       # AGGREGATE COMPARISON SUMMARY — single sensor with trend message
       # Used for the dashboard "headline" card.
       # ════════════════════════════════════════════════════════════════════
-      - name: "HeishaHub Efficiency Trend"
-        unique_id: heishahub_efficiency_trend
+      - name: "Heat Pump Hero Efficiency Trend"
+        unique_id: hph_efficiency_trend
         icon: >-
-          {% set v = states('sensor.heishahub_cop_change_month_pct') | float(0) %}
+          {% set v = states('sensor.hph_cop_change_month_pct') | float(0) %}
           {% if v > 5 %}mdi:rocket-launch
           {% elif v > 1 %}mdi:trending-up
           {% elif v < -5 %}mdi:alert
           {% elif v < -1 %}mdi:trending-down
           {% else %}mdi:trending-neutral{% endif %}
         state: >-
-          {% set v = states('sensor.heishahub_cop_change_month_pct') | float(0) %}
+          {% set v = states('sensor.hph_cop_change_month_pct') | float(0) %}
           {% if v > 5 %}great
           {% elif v > 1 %}better
           {% elif v < -5 %}critical
           {% elif v < -1 %}worse
           {% else %}stable{% endif %}
         attributes:
-          month_pct: "{{ states('sensor.heishahub_cop_change_month_pct') }}"
-          year_pct: "{{ states('sensor.heishahub_scop_change_year_pct') }}"
+          month_pct: "{{ states('sensor.hph_cop_change_month_pct') }}"
+          year_pct: "{{ states('sensor.hph_scop_change_year_pct') }}"
           headline: >-
-            {% set m = states('sensor.heishahub_cop_change_month_pct') | float(0) %}
-            {% set y = states('sensor.heishahub_scop_change_year_pct') | float(0) %}
-            {% set m_prev = states('sensor.heishahub_cop_last_month') | float(0) %}
-            {% set y_prev = states('sensor.heishahub_cop_last_year') | float(0) %}
+            {% set m = states('sensor.hph_cop_change_month_pct') | float(0) %}
+            {% set y = states('sensor.hph_scop_change_year_pct') | float(0) %}
+            {% set m_prev = states('sensor.hph_cop_last_month') | float(0) %}
+            {% set y_prev = states('sensor.hph_cop_last_year') | float(0) %}
             {% set parts = [] %}
             {% if m_prev > 0.1 %}
               {% if m > 0 %}

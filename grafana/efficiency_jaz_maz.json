@@ -1,5 +1,5 @@
 {
-  "__comment": "HeishaHub — Multi-year SCOP/MAZ dashboard. Requires InfluxDB v2 datasource and at least 1 month of data from the HA InfluxDB integration. Adjust bucket variable to match your setup.",
+  "__comment": "Heat Pump Hero — Multi-year SCOP/MAZ dashboard. Requires InfluxDB v2 datasource and at least 1 month of data from the HA InfluxDB integration. Adjust bucket variable to match your setup.",
   "annotations": { "list": [] },
   "editable": true,
   "fiscalYearStartMonth": 0,
@@ -42,7 +42,7 @@
       },
       "targets": [{
         "refId": "A",
-        "query": "thermal = from(bucket: v.bucket)\n  |> range(start: date.truncate(t: now(), unit: 1y), stop: now())\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_thermal_energy_active\" and r[\"_field\"] == \"value\")\n  |> integral(unit: 1h)\n  |> map(fn: (r) => ({r with _field: \"thermal_kwh\"}))\n\nelectrical = from(bucket: v.bucket)\n  |> range(start: date.truncate(t: now(), unit: 1y), stop: now())\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_electrical_energy_active\" and r[\"_field\"] == \"value\")\n  |> integral(unit: 1h)\n  |> map(fn: (r) => ({r with _field: \"electrical_kwh\"}))\n\njoin(tables: {t: thermal, e: electrical}, on: [\"_stop\"])\n  |> map(fn: (r) => ({_time: r._time, _value: if r._value_e > 0.0 then r._value_t / r._value_e else 0.0, _field: \"SCOP (year to date)\"}))"
+        "query": "thermal = from(bucket: v.bucket)\n  |> range(start: date.truncate(t: now(), unit: 1y), stop: now())\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_thermal_energy_active\" and r[\"_field\"] == \"value\")\n  |> integral(unit: 1h)\n  |> map(fn: (r) => ({r with _field: \"thermal_kwh\"}))\n\nelectrical = from(bucket: v.bucket)\n  |> range(start: date.truncate(t: now(), unit: 1y), stop: now())\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_electrical_energy_active\" and r[\"_field\"] == \"value\")\n  |> integral(unit: 1h)\n  |> map(fn: (r) => ({r with _field: \"electrical_kwh\"}))\n\njoin(tables: {t: thermal, e: electrical}, on: [\"_stop\"])\n  |> map(fn: (r) => ({_time: r._time, _value: if r._value_e > 0.0 then r._value_t / r._value_e else 0.0, _field: \"SCOP (year to date)\"}))"
       }],
       "title": "SCOP — year to date",
       "type": "stat"
@@ -72,7 +72,7 @@
       },
       "targets": [{
         "refId": "A",
-        "query": "import \"date\"\n\nprevYearStart = date.truncate(t: date.sub(d: 1y, from: now()), unit: 1y)\nprevYearEnd   = date.truncate(t: now(), unit: 1y)\n\nthermal = from(bucket: v.bucket)\n  |> range(start: prevYearStart, stop: prevYearEnd)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_thermal_energy_active\" and r[\"_field\"] == \"value\")\n  |> integral(unit: 1h)\n\nelectrical = from(bucket: v.bucket)\n  |> range(start: prevYearStart, stop: prevYearEnd)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_electrical_energy_active\" and r[\"_field\"] == \"value\")\n  |> integral(unit: 1h)\n\njoin(tables: {t: thermal, e: electrical}, on: [\"_stop\"])\n  |> map(fn: (r) => ({_time: r._time, _value: if r._value_e > 0.0 then r._value_t / r._value_e else 0.0, _field: \"SCOP previous year\"}))"
+        "query": "import \"date\"\n\nprevYearStart = date.truncate(t: date.sub(d: 1y, from: now()), unit: 1y)\nprevYearEnd   = date.truncate(t: now(), unit: 1y)\n\nthermal = from(bucket: v.bucket)\n  |> range(start: prevYearStart, stop: prevYearEnd)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_thermal_energy_active\" and r[\"_field\"] == \"value\")\n  |> integral(unit: 1h)\n\nelectrical = from(bucket: v.bucket)\n  |> range(start: prevYearStart, stop: prevYearEnd)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_electrical_energy_active\" and r[\"_field\"] == \"value\")\n  |> integral(unit: 1h)\n\njoin(tables: {t: thermal, e: electrical}, on: [\"_stop\"])\n  |> map(fn: (r) => ({_time: r._time, _value: if r._value_e > 0.0 then r._value_t / r._value_e else 0.0, _field: \"SCOP previous year\"}))"
       }],
       "title": "SCOP — previous year",
       "type": "stat"
@@ -102,7 +102,7 @@
       },
       "targets": [{
         "refId": "A",
-        "query": "thermal = from(bucket: v.bucket)\n  |> range(start: -100y, stop: now())\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_thermal_energy_active\" and r[\"_field\"] == \"value\")\n  |> integral(unit: 1h)\n\nelectrical = from(bucket: v.bucket)\n  |> range(start: -100y, stop: now())\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_electrical_energy_active\" and r[\"_field\"] == \"value\")\n  |> integral(unit: 1h)\n\njoin(tables: {t: thermal, e: electrical}, on: [\"_stop\"])\n  |> map(fn: (r) => ({_time: r._time, _value: if r._value_e > 0.0 then r._value_t / r._value_e else 0.0, _field: \"SCOP lifetime\"}))"
+        "query": "thermal = from(bucket: v.bucket)\n  |> range(start: -100y, stop: now())\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_thermal_energy_active\" and r[\"_field\"] == \"value\")\n  |> integral(unit: 1h)\n\nelectrical = from(bucket: v.bucket)\n  |> range(start: -100y, stop: now())\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_electrical_energy_active\" and r[\"_field\"] == \"value\")\n  |> integral(unit: 1h)\n\njoin(tables: {t: thermal, e: electrical}, on: [\"_stop\"])\n  |> map(fn: (r) => ({_time: r._time, _value: if r._value_e > 0.0 then r._value_t / r._value_e else 0.0, _field: \"SCOP lifetime\"}))"
       }],
       "title": "SCOP — lifetime",
       "type": "stat"
@@ -124,11 +124,11 @@
       "targets": [
         {
           "refId": "A",
-          "query": "from(bucket: v.bucket)\n  |> range(start: date.truncate(t: now(), unit: 1y), stop: now())\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_thermal_energy_active\" and r[\"_field\"] == \"value\")\n  |> integral(unit: 1h)\n  |> map(fn: (r) => ({r with _field: \"Thermal kWh (year)\"}))"
+          "query": "from(bucket: v.bucket)\n  |> range(start: date.truncate(t: now(), unit: 1y), stop: now())\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_thermal_energy_active\" and r[\"_field\"] == \"value\")\n  |> integral(unit: 1h)\n  |> map(fn: (r) => ({r with _field: \"Thermal kWh (year)\"}))"
         },
         {
           "refId": "B",
-          "query": "from(bucket: v.bucket)\n  |> range(start: date.truncate(t: now(), unit: 1y), stop: now())\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_electrical_energy_active\" and r[\"_field\"] == \"value\")\n  |> integral(unit: 1h)\n  |> map(fn: (r) => ({r with _field: \"Electrical kWh (year)\"}))"
+          "query": "from(bucket: v.bucket)\n  |> range(start: date.truncate(t: now(), unit: 1y), stop: now())\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_electrical_energy_active\" and r[\"_field\"] == \"value\")\n  |> integral(unit: 1h)\n  |> map(fn: (r) => ({r with _field: \"Electrical kWh (year)\"}))"
         }
       ],
       "title": "Energy year to date",
@@ -166,7 +166,7 @@
       "targets": [
         {
           "refId": "A",
-          "query": "thermal = from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_thermal_energy_active\" and r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: 1mo, fn: integral, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: r._value / 3600.0}))\n\nelectrical = from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_electrical_energy_active\" and r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: 1mo, fn: integral, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: r._value / 3600.0}))\n\njoin(tables: {t: thermal, e: electrical}, on: [\"_time\"])\n  |> map(fn: (r) => ({_time: r._time, _value: if r._value_e > 0.0 then r._value_t / r._value_e else 0.0, _field: \"COP\"}))"
+          "query": "thermal = from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_thermal_energy_active\" and r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: 1mo, fn: integral, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: r._value / 3600.0}))\n\nelectrical = from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_electrical_energy_active\" and r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: 1mo, fn: integral, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: r._value / 3600.0}))\n\njoin(tables: {t: thermal, e: electrical}, on: [\"_time\"])\n  |> map(fn: (r) => ({_time: r._time, _value: if r._value_e > 0.0 then r._value_t / r._value_e else 0.0, _field: \"COP\"}))"
         }
       ],
       "title": "Monthly COP (MAZ) — all months",
@@ -196,11 +196,11 @@
       "targets": [
         {
           "refId": "A",
-          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_thermal_energy_active\" and r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: 1mo, fn: integral, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: r._value / 3600.0, _field: \"Thermal\"}))"
+          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_thermal_energy_active\" and r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: 1mo, fn: integral, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: r._value / 3600.0, _field: \"Thermal\"}))"
         },
         {
           "refId": "B",
-          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_electrical_energy_active\" and r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: 1mo, fn: integral, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: r._value / 3600.0, _field: \"Electrical\"}))"
+          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_electrical_energy_active\" and r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: 1mo, fn: integral, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: r._value / 3600.0, _field: \"Electrical\"}))"
         }
       ],
       "title": "Monthly energy — thermal vs electrical",
@@ -242,11 +242,11 @@
       "targets": [
         {
           "refId": "A",
-          "query": "thermal = from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_thermal_energy_active\" and r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: 1d, fn: integral, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: r._value / 3600.0}))\n\nelectrical = from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_electrical_energy_active\" and r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: 1d, fn: integral, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: r._value / 3600.0}))\n\njoin(tables: {t: thermal, e: electrical}, on: [\"_time\"])\n  |> map(fn: (r) => ({_time: r._time, _value: if r._value_e > 0.0 then r._value_t / r._value_e else 0.0, _field: \"COP daily\"}))"
+          "query": "thermal = from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_thermal_energy_active\" and r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: 1d, fn: integral, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: r._value / 3600.0}))\n\nelectrical = from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_electrical_energy_active\" and r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: 1d, fn: integral, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: r._value / 3600.0}))\n\njoin(tables: {t: thermal, e: electrical}, on: [\"_time\"])\n  |> map(fn: (r) => ({_time: r._time, _value: if r._value_e > 0.0 then r._value_t / r._value_e else 0.0, _field: \"COP daily\"}))"
         },
         {
           "refId": "B",
-          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_source_outdoor_temp\" and r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: 1d, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: \"Outdoor T° (daily avg)\"}))"
+          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_source_outdoor_temp\" and r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: 1d, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: \"Outdoor T° (daily avg)\"}))"
         }
       ],
       "title": "Daily COP vs outdoor temperature (correlation)",
@@ -256,7 +256,7 @@
   ],
   "refresh": "10m",
   "schemaVersion": 39,
-  "tags": ["heishahub", "efficiency", "scop", "maz"],
+  "tags": ["hph", "efficiency", "scop", "maz"],
   "templating": {
     "list": [
       {
@@ -283,7 +283,7 @@
   "time": { "from": "now-2y", "to": "now" },
   "timepicker": {},
   "timezone": "browser",
-  "title": "HeishaHub — Efficiency (SCOP / MAZ)",
-  "uid": "heishahub-efficiency",
+  "title": "Heat Pump Hero — Efficiency (SCOP / MAZ)",
+  "uid": "hph-efficiency",
   "version": 1
 }

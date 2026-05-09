@@ -1,6 +1,6 @@
 # HACS path forward
 
-This doc explains how HeishaHub can become **fully plug-and-play via
+This doc explains how Heat Pump Hero can become **fully plug-and-play via
 HACS** — and what's blocking that today.
 
 ## What HACS can ship
@@ -9,9 +9,9 @@ HACS only delivers files into specific directories:
 
 | HACS category | Target | What we'd need |
 |---|---|---|
-| **Plugin** (current) | `<config>/www/community/heishahub/` | Frontend resources only — SVG assets, custom-card JS bundles |
-| **Integration** | `<config>/custom_components/heishahub/` | A Python integration that registers entities, automations, and helpers programmatically |
-| **Theme** | `<config>/themes/heishahub.yaml` | Styles only |
+| **Plugin** (current) | `<config>/www/community/hph/` | Frontend resources only — SVG assets, custom-card JS bundles |
+| **Integration** | `<config>/custom_components/hph/` | A Python integration that registers entities, automations, and helpers programmatically |
+| **Theme** | `<config>/themes/hph.yaml` | Styles only |
 
 **Crucially, HACS cannot write to:**
 - `<config>/packages/` — our YAML packages live here
@@ -23,7 +23,7 @@ HACS isn't allowed to do.
 
 ## What's needed for true plug-and-play
 
-A **Python custom integration** at `custom_components/heishahub/` that:
+A **Python custom integration** at `custom_components/hph/` that:
 
 1. **Registers all helpers** programmatically via `hass.helpers.entity_registry`
    — no `input_select` / `input_text` / `input_number` YAML needed
@@ -56,7 +56,7 @@ A **Python custom integration** at `custom_components/heishahub/` that:
 ## What's possible today (without integration)
 
 - ✅ HACS plugin install of frontend cards (handled separately by user)
-- ✅ HACS plugin install of HeishaHub assets (SVGs, future icon set)
+- ✅ HACS plugin install of Heat Pump Hero assets (SVGs, future icon set)
 - ❌ Auto-install of frontend dependencies (apexcharts, mushroom, …) —
   HACS does not support this; only manual install via HACS UI
 - ⚠️ Setup blueprint can post a notification listing what's missing,
@@ -69,7 +69,7 @@ plugins. The `info.md` lists them and users must click through HACS
 manually.
 
 **With our future integration:** We can use `homeassistant.helpers.issue_registry`
-to raise repairs ("HeishaHub: ApexCharts not installed — click here to
+to raise repairs ("Heat Pump Hero: ApexCharts not installed — click here to
 open HACS"), but the actual install click still requires the user.
 
 ## Roadmap mapping

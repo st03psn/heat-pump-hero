@@ -1,20 +1,63 @@
 # Changelog
 
-All notable changes to HeishaHub. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and HeishaHub adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+All notable changes to Heat Pump Hero. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and Heat Pump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.6.0] — 2026-05-09
+
+### Added — rebrand and analysis layer
+
+**Rebrand** — project renamed `HeishaHub` → **Heat Pump Hero (HPH)**.
+- All identifiers `heishahub_*` → `hph_*` (entity IDs, helper names,
+  package filenames, dashboard path)
+- All display strings updated across READMEs (EN/DE/NL), info files,
+  CLAUDE.md, docs, mockup SVGs
+- No migration path needed — explicit decision since no production
+  installs exist yet
+
+**Analysis module** (`packages/hph_analysis.yaml`)
+- Layer 1: rule-based statistical observation
+  - Indoor-temp source helper + target helper (optional, with fallback default)
+  - Rolling smoothed deviation via `statistics` platform (≤7 days)
+  - Concrete recommendations in K via the new
+    `sensor.hph_advisor_analysis` (state + recommendation_k attribute)
+  - Configurable dead band so trivial deviations don't nag
+- Layer 2: linear regression Python script
+  - `scripts/analyze_heating_curve.py` fits supply_temp = a + b·outdoor_temp
+    over the last N days of compressor-on samples
+  - Outputs slope/intercept/R² with plain-language verdict
+  - Writes to `input_text.hph_heating_curve_recommendation` for the
+    advisor to surface
+  - Schedulable via shell_command + automation (snippet in docs/analysis.md)
+- Aggregate advisor summary now considers 9 advisors (was 8)
+- Optimization view: new analysis recommendation card
+
+**Installer improvements** (`scripts/install.sh`)
+- Pre-flight checks: python3 / kamaradclimber heishamon integration /
+  6 HACS frontend dependencies
+- DB recommendation prompt — sqlite / mariadb / postgresql / skip,
+  with clear next-steps for non-default choices
+- `--db` flag for non-interactive runs
+- Now also installs the export / import / heating-curve scripts to
+  `<config>/scripts/` and chmods them executable
+
+**Docs**
+- `docs/analysis.md` — explains the 3-layer KI/observation continuum,
+  why pure ML/LLM isn't needed for heating-curve fitting, worked example
+- Vendor / installation / database docs updated for new branding
 
 ## [0.5.0] — 2026-05-09
 
 ### Added
 
-- **Export module** (`packages/heishahub_export.yaml` + `scripts/export_heishahub.py`)
+- **Export module** (`packages/hph_export.yaml` + `scripts/export_hph.py`)
   - UI helpers: target path, format (csv/json/xlsx), period (last day/week/month/year/all), schedule (manual/daily/weekly/monthly)
-  - `script.heishahub_export_now` for manual triggers
+  - `script.hph_export_now` for manual triggers
   - Scheduled automations (daily/weekly Mon/monthly 1st at 03:00)
   - Python script reads HA REST API, writes one file per entity
 - **Import module** (`scripts/import_csv_to_ha_stats.py`)
   - Backfills HA long-term statistics from CSV via `recorder/import_statistics` websocket
-  - For installs added mid-life — re-creates pre-HeishaHub history
+  - For installs added mid-life — re-creates pre-Heat Pump Hero history
 - **Database recommendations** (`docs/database.md`) — when SQLite is fine, when to switch to MariaDB / PostgreSQL, InfluxDB-for-analytics pattern
 - **Naming proposal** (`docs/naming_proposal.md`) — HeatLens recommended as universal rename to drop the Heishamon-specific branding
 
@@ -31,18 +74,18 @@ including the **Panasonic M-series (R290 flagship)**.
 
 ### Added
 
-- **Panasonic fault-code diagnostics** (`packages/heishahub_diagnostics.yaml`)
+- **Panasonic fault-code diagnostics** (`packages/hph_diagnostics.yaml`)
   - 30+ H- and F-codes mapped to plain-language descriptions and severity
   - Model-specific commentary (J-series H23, R32/R290 H99, J/K H62 false alarms)
   - 5-event ring buffer + recurrence sensor for repeat patterns
   - Persistent notification on fault change with severity / message / model note
-  - New advisor `heishahub_advisor_diagnostics` folds active fault +
+  - New advisor `hph_advisor_diagnostics` folds active fault +
     recurrence into the aggregate traffic-light tile
-- **Vendor preset selector** (`input_select.heishahub_vendor_preset`):
+- **Vendor preset selector** (`input_select.hph_vendor_preset`):
   Panasonic Heishamon, Daikin Altherma, MELCloud, Vaillant mypyllant,
   Stiebel ISG, generic Modbus / MQTT — automation auto-fills all 17
   source-helpers in one click
-- **Heat-pump model selector** (`input_select.heishahub_pump_model`):
+- **Heat-pump model selector** (`input_select.hph_pump_model`):
   Panasonic J / K / L / T-CAP / **M (R290 flagship)** plus Daikin /
   Mitsubishi / Vaillant / Stiebel — auto-sets compressor min/max Hz,
   minimum flow, maximum supply temperature
@@ -75,7 +118,7 @@ including the **Panasonic M-series (R290 flagship)**.
 - The vendor preset selector defaults to `keep_current`, so re-importing
   the package does not auto-clobber your existing source-helpers
 - M-series owners: set the model selector explicitly during setup —
-  HeishaHub adjusts compressor Hz and supply-T° expectations to match
+  Heat Pump Hero adjusts compressor Hz and supply-T° expectations to match
   R290 characteristics
 
 ## [0.3.0] — 2026-05-09

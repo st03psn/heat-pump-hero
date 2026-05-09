@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  HeishaHub — Mockup of the integration's main panel view (v1.0 design).
+  Heat Pump Hero — Mockup of the integration's main panel view (v1.0 design).
   Today this is approximated by the YAML dashboard with 7 views.
 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1300 820" font-family="'Roboto','Segoe UI',Arial,sans-serif">
@@ -24,7 +24,7 @@
 
   <!-- Top bar -->
   <rect x="64" y="0" width="1236" height="56" fill="#111d2e" stroke="#2a3f54"/>
-  <text x="100" y="34" fill="#ffffff" font-size="18" font-weight="600">HeishaHub</text>
+  <text x="100" y="34" fill="#ffffff" font-size="18" font-weight="600">Heat Pump Hero</text>
   <text x="220" y="34" fill="#5a7a96" font-size="13">Heat-pump dashboard · Aquarea L · 47 entities</text>
 
   <!-- Tabs (sub-views inside the integration) -->
@@ -194,5 +194,5 @@
     <text x="954" y="120" fill="#5a7a96" font-size="11">target 16 °C · 7-day avg</text>
   </g>
 
-  <text x="1280" y="800" text-anchor="end" fill="#3d5166" font-size="9" opacity="0.6">HeishaHub main-panel mockup · v1.0 design preview · v0.4 ships YAML dashboard with these views</text>
+  <text x="1280" y="800" text-anchor="end" fill="#3d5166" font-size="9" opacity="0.6">Heat Pump Hero main-panel mockup · v1.0 design preview · v0.4 ships YAML dashboard with these views</text>
 </svg>

@@ -1,5 +1,5 @@
 # Minimal HA configuration for `hass --script check_config` validation.
-# This file exists *only* for CI: it stubs out every entity HeishaHub
+# This file exists *only* for CI: it stubs out every entity Heat Pump Hero
 # expects to find by default (kamaradclimber/heishamon entities) so the
 # `availability:` guards in our packages don't fail to resolve, and so
 # automation triggers can be parsed.
@@ -88,10 +88,10 @@ input_select:
     options: ["Heat", "Cool", "DHW", "Heat+DHW"]
     initial: Heat
 
-# shell_command stub so heishahub_export.yaml can resolve its
-# script.heishahub_export_now reference in CI.
+# shell_command stub so hph_export.yaml can resolve its
+# script.hph_export_now reference in CI.
 shell_command:
-  heishahub_export: "echo stub"
+  hph_export: "echo stub"
 
 # Allow our packages to be loaded.
 homeassistant:

@@ -1,11 +1,11 @@
-# HeishaHub — vendor & model selectors with auto-fill
+# Heat Pump Hero — vendor & model selectors with auto-fill
 #
 # Two layers:
-#   1. heishahub_vendor_preset → which vendor + how it's connected to HA.
+#   1. hph_vendor_preset → which vendor + how it's connected to HA.
 #      Changing this fires an automation that sets all 17 source-helpers
 #      to the right entity-IDs in one click.
 #
-#   2. heishahub_pump_model → specific heat-pump model.
+#   2. hph_pump_model → specific heat-pump model.
 #      Drives model-specific thresholds (compressor min freq, defrost
 #      expectations, known-issue advisors like J-series H23).
 #
@@ -14,8 +14,8 @@
 # now supports M-series unofficially).
 
 input_select:
-  heishahub_vendor_preset:
-    name: HeishaHub — vendor preset (auto-fills source helpers)
+  hph_vendor_preset:
+    name: Heat Pump Hero — vendor preset (auto-fills source helpers)
     icon: mdi:factory
     options:
       - panasonic_heishamon          # default — kamaradclimber/heishamon-homeassistant
@@ -29,8 +29,8 @@ input_select:
       - keep_current                 # don't change anything
     initial: keep_current
 
-  heishahub_pump_model:
-    name: HeishaHub — heat-pump model
+  hph_pump_model:
+    name: Heat Pump Hero — heat-pump model
     icon: mdi:heat-pump-outline
     options:
       # Panasonic Aquarea generations (oldest → newest)
@@ -50,28 +50,28 @@ input_select:
 # Model-specific thresholds — auto-set by the model-change automation,
 # but power users can still override after the fact.
 input_number:
-  heishahub_model_compressor_min_hz:
+  hph_model_compressor_min_hz:
     name: Model — compressor minimum frequency (Hz)
     min: 5
     max: 60
     step: 1
     initial: 16
     icon: mdi:sine-wave
-  heishahub_model_compressor_max_hz:
+  hph_model_compressor_max_hz:
     name: Model — compressor maximum frequency (Hz)
     min: 50
     max: 250
     step: 5
     initial: 110
     icon: mdi:sine-wave
-  heishahub_model_min_flow_lpm:
+  hph_model_min_flow_lpm:
     name: Model — minimum water flow (L/min)
     min: 5
     max: 30
     step: 0.5
     initial: 9
     icon: mdi:water-pump
-  heishahub_model_max_supply_c:
+  hph_model_max_supply_c:
     name: Model — maximum supply temperature (°C)
     min: 35
     max: 80
@@ -82,11 +82,11 @@ input_number:
 template:
   - sensor:
       # ─── Model facts (read-only summary card) ────────────────────────
-      - name: "HeishaHub Model Refrigerant"
-        unique_id: heishahub_model_refrigerant
+      - name: "Heat Pump Hero Model Refrigerant"
+        unique_id: hph_model_refrigerant
         icon: mdi:gas-cylinder
         state: >-
-          {% set m = states('input_select.heishahub_pump_model') %}
+          {% set m = states('input_select.hph_pump_model') %}
           {% if m in ['panasonic_j_aqj','panasonic_k_aqk'] %}R410A
           {% elif m in ['panasonic_l_aql','panasonic_tcap'] %}R32
           {% elif m == 'panasonic_m_aqm' %}R290
@@ -96,11 +96,11 @@ template:
           {% elif m == 'stiebel_wpl' %}R454C
           {% else %}unknown{% endif %}
 
-      - name: "HeishaHub Model Description"
-        unique_id: heishahub_model_description
+      - name: "Heat Pump Hero Model Description"
+        unique_id: hph_model_description
         icon: mdi:information-outline
         state: >-
-          {% set m = states('input_select.heishahub_pump_model') %}
+          {% set m = states('input_select.hph_pump_model') %}
           {% if m == 'panasonic_j_aqj' %}Panasonic J-series (Aquarea J / WH-MDC, R410A, oldest inverter generation)
           {% elif m == 'panasonic_k_aqk' %}Panasonic K-series (R410A, improved modulation)
           {% elif m == 'panasonic_l_aql' %}Panasonic L-series (R32, current mainstream)
@@ -118,19 +118,19 @@ automation:
   # Model-change → set thresholds appropriate for that model
   # Power-user overrides after this fire are kept (we don't fight the user).
   # ─────────────────────────────────────────────────────────────────────
-  - id: heishahub_model_apply_thresholds
-    alias: HeishaHub — apply model-specific thresholds
+  - id: hph_model_apply_thresholds
+    alias: Heat Pump Hero — apply model-specific thresholds
     mode: single
     trigger:
       - platform: state
-        entity_id: input_select.heishahub_pump_model
+        entity_id: input_select.hph_pump_model
     action:
       - variables:
-          model: "{{ states('input_select.heishahub_pump_model') }}"
+          model: "{{ states('input_select.hph_pump_model') }}"
       # Compressor min frequency
       - service: input_number.set_value
         target:
-          entity_id: input_number.heishahub_model_compressor_min_hz
+          entity_id: input_number.hph_model_compressor_min_hz
         data:
           # Empirically verified compressor minimums from community data;
           # M-series (R290) does not modulate below 16 Hz despite earlier
@@ -144,7 +144,7 @@ automation:
             {% else %}16{% endif %}
       - service: input_number.set_value
         target:
-          entity_id: input_number.heishahub_model_compressor_max_hz
+          entity_id: input_number.hph_model_compressor_max_hz
         data:
           value: >-
             {% if model in ['panasonic_j_aqj','panasonic_k_aqk'] %}90
@@ -154,7 +154,7 @@ automation:
             {% else %}110{% endif %}
       - service: input_number.set_value
         target:
-          entity_id: input_number.heishahub_model_min_flow_lpm
+          entity_id: input_number.hph_model_min_flow_lpm
         data:
           value: >-
             {% if model in ['panasonic_j_aqj','panasonic_k_aqk'] %}11
@@ -163,7 +163,7 @@ automation:
             {% else %}9{% endif %}
       - service: input_number.set_value
         target:
-          entity_id: input_number.heishahub_model_max_supply_c
+          entity_id: input_number.hph_model_max_supply_c
         data:
           value: >-
             {% if model in ['panasonic_j_aqj','panasonic_k_aqk','panasonic_l_aql','panasonic_tcap'] %}55
@@ -172,8 +172,8 @@ automation:
             {% else %}55{% endif %}
       - service: persistent_notification.create
         data:
-          notification_id: heishahub_model_change
-          title: HeishaHub — model thresholds updated
+          notification_id: hph_model_change
+          title: Heat Pump Hero — model thresholds updated
           message: >-
             Model set to {{ model }}.
             Compressor min/max Hz, min flow L/min and max supply °C
@@ -183,18 +183,18 @@ automation:
   # ─────────────────────────────────────────────────────────────────────
   # Vendor-preset → auto-fill all 17 source helpers in one click
   # ─────────────────────────────────────────────────────────────────────
-  - id: heishahub_vendor_preset_apply
-    alias: HeishaHub — apply vendor preset (auto-fill source helpers)
+  - id: hph_vendor_preset_apply
+    alias: Heat Pump Hero — apply vendor preset (auto-fill source helpers)
     mode: single
     trigger:
       - platform: state
-        entity_id: input_select.heishahub_vendor_preset
+        entity_id: input_select.hph_vendor_preset
     condition:
       - condition: template
         value_template: "{{ trigger.to_state.state != 'keep_current' }}"
     action:
       - variables:
-          preset: "{{ states('input_select.heishahub_vendor_preset') }}"
+          preset: "{{ states('input_select.hph_vendor_preset') }}"
       - choose:
           # ── Panasonic Heishamon (kamaradclimber) — also the defaults ──
           - conditions:
@@ -202,58 +202,58 @@ automation:
                 value_template: "{{ preset == 'panasonic_heishamon' }}"
             sequence:
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_inlet_temp }
+                target: { entity_id: input_text.hph_src_inlet_temp }
                 data: { value: "sensor.panasonic_heat_pump_main_inlet_temperature" }
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_outlet_temp }
+                target: { entity_id: input_text.hph_src_outlet_temp }
                 data: { value: "sensor.panasonic_heat_pump_main_outlet_temperature" }
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_flow_rate }
+                target: { entity_id: input_text.hph_src_flow_rate }
                 data: { value: "sensor.panasonic_heat_pump_main_water_flow" }
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_outdoor_temp }
+                target: { entity_id: input_text.hph_src_outdoor_temp }
                 data: { value: "sensor.panasonic_heat_pump_main_outside_temperature" }
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_compressor_freq }
+                target: { entity_id: input_text.hph_src_compressor_freq }
                 data: { value: "sensor.panasonic_heat_pump_main_compressor_frequency" }
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_compressor_hours }
+                target: { entity_id: input_text.hph_src_compressor_hours }
                 data: { value: "sensor.panasonic_heat_pump_main_compressor_running_hours" }
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_compressor_starts }
+                target: { entity_id: input_text.hph_src_compressor_starts }
                 data: { value: "sensor.panasonic_heat_pump_main_compressor_starts" }
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_discharge_temp }
+                target: { entity_id: input_text.hph_src_discharge_temp }
                 data: { value: "sensor.panasonic_heat_pump_main_discharge_temperature" }
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_pump_pressure }
+                target: { entity_id: input_text.hph_src_pump_pressure }
                 data: { value: "sensor.panasonic_heat_pump_main_pump_pressure" }
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_internal_power }
+                target: { entity_id: input_text.hph_src_internal_power }
                 data: { value: "sensor.panasonic_heat_pump_main_consumed_power" }
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_defrost_state }
+                target: { entity_id: input_text.hph_src_defrost_state }
                 data: { value: "binary_sensor.panasonic_heat_pump_main_defrost_state" }
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_aux_heater_state }
+                target: { entity_id: input_text.hph_src_aux_heater_state }
                 data: { value: "binary_sensor.panasonic_heat_pump_main_heater_state" }
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_operating_mode }
+                target: { entity_id: input_text.hph_src_operating_mode }
                 data: { value: "select.panasonic_heat_pump_main_operating_mode_state" }
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_zone1_temp }
+                target: { entity_id: input_text.hph_src_zone1_temp }
                 data: { value: "sensor.panasonic_heat_pump_main_z1_water_temperature" }
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_zone2_temp }
+                target: { entity_id: input_text.hph_src_zone2_temp }
                 data: { value: "sensor.panasonic_heat_pump_main_z2_water_temperature" }
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_dhw_temp }
+                target: { entity_id: input_text.hph_src_dhw_temp }
                 data: { value: "sensor.panasonic_heat_pump_main_dhw_temperature" }
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_buffer_temp }
+                target: { entity_id: input_text.hph_src_buffer_temp }
                 data: { value: "sensor.panasonic_heat_pump_main_buffer_temperature" }
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_error_code }
+                target: { entity_id: input_text.hph_src_error_code }
                 data: { value: "sensor.panasonic_heat_pump_main_error" }
 
           # ── Daikin Altherma 3 (HA core daikin_altherma) ──
@@ -262,19 +262,19 @@ automation:
                 value_template: "{{ preset == 'daikin_altherma_core' }}"
             sequence:
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_inlet_temp }
+                target: { entity_id: input_text.hph_src_inlet_temp }
                 data: { value: "sensor.altherma_leaving_water_temperature" }
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_outlet_temp }
+                target: { entity_id: input_text.hph_src_outlet_temp }
                 data: { value: "sensor.altherma_outdoor_temperature_returning_water" }
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_outdoor_temp }
+                target: { entity_id: input_text.hph_src_outdoor_temp }
                 data: { value: "sensor.altherma_outdoor_temperature" }
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_dhw_temp }
+                target: { entity_id: input_text.hph_src_dhw_temp }
                 data: { value: "sensor.altherma_tank_temperature" }
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_internal_power }
+                target: { entity_id: input_text.hph_src_internal_power }
                 data: { value: "sensor.altherma_power_consumption" }
 
           # ── Mitsubishi MELCloud (HA core melcloud) ──
@@ -283,13 +283,13 @@ automation:
                 value_template: "{{ preset == 'mitsubishi_melcloud_core' }}"
             sequence:
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_inlet_temp }
+                target: { entity_id: input_text.hph_src_inlet_temp }
                 data: { value: "sensor.melcloud_flow_temperature_zone_1" }
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_outdoor_temp }
+                target: { entity_id: input_text.hph_src_outdoor_temp }
                 data: { value: "sensor.melcloud_outdoor_temperature" }
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_dhw_temp }
+                target: { entity_id: input_text.hph_src_dhw_temp }
                 data: { value: "sensor.melcloud_tank_water_temperature" }
 
           # ── Vaillant aroTHERM (mypyllant HACS) ──
@@ -298,13 +298,13 @@ automation:
                 value_template: "{{ preset == 'vaillant_arotherm_mypyllant' }}"
             sequence:
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_outlet_temp }
+                target: { entity_id: input_text.hph_src_outlet_temp }
                 data: { value: "sensor.arotherm_flow_temperature" }
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_inlet_temp }
+                target: { entity_id: input_text.hph_src_inlet_temp }
                 data: { value: "sensor.arotherm_return_temperature" }
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_outdoor_temp }
+                target: { entity_id: input_text.hph_src_outdoor_temp }
                 data: { value: "sensor.arotherm_outdoor_temperature" }
 
           # ── Stiebel Eltron ISG (HACS) ──
@@ -313,20 +313,20 @@ automation:
                 value_template: "{{ preset == 'stiebel_eltron_isg' }}"
             sequence:
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_outlet_temp }
+                target: { entity_id: input_text.hph_src_outlet_temp }
                 data: { value: "sensor.isg_flow_temperature_hc1" }
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_inlet_temp }
+                target: { entity_id: input_text.hph_src_inlet_temp }
                 data: { value: "sensor.isg_return_temperature" }
               - service: input_text.set_value
-                target: { entity_id: input_text.heishahub_src_outdoor_temp }
+                target: { entity_id: input_text.hph_src_outdoor_temp }
                 data: { value: "sensor.isg_outdoor_temperature" }
 
       # Notification — always fires unless preset == keep_current
       - service: persistent_notification.create
         data:
-          notification_id: heishahub_vendor_preset_change
-          title: HeishaHub — vendor preset applied
+          notification_id: hph_vendor_preset_change
+          title: Heat Pump Hero — vendor preset applied
           message: >-
             Source helpers were auto-filled for preset "{{ preset }}". Please
             verify under Configuration → Heat-pump entities — non-existent
@@ -338,6 +338,6 @@ automation:
       - delay: "00:00:02"
       - service: input_select.select_option
         target:
-          entity_id: input_select.heishahub_vendor_preset
+          entity_id: input_select.hph_vendor_preset
         data:
           option: keep_current

@@ -1,4 +1,4 @@
-# HeishaHub — cycle analysis
+# Heat Pump Hero — cycle analysis
 #
 # Tracks compressor cycles: start/stop events, run times, pauses, and the
 # short-cycle ratio. Feeds the advisor and any optimization decisions.
@@ -11,34 +11,34 @@
 #   - History via HA recorder + LTS
 
 input_datetime:
-  heishahub_cycle_last_start:
-    name: HeishaHub — last cycle start
+  hph_cycle_last_start:
+    name: Heat Pump Hero — last cycle start
     has_date: true
     has_time: true
-  heishahub_cycle_last_end:
-    name: HeishaHub — last cycle end
+  hph_cycle_last_end:
+    name: Heat Pump Hero — last cycle end
     has_date: true
     has_time: true
 
 input_number:
-  heishahub_cycle_short_threshold_min:
-    name: HeishaHub — "short cycle" threshold (minutes)
+  hph_cycle_short_threshold_min:
+    name: Heat Pump Hero — "short cycle" threshold (minutes)
     min: 1
     max: 60
     step: 1
     initial: 10
     icon: mdi:timer-alert
 
-  heishahub_cycle_last_duration_min:
-    name: HeishaHub — last run duration (minutes)
+  hph_cycle_last_duration_min:
+    name: Heat Pump Hero — last run duration (minutes)
     min: 0
     max: 1440
     step: 0.1
     initial: 0
     icon: mdi:timer
 
-  heishahub_cycle_last_pause_min:
-    name: HeishaHub — last pause (minutes)
+  hph_cycle_last_pause_min:
+    name: Heat Pump Hero — last pause (minutes)
     min: 0
     max: 1440
     step: 0.1
@@ -46,33 +46,33 @@ input_number:
     icon: mdi:timer-pause
 
 counter:
-  heishahub_cycles_today:
-    name: HeishaHub — cycles today
+  hph_cycles_today:
+    name: Heat Pump Hero — cycles today
     icon: mdi:counter
     initial: 0
-  heishahub_short_cycles_today:
-    name: HeishaHub — short cycles today
+  hph_short_cycles_today:
+    name: Heat Pump Hero — short cycles today
     icon: mdi:timer-alert-outline
     initial: 0
 
 automation:
   # ─── Compressor STARTS ──────────────────────────────────────────────────
-  - id: heishahub_cycle_on_start
-    alias: HeishaHub — cycle start
+  - id: hph_cycle_on_start
+    alias: Heat Pump Hero — cycle start
     mode: single
     trigger:
       - platform: state
-        entity_id: binary_sensor.heishahub_compressor_running
+        entity_id: binary_sensor.hph_compressor_running
         from: "off"
         to: "on"
     action:
       - service: input_datetime.set_datetime
         target:
-          entity_id: input_datetime.heishahub_cycle_last_start
+          entity_id: input_datetime.hph_cycle_last_start
         data:
           datetime: "{{ now().isoformat() }}"
       - variables:
-          last_end: "{{ states('input_datetime.heishahub_cycle_last_end') }}"
+          last_end: "{{ states('input_datetime.hph_cycle_last_end') }}"
           pause_min: >-
             {% if last_end not in ['unknown','unavailable','none'] %}
               {{ ((now() - as_datetime(last_end)).total_seconds() / 60) | round(1) }}
@@ -81,40 +81,40 @@ automation:
             {% endif %}
       - service: input_number.set_value
         target:
-          entity_id: input_number.heishahub_cycle_last_pause_min
+          entity_id: input_number.hph_cycle_last_pause_min
         data:
           value: "{{ pause_min }}"
       - service: counter.increment
         target:
-          entity_id: counter.heishahub_cycles_today
+          entity_id: counter.hph_cycles_today
 
   # ─── Compressor STOPS ───────────────────────────────────────────────────
-  - id: heishahub_cycle_on_stop
-    alias: HeishaHub — cycle end
+  - id: hph_cycle_on_stop
+    alias: Heat Pump Hero — cycle end
     mode: single
     trigger:
       - platform: state
-        entity_id: binary_sensor.heishahub_compressor_running
+        entity_id: binary_sensor.hph_compressor_running
         from: "on"
         to: "off"
     action:
       - service: input_datetime.set_datetime
         target:
-          entity_id: input_datetime.heishahub_cycle_last_end
+          entity_id: input_datetime.hph_cycle_last_end
         data:
           datetime: "{{ now().isoformat() }}"
       - variables:
-          last_start: "{{ states('input_datetime.heishahub_cycle_last_start') }}"
+          last_start: "{{ states('input_datetime.hph_cycle_last_start') }}"
           duration_min: >-
             {% if last_start not in ['unknown','unavailable','none'] %}
               {{ ((now() - as_datetime(last_start)).total_seconds() / 60) | round(1) }}
             {% else %}
               0
             {% endif %}
-          threshold: "{{ states('input_number.heishahub_cycle_short_threshold_min') | float(10) }}"
+          threshold: "{{ states('input_number.hph_cycle_short_threshold_min') | float(10) }}"
       - service: input_number.set_value
         target:
-          entity_id: input_number.heishahub_cycle_last_duration_min
+          entity_id: input_number.hph_cycle_last_duration_min
         data:
           value: "{{ duration_min }}"
       - if:
@@ -123,11 +123,11 @@ automation:
         then:
           - service: counter.increment
             target:
-              entity_id: counter.heishahub_short_cycles_today
+              entity_id: counter.hph_short_cycles_today
 
   # ─── Daily counter reset at midnight ──────────────────────────────────
-  - id: heishahub_cycles_daily_reset
-    alias: HeishaHub — daily counter reset
+  - id: hph_cycles_daily_reset
+    alias: Heat Pump Hero — daily counter reset
     mode: single
     trigger:
       - platform: time
@@ -136,34 +136,34 @@ automation:
       - service: counter.reset
         target:
           entity_id:
-            - counter.heishahub_cycles_today
-            - counter.heishahub_short_cycles_today
+            - counter.hph_cycles_today
+            - counter.hph_short_cycles_today
 
 template:
   - sensor:
       # ─── Average run duration (rolling 24h) ───────────────────────────
-      - name: "HeishaHub Avg Cycle Duration 24h"
-        unique_id: heishahub_avg_cycle_duration_24h
+      - name: "Heat Pump Hero Avg Cycle Duration 24h"
+        unique_id: hph_avg_cycle_duration_24h
         unit_of_measurement: "min"
         state: >-
-          {% set total = states('sensor.heishahub_source_compressor_hours') | float(0) %}
-          {% set cycles = states('counter.heishahub_cycles_today') | float(0) %}
+          {% set total = states('sensor.hph_source_compressor_hours') | float(0) %}
+          {% set cycles = states('counter.hph_cycles_today') | float(0) %}
           {{ (total * 60 / cycles) | round(1) if cycles > 0 else 0 }}
 
       # ─── Short-cycle ratio (%) ────────────────────────────────────────
-      - name: "HeishaHub Short Cycle Ratio"
-        unique_id: heishahub_short_cycle_ratio
+      - name: "Heat Pump Hero Short Cycle Ratio"
+        unique_id: hph_short_cycle_ratio
         unit_of_measurement: "%"
         state: >-
-          {% set total = states('counter.heishahub_cycles_today') | float(0) %}
-          {% set short = states('counter.heishahub_short_cycles_today') | float(0) %}
+          {% set total = states('counter.hph_cycles_today') | float(0) %}
+          {% set short = states('counter.hph_short_cycles_today') | float(0) %}
           {{ (short / total * 100) | round(0) if total > 0 else 0 }}
 
       # ─── Cycles per hour (today) ──────────────────────────────────────
-      - name: "HeishaHub Cycles Per Hour"
-        unique_id: heishahub_cycles_per_hour
+      - name: "Heat Pump Hero Cycles Per Hour"
+        unique_id: hph_cycles_per_hour
         unit_of_measurement: "1/h"
         state: >-
-          {% set cycles = states('counter.heishahub_cycles_today') | float(0) %}
+          {% set cycles = states('counter.hph_cycles_today') | float(0) %}
           {% set hours = (now().hour + now().minute / 60) %}
           {{ (cycles / hours) | round(2) if hours > 0.1 else 0 }}

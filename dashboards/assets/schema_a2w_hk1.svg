@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  HeishaHub — A2W installation schematic (HK1 only)
+  Heat Pump Hero — A2W installation schematic (HK1 only)
   Version: v0.2
   Design notes:
     - Viewbox 900×500. All hotspot anchor positions are data-hotspot-x / data-hotspot-y.
@@ -278,5 +278,5 @@
         stroke-linecap="butt"/>
 
   <!-- Version watermark -->
-  <text x="880" y="515" text-anchor="end" fill="#3d5166" font-size="8" opacity="0.6">HeishaHub v0.2</text>
+  <text x="880" y="515" text-anchor="end" fill="#3d5166" font-size="8" opacity="0.6">Heat Pump Hero v0.2</text>
 </svg>

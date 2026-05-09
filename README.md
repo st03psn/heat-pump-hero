@@ -1,23 +1,24 @@
-# HeishaHub
+# Heat Pump Hero
 
 > Universal Home Assistant package for Panasonic Aquarea heat pumps with
 > Heishamon — dashboard, statistics, optimization advisor, control automations.
 
 🌐 **Languages:** English (this file) · [Deutsch](README.de.md) · [Nederlands](README.nl.md)
 
-[![Validate](https://github.com/st03psn/HeishaHub/actions/workflows/validate.yml/badge.svg)](https://github.com/st03psn/HeishaHub/actions/workflows/validate.yml)
+[![Validate](https://github.com/st03psn/heat-pump-hero/actions/workflows/validate.yml/badge.svg)](https://github.com/st03psn/heat-pump-hero/actions/workflows/validate.yml)
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-HeishaHub bundles what's missing today: an importable Home Assistant dashboard
+Heat Pump Hero bundles what's missing today: an importable Home Assistant dashboard
 laid out like the Heishamon web UI, Service-Cloud-style analytical graphs, an
 installation schematic with live hotspots, and proper efficiency metrics
 (SCOP / monthly / daily / live COP) — including multi-year tracking.
 
 ## Status
 
-🟢 **v0.5 — beta** — diagnostics, vendor & model selectors, M-series,
-**export / import**, DB guidance, naming proposal. See [CHANGELOG.md](CHANGELOG.md).
+🟢 **v0.6 — beta** — renamed to Heat Pump Hero. Adds analysis module
+(L1 statistical observation + L2 regression script), installer DB
+prompt + prereq check. See [CHANGELOG.md](CHANGELOG.md).
 
 ## Screenshots
 
@@ -87,7 +88,7 @@ reference install is online — see [docs/screenshots/](docs/screenshots/).)*
 - ✅ Telegraf MQTT → InfluxDB bridge config
 - ✅ Export module — CSV / JSON / XLSX, manual or scheduled
 - ✅ Import module — backfill HA long-term stats from CSV (e.g. legacy
-  Shelly / utility-cloud history before HeishaHub was installed)
+  Shelly / utility-cloud history before Heat Pump Hero was installed)
 - ✅ Database guidance — SQLite vs MariaDB vs PostgreSQL vs InfluxDB
 - ✅ Setup blueprint and CLI installer
 
@@ -102,7 +103,7 @@ reference install is online — see [docs/screenshots/](docs/screenshots/).)*
 
 1. **Add HACS custom repository**
    - HACS → Integrations → ⋮ → Custom repositories
-   - URL: `https://github.com/st03psn/HeishaHub`
+   - URL: `https://github.com/st03psn/heat-pump-hero`
    - Category: *Lovelace* (until HACS supports mixed content)
 
 2. **Install dependencies** (HACS search, order doesn't matter):
@@ -119,10 +120,10 @@ reference install is online — see [docs/screenshots/](docs/screenshots/).)*
    (manually or via `scripts/install.sh`).
 
 4. **Add the dashboard** — Settings → Dashboards → Add → From YAML →
-   paste `dashboards/heishahub.yaml`.
+   paste `dashboards/hph.yaml`.
 
 5. **External sensors** (optional) — Settings → Devices & Services → Helpers:
-   set `heishahub_shelly_entity` and `heishahub_wmz_entity` to your sensor
+   set `hph_shelly_entity` and `hph_wmz_entity` to your sensor
    entity-IDs. See [docs/external_sensors.md](docs/external_sensors.md).
 
 Detailed walkthrough: [docs/installation.md](docs/installation.md).
@@ -133,7 +134,7 @@ Detailed walkthrough: [docs/installation.md](docs/installation.md).
   Heishamon ─┐
              ├─MQTT─▶ kamaradclimber → HA entities
   Shelly ────┤                        │
-  Heat meter ┘                        ├─▶ heishahub packages (templates)
+  Heat meter ┘                        ├─▶ hph packages (templates)
                                       │     ├─ COP / SCOP / monthly / daily
                                       │     └─ thermal/electrical energy
                                       ├─▶ HA Recorder + LTS ─▶ Lovelace
@@ -144,7 +145,7 @@ Detailed walkthrough: [docs/installation.md](docs/installation.md).
 
 ## Project name
 
-**HeishaHub** — a hub for everything around Heishamon: dashboard + control +
+**Heat Pump Hero** — a hub for everything around Heishamon: dashboard + control +
 statistics in a single bundle.
 
 ## Contributing

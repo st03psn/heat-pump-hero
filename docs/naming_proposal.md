@@ -2,7 +2,7 @@
 
 🌐 English
 
-The current name **HeishaHub** is heavily Heishamon-branded. With the
+The current name **Heat Pump Hero** is heavily Heishamon-branded. With the
 v0.4 source-adapter, vendor presets covering Daikin / Vaillant /
 Mitsubishi / Stiebel / generic, and Panasonic M-series support, the
 Heishamon-only association no longer matches the scope.
@@ -55,7 +55,7 @@ Heishamon-only association no longer matches the scope.
 
 ## Rationale for HeatLens
 
-It captures the actual project value: HeishaHub doesn't replace the
+It captures the actual project value: Heat Pump Hero doesn't replace the
 heat pump's controls, it provides a **lens** through which to see it
 clearly — efficiency, faults, optimisation. The name de-couples from
 Heishamon without losing any meaning, and it works equally well for
@@ -64,16 +64,16 @@ Heishamon, Daikin, Vaillant, Mitsubishi, Stiebel users.
 ## Migration plan (when accepted)
 
 1. Decide name in an issue / discussion.
-2. Rename GitHub repository — GitHub keeps redirects from `st03psn/HeishaHub`.
+2. Rename GitHub repository — GitHub keeps redirects from `st03psn/Heat Pump Hero`.
 3. Rename `manifest.json` / `hacs.json` / `info.md`.
-4. **Keep entity-IDs** stable (`heishahub_*`) for v1.x — too disruptive
+4. **Keep entity-IDs** stable (`hph_*`) for v1.x — too disruptive
    to rename. Document as "legacy prefix from project's first name".
 5. Domain registration if we go that direction.
 6. Logo / icon update — coordinate with the screenshots placeholders.
 
 ## What stays
 
-- All entity-IDs, helper names, package filenames keep `heishahub_`
+- All entity-IDs, helper names, package filenames keep `hph_`
   prefix in v1 to avoid breaking installs.
 - Tag deprecation path for v2 if a clean rename is later desired.
 - Repo description / README headline switches to the new name; the
@@ -82,4 +82,4 @@ Heishamon, Daikin, Vaillant, Mitsubishi, Stiebel users.
 ## Decision
 
 This is a community decision. Track in
-[issue #X](https://github.com/st03psn/HeishaHub/issues) once filed.
+[issue #X](https://github.com/st03psn/heat-pump-hero/issues) once filed.

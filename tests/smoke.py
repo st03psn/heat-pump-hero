@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-HeishaHub — local smoke tests.
+Heat Pump Hero — local smoke tests.
 
 Validates structural invariants without booting a real HA instance:
 
@@ -10,7 +10,7 @@ Validates structural invariants without booting a real HA instance:
      references outside the packages where they belong (sources.yaml as
      defaults, control.yaml as documented heat-pump-specific write targets,
      dashboard heat-curve auto-entities filter, dashboard main on/off switch).
-  4. All `sensor.heishahub_source_*` references in core/advisor/cycles/
+  4. All `sensor.hph_source_*` references in core/advisor/cycles/
      dashboards correspond to a sensor actually defined in sources.yaml.
 
 Run:  py tests/smoke.py
@@ -30,14 +30,14 @@ ROOT = Path(__file__).resolve().parent.parent
 
 PACKAGE_FILES = sorted((ROOT / "packages").glob("*.yaml"))
 GRAFANA_FILES = sorted((ROOT / "grafana").glob("*.json"))
-DASHBOARD_FILE = ROOT / "dashboards" / "heishahub.yaml"
-BLUEPRINT_FILE = ROOT / "blueprints" / "heishahub_setup.yaml"
+DASHBOARD_FILE = ROOT / "dashboards" / "hph.yaml"
+BLUEPRINT_FILE = ROOT / "blueprints" / "hph_setup.yaml"
 
 # Files allowed to contain hardcoded heat-pump entity references.
 ALLOWED_HARDCODE = {
-    "packages/heishahub_sources.yaml": "default values for the source-adapter helpers",
-    "packages/heishahub_control.yaml": "heat-pump-specific write targets (documented)",
-    "packages/heishahub_models.yaml": "vendor-preset auto-fill payloads (write per-vendor entity-IDs into helpers)",
+    "packages/hph_sources.yaml": "default values for the source-adapter helpers",
+    "packages/hph_control.yaml": "heat-pump-specific write targets (documented)",
+    "packages/hph_models.yaml": "vendor-preset auto-fill payloads (write per-vendor entity-IDs into helpers)",
 }
 
 # Dashboard exceptions: the main on/off switch and heat-curve auto-entities
@@ -103,7 +103,7 @@ def test_source_adapter_contract() -> int:
         text = f.read_text(encoding="utf-8")
 
         # Strip allowed dashboard patterns before counting
-        if rel == "dashboards/heishahub.yaml":
+        if rel == "dashboards/hph.yaml":
             for allowed in DASHBOARD_ALLOWED_PATTERNS:
                 text = re.sub(allowed, "", text)
 
@@ -121,30 +121,32 @@ def test_source_adapter_contract() -> int:
 
 # ─── Test 3: source-facade sensors used elsewhere all exist in sources.yaml ─
 def test_source_facade_resolution() -> int:
-    section("Source-facade resolution — every heishahub_source_* must be defined")
+    section("Source-facade resolution — every hph_source_* must be defined")
     failures = 0
 
-    # Collect facade definitions from sources.yaml
-    sources = load_yaml(ROOT / "packages" / "heishahub_sources.yaml")
+    # Facade sensors can be defined in any HPH package (hph_sources is the
+    # primary, but hph_analysis adds indoor temp facades, etc.)
     facade_names: set[str] = set()
-    for block in sources.get("template", []):
-        for sensor in block.get("sensor", []) or []:
-            facade_names.add(sensor["unique_id"])
-        for sensor in block.get("binary_sensor", []) or []:
-            facade_names.add(sensor["unique_id"])
+    for pkg in (ROOT / "packages").glob("hph_*.yaml"):
+        d = load_yaml(pkg)
+        for block in d.get("template", []) or []:
+            for sensor in block.get("sensor", []) or []:
+                facade_names.add(sensor["unique_id"])
+            for sensor in block.get("binary_sensor", []) or []:
+                facade_names.add(sensor["unique_id"])
 
     if not facade_names:
-        fail("sources.yaml exposes no template sensors — refactor regression?")
+        fail("no template facades found — refactor regression?")
         return 1
 
-    ok(f"sources.yaml defines {len(facade_names)} facade entities")
+    ok(f"all packages define {len(facade_names)} facade entities")
 
-    # Look for sensor.heishahub_source_* references everywhere except sources itself
+    # Look for sensor.hph_source_* references everywhere except the
+    # packages that define them (they reference themselves naturally)
     facade_ref_pattern = re.compile(
-        r"(?:sensor|binary_sensor)\.heishahub_source_(\w+)"
+        r"(?:sensor|binary_sensor)\.hph_source_(\w+)"
     )
-    others = [f for f in PACKAGE_FILES if f.name != "heishahub_sources.yaml"]
-    others.append(DASHBOARD_FILE)
+    others = list(PACKAGE_FILES) + [DASHBOARD_FILE]
 
     used: set[str] = set()
     for f in others:
@@ -157,15 +159,15 @@ def test_source_facade_resolution() -> int:
     else:
         ok(f"facade entities referenced from other files: {len(used)}")
 
-    # Map back: every used unique_id should match a `heishahub_source_<x>` definition
+    # Map back: every used unique_id should match a `hph_source_<x>` definition
     missing = []
     for u in used:
-        if f"heishahub_source_{u}" not in facade_names:
+        if f"hph_source_{u}" not in facade_names:
             missing.append(u)
 
     if missing:
         for m in missing:
-            fail(f"sensor.heishahub_source_{m} is referenced but not defined in sources.yaml")
+            fail(f"sensor.hph_source_{m} is referenced but not defined in sources.yaml")
         failures += len(missing)
     else:
         ok("all referenced facade entities are defined")
@@ -178,15 +180,15 @@ def test_utility_meter_active_source() -> int:
     section("utility_meter sources go through *_active dispatchers")
     failures = 0
 
-    eff = load_yaml(ROOT / "packages" / "heishahub_efficiency.yaml")
+    eff = load_yaml(ROOT / "packages" / "hph_efficiency.yaml")
     counters = eff.get("utility_meter", {}) or {}
 
     # Sources are either `_active` energy sensors or other utility_meters; allow both.
     for name, cfg in counters.items():
         src = cfg.get("source", "")
         if src in (
-            "sensor.heishahub_thermal_energy_active",
-            "sensor.heishahub_electrical_energy_active",
+            "sensor.hph_thermal_energy_active",
+            "sensor.hph_electrical_energy_active",
         ):
             ok(f"{name} -> {src}")
         else:
@@ -201,15 +203,17 @@ def test_advisor_summary_consistency() -> int:
     section("Advisor summary aggregates only sensors that exist")
     failures = 0
 
-    advisor_pkg = ROOT / "packages" / "heishahub_advisor.yaml"
-    text = advisor_pkg.read_text(encoding="utf-8")
+    # Advisors can live in multiple packages — scan all of them.
+    advisor_text = ""
+    for pkg in (ROOT / "packages").glob("hph_*.yaml"):
+        advisor_text += pkg.read_text(encoding="utf-8") + "\n"
+    text = advisor_text
 
-    # Find unique_ids declared in the file
-    declared = set(re.findall(r"unique_id:\s*(heishahub_advisor_\w+)", text))
+    declared = set(re.findall(r"unique_id:\s*(hph_advisor_\w+)", text))
 
     # Find advisor entities the summary reads
     summary_block_match = re.search(
-        r"unique_id:\s*heishahub_advisor_summary.*?attributes:",
+        r"unique_id:\s*hph_advisor_summary.*?attributes:",
         text,
         flags=re.S,
     )
@@ -218,8 +222,8 @@ def test_advisor_summary_consistency() -> int:
         return 1
 
     summary_block = text[summary_block_match.start():summary_block_match.end()]
-    referenced = set(re.findall(r"sensor\.(heishahub_advisor_\w+)", summary_block))
-    referenced.discard("heishahub_advisor_summary")
+    referenced = set(re.findall(r"sensor\.(hph_advisor_\w+)", summary_block))
+    referenced.discard("hph_advisor_summary")
 
     missing = referenced - declared
     if missing:
@@ -237,20 +241,20 @@ def test_diagnostics_consistency() -> int:
     section("Diagnostics module self-consistency")
     failures = 0
 
-    diag = load_yaml(ROOT / "packages" / "heishahub_diagnostics.yaml")
+    diag = load_yaml(ROOT / "packages" / "hph_diagnostics.yaml")
 
     # Find the current_error template sensor
     current_error_def = None
     for block in diag.get("template", []):
         for s in block.get("sensor", []) or []:
-            if s.get("unique_id") == "heishahub_diagnostics_current_error":
+            if s.get("unique_id") == "hph_diagnostics_current_error":
                 current_error_def = s
                 break
 
     if not current_error_def:
-        fail("heishahub_diagnostics_current_error not declared")
+        fail("hph_diagnostics_current_error not declared")
         return 1
-    ok("heishahub_diagnostics_current_error declared")
+    ok("hph_diagnostics_current_error declared")
 
     # Severity arrays should reference codes that appear in the message
     state_text = str(current_error_def.get("attributes", {}).get("severity", ""))
@@ -274,7 +278,7 @@ def test_diagnostics_consistency() -> int:
 
 
 def main() -> int:
-    print(f"HeishaHub smoke tests · root: {ROOT}")
+    print(f"Heat Pump Hero smoke tests · root: {ROOT}")
     failures = 0
     failures += test_files_parse()
     failures += test_source_adapter_contract()

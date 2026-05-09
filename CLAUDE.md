@@ -1,19 +1,19 @@
-# CLAUDE.md — HeishaHub Project Context
+# CLAUDE.md — Heat Pump Hero Project Context
 
 🌐 English (this file) · [Deutsch](CLAUDE.de.md)
 
 This guide is for AI assistants (Claude Code) and new human contributors. It
 explains the project in five minutes.
 
-## What is HeishaHub?
+## What is Heat Pump Hero?
 
-HeishaHub is a **bundle** for Home Assistant that deploys a complete dashboard
+Heat Pump Hero is a **bundle** for Home Assistant that deploys a complete dashboard
 and analytical layer onto a Heishamon-controlled Panasonic Aquarea heat pump
 installation. It does **not** replace any integration — it **combines**
 existing building blocks into something usable:
 
 - Entities come from [kamaradclimber/heishamon-homeassistant](https://github.com/kamaradclimber/heishamon-homeassistant)
-- HeishaHub provides: HA packages (template sensors, COP/SCOP calculation),
+- Heat Pump Hero provides: HA packages (template sensors, COP/SCOP calculation),
   Lovelace dashboard YAML, Bubble-Card SVG schematic, Grafana boards,
   setup blueprint.
 
@@ -36,17 +36,17 @@ existing building blocks into something usable:
 
 | Path | Purpose |
 |---|---|
-| `packages/heishahub_sources.yaml` | **Source adapter layer.** Defines `input_text` helpers for every underlying entity-ID (heat pump and external meters), plus active-source dispatcher template sensors. The only file that names heat-pump-specific entities. |
-| `packages/heishahub_models.yaml` | **Vendor & model selectors** with auto-fill automations. Vendor preset sets all 17 source helpers on selection; model selector sets compressor / flow / supply-T° thresholds for the chosen Panasonic generation (J/K/L/T-CAP/M) or other vendor. |
-| `packages/heishahub_diagnostics.yaml` | **Panasonic fault-code analysis** — 30+ H/F codes mapped to plain-language descriptions, severity, model-specific commentary; ring buffer of last 5 events; recurrence detection; persistent-notification flow. |
-| `packages/heishahub_core.yaml` | Live sensors (thermal power, mode mapping, defrost, compressor running) — reads exclusively from `sensor.heishahub_source_*`. |
-| `packages/heishahub_efficiency.yaml` | Energy integrals, utility_meter (with tariff splits), COP / daily / monthly / SCOP, period comparisons. |
-| `packages/heishahub_cycles.yaml` | Cycle analysis: start/stop events, runtime/pause, counters, short-cycle detection. |
-| `packages/heishahub_advisor.yaml` | Data-driven optimization recommendations with plain-language messages and an aggregate traffic-light. |
-| `packages/heishahub_control.yaml` | Optional control automations (CCC, SoftStart, Solar-DHW, night Quiet-Mode) — master switch off by default. |
-| `dashboards/heishahub.yaml` | Lovelace dashboard YAML (storage or YAML mode). |
+| `packages/hph_sources.yaml` | **Source adapter layer.** Defines `input_text` helpers for every underlying entity-ID (heat pump and external meters), plus active-source dispatcher template sensors. The only file that names heat-pump-specific entities. |
+| `packages/hph_models.yaml` | **Vendor & model selectors** with auto-fill automations. Vendor preset sets all 17 source helpers on selection; model selector sets compressor / flow / supply-T° thresholds for the chosen Panasonic generation (J/K/L/T-CAP/M) or other vendor. |
+| `packages/hph_diagnostics.yaml` | **Panasonic fault-code analysis** — 30+ H/F codes mapped to plain-language descriptions, severity, model-specific commentary; ring buffer of last 5 events; recurrence detection; persistent-notification flow. |
+| `packages/hph_core.yaml` | Live sensors (thermal power, mode mapping, defrost, compressor running) — reads exclusively from `sensor.hph_source_*`. |
+| `packages/hph_efficiency.yaml` | Energy integrals, utility_meter (with tariff splits), COP / daily / monthly / SCOP, period comparisons. |
+| `packages/hph_cycles.yaml` | Cycle analysis: start/stop events, runtime/pause, counters, short-cycle detection. |
+| `packages/hph_advisor.yaml` | Data-driven optimization recommendations with plain-language messages and an aggregate traffic-light. |
+| `packages/hph_control.yaml` | Optional control automations (CCC, SoftStart, Solar-DHW, night Quiet-Mode) — master switch off by default. |
+| `dashboards/hph.yaml` | Lovelace dashboard YAML (storage or YAML mode). |
 | `dashboards/assets/*.svg` | Installation-schematic templates (Bubble-Card backgrounds). |
-| `blueprints/heishahub_setup.yaml` | Script blueprint to seed helpers and verify install. |
+| `blueprints/hph_setup.yaml` | Script blueprint to seed helpers and verify install. |
 | `scripts/install.sh` | Optional bash installer for SSH users. |
 | `grafana/*.json` | Grafana dashboards (import-ready). |
 | `grafana/telegraf_mqtt.conf` | Telegraf config for MQTT → InfluxDB. |
@@ -56,51 +56,51 @@ existing building blocks into something usable:
 
 ## Naming conventions
 
-- **HeishaHub-owned entities**: prefix `heishahub_` (e.g.
-  `sensor.heishahub_scop`).
+- **Heat Pump Hero-owned entities**: prefix `hph_` (e.g.
+  `sensor.hph_scop`).
 - **Source-facade entities** (resolved from configurable helpers):
-  prefix `heishahub_source_*` (e.g. `sensor.heishahub_source_inlet_temp`).
+  prefix `hph_source_*` (e.g. `sensor.hph_source_inlet_temp`).
   These are what every other package reads from.
 - **Source helpers** (UI-configurable entity-ID strings):
-  prefix `input_text.heishahub_src_*`.
+  prefix `input_text.hph_src_*`.
 - **External meter helpers**:
-  prefix `input_text.heishahub_src_external_*`.
+  prefix `input_text.hph_src_external_*`.
 - **Active-source dispatchers** (what utility_meter / COP read):
-  `sensor.heishahub_thermal_power_active`, `_thermal_energy_active`,
+  `sensor.hph_thermal_power_active`, `_thermal_energy_active`,
   `_electrical_power_active`, `_electrical_energy_active`.
 - **Heat-pump native entities** (`panasonic_heat_pump_*`): only ever
-  appear as **defaults** in `heishahub_sources.yaml`, never directly
+  appear as **defaults** in `hph_sources.yaml`, never directly
   in any other file.
 - **Dashboard views**: `overview`, `schema`, `analysis`, `efficiency`,
   `optimization`, `config`.
 
 ## Source-adapter architecture
 
-Everything HeishaHub reads is funneled through `packages/heishahub_sources.yaml`:
+Everything Heat Pump Hero reads is funneled through `packages/hph_sources.yaml`:
 
 ```
-input_text.heishahub_src_inlet_temp           ← user-configurable entity-ID
+input_text.hph_src_inlet_temp           ← user-configurable entity-ID
    │  default: sensor.panasonic_heat_pump_main_inlet_temperature
    ▼
-sensor.heishahub_source_inlet_temp            ← facade (resolved)
+sensor.hph_source_inlet_temp            ← facade (resolved)
    │
    ▼
-sensor.heishahub_thermal_power                ← uses facade
+sensor.hph_thermal_power                ← uses facade
    │
    ▼
-sensor.heishahub_thermal_power_active         ← respects source-mode selector
+sensor.hph_thermal_power_active         ← respects source-mode selector
    │
    ▼ (integration: Riemann sum)
-sensor.heishahub_thermal_energy               ← kWh, total_increasing
+sensor.hph_thermal_energy               ← kWh, total_increasing
    │
    ▼
-sensor.heishahub_thermal_energy_active        ← either integrator OR external kWh meter
+sensor.hph_thermal_energy_active        ← either integrator OR external kWh meter
    │
    ▼
-utility_meter.heishahub_thermal_*             ← daily/monthly/yearly + tariff splits
+utility_meter.hph_thermal_*             ← daily/monthly/yearly + tariff splits
 ```
 
-**Source modes** (`input_select.heishahub_thermal_source` / `_electrical_source`):
+**Source modes** (`input_select.hph_thermal_source` / `_electrical_source`):
 
 | Mode | Behavior |
 |---|---|
@@ -109,54 +109,54 @@ utility_meter.heishahub_thermal_*             ← daily/monthly/yearly + tariff 
 | `external_power` | Integrates a user-provided power sensor (W) → kWh. Use for Shelly/IoTaWatt. |
 | `external_energy` | Reads a user-provided kWh meter (`total_increasing`) directly — bypasses the integrator. Most accurate when you have a hardware heat meter or utility meter. |
 
-**Swapping the heat pump:** change the relevant `input_text.heishahub_src_*`
+**Swapping the heat pump:** change the relevant `input_text.hph_src_*`
 helpers in the UI (Settings → Devices → Helpers). All read paths follow.
-Write paths in `heishahub_control.yaml` are still heat-pump-specific by
+Write paths in `hph_control.yaml` are still heat-pump-specific by
 nature — see the comment header in that file.
 
 ## Diagnostics module
 
-The diagnostics package (`heishahub_diagnostics.yaml`) reads
-`sensor.heishahub_source_error_code` and produces:
+The diagnostics package (`hph_diagnostics.yaml`) reads
+`sensor.hph_source_error_code` and produces:
 
-- `sensor.heishahub_diagnostics_current_error` — state = code, attributes
+- `sensor.hph_diagnostics_current_error` — state = code, attributes
   hold severity / message / model-specific commentary
-- `sensor.heishahub_diagnostics_recurrence` — count of same code in the
-  last 5 events (ring buffer in `input_text.heishahub_diag_error_history`)
+- `sensor.hph_diagnostics_recurrence` — count of same code in the
+  last 5 events (ring buffer in `input_text.hph_diag_error_history`)
 - An automation that timestamps every change, appends to the buffer, and
   raises / dismisses a persistent notification
 
 Severity classification (bad → good): `critical` / `warn` / `info` / `none`.
 
 Adding a new code: extend the `message` template's chained `{% elif %}`
-in `heishahub_diagnostics_current_error`. Add it to the `critical` or
+in `hph_diagnostics_current_error`. Add it to the `critical` or
 `warn` array if applicable. Document in `docs/diagnostics.md`.
 
 Adding model-specific commentary: extend the `model_note` template
-similarly — it reads `input_select.heishahub_pump_model` so per-model
+similarly — it reads `input_select.hph_pump_model` so per-model
 guidance is keyed off the same selector that drives compressor / flow
 thresholds.
 
 ## Vendor presets and model selector
 
-`heishahub_models.yaml` defines two independent selectors:
+`hph_models.yaml` defines two independent selectors:
 
-1. **`input_select.heishahub_vendor_preset`** — when changed (away from
-   `keep_current`), an automation auto-fills all 17 `input_text.heishahub_src_*`
+1. **`input_select.hph_vendor_preset`** — when changed (away from
+   `keep_current`), an automation auto-fills all 17 `input_text.hph_src_*`
    helpers with the entity-ID convention of the chosen vendor. Resets
    itself to `keep_current` after 2 s so re-import doesn't re-clobber.
 
-2. **`input_select.heishahub_pump_model`** — drives a separate automation
-   that sets `input_number.heishahub_model_compressor_min_hz/max_hz`,
+2. **`input_select.hph_pump_model`** — drives a separate automation
+   that sets `input_number.hph_model_compressor_min_hz/max_hz`,
    `_min_flow_lpm`, and `_max_supply_c` to typical values for that
    generation. Power users can override after the fact.
 
 Adding a vendor preset: append a new option to the `input_select`,
-add a `choose:` branch to `heishahub_vendor_preset_apply`, and create
+add a `choose:` branch to `hph_vendor_preset_apply`, and create
 a recipe in `docs/vendors/<name>.md`.
 
 Adding a model: append a new option, add the threshold logic to
-`heishahub_model_apply_thresholds`, update the description and
+`hph_model_apply_thresholds`, update the description and
 refrigerant template sensors. Document the model in
 `docs/vendors/panasonic_heishamon.md` (or the relevant vendor file).
 
@@ -166,22 +166,22 @@ Optional components (zone 2, DHW tank, buffer tank) are detected
 automatically from the source-facade availability:
 
 ```
-input_text.heishahub_src_zone2_temp     → binary_sensor.heishahub_has_hk2
-input_text.heishahub_src_dhw_temp       → binary_sensor.heishahub_has_dhw
-input_text.heishahub_src_buffer_temp    → binary_sensor.heishahub_has_buffer
+input_text.hph_src_zone2_temp     → binary_sensor.hph_has_hk2
+input_text.hph_src_dhw_temp       → binary_sensor.hph_has_dhw
+input_text.hph_src_buffer_temp    → binary_sensor.hph_has_buffer
                                             ↓
-                                  sensor.heishahub_schema_variant_detected
+                                  sensor.hph_schema_variant_detected
                                             ↓ (resolved by selector)
-                                  sensor.heishahub_schema_variant_active
+                                  sensor.hph_schema_variant_active
                                             ↓
                                   Schematic view (4 conditional bubble-cards)
 ```
 
-The selector `input_select.heishahub_schema_variant` defaults to `auto`
+The selector `input_select.hph_schema_variant` defaults to `auto`
 which follows detection. To force a specific schematic (e.g. preview a
 buffered install before adding sensors), set it to one of the four
 explicit options. To mark a component as definitely absent, blank out
-the corresponding `heishahub_src_*` helper.
+the corresponding `hph_src_*` helper.
 
 Each schematic SVG (`schema_a2w_*.svg`) has its own conditional
 bubble-card with hotspot positions calibrated to that variant's
@@ -195,15 +195,15 @@ specific layout — there is no shared coordinate system across variants.
 - **SCOP / monthly / daily**: `utility_meter` counters yield per-period
   energy totals; efficiency = `thermal_kWh[period] / electrical_kWh[period]`.
 - **Tariff splits**: `utility_meter` with tariffs `heating`/`dhw`/`cooling`,
-  switched by an automation that follows `sensor.heishahub_operating_mode`
+  switched by an automation that follows `sensor.hph_operating_mode`
   (which is itself derived from the configurable source-facade).
 
 ## Coexistence with HeishaMoNR
 
 Both systems can listen on the same MQTT broker simultaneously — only
 **one** of them must write. The recommendation in the docs is: HeishaMoNR
-controls, HeishaHub reads only (kamaradclimber `number.*`/`select.*`
-disabled). For pure HeishaHub setups this constraint does not apply.
+controls, Heat Pump Hero reads only (kamaradclimber `number.*`/`select.*`
+disabled). For pure Heat Pump Hero setups this constraint does not apply.
 
 ## Advisor design
 
@@ -213,21 +213,21 @@ The advisor produces **recommendations, not commands**. Each sensor:
 - `attributes.message` — plain-language explanation with a concrete next step
 - `attributes.metric` — the relevant measurement supporting the diagnosis
 
-Thresholds are **always** exposed via `input_number.heishahub_advisor_*`. No
+Thresholds are **always** exposed via `input_number.hph_advisor_*`. No
 hard-coded magic numbers in templates — if a value should be tunable, expose
 it as a helper.
 
 New advisor sensors follow the same schema and are added to the
-`heishahub_advisor_summary` aggregation.
+`hph_advisor_summary` aggregation.
 
 ## Control design
 
 Control automations (CCC, SoftStart, etc.) are **always**:
 
 1. Off by default (`initial: false`)
-2. Behind the master switch `input_boolean.heishahub_ctrl_master`
-3. Individually toggleable via `input_boolean.heishahub_ctrl_<name>`
-4. Tunable via `input_number.heishahub_ctrl_<name>_*`
+2. Behind the master switch `input_boolean.hph_ctrl_master`
+3. Individually toggleable via `input_boolean.hph_ctrl_<name>`
+4. Tunable via `input_number.hph_ctrl_<name>_*`
 
 Rationale: a misconfigured control automation can damage the heat pump or
 hurt comfort. Activation must be deliberate.

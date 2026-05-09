@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  HeishaHub — A2W with HK1 + HK2 + DHW + buffer storage
+  Heat Pump Hero — A2W with HK1 + HK2 + DHW + buffer storage
   Version: v0.3
   Most complete A2W variant: buffer tank between primary and secondary
   side, mixed HK2, DHW priority.
@@ -232,5 +232,5 @@
           id="hotspot-compressor-freq" data-hotspot-x="790" data-hotspot-y="144"/>
   </g>
 
-  <text x="880" y="615" text-anchor="end" fill="#3d5166" font-size="8" opacity="0.6">HeishaHub v0.3 · A2W+HK1+HK2+DHW+Buffer</text>
+  <text x="880" y="615" text-anchor="end" fill="#3d5166" font-size="8" opacity="0.6">Heat Pump Hero v0.3 · A2W+HK1+HK2+DHW+Buffer</text>
 </svg>

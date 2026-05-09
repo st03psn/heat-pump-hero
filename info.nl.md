@@ -1,4 +1,4 @@
-# HeishaHub
+# Heat Pump Hero
 
 🌐 [English](info.md) · [Deutsch](info.de.md) · Nederlands (dit bestand)
 

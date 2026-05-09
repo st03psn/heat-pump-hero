@@ -6,7 +6,7 @@
 
 A heat pump runs most efficiently when it operates **long, even** cycles,
 **rarely** kicks in and out, and gets by with a **low supply temperature**.
-HeishaHub provides three tools to get there:
+Heat Pump Hero provides three tools to get there:
 
 1. **Cycle analysis** — measures cycles, run times, pauses.
 2. **Advisor** — interprets that data and produces plain-language hints.
@@ -15,17 +15,17 @@ HeishaHub provides three tools to get there:
 
 ## Cycle analysis
 
-Sensors in `packages/heishahub_cycles.yaml`:
+Sensors in `packages/hph_cycles.yaml`:
 
 | Sensor | Meaning |
 |---|---|
-| `counter.heishahub_cycles_today` | Compressor starts today |
-| `counter.heishahub_short_cycles_today` | Of those, shorter than threshold (default 10 min) |
-| `sensor.heishahub_short_cycle_ratio` | Share of short cycles (%) |
-| `sensor.heishahub_cycles_per_hour` | Starts per hour (rolling) |
-| `sensor.heishahub_avg_cycle_duration_24h` | Average runtime |
-| `input_number.heishahub_cycle_last_duration_min` | Last run duration |
-| `input_number.heishahub_cycle_last_pause_min` | Last pause duration |
+| `counter.hph_cycles_today` | Compressor starts today |
+| `counter.hph_short_cycles_today` | Of those, shorter than threshold (default 10 min) |
+| `sensor.hph_short_cycle_ratio` | Share of short cycles (%) |
+| `sensor.hph_cycles_per_hour` | Starts per hour (rolling) |
+| `sensor.hph_avg_cycle_duration_24h` | Average runtime |
+| `input_number.hph_cycle_last_duration_min` | Last run duration |
+| `input_number.hph_cycle_last_pause_min` | Last pause duration |
 
 **What's "normal"?**
 
@@ -39,7 +39,7 @@ issues.
 
 ## Advisor
 
-`packages/heishahub_advisor.yaml`. Each advisor sensor exposes:
+`packages/hph_advisor.yaml`. Each advisor sensor exposes:
 
 - `state ∈ { ok, warn, critical, info }`
 - `attributes.message` — explanation in plain language
@@ -64,10 +64,10 @@ issues.
 
 ## Control — optimization strategies
 
-`packages/heishahub_control.yaml`. **Default: everything off.** Two switches
+`packages/hph_control.yaml`. **Default: everything off.** Two switches
 are needed to enable any strategy:
 
-1. `input_boolean.heishahub_ctrl_master` — global gate
+1. `input_boolean.hph_ctrl_master` — global gate
 2. The individual strategy switch — see below
 
 ### Compressor Cycle Control (CCC)
@@ -75,7 +75,7 @@ are needed to enable any strategy:
 **Problem**: the heat pump restarts shortly after a stop → short cycles,
 high wear, poor COP.
 
-**HeishaHub solution**: if the previous pause was shorter than
+**Heat Pump Hero solution**: if the previous pause was shorter than
 `ctrl_ccc_min_pause_min` (default 15 min), Quiet-Mode 3 is engaged for 5
 minutes after the restart — this caps the maximum frequency and gives the
 unit a chance to modulate down rather than ramping up and shutting off again.
@@ -88,7 +88,7 @@ needed.
 **Problem**: cold-weather start spikes draw a high current and may trip the
 utility-supplier limiter.
 
-**HeishaHub solution**: on compressor start, engage Quiet-Mode 2 for 10
+**Heat Pump Hero solution**: on compressor start, engage Quiet-Mode 2 for 10
 minutes → gentle frequency ramp.
 
 ### Solar-DHW boost
@@ -96,7 +96,7 @@ minutes → gentle frequency ramp.
 **Problem**: PV surplus is exported while the heat pump heats DHW later from
 the grid.
 
-**HeishaHub solution**: when the surplus sensor (entity-ID in
+**Heat Pump Hero solution**: when the surplus sensor (entity-ID in
 `ctrl_pv_surplus_entity`) stays above `ctrl_solar_pv_threshold_w` (default
 1500 W) for 5 minutes **and** the tank is not full, fire `force_dhw`.
 
@@ -125,9 +125,9 @@ don't expect heat-load problems.
 ## Adding your own advisor rule
 
 Power users: add a new `template.sensor` block to
-`packages/heishahub_advisor.yaml` following the same schema (`state`,
+`packages/hph_advisor.yaml` following the same schema (`state`,
 `attributes.message`, `attributes.metric`). Add it to
-`heishahub_advisor_summary` so the aggregate traffic-light considers it.
+`hph_advisor_summary` so the aggregate traffic-light considers it.
 
 PRs with generally useful rules are welcome — see [CLAUDE.md](../CLAUDE.md)
 for design principles.

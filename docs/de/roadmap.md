@@ -63,7 +63,7 @@
 
 - Eigene Python-Custom-Integration (kamaradclimber deckt Entities ab —
   Doppel-Arbeit vermeiden)
-- Cloud-Funktionen (HeishaHub bleibt 100 % lokal)
+- Cloud-Funktionen (Heat Pump Hero bleibt 100 % lokal)
 - Steuerung ohne kamaradclimber-Integration (zu großer Abstraktions-
   Aufwand für wenig Mehrwert)
 

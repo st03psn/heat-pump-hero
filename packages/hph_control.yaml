@@ -1,4 +1,4 @@
-# HeishaHub — control (HeishaMoNR parity)
+# Heat Pump Hero — control (HeishaMoNR parity)
 #
 # Optional control automations that mirror the optimization strategies
 # HeishaMoNR (Node-Red) ships. Every strategy is gated by an input_boolean
@@ -6,55 +6,55 @@
 #
 # !!! IMPORTANT !!!
 # Only ONE system may write at a time. If HeishaMoNR is active, leave
-# every input_boolean.heishahub_ctrl_* OFF.
+# every input_boolean.hph_ctrl_* OFF.
 #
 # ─── Note on heat-pump portability ──────────────────────────────────────
-# Read paths in HeishaHub are abstracted via heishahub_sources.yaml so
+# Read paths in Heat Pump Hero are abstracted via hph_sources.yaml so
 # users can swap heat pumps without YAML edits. Write paths (the
 # select.* / button.* targets used here) are device-specific, since
 # every heat pump exposes different control actions. To adapt this
 # package to a non-Heishamon heat pump:
 #   1. Disable / delete the automations below.
 #   2. Add equivalents that target your heat pump's write entities,
-#      gated by the same input_boolean.heishahub_ctrl_* switches so
+#      gated by the same input_boolean.hph_ctrl_* switches so
 #      the dashboard UI keeps working.
 
 input_boolean:
-  heishahub_ctrl_master:
-    name: HeishaHub Control — master switch
+  hph_ctrl_master:
+    name: Heat Pump Hero Control — master switch
     icon: mdi:robot-outline
     initial: false
-  heishahub_ctrl_ccc:
+  hph_ctrl_ccc:
     name: Compressor Cycle Control (CCC)
     icon: mdi:repeat-variant
     initial: false
-  heishahub_ctrl_softstart:
+  hph_ctrl_softstart:
     name: SoftStart
     icon: mdi:trending-up
     initial: false
-  heishahub_ctrl_solar_dhw:
+  hph_ctrl_solar_dhw:
     name: Solar-DHW boost
     icon: mdi:solar-power-variant
     initial: false
-  heishahub_ctrl_quiet_night:
+  hph_ctrl_quiet_night:
     name: Night quiet mode
     icon: mdi:weather-night
     initial: false
 
 input_number:
-  heishahub_ctrl_ccc_min_pause_min:
+  hph_ctrl_ccc_min_pause_min:
     name: CCC — minimum pause (minutes)
     min: 5
     max: 60
     step: 1
     initial: 15
-  heishahub_ctrl_ccc_min_runtime_min:
+  hph_ctrl_ccc_min_runtime_min:
     name: CCC — minimum runtime (minutes)
     min: 5
     max: 60
     step: 1
     initial: 20
-  heishahub_ctrl_solar_pv_threshold_w:
+  hph_ctrl_solar_pv_threshold_w:
     name: Solar-DHW — PV-surplus threshold (W)
     min: 500
     max: 5000
@@ -62,7 +62,7 @@ input_number:
     initial: 1500
 
 input_text:
-  heishahub_ctrl_pv_surplus_entity:
+  hph_ctrl_pv_surplus_entity:
     name: PV surplus sensor (entity-ID)
     icon: mdi:solar-power
     initial: ""
@@ -73,25 +73,25 @@ automation:
   # Strategy: if the unit restarts within < min_pause, briefly reduce
   #           demand via Quiet-Mode 3.
   # ════════════════════════════════════════════════════════════════════════
-  - id: heishahub_ctrl_ccc_block_short_pause
-    alias: HeishaHub CCC — block short pause
+  - id: hph_ctrl_ccc_block_short_pause
+    alias: Heat Pump Hero CCC — block short pause
     mode: single
     trigger:
       - platform: state
-        entity_id: binary_sensor.heishahub_compressor_running
+        entity_id: binary_sensor.hph_compressor_running
         from: "off"
         to: "on"
     condition:
       - condition: state
-        entity_id: input_boolean.heishahub_ctrl_master
+        entity_id: input_boolean.hph_ctrl_master
         state: "on"
       - condition: state
-        entity_id: input_boolean.heishahub_ctrl_ccc
+        entity_id: input_boolean.hph_ctrl_ccc
         state: "on"
       - condition: template
         value_template: >-
-          {{ states('input_number.heishahub_cycle_last_pause_min') | float(99)
-             < states('input_number.heishahub_ctrl_ccc_min_pause_min') | float(15) }}
+          {{ states('input_number.hph_cycle_last_pause_min') | float(99)
+             < states('input_number.hph_ctrl_ccc_min_pause_min') | float(15) }}
     action:
       # Quiet-Mode caps the maximum frequency for a few minutes.
       - service: select.select_option
@@ -107,26 +107,26 @@ automation:
           option: "0"
       - service: persistent_notification.create
         data:
-          title: HeishaHub CCC
+          title: Heat Pump Hero CCC
           message: Short pause detected — Quiet-Mode engaged for 5 minutes.
 
   # ════════════════════════════════════════════════════════════════════════
   # SoftStart — frequency cap on compressor start
   # ════════════════════════════════════════════════════════════════════════
-  - id: heishahub_ctrl_softstart
-    alias: HeishaHub SoftStart
+  - id: hph_ctrl_softstart
+    alias: Heat Pump Hero SoftStart
     mode: single
     trigger:
       - platform: state
-        entity_id: binary_sensor.heishahub_compressor_running
+        entity_id: binary_sensor.hph_compressor_running
         from: "off"
         to: "on"
     condition:
       - condition: state
-        entity_id: input_boolean.heishahub_ctrl_master
+        entity_id: input_boolean.hph_ctrl_master
         state: "on"
       - condition: state
-        entity_id: input_boolean.heishahub_ctrl_softstart
+        entity_id: input_boolean.hph_ctrl_softstart
         state: "on"
     action:
       - service: select.select_option
@@ -144,22 +144,22 @@ automation:
   # ════════════════════════════════════════════════════════════════════════
   # Solar-DHW boost — force DHW when PV surplus is high
   # ════════════════════════════════════════════════════════════════════════
-  - id: heishahub_ctrl_solar_dhw
-    alias: HeishaHub Solar-DHW boost
+  - id: hph_ctrl_solar_dhw
+    alias: Heat Pump Hero Solar-DHW boost
     mode: single
     trigger:
       - platform: template
         value_template: >-
-          {% set ent = states('input_text.heishahub_ctrl_pv_surplus_entity') %}
-          {% set thr = states('input_number.heishahub_ctrl_solar_pv_threshold_w') | float(1500) %}
+          {% set ent = states('input_text.hph_ctrl_pv_surplus_entity') %}
+          {% set thr = states('input_number.hph_ctrl_solar_pv_threshold_w') | float(1500) %}
           {{ ent and states(ent) | float(0) > thr }}
         for: "00:05:00"
     condition:
       - condition: state
-        entity_id: input_boolean.heishahub_ctrl_master
+        entity_id: input_boolean.hph_ctrl_master
         state: "on"
       - condition: state
-        entity_id: input_boolean.heishahub_ctrl_solar_dhw
+        entity_id: input_boolean.hph_ctrl_solar_dhw
         state: "on"
       # Only trigger if the DHW tank is not already hot. Sample sensor —
       # adjust per installation.
@@ -173,24 +173,24 @@ automation:
           entity_id: button.panasonic_heat_pump_main_force_dhw
       - service: persistent_notification.create
         data:
-          title: HeishaHub Solar-DHW
+          title: Heat Pump Hero Solar-DHW
           message: PV surplus detected — DHW force triggered.
 
   # ════════════════════════════════════════════════════════════════════════
   # Night Quiet-Mode — automatic 22:00 → 06:00
   # ════════════════════════════════════════════════════════════════════════
-  - id: heishahub_ctrl_quiet_night_on
-    alias: HeishaHub Quiet — night on
+  - id: hph_ctrl_quiet_night_on
+    alias: Heat Pump Hero Quiet — night on
     mode: single
     trigger:
       - platform: time
         at: "22:00:00"
     condition:
       - condition: state
-        entity_id: input_boolean.heishahub_ctrl_master
+        entity_id: input_boolean.hph_ctrl_master
         state: "on"
       - condition: state
-        entity_id: input_boolean.heishahub_ctrl_quiet_night
+        entity_id: input_boolean.hph_ctrl_quiet_night
         state: "on"
     action:
       - service: select.select_option
@@ -199,18 +199,18 @@ automation:
         data:
           option: "3"
 
-  - id: heishahub_ctrl_quiet_night_off
-    alias: HeishaHub Quiet — night off
+  - id: hph_ctrl_quiet_night_off
+    alias: Heat Pump Hero Quiet — night off
     mode: single
     trigger:
       - platform: time
         at: "06:00:00"
     condition:
       - condition: state
-        entity_id: input_boolean.heishahub_ctrl_master
+        entity_id: input_boolean.hph_ctrl_master
         state: "on"
       - condition: state
-        entity_id: input_boolean.heishahub_ctrl_quiet_night
+        entity_id: input_boolean.hph_ctrl_quiet_night
         state: "on"
     action:
       - service: select.select_option

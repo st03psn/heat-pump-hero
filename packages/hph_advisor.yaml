@@ -1,4 +1,4 @@
-# HeishaHub — advisor
+# Heat Pump Hero — advisor
 #
 # Data-driven optimization recommendations. Each advisor sensor exposes:
 #   - state: "ok" | "warn" | "critical" | "info"
@@ -7,40 +7,40 @@
 #
 # Rules are based on common heat-pump tuning practice (Dimplex, Panasonic,
 # Stiebel-Eltron optimization guides). Power users can adjust thresholds via
-# input_number.heishahub_advisor_*.
+# input_number.hph_advisor_*.
 
 input_number:
-  heishahub_advisor_short_cycle_warn_pct:
+  hph_advisor_short_cycle_warn_pct:
     name: Advisor — short-cycle warn threshold (%)
     min: 5
     max: 80
     step: 1
     initial: 25
-  heishahub_advisor_short_cycle_crit_pct:
+  hph_advisor_short_cycle_crit_pct:
     name: Advisor — short-cycle critical threshold (%)
     min: 10
     max: 90
     step: 1
     initial: 50
-  heishahub_advisor_dt_target_k:
+  hph_advisor_dt_target_k:
     name: Advisor — target supply/return spread (K)
     min: 3
     max: 10
     step: 0.5
     initial: 5
-  heishahub_advisor_dhw_min_runtime_min:
+  hph_advisor_dhw_min_runtime_min:
     name: Advisor — DHW minimum run time (minutes)
     min: 5
     max: 60
     step: 1
     initial: 20
-  heishahub_advisor_heating_limit_target_c:
+  hph_advisor_heating_limit_target_c:
     name: Advisor — heating limit target (°C)
     min: 5
     max: 25
     step: 0.5
     initial: 16
-  heishahub_heating_limit_observed_c:
+  hph_heating_limit_observed_c:
     name: Heating limit — last observed (°C)
     icon: mdi:thermometer-off
     min: -30
@@ -53,22 +53,22 @@ template:
       # ════════════════════════════════════════════════════════════════════
       # 1) Short-cycle diagnosis
       # ════════════════════════════════════════════════════════════════════
-      - name: "HeishaHub Advisor Short Cycle"
-        unique_id: heishahub_advisor_short_cycle
+      - name: "Heat Pump Hero Advisor Short Cycle"
+        unique_id: hph_advisor_short_cycle
         icon: mdi:timer-alert
         state: >-
-          {% set ratio = states('sensor.heishahub_short_cycle_ratio') | float(0) %}
-          {% set warn = states('input_number.heishahub_advisor_short_cycle_warn_pct') | float(25) %}
-          {% set crit = states('input_number.heishahub_advisor_short_cycle_crit_pct') | float(50) %}
+          {% set ratio = states('sensor.hph_short_cycle_ratio') | float(0) %}
+          {% set warn = states('input_number.hph_advisor_short_cycle_warn_pct') | float(25) %}
+          {% set crit = states('input_number.hph_advisor_short_cycle_crit_pct') | float(50) %}
           {% if ratio >= crit %}critical
           {% elif ratio >= warn %}warn
           {% else %}ok{% endif %}
         attributes:
-          metric: "{{ states('sensor.heishahub_short_cycle_ratio') }} %"
+          metric: "{{ states('sensor.hph_short_cycle_ratio') }} %"
           message: >-
-            {% set ratio = states('sensor.heishahub_short_cycle_ratio') | float(0) %}
-            {% set crit = states('input_number.heishahub_advisor_short_cycle_crit_pct') | float(50) %}
-            {% set warn = states('input_number.heishahub_advisor_short_cycle_warn_pct') | float(25) %}
+            {% set ratio = states('sensor.hph_short_cycle_ratio') | float(0) %}
+            {% set crit = states('input_number.hph_advisor_short_cycle_crit_pct') | float(50) %}
+            {% set warn = states('input_number.hph_advisor_short_cycle_warn_pct') | float(25) %}
             {% if ratio >= crit %}
             Very high cycling rate ({{ ratio }} %). Likely causes:
             (1) heating curve too steep — the unit reaches setpoint quickly
@@ -89,29 +89,29 @@ template:
       # ════════════════════════════════════════════════════════════════════
       # 2) Supply/return spread (pump speed)
       # ════════════════════════════════════════════════════════════════════
-      - name: "HeishaHub Advisor Spread"
-        unique_id: heishahub_advisor_spread
+      - name: "Heat Pump Hero Advisor Spread"
+        unique_id: hph_advisor_spread
         icon: mdi:thermometer-lines
         state: >-
-          {% set tin = states('sensor.heishahub_source_inlet_temp') | float(0) %}
-          {% set tout = states('sensor.heishahub_source_outlet_temp') | float(0) %}
-          {% set running = is_state('binary_sensor.heishahub_compressor_running','on') %}
+          {% set tin = states('sensor.hph_source_inlet_temp') | float(0) %}
+          {% set tout = states('sensor.hph_source_outlet_temp') | float(0) %}
+          {% set running = is_state('binary_sensor.hph_compressor_running','on') %}
           {% set dt = tout - tin %}
-          {% set target = states('input_number.heishahub_advisor_dt_target_k') | float(5) %}
+          {% set target = states('input_number.hph_advisor_dt_target_k') | float(5) %}
           {% if not running %}info
           {% elif dt < target - 2 %}warn
           {% elif dt > target + 3 %}warn
           {% else %}ok{% endif %}
         attributes:
           metric: >-
-            {{ ((states('sensor.heishahub_source_outlet_temp') | float(0))
-               - (states('sensor.heishahub_source_inlet_temp') | float(0))) | round(1) }} K
+            {{ ((states('sensor.hph_source_outlet_temp') | float(0))
+               - (states('sensor.hph_source_inlet_temp') | float(0))) | round(1) }} K
           message: >-
-            {% set tin = states('sensor.heishahub_source_inlet_temp') | float(0) %}
-            {% set tout = states('sensor.heishahub_source_outlet_temp') | float(0) %}
+            {% set tin = states('sensor.hph_source_inlet_temp') | float(0) %}
+            {% set tout = states('sensor.hph_source_outlet_temp') | float(0) %}
             {% set dt = tout - tin %}
-            {% set target = states('input_number.heishahub_advisor_dt_target_k') | float(5) %}
-            {% if not is_state('binary_sensor.heishahub_compressor_running','on') %}
+            {% set target = states('input_number.hph_advisor_dt_target_k') | float(5) %}
+            {% if not is_state('binary_sensor.hph_compressor_running','on') %}
             Compressor idle — spread not meaningful.
             {% elif dt < target - 2 %}
             Spread ({{ dt | round(1) }} K) too small. Pump runs too fast for
@@ -129,19 +129,19 @@ template:
       # ════════════════════════════════════════════════════════════════════
       # 3) Defrost frequency
       # ════════════════════════════════════════════════════════════════════
-      - name: "HeishaHub Advisor Defrost"
-        unique_id: heishahub_advisor_defrost
+      - name: "Heat Pump Hero Advisor Defrost"
+        unique_id: hph_advisor_defrost
         icon: mdi:snowflake-melt
         state: >-
-          {% set defrost = is_state('binary_sensor.heishahub_defrost_active','on') %}
-          {% set tout = states('sensor.heishahub_source_outdoor_temp') | float(0) %}
+          {% set defrost = is_state('binary_sensor.hph_defrost_active','on') %}
+          {% set tout = states('sensor.hph_source_outdoor_temp') | float(0) %}
           {% if defrost and tout > 7 %}warn
           {% else %}ok{% endif %}
         attributes:
-          metric: "{{ states('sensor.heishahub_source_outdoor_temp') }} °C"
+          metric: "{{ states('sensor.hph_source_outdoor_temp') }} °C"
           message: >-
-            {% if is_state('binary_sensor.heishahub_defrost_active','on')
-                  and states('sensor.heishahub_source_outdoor_temp') | float(0) > 7 %}
+            {% if is_state('binary_sensor.hph_defrost_active','on')
+                  and states('sensor.hph_source_outdoor_temp') | float(0) > 7 %}
             Defrost cycle active above 7 °C outdoor — unusual. Likely causes:
             evaporator airflow blocked (leaves, snow, wall too close), fan
             issue, sensor drift. Check the evaporator fins.
@@ -152,21 +152,21 @@ template:
       # ════════════════════════════════════════════════════════════════════
       # 4) Heating-curve analysis (rolling)
       # ════════════════════════════════════════════════════════════════════
-      - name: "HeishaHub Advisor Heat Curve"
-        unique_id: heishahub_advisor_heat_curve
+      - name: "Heat Pump Hero Advisor Heat Curve"
+        unique_id: hph_advisor_heat_curve
         icon: mdi:chart-bell-curve
         state: >-
           {# Simplified heuristic: at outdoor < 0 °C the supply setpoint
              should be reachable without the auxiliary heater. If the heater
              runs, the curve is too flat. #}
-          {% set heater = is_state('binary_sensor.heishahub_source_aux_heater','on') %}
-          {% set tout = states('sensor.heishahub_source_outdoor_temp') | float(99) %}
+          {% set heater = is_state('binary_sensor.hph_source_aux_heater','on') %}
+          {% set tout = states('sensor.hph_source_outdoor_temp') | float(99) %}
           {% if heater and tout > -7 %}warn
           {% else %}ok{% endif %}
         attributes:
           message: >-
-            {% if is_state('binary_sensor.heishahub_source_aux_heater','on')
-                  and states('sensor.heishahub_source_outdoor_temp') | float(99) > -7 %}
+            {% if is_state('binary_sensor.hph_source_aux_heater','on')
+                  and states('sensor.hph_source_outdoor_temp') | float(99) > -7 %}
             Auxiliary electric heater active above -7 °C outdoor. Indicates
             either a too-flat heating curve or an overshooting supply
             setpoint. Raise the heating curve at the cold end or check the
@@ -179,47 +179,47 @@ template:
       # ════════════════════════════════════════════════════════════════════
       # 5) DHW run too short (hygiene / COP)
       # ════════════════════════════════════════════════════════════════════
-      - name: "HeishaHub Advisor DHW Runtime"
-        unique_id: heishahub_advisor_dhw_runtime
+      - name: "Heat Pump Hero Advisor DHW Runtime"
+        unique_id: hph_advisor_dhw_runtime
         icon: mdi:water-boiler
         state: >-
-          {% set last = states('input_number.heishahub_cycle_last_duration_min') | float(0) %}
-          {% set min_run = states('input_number.heishahub_advisor_dhw_min_runtime_min') | float(20) %}
-          {% set was_dhw = is_state('sensor.heishahub_operating_mode','dhw') %}
+          {% set last = states('input_number.hph_cycle_last_duration_min') | float(0) %}
+          {% set min_run = states('input_number.hph_advisor_dhw_min_runtime_min') | float(20) %}
+          {% set was_dhw = is_state('sensor.hph_operating_mode','dhw') %}
           {% if was_dhw and last < min_run and last > 0 %}warn
           {% else %}ok{% endif %}
         attributes:
-          metric: "{{ states('input_number.heishahub_cycle_last_duration_min') }} min"
+          metric: "{{ states('input_number.hph_cycle_last_duration_min') }} min"
           message: >-
-            DHW run of {{ states('input_number.heishahub_cycle_last_duration_min') }} min
+            DHW run of {{ states('input_number.hph_cycle_last_duration_min') }} min
             was shorter than the minimum runtime. Short DHW runs are
             inefficient and hygienically borderline. Increase tank
             hysteresis or check the anti-legionella schedule.
 
       # ─── Pressure delta vs 7-day mean (used by Advisor 7) ─────────────
-      - name: "HeishaHub Pressure Delta 7d"
-        unique_id: heishahub_pressure_delta_7d
+      - name: "Heat Pump Hero Pressure Delta 7d"
+        unique_id: hph_pressure_delta_7d
         unit_of_measurement: "bar"
         state_class: measurement
         availability: >-
-          {{ states('sensor.heishahub_source_pump_pressure')
+          {{ states('sensor.hph_source_pump_pressure')
              not in ['unknown','unavailable','none']
-             and states('sensor.heishahub_pressure_7d_mean')
+             and states('sensor.hph_pressure_7d_mean')
              not in ['unknown','unavailable','none'] }}
         state: >-
-          {% set cur = states('sensor.heishahub_source_pump_pressure') | float(0) %}
-          {% set mean = states('sensor.heishahub_pressure_7d_mean') | float(0) %}
+          {% set cur = states('sensor.hph_source_pump_pressure') | float(0) %}
+          {% set mean = states('sensor.hph_pressure_7d_mean') | float(0) %}
           {{ (cur - mean) | round(2) }}
 
       # ════════════════════════════════════════════════════════════════════
       # 6) Diagnostics (active fault + recurrence)
       # ════════════════════════════════════════════════════════════════════
-      - name: "HeishaHub Advisor Diagnostics"
-        unique_id: heishahub_advisor_diagnostics
+      - name: "Heat Pump Hero Advisor Diagnostics"
+        unique_id: hph_advisor_diagnostics
         icon: mdi:medical-bag
         state: >-
-          {% set sev = state_attr('sensor.heishahub_diagnostics_current_error','severity') %}
-          {% set rec = states('sensor.heishahub_diagnostics_recurrence') | int(0) %}
+          {% set sev = state_attr('sensor.hph_diagnostics_current_error','severity') %}
+          {% set rec = states('sensor.hph_diagnostics_recurrence') | int(0) %}
           {% if sev == 'critical' %}critical
           {% elif sev == 'warn' %}warn
           {% elif rec >= 3 %}warn
@@ -227,11 +227,11 @@ template:
           {% else %}ok{% endif %}
         attributes:
           metric: >-
-            {{ states('sensor.heishahub_diagnostics_current_error') }}
-            (recurrences in last 5: {{ states('sensor.heishahub_diagnostics_recurrence') }})
+            {{ states('sensor.hph_diagnostics_current_error') }}
+            (recurrences in last 5: {{ states('sensor.hph_diagnostics_recurrence') }})
           message: >-
-            {% set cur = states('sensor.heishahub_diagnostics_current_error') %}
-            {% set rec = states('sensor.heishahub_diagnostics_recurrence') | int(0) %}
+            {% set cur = states('sensor.hph_diagnostics_current_error') %}
+            {% set rec = states('sensor.hph_diagnostics_recurrence') | int(0) %}
             {% if cur == 'ok' and rec == 0 %}
             No active or recurring fault.
             {% elif cur == 'ok' and rec > 0 %}
@@ -239,8 +239,8 @@ template:
             the recent history. Investigate root cause even if the unit recovered.
             {% else %}
             Active fault: {{ cur }}.
-            {{ state_attr('sensor.heishahub_diagnostics_current_error','message') }}
-            {% set mn = state_attr('sensor.heishahub_diagnostics_current_error','model_note') %}
+            {{ state_attr('sensor.hph_diagnostics_current_error','message') }}
+            {% set mn = state_attr('sensor.hph_diagnostics_current_error','model_note') %}
             {% if mn and mn | trim != '' %} {{ mn }}{% endif %}
             {% endif %}
 
@@ -250,18 +250,18 @@ template:
       # Uses the rolling change-over-time of pump_pressure to detect a
       # slow loss. A drop > 0.2 bar over 7 days while the unit was idle
       # half the time is a strong leak indicator.
-      - name: "HeishaHub Advisor Pressure Trend"
-        unique_id: heishahub_advisor_pressure_trend
+      - name: "Heat Pump Hero Advisor Pressure Trend"
+        unique_id: hph_advisor_pressure_trend
         icon: mdi:gauge-low
         state: >-
-          {% set delta = states('sensor.heishahub_pressure_delta_7d') | float(0) %}
+          {% set delta = states('sensor.hph_pressure_delta_7d') | float(0) %}
           {% if delta < -0.4 %}critical
           {% elif delta < -0.2 %}warn
           {% else %}ok{% endif %}
         attributes:
-          metric: "{{ states('sensor.heishahub_pressure_delta_7d') }} bar over 7 d"
+          metric: "{{ states('sensor.hph_pressure_delta_7d') }} bar over 7 d"
           message: >-
-            {% set delta = states('sensor.heishahub_pressure_delta_7d') | float(0) %}
+            {% set delta = states('sensor.hph_pressure_delta_7d') | float(0) %}
             {% if delta < -0.4 %}
             Water pressure dropped {{ (-delta) | round(2) }} bar in 7 days —
             a strong leak indicator. Inspect joints, expansion vessel pressure,
@@ -282,26 +282,26 @@ template:
       # rolling smoothed value of the outdoor temp captured at the END of
       # long compressor runs (≥30 min) — see automation in this same
       # package. The advisor compares observed vs user-set target.
-      - name: "HeishaHub Advisor Heating Limit"
-        unique_id: heishahub_advisor_heating_limit
+      - name: "Heat Pump Hero Advisor Heating Limit"
+        unique_id: hph_advisor_heating_limit
         icon: mdi:thermometer-off
         state: >-
-          {% set obs = states('sensor.heishahub_heating_limit_smoothed') | float(0) %}
-          {% set target = states('input_number.heishahub_advisor_heating_limit_target_c') | float(16) %}
+          {% set obs = states('sensor.hph_heating_limit_smoothed') | float(0) %}
+          {% set target = states('input_number.hph_advisor_heating_limit_target_c') | float(16) %}
           {% set diff = obs - target %}
           {% if obs == 0 %}info
           {% elif diff > 3 %}warn
           {% elif diff < -5 %}info
           {% else %}ok{% endif %}
         attributes:
-          observed: "{{ states('sensor.heishahub_heating_limit_smoothed') }} °C"
-          target: "{{ states('input_number.heishahub_advisor_heating_limit_target_c') }} °C"
+          observed: "{{ states('sensor.hph_heating_limit_smoothed') }} °C"
+          target: "{{ states('input_number.hph_advisor_heating_limit_target_c') }} °C"
           metric: >-
-            obs {{ states('sensor.heishahub_heating_limit_smoothed') }} °C /
-            target {{ states('input_number.heishahub_advisor_heating_limit_target_c') }} °C
+            obs {{ states('sensor.hph_heating_limit_smoothed') }} °C /
+            target {{ states('input_number.hph_advisor_heating_limit_target_c') }} °C
           message: >-
-            {% set obs = states('sensor.heishahub_heating_limit_smoothed') | float(0) %}
-            {% set target = states('input_number.heishahub_advisor_heating_limit_target_c') | float(16) %}
+            {% set obs = states('sensor.hph_heating_limit_smoothed') | float(0) %}
+            {% set target = states('input_number.hph_advisor_heating_limit_target_c') | float(16) %}
             {% set diff = obs - target %}
             {% if obs == 0 %}
             Not enough compressor cycles ≥30 min observed yet — heating-limit
@@ -324,33 +324,35 @@ template:
       # ════════════════════════════════════════════════════════════════════
       # 7) Aggregate traffic-light (for the dashboard overview)
       # ════════════════════════════════════════════════════════════════════
-      - name: "HeishaHub Advisor Summary"
-        unique_id: heishahub_advisor_summary
+      - name: "Heat Pump Hero Advisor Summary"
+        unique_id: hph_advisor_summary
         icon: mdi:lightbulb-on-outline
         state: >-
           {% set advisors = [
-            states('sensor.heishahub_advisor_short_cycle'),
-            states('sensor.heishahub_advisor_spread'),
-            states('sensor.heishahub_advisor_defrost'),
-            states('sensor.heishahub_advisor_heat_curve'),
-            states('sensor.heishahub_advisor_dhw_runtime'),
-            states('sensor.heishahub_advisor_heating_limit'),
-            states('sensor.heishahub_advisor_diagnostics'),
-            states('sensor.heishahub_advisor_pressure_trend')
+            states('sensor.hph_advisor_short_cycle'),
+            states('sensor.hph_advisor_spread'),
+            states('sensor.hph_advisor_defrost'),
+            states('sensor.hph_advisor_heat_curve'),
+            states('sensor.hph_advisor_dhw_runtime'),
+            states('sensor.hph_advisor_heating_limit'),
+            states('sensor.hph_advisor_diagnostics'),
+            states('sensor.hph_advisor_pressure_trend'),
+            states('sensor.hph_advisor_analysis')
           ] %}
           {% if 'critical' in advisors %}critical
           {% elif 'warn' in advisors %}warn
           {% else %}ok{% endif %}
         attributes:
           warn_count: >-
-            {{ [states('sensor.heishahub_advisor_short_cycle'),
-                states('sensor.heishahub_advisor_spread'),
-                states('sensor.heishahub_advisor_defrost'),
-                states('sensor.heishahub_advisor_heat_curve'),
-                states('sensor.heishahub_advisor_dhw_runtime'),
-                states('sensor.heishahub_advisor_heating_limit'),
-                states('sensor.heishahub_advisor_diagnostics'),
-                states('sensor.heishahub_advisor_pressure_trend')]
+            {{ [states('sensor.hph_advisor_short_cycle'),
+                states('sensor.hph_advisor_spread'),
+                states('sensor.hph_advisor_defrost'),
+                states('sensor.hph_advisor_heat_curve'),
+                states('sensor.hph_advisor_dhw_runtime'),
+                states('sensor.hph_advisor_heating_limit'),
+                states('sensor.hph_advisor_diagnostics'),
+                states('sensor.hph_advisor_pressure_trend'),
+                states('sensor.hph_advisor_analysis')]
                | select('in', ['warn','critical']) | list | count }}
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -359,16 +361,16 @@ template:
 #
 # The flow:
 #   1. Automation captures outdoor temp at compressor stop into
-#      input_number.heishahub_heating_limit_observed_c
+#      input_number.hph_heating_limit_observed_c
 #   2. The statistics platform sensor below maintains a 7-day rolling
-#      average → heishahub_heating_limit_smoothed
+#      average → hph_heating_limit_smoothed
 #   3. Advisor (above) compares smoothed vs user target.
 # ═══════════════════════════════════════════════════════════════════════════
 sensor:
   - platform: statistics
-    name: "HeishaHub Heating Limit Smoothed"
-    unique_id: heishahub_heating_limit_smoothed
-    entity_id: input_number.heishahub_heating_limit_observed_c
+    name: "Heat Pump Hero Heating Limit Smoothed"
+    unique_id: hph_heating_limit_smoothed
+    entity_id: input_number.hph_heating_limit_observed_c
     state_characteristic: average_linear
     sampling_size: 50
     max_age:
@@ -379,9 +381,9 @@ sensor:
   # 7-day pressure delta (last reading - mean) for leak detection.
   # Negative values mean pressure has dropped vs the 7-day average.
   - platform: statistics
-    name: "HeishaHub Pressure 7-day Mean"
-    unique_id: heishahub_pressure_7d_mean
-    entity_id: sensor.heishahub_source_pump_pressure
+    name: "Heat Pump Hero Pressure 7-day Mean"
+    unique_id: hph_pressure_7d_mean
+    entity_id: sensor.hph_source_pump_pressure
     state_characteristic: mean
     sampling_size: 5000
     max_age:
@@ -390,8 +392,8 @@ sensor:
     precision: 2
 
 automation:
-  - id: heishahub_record_heating_limit
-    alias: HeishaHub — record heating-limit observation
+  - id: hph_record_heating_limit
+    alias: Heat Pump Hero — record heating-limit observation
     description: >
       Captures the outdoor temperature at the end of each compressor run
       that lasted at least 30 minutes. The 7-day rolling average of this
@@ -399,24 +401,24 @@ automation:
     mode: single
     trigger:
       - platform: state
-        entity_id: binary_sensor.heishahub_compressor_running
+        entity_id: binary_sensor.hph_compressor_running
         from: "on"
         to: "off"
     condition:
       - condition: template
         value_template: >-
-          {{ states('input_number.heishahub_cycle_last_duration_min') | float(0) >= 30 }}
+          {{ states('input_number.hph_cycle_last_duration_min') | float(0) >= 30 }}
       - condition: template
         value_template: >-
-          {{ states('sensor.heishahub_source_outdoor_temp')
+          {{ states('sensor.hph_source_outdoor_temp')
              not in ['unknown','unavailable','none'] }}
       # Only record while in heating mode — DHW pulls confound the value.
       - condition: state
-        entity_id: sensor.heishahub_operating_mode
+        entity_id: sensor.hph_operating_mode
         state: heating
     action:
       - service: input_number.set_value
         target:
-          entity_id: input_number.heishahub_heating_limit_observed_c
+          entity_id: input_number.hph_heating_limit_observed_c
         data:
-          value: "{{ states('sensor.heishahub_source_outdoor_temp') | float(0) }}"
+          value: "{{ states('sensor.hph_source_outdoor_temp') | float(0) }}"

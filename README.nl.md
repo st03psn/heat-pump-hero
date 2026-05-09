@@ -1,15 +1,15 @@
-# HeishaHub
+# Heat Pump Hero
 
 > Universeel Home Assistant-pakket voor Panasonic Aquarea-warmtepompen met
 > Heishamon — dashboard, statistieken, optimalisatie-adviseur, regelautomatiseringen.
 
 🌐 **Talen:** [English](README.md) · [Deutsch](README.de.md) · Nederlands (dit bestand)
 
-[![Validate](https://github.com/st03psn/HeishaHub/actions/workflows/validate.yml/badge.svg)](https://github.com/st03psn/HeishaHub/actions/workflows/validate.yml)
+[![Validate](https://github.com/st03psn/heat-pump-hero/actions/workflows/validate.yml/badge.svg)](https://github.com/st03psn/heat-pump-hero/actions/workflows/validate.yml)
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-HeishaHub bundelt wat tot nu toe ontbrak: een importeerbaar Home Assistant
+Heat Pump Hero bundelt wat tot nu toe ontbrak: een importeerbaar Home Assistant
 dashboard met de lay-out van de Heishamon-webinterface, Service-Cloud-achtige
 analytische grafieken, een installatieschema met live-hotspots en degelijke
 efficiëntiemetrieken (SCOP / maand / dag / live COP) — inclusief vergelijking
@@ -17,9 +17,9 @@ over meerdere jaren.
 
 ## Status
 
-🟢 **v0.5 — beta** — diagnostics, vendor & model selectors, M-serie,
-**export / import**, DB-richtlijnen, naming-voorstel. Zie
-[CHANGELOG.md](CHANGELOG.md).
+🟢 **v0.6 — beta** — hernoemd naar Heat Pump Hero. Toegevoegd: analysemodule
+(L1 statistische observatie + L2 regressie-script), installer met
+DB-keuze + prereq-check. Zie [CHANGELOG.md](CHANGELOG.md).
 
 ## Functies
 
@@ -73,16 +73,16 @@ over meerdere jaren.
 
 1. **Voeg HACS custom repository toe**
    - HACS → Integraties → ⋮ → Custom repositories
-   - URL: `https://github.com/st03psn/HeishaHub`
+   - URL: `https://github.com/st03psn/heat-pump-hero`
    - Categorie: Plugin
 2. **Installeer de afhankelijkheden** (HACS-frontend-cards):
    apexcharts-card, Bubble-Card, lovelace-mushroom, button-card,
    auto-entities, card-mod
 3. **Voer scripts/install.sh uit** (of kopieer handmatig — zie
    [docs/installation.md](docs/installation.md))
-4. **Start HA opnieuw**, en voer de "HeishaHub Setup" blueprint uit
+4. **Start HA opnieuw**, en voer de "Heat Pump Hero Setup" blueprint uit
 5. **Voeg dashboard toe**: Instellingen → Dashboards → Toevoegen → Vanuit YAML →
-   `heishahub/dashboard.yaml`
+   `hph/dashboard.yaml`
 
 ## Documentatie
 

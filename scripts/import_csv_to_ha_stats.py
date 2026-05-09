@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-HeishaHub — import CSV into HA Long-Term Statistics.
+Heat Pump Hero — import CSV into HA Long-Term Statistics.
 
-Use case: HeishaHub installed mid-life. You have historical kWh data from
+Use case: Heat Pump Hero installed mid-life. You have historical kWh data from
 your old utility-meter export, Shelly cloud, vendor cloud, or a previous
 HA install. This script backfills it via HA's `recorder.import_statistics`
 websocket call so the long-term graphs and SCOP comparisons reach back
-into pre-HeishaHub history.
+into pre-Heat Pump Hero history.
 
 Input CSV format (header row required):
     timestamp,state,sum
@@ -24,7 +24,7 @@ Usage:
     HA_BASE_URL=http://homeassistant.local:8123 \\
     HA_TOKEN=eyJhb... \\
     python3 import_csv_to_ha_stats.py \\
-        --entity sensor.heishahub_thermal_energy_active \\
+        --entity sensor.hph_thermal_energy_active \\
         --unit kWh \\
         --csv old_thermal_energy.csv
 

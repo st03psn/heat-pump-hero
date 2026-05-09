@@ -1,4 +1,4 @@
-# HeishaHub — sources adapter
+# Heat Pump Hero — sources adapter
 #
 # Central abstraction layer for ALL underlying entities. Every hardcoded
 # entity-ID is replaced by an input_text helper here so users can swap:
@@ -23,86 +23,86 @@
 # ═══════════════════════════════════════════════════════════════════════════
 input_text:
   # ─── Heat pump device entities (defaults: Heishamon/kamaradclimber) ─────
-  heishahub_src_inlet_temp:
-    name: HeishaHub source — inlet (return) temperature
+  hph_src_inlet_temp:
+    name: Heat Pump Hero source — inlet (return) temperature
     icon: mdi:thermometer-low
     max: 255
     initial: sensor.panasonic_heat_pump_main_inlet_temperature
 
-  heishahub_src_outlet_temp:
-    name: HeishaHub source — outlet (supply) temperature
+  hph_src_outlet_temp:
+    name: Heat Pump Hero source — outlet (supply) temperature
     icon: mdi:thermometer-high
     max: 255
     initial: sensor.panasonic_heat_pump_main_outlet_temperature
 
-  heishahub_src_flow_rate:
-    name: HeishaHub source — water flow rate
+  hph_src_flow_rate:
+    name: Heat Pump Hero source — water flow rate
     icon: mdi:water-pump
     max: 255
     initial: sensor.panasonic_heat_pump_main_water_flow
 
-  heishahub_src_outdoor_temp:
-    name: HeishaHub source — outdoor temperature
+  hph_src_outdoor_temp:
+    name: Heat Pump Hero source — outdoor temperature
     icon: mdi:thermometer
     max: 255
     initial: sensor.panasonic_heat_pump_main_outside_temperature
 
-  heishahub_src_compressor_freq:
-    name: HeishaHub source — compressor frequency
+  hph_src_compressor_freq:
+    name: Heat Pump Hero source — compressor frequency
     icon: mdi:sine-wave
     max: 255
     initial: sensor.panasonic_heat_pump_main_compressor_frequency
 
-  heishahub_src_defrost_state:
-    name: HeishaHub source — defrost state (binary)
+  hph_src_defrost_state:
+    name: Heat Pump Hero source — defrost state (binary)
     icon: mdi:snowflake-melt
     max: 255
     initial: binary_sensor.panasonic_heat_pump_main_defrost_state
 
-  heishahub_src_operating_mode:
-    name: HeishaHub source — operating mode (select)
+  hph_src_operating_mode:
+    name: Heat Pump Hero source — operating mode (select)
     icon: mdi:fire
     max: 255
     initial: select.panasonic_heat_pump_main_operating_mode_state
 
-  heishahub_src_pump_pressure:
-    name: HeishaHub source — water pressure
+  hph_src_pump_pressure:
+    name: Heat Pump Hero source — water pressure
     icon: mdi:gauge
     max: 255
     initial: sensor.panasonic_heat_pump_main_pump_pressure
 
-  heishahub_src_internal_power:
-    name: HeishaHub source — heat pump internal power consumption
+  hph_src_internal_power:
+    name: Heat Pump Hero source — heat pump internal power consumption
     icon: mdi:flash
     max: 255
     initial: sensor.panasonic_heat_pump_main_consumed_power
 
-  heishahub_src_aux_heater_state:
-    name: HeishaHub source — auxiliary electric heater state (binary)
+  hph_src_aux_heater_state:
+    name: Heat Pump Hero source — auxiliary electric heater state (binary)
     icon: mdi:radiator
     max: 255
     initial: binary_sensor.panasonic_heat_pump_main_heater_state
 
-  heishahub_src_error_code:
-    name: HeishaHub source — current error code (Heishamon-style)
+  hph_src_error_code:
+    name: Heat Pump Hero source — current error code (Heishamon-style)
     icon: mdi:alert-circle-outline
     max: 255
     initial: sensor.panasonic_heat_pump_main_error
 
-  heishahub_src_compressor_hours:
-    name: HeishaHub source — compressor running hours (lifetime)
+  hph_src_compressor_hours:
+    name: Heat Pump Hero source — compressor running hours (lifetime)
     icon: mdi:clock-outline
     max: 255
     initial: sensor.panasonic_heat_pump_main_compressor_running_hours
 
-  heishahub_src_compressor_starts:
-    name: HeishaHub source — compressor starts (lifetime)
+  hph_src_compressor_starts:
+    name: Heat Pump Hero source — compressor starts (lifetime)
     icon: mdi:counter
     max: 255
     initial: sensor.panasonic_heat_pump_main_compressor_starts
 
-  heishahub_src_discharge_temp:
-    name: HeishaHub source — discharge temperature
+  hph_src_discharge_temp:
+    name: Heat Pump Hero source — discharge temperature
     icon: mdi:thermometer-high
     max: 255
     initial: sensor.panasonic_heat_pump_main_discharge_temperature
@@ -110,60 +110,60 @@ input_text:
   # ─── Component-detection probes (presence inferred from availability) ──
   # Defaults match Heishamon/kamaradclimber. Set to "" to mark a component
   # as definitely absent (overrides auto-detection).
-  heishahub_src_zone1_temp:
-    name: HeishaHub source — Zone 1 supply / target temperature
+  hph_src_zone1_temp:
+    name: Heat Pump Hero source — Zone 1 supply / target temperature
     icon: mdi:home-thermometer
     max: 255
     initial: sensor.panasonic_heat_pump_main_z1_water_temperature
 
-  heishahub_src_zone2_temp:
-    name: HeishaHub source — Zone 2 supply / target temperature
+  hph_src_zone2_temp:
+    name: Heat Pump Hero source — Zone 2 supply / target temperature
     icon: mdi:home-thermometer-outline
     max: 255
     initial: sensor.panasonic_heat_pump_main_z2_water_temperature
 
-  heishahub_src_dhw_temp:
-    name: HeishaHub source — DHW tank temperature
+  hph_src_dhw_temp:
+    name: Heat Pump Hero source — DHW tank temperature
     icon: mdi:water-boiler
     max: 255
     initial: sensor.panasonic_heat_pump_main_dhw_temperature
 
-  heishahub_src_buffer_temp:
-    name: HeishaHub source — buffer-tank temperature
+  hph_src_buffer_temp:
+    name: Heat Pump Hero source — buffer-tank temperature
     icon: mdi:propane-tank
     max: 255
     initial: sensor.panasonic_heat_pump_main_buffer_temperature
 
-  heishahub_src_dhw_target_temp:
-    name: HeishaHub source — DHW target temperature
+  hph_src_dhw_target_temp:
+    name: Heat Pump Hero source — DHW target temperature
     icon: mdi:thermostat-cog
     max: 255
     initial: sensor.panasonic_heat_pump_main_dhw_target_temperature
 
   # ─── External meter entities (user fills in) ─────────────────────────────
   # Power sensors (W) — alternative to the calculated thermal_power.
-  heishahub_src_external_thermal_power:
-    name: HeishaHub external thermal power sensor (entity-ID, optional)
+  hph_src_external_thermal_power:
+    name: Heat Pump Hero external thermal power sensor (entity-ID, optional)
     icon: mdi:fire
     max: 255
     initial: ""
 
-  heishahub_src_external_electrical_power:
-    name: HeishaHub external electrical power sensor (entity-ID, e.g. Shelly)
+  hph_src_external_electrical_power:
+    name: Heat Pump Hero external electrical power sensor (entity-ID, e.g. Shelly)
     icon: mdi:flash
     max: 255
     initial: ""
 
   # Direct energy counters (kWh, total_increasing) — bypass the integration.
   # If set and selected, the integrator is skipped and the meter is used as-is.
-  heishahub_src_external_thermal_energy:
-    name: HeishaHub external heat-meter (kWh, total_increasing)
+  hph_src_external_thermal_energy:
+    name: Heat Pump Hero external heat-meter (kWh, total_increasing)
     icon: mdi:counter
     max: 255
     initial: ""
 
-  heishahub_src_external_electrical_energy:
-    name: HeishaHub external electricity-meter (kWh, total_increasing)
+  hph_src_external_electrical_energy:
+    name: Heat Pump Hero external electricity-meter (kWh, total_increasing)
     icon: mdi:counter
     max: 255
     initial: ""
@@ -172,8 +172,8 @@ input_text:
 # Source-mode selectors
 # ═══════════════════════════════════════════════════════════════════════════
 input_select:
-  heishahub_thermal_source:
-    name: HeishaHub — thermal source
+  hph_thermal_source:
+    name: Heat Pump Hero — thermal source
     icon: mdi:thermometer-water
     options:
       - calculated        # T_in/T_out × flow × cp (default, needs heat-pump entities)
@@ -181,8 +181,8 @@ input_select:
       - external_energy   # external heat meter (kWh) — bypass integration
     initial: calculated
 
-  heishahub_electrical_source:
-    name: HeishaHub — electrical source
+  hph_electrical_source:
+    name: Heat Pump Hero — electrical source
     icon: mdi:flash
     options:
       - heat_pump_internal  # heat pump's own consumed-power reading
@@ -190,11 +190,11 @@ input_select:
       - external_energy     # external utility meter (kWh) — bypass integration
     initial: heat_pump_internal
 
-  heishahub_schema_variant:
-    name: HeishaHub — installation schematic (auto follows detection)
+  hph_schema_variant:
+    name: Heat Pump Hero — installation schematic (auto follows detection)
     icon: mdi:graph-outline
     options:
-      - auto                       # follow heishahub_schema_variant_detected
+      - auto                       # follow hph_schema_variant_detected
       - a2w_hk1
       - a2w_hk1_dhw
       - a2w_hk1_hk2_dhw
@@ -209,160 +209,160 @@ template:
 
       # ─── Facade reads (with availability guards) ─────────────────────────
       # These resolve the configured entity-ID once and expose a stable name.
-      - name: "HeishaHub Source Inlet Temperature"
-        unique_id: heishahub_source_inlet_temp
+      - name: "Heat Pump Hero Source Inlet Temperature"
+        unique_id: hph_source_inlet_temp
         unit_of_measurement: "°C"
         device_class: temperature
         state_class: measurement
         availability: >-
-          {% set ent = states('input_text.heishahub_src_inlet_temp') %}
+          {% set ent = states('input_text.hph_src_inlet_temp') %}
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
-        state: "{{ states(states('input_text.heishahub_src_inlet_temp')) | float(0) }}"
+        state: "{{ states(states('input_text.hph_src_inlet_temp')) | float(0) }}"
 
-      - name: "HeishaHub Source Outlet Temperature"
-        unique_id: heishahub_source_outlet_temp
+      - name: "Heat Pump Hero Source Outlet Temperature"
+        unique_id: hph_source_outlet_temp
         unit_of_measurement: "°C"
         device_class: temperature
         state_class: measurement
         availability: >-
-          {% set ent = states('input_text.heishahub_src_outlet_temp') %}
+          {% set ent = states('input_text.hph_src_outlet_temp') %}
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
-        state: "{{ states(states('input_text.heishahub_src_outlet_temp')) | float(0) }}"
+        state: "{{ states(states('input_text.hph_src_outlet_temp')) | float(0) }}"
 
-      - name: "HeishaHub Source Flow Rate"
-        unique_id: heishahub_source_flow_rate
+      - name: "Heat Pump Hero Source Flow Rate"
+        unique_id: hph_source_flow_rate
         unit_of_measurement: "L/min"
         state_class: measurement
         availability: >-
-          {% set ent = states('input_text.heishahub_src_flow_rate') %}
+          {% set ent = states('input_text.hph_src_flow_rate') %}
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
-        state: "{{ states(states('input_text.heishahub_src_flow_rate')) | float(0) }}"
+        state: "{{ states(states('input_text.hph_src_flow_rate')) | float(0) }}"
 
-      - name: "HeishaHub Source Outdoor Temperature"
-        unique_id: heishahub_source_outdoor_temp
+      - name: "Heat Pump Hero Source Outdoor Temperature"
+        unique_id: hph_source_outdoor_temp
         unit_of_measurement: "°C"
         device_class: temperature
         state_class: measurement
         availability: >-
-          {% set ent = states('input_text.heishahub_src_outdoor_temp') %}
+          {% set ent = states('input_text.hph_src_outdoor_temp') %}
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
-        state: "{{ states(states('input_text.heishahub_src_outdoor_temp')) | float(0) }}"
+        state: "{{ states(states('input_text.hph_src_outdoor_temp')) | float(0) }}"
 
-      - name: "HeishaHub Source Compressor Frequency"
-        unique_id: heishahub_source_compressor_freq
+      - name: "Heat Pump Hero Source Compressor Frequency"
+        unique_id: hph_source_compressor_freq
         unit_of_measurement: "Hz"
         state_class: measurement
         availability: >-
-          {% set ent = states('input_text.heishahub_src_compressor_freq') %}
+          {% set ent = states('input_text.hph_src_compressor_freq') %}
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
-        state: "{{ states(states('input_text.heishahub_src_compressor_freq')) | float(0) }}"
+        state: "{{ states(states('input_text.hph_src_compressor_freq')) | float(0) }}"
 
-      - name: "HeishaHub Source Operating Mode"
-        unique_id: heishahub_source_operating_mode
+      - name: "Heat Pump Hero Source Operating Mode"
+        unique_id: hph_source_operating_mode
         availability: >-
-          {% set ent = states('input_text.heishahub_src_operating_mode') %}
+          {% set ent = states('input_text.hph_src_operating_mode') %}
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
-        state: "{{ states(states('input_text.heishahub_src_operating_mode')) }}"
+        state: "{{ states(states('input_text.hph_src_operating_mode')) }}"
 
-      - name: "HeishaHub Source Pump Pressure"
-        unique_id: heishahub_source_pump_pressure
+      - name: "Heat Pump Hero Source Pump Pressure"
+        unique_id: hph_source_pump_pressure
         unit_of_measurement: "bar"
         device_class: pressure
         state_class: measurement
         availability: >-
-          {% set ent = states('input_text.heishahub_src_pump_pressure') %}
+          {% set ent = states('input_text.hph_src_pump_pressure') %}
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
-        state: "{{ states(states('input_text.heishahub_src_pump_pressure')) | float(0) }}"
+        state: "{{ states(states('input_text.hph_src_pump_pressure')) | float(0) }}"
 
-      - name: "HeishaHub Source Compressor Hours"
-        unique_id: heishahub_source_compressor_hours
+      - name: "Heat Pump Hero Source Compressor Hours"
+        unique_id: hph_source_compressor_hours
         unit_of_measurement: "h"
         state_class: total_increasing
         availability: >-
-          {% set ent = states('input_text.heishahub_src_compressor_hours') %}
+          {% set ent = states('input_text.hph_src_compressor_hours') %}
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
-        state: "{{ states(states('input_text.heishahub_src_compressor_hours')) | float(0) }}"
+        state: "{{ states(states('input_text.hph_src_compressor_hours')) | float(0) }}"
 
-      - name: "HeishaHub Source Compressor Starts"
-        unique_id: heishahub_source_compressor_starts
+      - name: "Heat Pump Hero Source Compressor Starts"
+        unique_id: hph_source_compressor_starts
         state_class: total_increasing
         availability: >-
-          {% set ent = states('input_text.heishahub_src_compressor_starts') %}
+          {% set ent = states('input_text.hph_src_compressor_starts') %}
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
-        state: "{{ states(states('input_text.heishahub_src_compressor_starts')) | float(0) }}"
+        state: "{{ states(states('input_text.hph_src_compressor_starts')) | float(0) }}"
 
-      - name: "HeishaHub Source Discharge Temperature"
-        unique_id: heishahub_source_discharge_temp
+      - name: "Heat Pump Hero Source Discharge Temperature"
+        unique_id: hph_source_discharge_temp
         unit_of_measurement: "°C"
         device_class: temperature
         state_class: measurement
         availability: >-
-          {% set ent = states('input_text.heishahub_src_discharge_temp') %}
+          {% set ent = states('input_text.hph_src_discharge_temp') %}
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
-        state: "{{ states(states('input_text.heishahub_src_discharge_temp')) | float(0) }}"
+        state: "{{ states(states('input_text.hph_src_discharge_temp')) | float(0) }}"
 
       # ─── Error-code facade ───────────────────────────────────────────────
-      - name: "HeishaHub Source Error Code"
-        unique_id: heishahub_source_error_code
+      - name: "Heat Pump Hero Source Error Code"
+        unique_id: hph_source_error_code
         icon: mdi:alert-circle-outline
         availability: >-
-          {% set ent = states('input_text.heishahub_src_error_code') %}
+          {% set ent = states('input_text.hph_src_error_code') %}
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
-        state: "{{ states(states('input_text.heishahub_src_error_code')) | string | upper }}"
+        state: "{{ states(states('input_text.hph_src_error_code')) | string | upper }}"
 
       # ─── Optional component facades (HK1/HK2 zone temps, DHW, buffer) ───
-      - name: "HeishaHub Source Zone 1 Temperature"
-        unique_id: heishahub_source_zone1_temp
+      - name: "Heat Pump Hero Source Zone 1 Temperature"
+        unique_id: hph_source_zone1_temp
         unit_of_measurement: "°C"
         device_class: temperature
         state_class: measurement
         availability: >-
-          {% set ent = states('input_text.heishahub_src_zone1_temp') %}
+          {% set ent = states('input_text.hph_src_zone1_temp') %}
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
-        state: "{{ states(states('input_text.heishahub_src_zone1_temp')) | float(0) }}"
+        state: "{{ states(states('input_text.hph_src_zone1_temp')) | float(0) }}"
 
-      - name: "HeishaHub Source Zone 2 Temperature"
-        unique_id: heishahub_source_zone2_temp
+      - name: "Heat Pump Hero Source Zone 2 Temperature"
+        unique_id: hph_source_zone2_temp
         unit_of_measurement: "°C"
         device_class: temperature
         state_class: measurement
         availability: >-
-          {% set ent = states('input_text.heishahub_src_zone2_temp') %}
+          {% set ent = states('input_text.hph_src_zone2_temp') %}
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
-        state: "{{ states(states('input_text.heishahub_src_zone2_temp')) | float(0) }}"
+        state: "{{ states(states('input_text.hph_src_zone2_temp')) | float(0) }}"
 
-      - name: "HeishaHub Source DHW Temperature"
-        unique_id: heishahub_source_dhw_temp
+      - name: "Heat Pump Hero Source DHW Temperature"
+        unique_id: hph_source_dhw_temp
         unit_of_measurement: "°C"
         device_class: temperature
         state_class: measurement
         availability: >-
-          {% set ent = states('input_text.heishahub_src_dhw_temp') %}
+          {% set ent = states('input_text.hph_src_dhw_temp') %}
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
-        state: "{{ states(states('input_text.heishahub_src_dhw_temp')) | float(0) }}"
+        state: "{{ states(states('input_text.hph_src_dhw_temp')) | float(0) }}"
 
-      - name: "HeishaHub Source Buffer Temperature"
-        unique_id: heishahub_source_buffer_temp
+      - name: "Heat Pump Hero Source Buffer Temperature"
+        unique_id: hph_source_buffer_temp
         unit_of_measurement: "°C"
         device_class: temperature
         state_class: measurement
         availability: >-
-          {% set ent = states('input_text.heishahub_src_buffer_temp') %}
+          {% set ent = states('input_text.hph_src_buffer_temp') %}
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
-        state: "{{ states(states('input_text.heishahub_src_buffer_temp')) | float(0) }}"
+        state: "{{ states(states('input_text.hph_src_buffer_temp')) | float(0) }}"
 
       # ─── Active thermal power (selected source, for live COP + integration) ──
       # Returns 0 in `external_energy` mode — efficiency package will read
       # the energy counter directly and bypass the integration in that case.
-      - name: "HeishaHub Thermal Power Active"
-        unique_id: heishahub_thermal_power_active
+      - name: "Heat Pump Hero Thermal Power Active"
+        unique_id: hph_thermal_power_active
         unit_of_measurement: "W"
         device_class: power
         state_class: measurement
         state: >-
-          {% set src = states('input_select.heishahub_thermal_source') %}
+          {% set src = states('input_select.hph_thermal_source') %}
           {% if src == 'external_power' %}
-            {% set ent = states('input_text.heishahub_src_external_thermal_power') %}
+            {% set ent = states('input_text.hph_src_external_thermal_power') %}
             {% if ent and states(ent) not in ['unknown','unavailable','none',''] %}
               {{ states(ent) | float(0) }}
             {% else %}
@@ -371,19 +371,19 @@ template:
           {% elif src == 'external_energy' %}
             0
           {% else %}
-            {{ states('sensor.heishahub_thermal_power') | float(0) }}
+            {{ states('sensor.hph_thermal_power') | float(0) }}
           {% endif %}
 
       # ─── Active electrical power (selected source) ──────────────────────
-      - name: "HeishaHub Electrical Power Active"
-        unique_id: heishahub_electrical_power_active
+      - name: "Heat Pump Hero Electrical Power Active"
+        unique_id: hph_electrical_power_active
         unit_of_measurement: "W"
         device_class: power
         state_class: measurement
         state: >-
-          {% set src = states('input_select.heishahub_electrical_source') %}
+          {% set src = states('input_select.hph_electrical_source') %}
           {% if src == 'external_power' %}
-            {% set ent = states('input_text.heishahub_src_external_electrical_power') %}
+            {% set ent = states('input_text.hph_src_external_electrical_power') %}
             {% if ent and states(ent) not in ['unknown','unavailable','none',''] %}
               {{ states(ent) | float(0) }}
             {% else %}
@@ -392,7 +392,7 @@ template:
           {% elif src == 'external_energy' %}
             0
           {% else %}
-            {% set ent = states('input_text.heishahub_src_internal_power') %}
+            {% set ent = states('input_text.hph_src_internal_power') %}
             {% if ent and states(ent) not in ['unknown','unavailable','none',''] %}
               {{ states(ent) | float(0) }}
             {% else %}
@@ -403,78 +403,78 @@ template:
       # ─── Active thermal energy (kWh, total_increasing) ──────────────────
       # Used by utility_meter. In `external_energy` mode reads the meter
       # directly; otherwise reads the integrator output.
-      - name: "HeishaHub Thermal Energy Active"
-        unique_id: heishahub_thermal_energy_active
+      - name: "Heat Pump Hero Thermal Energy Active"
+        unique_id: hph_thermal_energy_active
         unit_of_measurement: "kWh"
         device_class: energy
         state_class: total_increasing
         availability: >-
-          {% set src = states('input_select.heishahub_thermal_source') %}
+          {% set src = states('input_select.hph_thermal_source') %}
           {% if src == 'external_energy' %}
-            {% set ent = states('input_text.heishahub_src_external_thermal_energy') %}
+            {% set ent = states('input_text.hph_src_external_thermal_energy') %}
             {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
           {% else %}
-            {{ states('sensor.heishahub_thermal_energy')
+            {{ states('sensor.hph_thermal_energy')
                not in ['unknown','unavailable','none'] }}
           {% endif %}
         state: >-
-          {% set src = states('input_select.heishahub_thermal_source') %}
+          {% set src = states('input_select.hph_thermal_source') %}
           {% if src == 'external_energy' %}
-            {{ states(states('input_text.heishahub_src_external_thermal_energy')) | float(0) }}
+            {{ states(states('input_text.hph_src_external_thermal_energy')) | float(0) }}
           {% else %}
-            {{ states('sensor.heishahub_thermal_energy') | float(0) }}
+            {{ states('sensor.hph_thermal_energy') | float(0) }}
           {% endif %}
 
       # ─── Active electrical energy (kWh, total_increasing) ───────────────
-      - name: "HeishaHub Electrical Energy Active"
-        unique_id: heishahub_electrical_energy_active
+      - name: "Heat Pump Hero Electrical Energy Active"
+        unique_id: hph_electrical_energy_active
         unit_of_measurement: "kWh"
         device_class: energy
         state_class: total_increasing
         availability: >-
-          {% set src = states('input_select.heishahub_electrical_source') %}
+          {% set src = states('input_select.hph_electrical_source') %}
           {% if src == 'external_energy' %}
-            {% set ent = states('input_text.heishahub_src_external_electrical_energy') %}
+            {% set ent = states('input_text.hph_src_external_electrical_energy') %}
             {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
           {% else %}
-            {{ states('sensor.heishahub_electrical_energy')
+            {{ states('sensor.hph_electrical_energy')
                not in ['unknown','unavailable','none'] }}
           {% endif %}
         state: >-
-          {% set src = states('input_select.heishahub_electrical_source') %}
+          {% set src = states('input_select.hph_electrical_source') %}
           {% if src == 'external_energy' %}
-            {{ states(states('input_text.heishahub_src_external_electrical_energy')) | float(0) }}
+            {{ states(states('input_text.hph_src_external_electrical_energy')) | float(0) }}
           {% else %}
-            {{ states('sensor.heishahub_electrical_energy') | float(0) }}
+            {{ states('sensor.hph_electrical_energy') | float(0) }}
           {% endif %}
 
       # ════════════════════════════════════════════════════════════════════
       # COMPONENT AUTO-DETECTION
       # Detects HK2 / DHW / Buffer presence by checking whether the
       # corresponding source entity reports a valid number. Result feeds
-      # heishahub_schema_variant_detected → schema_variant_active.
+      # hph_schema_variant_detected → schema_variant_active.
       # ════════════════════════════════════════════════════════════════════
 
-      - name: "HeishaHub Schema Variant Detected"
-        unique_id: heishahub_schema_variant_detected
+      - name: "Heat Pump Hero Schema Variant Detected"
+        unique_id: hph_schema_variant_detected
         icon: mdi:graph-outline
         state: >-
-          {% set hk2 = is_state('binary_sensor.heishahub_has_hk2','on') %}
-          {% set dhw = is_state('binary_sensor.heishahub_has_dhw','on') %}
-          {% set buf = is_state('binary_sensor.heishahub_has_buffer','on') %}
+          {% set hk2 = is_state('binary_sensor.hph_has_hk2','on') %}
+          {% set dhw = is_state('binary_sensor.hph_has_dhw','on') %}
+          {% set buf = is_state('binary_sensor.hph_has_buffer','on') %}
           {% if hk2 and buf %}a2w_hk1_hk2_dhw_buffer
           {% elif hk2 and dhw %}a2w_hk1_hk2_dhw
           {% elif buf %}a2w_hk1_hk2_dhw_buffer
           {% elif dhw %}a2w_hk1_dhw
           {% else %}a2w_hk1{% endif %}
         attributes:
-          has_hk2: "{{ is_state('binary_sensor.heishahub_has_hk2','on') }}"
-          has_dhw: "{{ is_state('binary_sensor.heishahub_has_dhw','on') }}"
-          has_buffer: "{{ is_state('binary_sensor.heishahub_has_buffer','on') }}"
+          has_hk2: "{{ is_state('binary_sensor.hph_has_hk2','on') }}"
+          has_dhw: "{{ is_state('binary_sensor.hph_has_dhw','on') }}"
+          has_buffer: "{{ is_state('binary_sensor.hph_has_buffer','on') }}"
           message: >-
-            {% set hk2 = is_state('binary_sensor.heishahub_has_hk2','on') %}
-            {% set dhw = is_state('binary_sensor.heishahub_has_dhw','on') %}
-            {% set buf = is_state('binary_sensor.heishahub_has_buffer','on') %}
+            {% set hk2 = is_state('binary_sensor.hph_has_hk2','on') %}
+            {% set dhw = is_state('binary_sensor.hph_has_dhw','on') %}
+            {% set buf = is_state('binary_sensor.hph_has_buffer','on') %}
             {% set parts = [] %}
             {% if hk2 %}{% set parts = parts + ['Zone 2'] %}{% endif %}
             {% if dhw %}{% set parts = parts + ['DHW tank'] %}{% endif %}
@@ -486,19 +486,19 @@ template:
             {% endif %}
 
       # ─── Active variant (manual override or follow detection) ───────────
-      - name: "HeishaHub Schema Variant Active"
-        unique_id: heishahub_schema_variant_active
+      - name: "Heat Pump Hero Schema Variant Active"
+        unique_id: hph_schema_variant_active
         icon: mdi:graph-outline
         state: >-
-          {% set sel = states('input_select.heishahub_schema_variant') %}
+          {% set sel = states('input_select.hph_schema_variant') %}
           {% if sel == 'auto' %}
-            {{ states('sensor.heishahub_schema_variant_detected') }}
+            {{ states('sensor.hph_schema_variant_detected') }}
           {% else %}
             {{ sel }}
           {% endif %}
         attributes:
           source: >-
-            {% if states('input_select.heishahub_schema_variant') == 'auto' %}
+            {% if states('input_select.hph_schema_variant') == 'auto' %}
               auto-detected
             {% else %}
               manual override
@@ -507,23 +507,23 @@ template:
   - binary_sensor:
 
       # ─── Defrost state (resolved via configurable source) ───────────────
-      - name: "HeishaHub Source Defrost"
-        unique_id: heishahub_source_defrost
+      - name: "Heat Pump Hero Source Defrost"
+        unique_id: hph_source_defrost
         availability: >-
-          {% set ent = states('input_text.heishahub_src_defrost_state') %}
+          {% set ent = states('input_text.hph_src_defrost_state') %}
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
         state: >-
-          {% set ent = states('input_text.heishahub_src_defrost_state') %}
+          {% set ent = states('input_text.hph_src_defrost_state') %}
           {{ is_state(ent, 'on') }}
 
       # ─── Aux heater state (resolved via configurable source) ────────────
-      - name: "HeishaHub Source Aux Heater"
-        unique_id: heishahub_source_aux_heater
+      - name: "Heat Pump Hero Source Aux Heater"
+        unique_id: hph_source_aux_heater
         availability: >-
-          {% set ent = states('input_text.heishahub_src_aux_heater_state') %}
+          {% set ent = states('input_text.hph_src_aux_heater_state') %}
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
         state: >-
-          {% set ent = states('input_text.heishahub_src_aux_heater_state') %}
+          {% set ent = states('input_text.hph_src_aux_heater_state') %}
           {{ is_state(ent, 'on') }}
 
       # ════════════════════════════════════════════════════════════════════
@@ -531,11 +531,11 @@ template:
       # A component is "present" if its source entity-ID is set and reports
       # a valid number. Empty entity-ID = explicitly absent.
       # ════════════════════════════════════════════════════════════════════
-      - name: "HeishaHub Has HK2"
-        unique_id: heishahub_has_hk2
+      - name: "Heat Pump Hero Has HK2"
+        unique_id: hph_has_hk2
         icon: mdi:home-thermometer-outline
         state: >-
-          {% set ent = states('input_text.heishahub_src_zone2_temp') %}
+          {% set ent = states('input_text.hph_src_zone2_temp') %}
           {% if ent and ent not in ['unknown','unavailable','none',''] %}
             {% set v = states(ent) %}
             {{ v not in ['unknown','unavailable','none',''] and (v | float(-999)) > -100 }}
@@ -543,11 +543,11 @@ template:
             false
           {% endif %}
 
-      - name: "HeishaHub Has DHW"
-        unique_id: heishahub_has_dhw
+      - name: "Heat Pump Hero Has DHW"
+        unique_id: hph_has_dhw
         icon: mdi:water-boiler
         state: >-
-          {% set ent = states('input_text.heishahub_src_dhw_temp') %}
+          {% set ent = states('input_text.hph_src_dhw_temp') %}
           {% if ent and ent not in ['unknown','unavailable','none',''] %}
             {% set v = states(ent) %}
             {{ v not in ['unknown','unavailable','none',''] and (v | float(-999)) > -100 }}
@@ -555,11 +555,11 @@ template:
             false
           {% endif %}
 
-      - name: "HeishaHub Has Buffer"
-        unique_id: heishahub_has_buffer
+      - name: "Heat Pump Hero Has Buffer"
+        unique_id: hph_has_buffer
         icon: mdi:propane-tank
         state: >-
-          {% set ent = states('input_text.heishahub_src_buffer_temp') %}
+          {% set ent = states('input_text.hph_src_buffer_temp') %}
           {% if ent and ent not in ['unknown','unavailable','none',''] %}
             {% set v = states(ent) %}
             {{ v not in ['unknown','unavailable','none',''] and (v | float(-999)) > -100 }}

@@ -1,4 +1,4 @@
-# HeishaHub
+# Heat Pump Hero
 
 🌐 **Sprache:** [English](README.md) · Deutsch (diese Datei)
 
@@ -6,20 +6,20 @@
 > Universelles Home-Assistant-Paket für Panasonic-Aquarea-Wärmepumpen mit
 > Heishamon — Dashboard, Auswertung, Langzeit-Effizienz.
 
-[![Validate](https://github.com/st03psn/heishahub/actions/workflows/validate.yml/badge.svg)](https://github.com/st03psn/heishahub/actions/workflows/validate.yml)
+[![Validate](https://github.com/st03psn/heat-pump-hero/actions/workflows/validate.yml/badge.svg)](https://github.com/st03psn/heat-pump-hero/actions/workflows/validate.yml)
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-HeishaHub bündelt das, was bisher fehlt: ein importierbares Dashboard im Layout
+Heat Pump Hero bündelt das, was bisher fehlt: ein importierbares Dashboard im Layout
 des Heishamon-Web-UIs, Service-Cloud-ähnliche Auswertegraphen, ein Anlagen-
 Schema mit Live-Hotspots und sauber gerechnete Effizienz-Kennzahlen
 (JAZ / MAZ / TAZ / COP) — auch über mehrere Jahre.
 
 ## Status
 
-🟢 **v0.5 — beta** — Diagnose, Hersteller-/Modell-Selector, M-Serie,
-**Export / Import**, DB-Empfehlung, Naming-Vorschlag. Siehe
-[CHANGELOG.md](CHANGELOG.md).
+🟢 **v0.6 — beta** — umbenannt zu Heat Pump Hero. Neu: Analyse-Modul
+(L1 statistische Beobachtung + L2 Regressions-Script), Installer mit
+DB-Auswahl + Prereq-Check. Siehe [CHANGELOG.md](CHANGELOG.md).
 
 ## Features
 
@@ -71,7 +71,7 @@ Schema mit Live-Hotspots und sauber gerechnete Effizienz-Kennzahlen
 
 1. **HACS-Custom-Repository hinzufügen**
    - HACS → Integrations → ⋮ → Custom repositories
-   - URL: `https://github.com/st03psn/heishahub`
+   - URL: `https://github.com/st03psn/heat-pump-hero`
    - Kategorie: *Lovelace* (zunächst, bis HACS Mixed-Content unterstützt)
 
 2. **Abhängigkeiten installieren** (HACS-Suche, Reihenfolge egal):
@@ -88,10 +88,10 @@ Schema mit Live-Hotspots und sauber gerechnete Effizienz-Kennzahlen
    kopieren (manuell oder via `scripts/install.sh`).
 
 4. **Dashboard hinzufügen** — Settings → Dashboards → Add → From YAML →
-   `dashboards/heishahub.yaml` einfügen.
+   `dashboards/hph.yaml` einfügen.
 
 5. **Externe Sensoren** (optional) — Settings → Devices & Services → Helpers:
-   `heishahub_shelly_entity` und `heishahub_wmz_entity` mit Entity-IDs füllen.
+   `hph_shelly_entity` und `hph_wmz_entity` mit Entity-IDs füllen.
    Siehe [docs/external_sensors.md](docs/external_sensors.md).
 
 Ausführliche Anleitung: [docs/installation.md](docs/installation.md).
@@ -102,7 +102,7 @@ Ausführliche Anleitung: [docs/installation.md](docs/installation.md).
   Heishamon ─┐
              ├─MQTT─▶ kamaradclimber → HA-Entities
   Shelly ────┤                        │
-  WMZ ───────┘                        ├─▶ heishahub-Packages (Templates)
+  WMZ ───────┘                        ├─▶ hph-Packages (Templates)
                                       │     ├─ COP / JAZ / MAZ / TAZ
                                       │     └─ Energie thermisch/elektrisch
                                       ├─▶ HA Recorder + LTS ─▶ Lovelace
@@ -113,7 +113,7 @@ Ausführliche Anleitung: [docs/installation.md](docs/installation.md).
 
 ## Projektname & Bezug
 
-**HeishaHub** — Hub für alles rund um Heishamon: Dashboard + Steuerung +
+**Heat Pump Hero** — Hub für alles rund um Heishamon: Dashboard + Steuerung +
 Statistik in einem Paket.
 
 ## Mitwirken

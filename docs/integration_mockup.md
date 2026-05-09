@@ -1,6 +1,6 @@
-# HeishaHub — integration UI mockup (v1.0 design preview)
+# Heat Pump Hero — integration UI mockup (v1.0 design preview)
 
-This document shows what HeishaHub's UI will look like once it becomes a
+This document shows what Heat Pump Hero's UI will look like once it becomes a
 proper Python custom integration (planned for v0.6 → v1.0). The current
 v0.4 release ships YAML-based equivalents of every screen below.
 
@@ -29,7 +29,7 @@ Three steps:
 2. **Confirm model + components** — the screen shown in the mockup.
    Vendor and model dropdowns; auto-detected components (HK1, HK2, DHW,
    buffer) shown with the entities they came from. Each can be toggled
-   off explicitly if the user wants HeishaHub to ignore it.
+   off explicitly if the user wants Heat Pump Hero to ignore it.
 
 3. **Wire up extras** — optional Shelly / heat-meter / utility-meter
    entities; tariff splits; control automation toggle (CCC, SoftStart,
@@ -79,12 +79,12 @@ Feature parity:
 
 | Mockup element | v0.4 equivalent |
 |---|---|
-| Vendor preset dropdown with auto-fill | `input_select.heishahub_vendor_preset` + automation |
-| Model dropdown with auto thresholds | `input_select.heishahub_pump_model` + automation |
-| Auto-detected components | `binary_sensor.heishahub_has_hk2/dhw/buffer` |
-| Active fault + history | `sensor.heishahub_diagnostics_current_error` + ring buffer |
-| 8-rule advisor with traffic-light | `sensor.heishahub_advisor_*` (8 advisors) |
-| 7 dashboard views | `dashboards/heishahub.yaml` (overview/schema/analysis/efficiency/optimization/mobile/config) |
+| Vendor preset dropdown with auto-fill | `input_select.hph_vendor_preset` + automation |
+| Model dropdown with auto thresholds | `input_select.hph_pump_model` + automation |
+| Auto-detected components | `binary_sensor.hph_has_hk2/dhw/buffer` |
+| Active fault + history | `sensor.hph_diagnostics_current_error` + ring buffer |
+| 8-rule advisor with traffic-light | `sensor.hph_advisor_*` (8 advisors) |
+| 7 dashboard views | `dashboards/hph.yaml` (overview/schema/analysis/efficiency/optimization/mobile/config) |
 | Mobile view | `- title: Mobile` view |
 
 The integration just makes all of this clickable and hides the

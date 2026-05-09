@@ -8,7 +8,7 @@ die thermische Leistung aus internen Temperatursensoren — beides mit
 Toleranzen von 10–20 %. Für belastbare JAZ/MAZ-Werte sind echte
 Strommessgeräte und ggf. ein Wärmemengenzähler nötig.
 
-HeishaHub kann beide Quellen — intern und extern — gleichzeitig vorhalten und
+Heat Pump Hero kann beide Quellen — intern und extern — gleichzeitig vorhalten und
 die aktive Quelle per Dropdown umschalten, ohne YAML zu editieren.
 
 ## Stromzähler — Shelly
@@ -18,7 +18,7 @@ die aktive Quelle per Dropdown umschalten, ohne YAML zu editieren.
 1. Shelly in HA einbinden (Shelly-Integration aus HACS oder MQTT).
 2. Es entstehen u. a. `sensor.shellypro3em_<id>_total_active_power` (W) und
    `sensor.shellypro3em_<id>_total_energy` (kWh).
-3. *Settings → Devices & Services → Helpers* öffnen, `heishahub_shelly_entity`
+3. *Settings → Devices & Services → Helpers* öffnen, `hph_shelly_entity`
    bearbeiten, dort den **Power-Sensor** (W) eintragen, z. B.
    `sensor.shellypro3em_xxx_total_active_power`.
 4. Im Dashboard *Konfiguration → Quellen-Auswahl*:
@@ -26,7 +26,7 @@ die aktive Quelle per Dropdown umschalten, ohne YAML zu editieren.
 
 ### Shelly 1PM / EM (Einphasig)
 
-Genauso — Entity-ID des Power-Sensors in `heishahub_shelly_entity`.
+Genauso — Entity-ID des Power-Sensors in `hph_shelly_entity`.
 
 ## Wärmemengenzähler — MQTT
 
@@ -59,8 +59,8 @@ mqtt:
 ```
 
 Dann in den Helpers eintragen:
-- `heishahub_wmz_entity`        → `sensor.wmz_energy`
-- `heishahub_wmz_power_entity`  → `sensor.wmz_power`
+- `hph_wmz_entity`        → `sensor.wmz_energy`
+- `hph_wmz_power_entity`  → `sensor.wmz_power`
 
 Quelle umstellen: *Konfiguration → Quellen-Auswahl* →
 `Thermische Quelle` = `external_wmz`.
@@ -81,9 +81,9 @@ gemischt — am sinnvollsten Wechsel zum Monatsersten.
 
 Nach dem Wechsel auf externe Quellen:
 
-1. *Developer Tools → States* → `sensor.heishahub_electrical_power_active`
+1. *Developer Tools → States* → `sensor.hph_electrical_power_active`
    prüfen → muss in W mit deinem Shelly-Sensor identisch sein.
-2. `sensor.heishahub_thermal_power_active` muss plausibel sein
+2. `sensor.hph_thermal_power_active` muss plausibel sein
    (5–15 kW im Heizbetrieb bei 7 °C Außentemperatur).
-3. `sensor.heishahub_cop_live` muss zwischen 2.0 und 5.0 liegen.
-4. Nach 24 h: `sensor.heishahub_cop_daily` zeigt Tageswert.
+3. `sensor.hph_cop_live` muss zwischen 2.0 und 5.0 liegen.
+4. Nach 24 h: `sensor.hph_cop_daily` zeigt Tageswert.

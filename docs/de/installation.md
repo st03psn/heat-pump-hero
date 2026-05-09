@@ -38,25 +38,25 @@ In HACS *Frontend* nacheinander suchen und installieren:
 - auto-entities
 - card-mod
 
-## Schritt 3 — HeishaHub-Repo holen
+## Schritt 3 — Heat Pump Hero-Repo holen
 
 ```bash
 cd /tmp
-git clone https://github.com/st03psn/heishahub.git
+git clone https://github.com/st03psn/heat-pump-hero.git
 ```
 
 ## Schritt 4 — Installer ausführen (empfohlen)
 
 ```bash
-cd heishahub
+cd hph
 ./scripts/install.sh /path/to/your/homeassistant/config
 ```
 
 Der Installer kopiert:
 - `packages/*.yaml` → `<config>/packages/`
-- `dashboards/heishahub.yaml` → `<config>/heishahub/dashboard.yaml`
-- `dashboards/assets/*.svg` → `<config>/www/heishahub/`
-- `blueprints/heishahub_setup.yaml` → `<config>/blueprints/script/heishahub/`
+- `dashboards/hph.yaml` → `<config>/hph/dashboard.yaml`
+- `dashboards/assets/*.svg` → `<config>/www/hph/`
+- `blueprints/hph_setup.yaml` → `<config>/blueprints/script/hph/`
 
 und ergänzt `homeassistant: packages: !include_dir_named packages` in
 `configuration.yaml` (idempotent).
@@ -70,11 +70,11 @@ einfügen.
 ## Schritt 5 — Home Assistant neu starten
 
 `Settings → System → Restart`. Nach dem Neustart in *Developer Tools → States*
-nach `heishahub_` filtern — die HeishaHub-Sensoren sollten erscheinen.
+nach `hph_` filtern — die Heat Pump Hero-Sensoren sollten erscheinen.
 
 ## Schritt 6 — Setup-Blueprint ausführen
 
-`Settings → Automations & Scenes → Blueprints` → *HeishaHub Setup* → 
+`Settings → Automations & Scenes → Blueprints` → *Heat Pump Hero Setup* → 
 *Skript erstellen* → Ausführen. Liefert eine persistente Notification mit
 einer Diagnose, ob die Heishamon-Entities gefunden wurden.
 
@@ -83,10 +83,10 @@ einer Diagnose, ob die Heishamon-Entities gefunden wurden.
 `Settings → Dashboards → Add Dashboard → From YAML` →
 
 ```yaml
-title: HeishaHub
+title: Heat Pump Hero
 icon: mdi:heat-pump
 mode: yaml
-filename: heishahub/dashboard.yaml
+filename: hph/dashboard.yaml
 ```
 
 ## Schritt 8 — (Optional) Externe Sensoren
@@ -95,8 +95,8 @@ Siehe [external_sensors.md](external_sensors.md).
 
 ## Schritt 9 — (Optional) Grafana / InfluxDB
 
-1. **InfluxDB-Add-on** installieren, Bucket `heishahub` anlegen, Token erzeugen.
-2. **HA InfluxDB-Integration** konfigurieren → spiegelt alle `sensor.heishahub_*`
+1. **InfluxDB-Add-on** installieren, Bucket `hph` anlegen, Token erzeugen.
+2. **HA InfluxDB-Integration** konfigurieren → spiegelt alle `sensor.hph_*`
    nach InfluxDB.
 3. Alternativ **Telegraf** mit der Config aus
    `grafana/telegraf_mqtt.conf` für direkten MQTT→InfluxDB-Pfad
@@ -110,13 +110,13 @@ Beide Systeme können parallel am MQTT-Broker hören. **Schreibend** sollte nur
 eines aktiv sein. Empfehlung während Parallel-Test:
 
 - HeishaMoNR steuert (Schedules, CCC, RTC, SoftStart),
-- HeishaHub liest und visualisiert nur — alle `number.*` und `select.*` aus
+- Heat Pump Hero liest und visualisiert nur — alle `number.*` und `select.*` aus
   der kamaradclimber-Integration in HA deaktivieren (Entity → Disable).
 
 ## Update
 
 ```bash
-cd /tmp/heishahub
+cd /tmp/hph
 git pull
 ./scripts/install.sh /path/to/your/homeassistant/config
 ```

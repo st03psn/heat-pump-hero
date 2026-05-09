@@ -1,5 +1,5 @@
 {
-  "__comment": "HeishaHub — Grafana Overview dashboard. Requires InfluxDB v2 datasource. Data written by the official HA InfluxDB integration (component: influxdb, api_version: 2). All queries use entity_id tag filter — adjust bucket name to match your setup (default: 'homeassistant').",
+  "__comment": "Heat Pump Hero — Grafana Overview dashboard. Requires InfluxDB v2 datasource. Data written by the official HA InfluxDB integration (component: influxdb, api_version: 2). All queries use entity_id tag filter — adjust bucket name to match your setup (default: 'homeassistant').",
   "annotations": { "list": [] },
   "editable": true,
   "fiscalYearStartMonth": 0,
@@ -40,19 +40,19 @@
       "targets": [
         {
           "refId": "A",
-          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_source_outdoor_temp\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: r._value}))\n  |> yield(name: \"Outdoor\")"
+          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_source_outdoor_temp\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: r._value}))\n  |> yield(name: \"Outdoor\")"
         },
         {
           "refId": "B",
-          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_source_inlet_temp\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"Return\")"
+          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_source_inlet_temp\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"Return\")"
         },
         {
           "refId": "C",
-          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_source_outlet_temp\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"Supply\")"
+          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_source_outlet_temp\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"Supply\")"
         },
         {
           "refId": "D",
-          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_source_discharge_temp\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"Discharge\")"
+          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_source_discharge_temp\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"Discharge\")"
         }
       ],
       "title": "Temperatures",
@@ -77,15 +77,15 @@
       "targets": [
         {
           "refId": "A",
-          "query": "from(bucket: v.bucket)\n  |> range(start: -5m)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_source_outdoor_temp\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> last()\n  |> map(fn: (r) => ({r with _field: \"Outdoor T°\"}))"
+          "query": "from(bucket: v.bucket)\n  |> range(start: -5m)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_source_outdoor_temp\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> last()\n  |> map(fn: (r) => ({r with _field: \"Outdoor T°\"}))"
         },
         {
           "refId": "B",
-          "query": "from(bucket: v.bucket)\n  |> range(start: -5m)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_source_outlet_temp\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> last()\n  |> map(fn: (r) => ({r with _field: \"Supply T°\"}))"
+          "query": "from(bucket: v.bucket)\n  |> range(start: -5m)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_source_outlet_temp\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> last()\n  |> map(fn: (r) => ({r with _field: \"Supply T°\"}))"
         },
         {
           "refId": "C",
-          "query": "from(bucket: v.bucket)\n  |> range(start: -5m)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_source_inlet_temp\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> last()\n  |> map(fn: (r) => ({r with _field: \"Return T°\"}))"
+          "query": "from(bucket: v.bucket)\n  |> range(start: -5m)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_source_inlet_temp\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> last()\n  |> map(fn: (r) => ({r with _field: \"Return T°\"}))"
         }
       ],
       "title": "Current temperatures",
@@ -127,11 +127,11 @@
       "targets": [
         {
           "refId": "A",
-          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_source_compressor_freq\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: \"Compressor Hz\"}))"
+          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_source_compressor_freq\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: \"Compressor Hz\"}))"
         },
         {
           "refId": "B",
-          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_source_flow_rate\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: \"Water flow\"}))"
+          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_source_flow_rate\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: \"Water flow\"}))"
         }
       ],
       "title": "Compressor & water flow",
@@ -168,15 +168,15 @@
       "targets": [
         {
           "refId": "A",
-          "query": "from(bucket: v.bucket)\n  |> range(start: -5m)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_source_compressor_freq\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> last()\n  |> map(fn: (r) => ({r with _field: \"Compressor Hz\"}))"
+          "query": "from(bucket: v.bucket)\n  |> range(start: -5m)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_source_compressor_freq\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> last()\n  |> map(fn: (r) => ({r with _field: \"Compressor Hz\"}))"
         },
         {
           "refId": "B",
-          "query": "from(bucket: v.bucket)\n  |> range(start: -5m)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_source_pump_pressure\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> last()\n  |> map(fn: (r) => ({r with _field: \"Pressure\"}))"
+          "query": "from(bucket: v.bucket)\n  |> range(start: -5m)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_source_pump_pressure\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> last()\n  |> map(fn: (r) => ({r with _field: \"Pressure\"}))"
         },
         {
           "refId": "C",
-          "query": "from(bucket: v.bucket)\n  |> range(start: -5m)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_cop_live\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> last()\n  |> map(fn: (r) => ({r with _field: \"COP live\"}))"
+          "query": "from(bucket: v.bucket)\n  |> range(start: -5m)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_cop_live\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> last()\n  |> map(fn: (r) => ({r with _field: \"COP live\"}))"
         }
       ],
       "title": "Live values",
@@ -219,11 +219,11 @@
       "targets": [
         {
           "refId": "A",
-          "query": "supply = from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_source_outlet_temp\" and r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n\nreturn = from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_source_inlet_temp\" and r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n\njoin(tables: {supply: supply, return: return}, on: [\"_time\"])\n  |> map(fn: (r) => ({_time: r._time, _value: r._value_supply - r._value_return, _field: \"ΔT (supply−return)\"}))"
+          "query": "supply = from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_source_outlet_temp\" and r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n\nreturn = from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_source_inlet_temp\" and r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n\njoin(tables: {supply: supply, return: return}, on: [\"_time\"])\n  |> map(fn: (r) => ({_time: r._time, _value: r._value_supply - r._value_return, _field: \"ΔT (supply−return)\"}))"
         },
         {
           "refId": "B",
-          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.heishahub_thermal_power_active\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: \"Thermal power W\"}))"
+          "query": "from(bucket: v.bucket)\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"entity_id\"] == \"sensor.hph_thermal_power_active\")\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _field: \"Thermal power W\"}))"
         }
       ],
       "title": "Supply/Return ΔT and thermal power",
@@ -233,7 +233,7 @@
   ],
   "refresh": "1m",
   "schemaVersion": 39,
-  "tags": ["heishahub", "heatpump", "overview"],
+  "tags": ["hph", "heatpump", "overview"],
   "templating": {
     "list": [
       {
@@ -261,7 +261,7 @@
   "time": { "from": "now-24h", "to": "now" },
   "timepicker": {},
   "timezone": "browser",
-  "title": "HeishaHub — Overview",
-  "uid": "heishahub-overview",
+  "title": "Heat Pump Hero — Overview",
+  "uid": "hph-overview",
   "version": 1
 }

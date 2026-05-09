@@ -1,7 +1,7 @@
 {
-  "name": "HeishaHub",
+  "name": "Heat Pump Hero",
   "content_in_root": false,
-  "filename": "heishahub.yaml",
+  "filename": "hph.yaml",
   "render_readme": true,
   "homeassistant": "2024.4.0",
   "hacs": "2.0.0",

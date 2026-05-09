@@ -42,15 +42,26 @@ For detailed per-release changes, see [`CHANGELOG.md`](../CHANGELOG.md).
 - HA min version corrected to 2024.4
 - HA Docker check_config CI
 
-## ✅ v0.5 — export, import, DB, naming (current)
+## ✅ v0.5 — export, import, DB, naming
 
 - Export module: CSV / JSON / XLSX, manual or scheduled (daily/weekly/monthly)
 - Import module: backfill HA long-term statistics from CSV
 - Database recommendations doc (SQLite vs MariaDB vs PostgreSQL vs InfluxDB)
-- Naming proposal doc (HeatLens as universal rename candidate)
+- Naming proposal doc
 - M-series compressor min Hz corrected (12 → 16, empirical)
 
-## v0.6 — control extensions
+## ✅ v0.6 — rebrand + analysis (current)
+
+- Rebrand `HeishaHub` → **Heat Pump Hero (HPH)** across the entire
+  codebase (entity IDs, files, docs, mockups)
+- Analysis module Layer 1 — statistical observation of indoor-temp
+  deviation, recommends heating-curve adjustment in K
+- Analysis module Layer 2 — Python regression script fits supply
+  vs outdoor temp, plain-language verdict
+- Installer pre-flight check + DB choice prompt
+- Installer ships export / import / heating-curve scripts to `/config/scripts/`
+
+## v0.7 — control extensions
 
 - [ ] Heating-curve recommendation derived from data (linear regression
   of supply temp vs outdoor temp)
@@ -64,9 +75,9 @@ For detailed per-release changes, see [`CHANGELOG.md`](../CHANGELOG.md).
 - [ ] Screed dry-out program (for new builds)
 - [ ] Control automations vendor adapter (write paths swappable)
 
-## v0.7 — Python custom integration (HACS plug-and-play)
+## v0.8 — Python custom integration (HACS plug-and-play)
 
-- [ ] `custom_components/heishahub/` skeleton
+- [ ] `custom_components/hph/` skeleton
 - [ ] Config flow for first-run setup (3 steps: vendor / model / extras)
 - [ ] Programmatic helper registration (no input_select / input_text YAML)
 - [ ] Programmatic sensor registration (replaces `template:` packages)
@@ -86,7 +97,7 @@ For detailed per-release changes, see [`CHANGELOG.md`](../CHANGELOG.md).
 
 ## Out of scope
 
-- Cloud features (HeishaHub stays 100 % local)
+- Cloud features (Heat Pump Hero stays 100 % local)
 - Replacing kamaradclimber/heishamon-homeassistant — we wrap it, not
   duplicate it
 - Standalone control without an underlying heat-pump integration

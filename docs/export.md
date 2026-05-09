@@ -2,49 +2,49 @@
 
 🌐 English
 
-Three ways to get HeishaHub data out for external analysis.
+Three ways to get Heat Pump Hero data out for external analysis.
 
 ## 1. Built-in HA UI (manual)
 
 Settings → Developer Tools → Statistics → pick entity → ⋯ → Download.
 Good for one-off Excel checks. No setup.
 
-## 2. Scheduled CSV / JSON / XLSX (HeishaHub export module)
+## 2. Scheduled CSV / JSON / XLSX (Heat Pump Hero export module)
 
-Helpers added by `packages/heishahub_export.yaml`:
+Helpers added by `packages/hph_export.yaml`:
 
 | Helper | Purpose |
 |---|---|
-| `input_text.heishahub_export_target_path` | output directory (default `/config/heishahub_exports`) |
-| `input_select.heishahub_export_format` | csv / json / xlsx |
-| `input_select.heishahub_export_period` | last_day / last_week / last_month / last_year / all_time |
-| `input_select.heishahub_export_schedule` | manual_only / daily_0300 / weekly_monday_0300 / monthly_1st_0300 |
-| `script.heishahub_export_now` | manual trigger button |
+| `input_text.hph_export_target_path` | output directory (default `/config/hph_exports`) |
+| `input_select.hph_export_format` | csv / json / xlsx |
+| `input_select.hph_export_period` | last_day / last_week / last_month / last_year / all_time |
+| `input_select.hph_export_schedule` | manual_only / daily_0300 / weekly_monday_0300 / monthly_1st_0300 |
+| `script.hph_export_now` | manual trigger button |
 
 **One-time setup** in `configuration.yaml`:
 
 ```yaml
 shell_command:
-  heishahub_export: >-
+  hph_export: >-
     HA_BASE_URL=http://localhost:8123
-    HA_TOKEN=!secret heishahub_export_token
-    HEISHAHUB_TARGET={{ states('input_text.heishahub_export_target_path') }}
-    HEISHAHUB_FORMAT={{ states('input_select.heishahub_export_format') }}
-    HEISHAHUB_PERIOD={{ states('input_select.heishahub_export_period') }}
-    python3 /config/scripts/export_heishahub.py
+    HA_TOKEN=!secret hph_export_token
+    HEISHAHUB_TARGET={{ states('input_text.hph_export_target_path') }}
+    HEISHAHUB_FORMAT={{ states('input_select.hph_export_format') }}
+    HEISHAHUB_PERIOD={{ states('input_select.hph_export_period') }}
+    python3 /config/scripts/export_hph.py
 ```
 
 Then in `secrets.yaml`:
 ```yaml
-heishahub_export_token: <your long-lived access token>
+hph_export_token: <your long-lived access token>
 ```
 
 Long-lived token: HA → user profile (bottom-left) → Security → Long-lived
 access tokens → Create.
 
-Runs the script at `scripts/export_heishahub.py` (installed by
+Runs the script at `scripts/export_hph.py` (installed by
 `scripts/install.sh`). One file per entity, named
-`heishahub_<entity>_<period>_<timestamp>.<ext>`.
+`hph_<entity>_<period>_<timestamp>.<ext>`.
 
 For XLSX: `pip install openpyxl` in the HA Python environment, or stay
 on CSV/JSON.
@@ -65,7 +65,7 @@ XLSX: same columns as CSV, one sheet per entity.
 
 The export module writes to a local directory. To ship files elsewhere:
 
-- **Network share** — set `target_path` to e.g. `/share/heishahub_exports`
+- **Network share** — set `target_path` to e.g. `/share/hph_exports`
   (the HA `share` add-on directory) and let your NAS pull from it.
 - **Cloud storage** — chain a second automation that calls
   `notify.dropbox` / `rclone` / a `shell_command` after the export.
