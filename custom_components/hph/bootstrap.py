@@ -1,19 +1,16 @@
 """Phase-3 bootstrap helpers.
 
-Phase 3 removes all YAML automation packages — the integration is now
-fully self-contained in Python. This module handles the reduced set of
-deploy/cleanup tasks:
+Deploys the minimal set of files needed for the integration to function:
+  - hph_efficiency.yaml → <config>/packages/   (utility_meter platform config)
+  - hph/dashboard.yaml  → <config>/hph/        (Lovelace YAML dashboard)
+  - *.svg               → <config>/www/hph/     (dashboard assets)
+  - blueprint           → <config>/blueprints/script/hph/ (legacy)
 
-  - One-time migration: remove hph_*.yaml files previously deployed to
-    <config>/packages/ (v0.8 / v0.9 phase 1 leftovers)
-  - Copying <config>/hph/dashboard.yaml  (Lovelace YAML-mode panel)
-  - Copying <config>/www/hph/*.svg       (dashboard assets)
-  - Deploying hph_efficiency.yaml        (utility_meter + integration
-    sensors — HA platform config, no automation logic, cannot be
-    expressed in Python)
-  - Auto-registering the dashboard via Lovelace's storage backend
-  - Cleaning every file we ever deployed when the integration is
-    removed via the UI
+Also handles:
+  - One-time migration: removes hph_*.yaml files previously deployed by
+    v0.8 / v0.9-phase-1 (all except hph_efficiency.yaml)
+  - Dashboard auto-registration in the Lovelace store
+  - Aggressive file cleanup on UI-uninstall
 """
 
 from __future__ import annotations
@@ -49,13 +46,7 @@ def _config(hass: HomeAssistant) -> Path:
 
 # ─── Deploy ───────────────────────────────────────────────────────────────
 async def async_deploy_yaml_packages(hass: HomeAssistant) -> dict[str, Any]:
-    """Deploy dashboard, assets and the efficiency platform package.
-
-    Also runs one-time migration: removes old hph_*.yaml automation
-    packages deployed by v0.8 / v0.9-phase-1.
-
-    Returns: summary dict (used by tests + logs).
-    """
+    """Deploy dashboard, assets, efficiency package; migrate old packages."""
     return await hass.async_add_executor_job(_deploy_sync, _config(hass))
 
 
@@ -68,14 +59,12 @@ def _deploy_sync(config_dir: Path) -> dict[str, Any]:
         "efficiency": False,
     }
 
-    # 1. Migration: remove old hph_*.yaml automation packages from
-    #    <config>/packages/ (deployed by v0.8 / v0.9-phase-1).
-    #    Only hph_efficiency.yaml is kept — it holds platform config.
+    # 1. Migration: remove old hph_*.yaml automation packages.
     pkg_dst = config_dir / "packages"
     if pkg_dst.exists():
-        bundled_efficiency = {"hph_efficiency.yaml"}
+        keep = {"hph_efficiency.yaml"}
         for stale in list(pkg_dst.glob("hph_*.yaml")):
-            if stale.name not in bundled_efficiency:
+            if stale.name not in keep:
                 try:
                     stale.unlink()
                     deployed["migrated_removed"].append(stale.name)
@@ -86,9 +75,9 @@ def _deploy_sync(config_dir: Path) -> dict[str, Any]:
     # 2. Deploy hph_efficiency.yaml (utility_meter + integration sensors).
     if _DATA_EFFICIENCY.exists():
         pkg_dst.mkdir(parents=True, exist_ok=True)
-        dst = pkg_dst / _DATA_EFFICIENCY.name
-        shutil.copyfile(_DATA_EFFICIENCY, dst)
+        shutil.copyfile(_DATA_EFFICIENCY, pkg_dst / _DATA_EFFICIENCY.name)
         deployed["efficiency"] = True
+        _ensure_packages_include(config_dir / "configuration.yaml")
 
     # 3. Dashboard YAML
     dash_dst_dir = config_dir / "hph"
@@ -107,25 +96,21 @@ def _deploy_sync(config_dir: Path) -> dict[str, Any]:
             shutil.copyfile(src, dst)
             deployed["assets"].append(src.name)
 
-    # 5. Setup blueprint (legacy — kept for users who used it pre-v0.9)
+    # 5. Setup blueprint (legacy)
     bp_dst = config_dir / "blueprints" / "script" / "hph"
     bp_dst.mkdir(parents=True, exist_ok=True)
     if _DATA_BLUEPRINT.exists():
         shutil.copyfile(_DATA_BLUEPRINT, bp_dst / _DATA_BLUEPRINT.name)
         deployed["blueprint"].append(_DATA_BLUEPRINT.name)
 
-    # 6. Ensure packages include in configuration.yaml (needed for efficiency.yaml)
-    if deployed["efficiency"]:
-        _ensure_packages_include(config_dir / "configuration.yaml")
-
     if deployed["migrated_removed"]:
         _LOGGER.info(
-            "Migration complete: removed %d old automation packages: %s",
+            "Migration: removed %d old automation packages: %s",
             len(deployed["migrated_removed"]),
             ", ".join(deployed["migrated_removed"]),
         )
     _LOGGER.info(
-        "HeatPump Hero bootstrap: dashboard=%s, %d assets, efficiency=%s, %d old packages removed",
+        "HPH bootstrap done: dashboard=%s, %d assets, efficiency=%s, %d old packages removed",
         bool(deployed["dashboard"]),
         len(deployed["assets"]),
         deployed["efficiency"],
@@ -136,7 +121,7 @@ def _deploy_sync(config_dir: Path) -> dict[str, Any]:
 
 def _ensure_packages_include(config_yaml: Path) -> None:
     if not config_yaml.exists():
-        _LOGGER.warning("configuration.yaml not found at %s — skipping include", config_yaml)
+        _LOGGER.warning("configuration.yaml not found — skipping packages include")
         return
     text = config_yaml.read_text(encoding="utf-8")
     if "packages: !include_dir_named packages" in text:
@@ -158,18 +143,51 @@ def _ensure_packages_include(config_yaml: Path) -> None:
 
 # ─── Dashboard auto-register ──────────────────────────────────────────────
 async def async_register_dashboard(hass: HomeAssistant) -> None:
-    """Register the HPH dashboard so it appears in the sidebar automatically."""
+    """Register the HPH Lovelace dashboard in the sidebar.
+
+    Strategy (two-pronged for reliability):
+    1. Add it directly to hass.data["lovelace"].dashboards via LovelaceYAML —
+       this makes HA serve the YAML config over the API immediately.
+    2. Register a built-in panel for the sidebar entry.
+
+    If Lovelace isn't loaded yet (e.g. called too early), falls back to
+    registering only the built-in panel and logs a warning.
+    """
     lovelace_data = hass.data.get("lovelace")
     if lovelace_data is None:
-        _LOGGER.debug("Lovelace not loaded yet — skipping dashboard auto-register")
+        _LOGGER.debug("Lovelace not loaded — skipping dashboard register")
         return
+
     dashboards = getattr(lovelace_data, "dashboards", None)
     if dashboards is None:
-        _LOGGER.debug("Lovelace dashboards attribute missing — skipping auto-register")
+        _LOGGER.debug("Lovelace dashboards attribute missing — skipping")
         return
-    if DASHBOARD_URL_PATH in dashboards:
-        _LOGGER.debug("Dashboard %s already registered — skipping", DASHBOARD_URL_PATH)
-        return
+
+    # Step 1: Register in the Lovelace dashboard store so the API serves
+    # the YAML file correctly when the frontend loads the dashboard.
+    if DASHBOARD_URL_PATH not in dashboards:
+        try:
+            from homeassistant.components.lovelace.dashboard import LovelaceYAML
+            yaml_dash = LovelaceYAML(
+                hass,
+                DASHBOARD_URL_PATH,
+                {
+                    "mode": "yaml",
+                    "filename": DASHBOARD_FILE_REL,
+                    "title": DASHBOARD_TITLE,
+                    "icon": DASHBOARD_ICON,
+                    "show_in_sidebar": True,
+                    "require_admin": False,
+                },
+            )
+            dashboards[DASHBOARD_URL_PATH] = yaml_dash
+            _LOGGER.info("HPH dashboard registered in Lovelace store at /%s", DASHBOARD_URL_PATH)
+        except Exception as exc:  # noqa: BLE001
+            _LOGGER.warning("Could not register dashboard in Lovelace store: %s", exc)
+    else:
+        _LOGGER.debug("Dashboard %s already in Lovelace store — skipping", DASHBOARD_URL_PATH)
+
+    # Step 2: Register the sidebar panel entry.
     try:
         frontend.async_register_built_in_panel(
             hass,
@@ -177,18 +195,27 @@ async def async_register_dashboard(hass: HomeAssistant) -> None:
             sidebar_title=DASHBOARD_TITLE,
             sidebar_icon=DASHBOARD_ICON,
             frontend_url_path=DASHBOARD_URL_PATH,
-            config={"mode": "yaml", "filename": DASHBOARD_FILE_REL},
+            config={
+                "mode": "yaml",
+                "filename": DASHBOARD_FILE_REL,
+            },
             require_admin=False,
             update=True,
         )
-        _LOGGER.info("Registered HeatPump Hero dashboard at /%s", DASHBOARD_URL_PATH)
+        _LOGGER.info("HPH sidebar panel registered at /%s", DASHBOARD_URL_PATH)
     except Exception as exc:  # noqa: BLE001
-        _LOGGER.warning("Could not register dashboard panel: %s", exc)
+        _LOGGER.warning("Could not register sidebar panel: %s", exc)
 
 
 # ─── Cleanup on UI-uninstall ──────────────────────────────────────────────
 async def async_clean_deployed_files(hass: HomeAssistant) -> None:
     """Remove every file the integration ever deployed."""
+    # Remove from Lovelace store
+    lovelace_data = hass.data.get("lovelace")
+    if lovelace_data is not None:
+        dashboards = getattr(lovelace_data, "dashboards", {})
+        dashboards.pop(DASHBOARD_URL_PATH, None)
+
     await hass.async_add_executor_job(_clean_sync, _config(hass))
 
 

@@ -17,6 +17,7 @@ from typing import Any
 import voluptuous as vol
 
 from homeassistant import config_entries
+from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.core import callback
 from homeassistant.helpers import selector
 
@@ -34,11 +35,39 @@ def _vendor_options() -> list[selector.SelectOptionDict]:
 
 def _model_options() -> list[selector.SelectOptionDict]:
     return [
-        selector.SelectOptionDict(
-            value=k, label=v.get("description", k)
-        )
+        selector.SelectOptionDict(value=k, label=v.get("description", k))
         for k, v in PUMP_MODELS.items()
     ]
+
+
+def _temp_selector() -> selector.EntitySelector:
+    return selector.EntitySelector(
+        selector.EntitySelectorConfig(
+            domain="sensor",
+            device_class=SensorDeviceClass.TEMPERATURE,
+            multiple=False,
+        )
+    )
+
+
+def _power_selector() -> selector.EntitySelector:
+    return selector.EntitySelector(
+        selector.EntitySelectorConfig(
+            domain="sensor",
+            device_class=SensorDeviceClass.POWER,
+            multiple=False,
+        )
+    )
+
+
+def _energy_selector() -> selector.EntitySelector:
+    return selector.EntitySelector(
+        selector.EntitySelectorConfig(
+            domain="sensor",
+            device_class=SensorDeviceClass.ENERGY,
+            multiple=False,
+        )
+    )
 
 
 class HphConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -51,7 +80,6 @@ class HphConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> Any:
         """Step 1 — pick a vendor preset."""
-        # Single-instance — only one HeatPump Hero per HA install.
         if self._async_current_entries():
             return self.async_abort(reason="single_instance_allowed")
 
@@ -107,16 +135,13 @@ class HphConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             )
             return await self.async_step_confirm()
 
-        any_sensor = selector.EntitySelector(
-            selector.EntitySelectorConfig(domain="sensor", multiple=False)
-        )
         schema = vol.Schema(
             {
-                vol.Optional("indoor_temp_entity"): any_sensor,
-                vol.Optional("external_thermal_power"): any_sensor,
-                vol.Optional("external_electrical_power"): any_sensor,
-                vol.Optional("external_thermal_energy"): any_sensor,
-                vol.Optional("external_electrical_energy"): any_sensor,
+                vol.Optional("indoor_temp_entity"): _temp_selector(),
+                vol.Optional("external_thermal_power"): _power_selector(),
+                vol.Optional("external_electrical_power"): _power_selector(),
+                vol.Optional("external_thermal_energy"): _energy_selector(),
+                vol.Optional("external_electrical_energy"): _energy_selector(),
             }
         )
         return self.async_show_form(step_id="sensors", data_schema=schema)
