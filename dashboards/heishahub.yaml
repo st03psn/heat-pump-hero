@@ -108,322 +108,379 @@ views:
             icon_color: yellow
 
   # ════════════════════════════════════════════════════════════════════════
-  # 2) SCHEMATIC — Bubble-Card with SVG background + live hotspots
+  # 2) SCHEMATIC — auto-detected variant + Bubble-Card SVG with hotspots
   #
-  # Requires: Clooos/Bubble-Card ≥ 3.0
-  # SVG background served from /local/heishahub/schema_a2w.svg
-  # (installed by scripts/install.sh into www/heishahub/)
+  # The active variant is auto-detected from which optional components
+  # report data (HK2 / DHW / Buffer) and is exposed as
+  # sensor.heishahub_schema_variant_active. Manual override via
+  # input_select.heishahub_schema_variant (option "auto" follows detection).
   #
-  # Each sub_button is positioned with margin offsets that match the
-  # data-hotspot-x / data-hotspot-y coordinates in the SVG (900×520 canvas,
-  # scaled to full card width). Values are percentages of card dimensions.
+  # Each variant has its own conditional Bubble-Card with the correct
+  # SVG background and variant-specific hotspot positions.
+  #
+  # Requires: Clooos/Bubble-Card >= 3.0
+  # SVGs served from /local/heishahub/schema_*.svg
   # ════════════════════════════════════════════════════════════════════════
   - title: Schematic
     path: schema
     icon: mdi:graph-outline
     cards:
-      # Schema variant selector — switches the SVG background
+      # ── Setup-status / detection card ──
+      - type: custom:mushroom-template-card
+        primary: |-
+          Installation: {{ states('sensor.heishahub_schema_variant_active') | replace('_',' ') | upper }}
+        secondary: |-
+          {% set src = state_attr('sensor.heishahub_schema_variant_active','source') %}
+          {% set msg = state_attr('sensor.heishahub_schema_variant_detected','message') %}
+          [{{ src }}] {{ msg }}
+        icon: |-
+          {% set v = states('sensor.heishahub_schema_variant_active') %}
+          {% if 'buffer' in v %}mdi:propane-tank
+          {% elif 'hk2' in v %}mdi:home-thermometer
+          {% elif 'dhw' in v %}mdi:water-boiler
+          {% else %}mdi:radiator{% endif %}
+        icon_color: blue
+        multiline_secondary: true
+        fill_container: true
+        tap_action:
+          action: navigate
+          navigation_path: /heishahub/config
+
       - type: entities
+        title: Detection details
         entities:
+          - entity: binary_sensor.heishahub_has_hk2
+            name: Zone 2 detected
+          - entity: binary_sensor.heishahub_has_dhw
+            name: DHW tank detected
+          - entity: binary_sensor.heishahub_has_buffer
+            name: Buffer tank detected
+          - type: divider
           - entity: input_select.heishahub_schema_variant
-            name: Installation variant
+            name: Variant selector (auto / manual override)
 
-      - type: custom:bubble-card
-        card_type: separator
-        name: A2W Heat Pump — Live Schematic
-        icon: mdi:heat-pump
-
-      - type: custom:bubble-card
-        card_type: custom
-        # Background: the SVG schematic served from /local/
-        # card_mod sets the background image; sub_buttons overlay live values.
-        card_mod:
-          style: |
-            ha-card {
-              background-image: url('/local/heishahub/schema_a2w.svg');
-              background-size: contain;
-              background-repeat: no-repeat;
-              background-position: center;
-              background-color: #0f1923;
-              min-height: 400px;
-              position: relative;
-            }
-        sub_buttons:
-          # ── Operating mode (top center, ~450/900 = 50%, ~35/520 = 7%) ──
-          - entity: sensor.heishahub_source_operating_mode
-            show_state: true
-            show_name: false
-            show_icon: false
-            styles: |
-              .bubble-sub-button {
-                position: absolute;
-                left: 44%;
-                top: 5%;
-                background: transparent;
-                color: #8ca8c0;
-                font-size: 11px;
-                font-weight: 600;
+      # ═══════════════════════════════════════════════════════════════════
+      # Variant a2w_hk1
+      # ═══════════════════════════════════════════════════════════════════
+      - type: conditional
+        conditions:
+          - entity: sensor.heishahub_schema_variant_active
+            state: a2w_hk1
+        card:
+          type: custom:bubble-card
+          card_type: custom
+          card_mod:
+            style: |
+              ha-card {
+                background-image: url('/local/heishahub/schema_a2w_hk1.svg');
+                background-size: contain;
+                background-repeat: no-repeat;
+                background-position: center;
+                background-color: #0f1923;
+                min-height: 400px;
+                position: relative;
               }
-
-          # ── Outdoor temperature (~110/900 = 12%, ~88/520 = 17%) ──
-          - entity: sensor.heishahub_source_outdoor_temp
-            show_state: true
-            show_name: false
-            show_icon: false
-            styles: |
-              .bubble-sub-button {
-                position: absolute;
-                left: 8%;
-                top: 14%;
-                background: transparent;
-                color: #e0a800;
-                font-size: 14px;
-                font-weight: 700;
+          sub_buttons:
+            - entity: sensor.heishahub_source_operating_mode
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 44%; top: 5%; background: transparent; color: #8ca8c0; font-size: 11px; font-weight: 600; }
+            - entity: sensor.heishahub_source_outdoor_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 8%; top: 14%; background: transparent; color: #e0a800; font-size: 14px; font-weight: 700; }
+            - entity: sensor.heishahub_source_outlet_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 41%; top: 22%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            - entity: sensor.heishahub_source_inlet_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 41%; top: 70%; background: #1a252f; border: 1px solid #2980b9; color: #2980b9; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            - entity: sensor.heishahub_source_flow_rate
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 24%; top: 65%; background: #1a252f; border: 1px solid #2980b9; color: #4a9aca; font-size: 10px; border-radius: 6px; padding: 2px 4px; }
+            - entity: sensor.heishahub_source_compressor_freq
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 84%; top: 71%; background: #0f1923; border: 1px solid #3d5166; color: #bcbd22; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            - entity: sensor.heishahub_cop_live
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 37%; top: 88%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
+            - entity: sensor.heishahub_cop_daily
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 46%; top: 88%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
+            - entity: sensor.heishahub_scop
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 54%; top: 88%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
+      # ═══════════════════════════════════════════════════════════════════
+      # Variant a2w_hk1_dhw
+      # ═══════════════════════════════════════════════════════════════════
+      - type: conditional
+        conditions:
+          - entity: sensor.heishahub_schema_variant_active
+            state: a2w_hk1_dhw
+        card:
+          type: custom:bubble-card
+          card_type: custom
+          card_mod:
+            style: |
+              ha-card {
+                background-image: url('/local/heishahub/schema_a2w_hk1_dhw.svg');
+                background-size: contain;
+                background-repeat: no-repeat;
+                background-position: center;
+                background-color: #0f1923;
+                min-height: 420px;
+                position: relative;
               }
-
-          # ── Supply (outlet) temperature (~400/900 = 44%, ~140/520 = 27%) ──
-          - entity: sensor.heishahub_source_outlet_temp
-            show_state: true
-            show_name: false
-            show_icon: false
-            styles: |
-              .bubble-sub-button {
-                position: absolute;
-                left: 41%;
-                top: 22%;
-                background: #1a252f;
-                border: 1px solid #e74c3c;
-                color: #e74c3c;
-                font-size: 11px;
-                font-weight: 700;
-                border-radius: 6px;
-                padding: 2px 5px;
+          sub_buttons:
+            - entity: sensor.heishahub_source_operating_mode
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 28%; top: 8%; background: transparent; color: #8ca8c0; font-size: 11px; font-weight: 600; }
+            - entity: sensor.heishahub_source_outdoor_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 9%; top: 17%; background: transparent; color: #e0a800; font-size: 14px; font-weight: 700; }
+            - entity: sensor.heishahub_source_outlet_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 35%; top: 25%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            - entity: sensor.heishahub_source_inlet_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 35%; top: 60%; background: #1a252f; border: 1px solid #2980b9; color: #2980b9; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            - entity: sensor.heishahub_source_compressor_freq
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 6%; top: 82%; background: #0f1923; border: 1px solid #3d5166; color: #bcbd22; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            - entity: sensor.heishahub_cop_live
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 22%; top: 91%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
+            - entity: sensor.heishahub_scop
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 38%; top: 91%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
+            - entity: sensor.heishahub_source_dhw_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 90%; top: 47%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+      # ═══════════════════════════════════════════════════════════════════
+      # Variant a2w_hk1_hk2_dhw
+      # ═══════════════════════════════════════════════════════════════════
+      - type: conditional
+        conditions:
+          - entity: sensor.heishahub_schema_variant_active
+            state: a2w_hk1_hk2_dhw
+        card:
+          type: custom:bubble-card
+          card_type: custom
+          card_mod:
+            style: |
+              ha-card {
+                background-image: url('/local/heishahub/schema_a2w_hk1_hk2_dhw.svg');
+                background-size: contain;
+                background-repeat: no-repeat;
+                background-position: center;
+                background-color: #0f1923;
+                min-height: 460px;
+                position: relative;
               }
-
-          # ── Discharge temperature (~240/900 = 27%, ~162/520 = 31%) ──
-          - entity: sensor.heishahub_source_discharge_temp
-            show_state: true
-            show_name: false
-            show_icon: false
-            styles: |
-              .bubble-sub-button {
-                position: absolute;
-                left: 22%;
-                top: 26%;
-                background: #1a252f;
-                border: 1px solid #e74c3c;
-                color: #e74c3c;
-                font-size: 10px;
-                border-radius: 6px;
-                padding: 2px 4px;
+          sub_buttons:
+            - entity: sensor.heishahub_source_operating_mode
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 30%; top: 7%; background: transparent; color: #8ca8c0; font-size: 11px; font-weight: 600; }
+            - entity: sensor.heishahub_source_outdoor_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 9%; top: 16%; background: transparent; color: #e0a800; font-size: 14px; font-weight: 700; }
+            - entity: sensor.heishahub_source_outlet_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 32%; top: 23%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            - entity: sensor.heishahub_source_inlet_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 32%; top: 55%; background: #1a252f; border: 1px solid #2980b9; color: #2980b9; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            - entity: sensor.heishahub_source_compressor_freq
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 84%; top: 81%; background: #0f1923; border: 1px solid #3d5166; color: #bcbd22; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            - entity: sensor.heishahub_cop_live
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 3%; top: 74%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
+            - entity: sensor.heishahub_scop
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 14%; top: 74%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
+            - entity: sensor.heishahub_source_dhw_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 91%; top: 44%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            - entity: sensor.heishahub_source_zone1_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 56%; top: 84%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 10px; border-radius: 4px; padding: 1px 3px; }
+            - entity: sensor.heishahub_source_zone2_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 33%; top: 84%; background: #1a252f; border: 1px solid #a78bfa; color: #a78bfa; font-size: 10px; border-radius: 4px; padding: 1px 3px; }
+      # ═══════════════════════════════════════════════════════════════════
+      # Variant a2w_hk1_hk2_dhw_buffer
+      # ═══════════════════════════════════════════════════════════════════
+      - type: conditional
+        conditions:
+          - entity: sensor.heishahub_schema_variant_active
+            state: a2w_hk1_hk2_dhw_buffer
+        card:
+          type: custom:bubble-card
+          card_type: custom
+          card_mod:
+            style: |
+              ha-card {
+                background-image: url('/local/heishahub/schema_a2w_hk1_hk2_dhw_buffer.svg');
+                background-size: contain;
+                background-repeat: no-repeat;
+                background-position: center;
+                background-color: #0f1923;
+                min-height: 500px;
+                position: relative;
               }
-
-          # ── Return (inlet) temperature (~400/900 = 44%, ~355/520 = 68%) ──
-          - entity: sensor.heishahub_source_inlet_temp
-            show_state: true
-            show_name: false
-            show_icon: false
-            styles: |
-              .bubble-sub-button {
-                position: absolute;
-                left: 41%;
-                top: 70%;
-                background: #1a252f;
-                border: 1px solid #2980b9;
-                color: #2980b9;
-                font-size: 11px;
-                font-weight: 700;
-                border-radius: 6px;
-                padding: 2px 5px;
-              }
-
-          # ── Water flow (~260/900 = 29%, ~354/520 = 68%) ──
-          - entity: sensor.heishahub_source_flow_rate
-            show_state: true
-            show_name: false
-            show_icon: false
-            styles: |
-              .bubble-sub-button {
-                position: absolute;
-                left: 24%;
-                top: 65%;
-                background: #1a252f;
-                border: 1px solid #2980b9;
-                color: #4a9aca;
-                font-size: 10px;
-                border-radius: 6px;
-                padding: 2px 4px;
-              }
-
-          # ── Compressor frequency (~812/900 = 90%, ~389/520 = 75%) ──
-          - entity: sensor.heishahub_source_compressor_freq
-            show_state: true
-            show_name: false
-            show_icon: false
-            styles: |
-              .bubble-sub-button {
-                position: absolute;
-                left: 84%;
-                top: 71%;
-                background: #0f1923;
-                border: 1px solid #3d5166;
-                color: #bcbd22;
-                font-size: 11px;
-                font-weight: 700;
-                border-radius: 6px;
-                padding: 2px 5px;
-              }
-
-          # ── Compressor running hours (~780/900 = 87%, ~428/520 = 82%) ──
-          - entity: sensor.heishahub_source_compressor_hours
-            show_state: true
-            show_name: false
-            show_icon: false
-            styles: |
-              .bubble-sub-button {
-                position: absolute;
-                left: 82%;
-                top: 79%;
-                background: #0f1923;
-                border: 1px solid #3d5166;
-                color: #8ca8c0;
-                font-size: 10px;
-                border-radius: 4px;
-                padding: 1px 4px;
-              }
-
-          # ── Compressor starts (~842/900 = 94%, ~428/520 = 82%) ──
-          - entity: sensor.heishahub_source_compressor_starts
-            show_state: true
-            show_name: false
-            show_icon: false
-            styles: |
-              .bubble-sub-button {
-                position: absolute;
-                left: 90%;
-                top: 79%;
-                background: #0f1923;
-                border: 1px solid #3d5166;
-                color: #8ca8c0;
-                font-size: 10px;
-                border-radius: 4px;
-                padding: 1px 4px;
-              }
-
-          # ── Defrost active indicator (~812/900 = 90%, ~462/520 = 89%) ──
-          - entity: binary_sensor.heishahub_defrost_active
-            show_state: true
-            show_name: false
-            show_icon: true
-            icon: mdi:snowflake-melt
-            styles: |
-              .bubble-sub-button {
-                position: absolute;
-                left: 84%;
-                top: 86%;
-                background: #0f1923;
-                border: 1px solid #3d5166;
-                color: #00bcd4;
-                font-size: 10px;
-                border-radius: 4px;
-                padding: 1px 4px;
-              }
-              /* Only show when defrost is active */
-              .bubble-sub-button { display: none; }
-              .bubble-sub-button[data-state="on"] { display: flex; }
-
-          # ── Water pressure (~65/900 = 7%, ~436/520 = 84%) ──
-          - entity: sensor.heishahub_source_pump_pressure
-            show_state: true
-            show_name: false
-            show_icon: false
-            styles: |
-              .bubble-sub-button {
-                position: absolute;
-                left: 3%;
-                top: 80%;
-                background: #0f1923;
-                border: 1px solid #3d5166;
-                color: #4a9aca;
-                font-size: 11px;
-                border-radius: 4px;
-                padding: 2px 4px;
-              }
-
-          # ── Water flow (pressure box, ~140/900 = 16%) ──
-          - entity: sensor.heishahub_source_flow_rate
-            show_state: true
-            show_name: false
-            show_icon: false
-            styles: |
-              .bubble-sub-button {
-                position: absolute;
-                left: 12%;
-                top: 80%;
-                background: #0f1923;
-                border: 1px solid #3d5166;
-                color: #4a9aca;
-                font-size: 11px;
-                border-radius: 4px;
-                padding: 2px 4px;
-              }
-
-          # ── COP live (~390/900 = 43%, ~478/520 = 92%) ──
-          - entity: sensor.heishahub_cop_live
-            show_state: true
-            show_name: false
-            show_icon: false
-            styles: |
-              .bubble-sub-button {
-                position: absolute;
-                left: 37%;
-                top: 88%;
-                background: #0f1923;
-                border: 1px solid #3d5166;
-                color: #17a2b8;
-                font-size: 12px;
-                font-weight: 700;
-                border-radius: 4px;
-                padding: 2px 5px;
-              }
-
-          # ── COP daily (~450/900 = 50%, ~478/520 = 92%) ──
-          - entity: sensor.heishahub_cop_daily
-            show_state: true
-            show_name: false
-            show_icon: false
-            styles: |
-              .bubble-sub-button {
-                position: absolute;
-                left: 46%;
-                top: 88%;
-                background: #0f1923;
-                border: 1px solid #3d5166;
-                color: #17a2b8;
-                font-size: 12px;
-                font-weight: 700;
-                border-radius: 4px;
-                padding: 2px 5px;
-              }
-
-          # ── SCOP (~515/900 = 57%, ~478/520 = 92%) ──
-          - entity: sensor.heishahub_scop
-            show_state: true
-            show_name: false
-            show_icon: false
-            styles: |
-              .bubble-sub-button {
-                position: absolute;
-                left: 54%;
-                top: 88%;
-                background: #0f1923;
-                border: 1px solid #3d5166;
-                color: #17a2b8;
-                font-size: 12px;
-                font-weight: 700;
-                border-radius: 4px;
-                padding: 2px 5px;
-              }
+          sub_buttons:
+            - entity: sensor.heishahub_source_operating_mode
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 32%; top: 7%; background: transparent; color: #8ca8c0; font-size: 11px; font-weight: 600; }
+            - entity: sensor.heishahub_source_outdoor_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 9%; top: 15%; background: transparent; color: #e0a800; font-size: 14px; font-weight: 700; }
+            - entity: sensor.heishahub_source_outlet_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 16%; top: 22%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 10px; font-weight: 700; border-radius: 6px; padding: 2px 4px; }
+            - entity: sensor.heishahub_source_inlet_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 16%; top: 53%; background: #1a252f; border: 1px solid #2980b9; color: #2980b9; font-size: 10px; font-weight: 700; border-radius: 6px; padding: 2px 4px; }
+            - entity: sensor.heishahub_source_compressor_freq
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 84%; top: 22%; background: #0f1923; border: 1px solid #3d5166; color: #bcbd22; font-size: 11px; font-weight: 700; border-radius: 4px; padding: 2px 4px; }
+            - entity: sensor.heishahub_cop_live
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 78%; top: 17%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 10px; font-weight: 700; border-radius: 4px; padding: 1px 4px; }
+            - entity: sensor.heishahub_cop_daily
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 84%; top: 17%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 10px; font-weight: 700; border-radius: 4px; padding: 1px 4px; }
+            - entity: sensor.heishahub_scop
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 91%; top: 17%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 10px; font-weight: 700; border-radius: 4px; padding: 1px 4px; }
+            - entity: sensor.heishahub_source_dhw_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 91%; top: 42%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 10px; font-weight: 700; border-radius: 6px; padding: 2px 4px; }
+            - entity: sensor.heishahub_source_buffer_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 46%; top: 35%; background: #1a252f; border: 1px solid #e8a87c; color: #e8a87c; font-size: 10px; font-weight: 700; border-radius: 6px; padding: 2px 4px; }
+            - entity: sensor.heishahub_source_zone1_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 33%; top: 89%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 10px; border-radius: 4px; padding: 1px 3px; }
+            - entity: sensor.heishahub_source_zone2_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 67%; top: 89%; background: #1a252f; border: 1px solid #a78bfa; color: #a78bfa; font-size: 10px; border-radius: 4px; padding: 1px 3px; }
 
   # ════════════════════════════════════════════════════════════════════════
   # 3) ANALYSIS — ApexCharts (Service-Cloud-style)
@@ -1090,7 +1147,35 @@ views:
           - entity: input_select.heishahub_electrical_source
             name: Electrical source mode
           - entity: input_select.heishahub_schema_variant
-            name: Installation schematic variant
+            name: Schematic variant (auto / manual)
+          - entity: sensor.heishahub_schema_variant_active
+            name: Schematic — active
+          - entity: sensor.heishahub_schema_variant_detected
+            name: Schematic — auto-detected
+
+      # ── Optional-component sources (zone 2 / DHW / buffer) ──
+      # Set the entity-ID to point at the right sensor, or leave blank to
+      # mark the component as definitely absent. Detection follows.
+      - type: entities
+        title: Optional components
+        entities:
+          - entity: input_text.heishahub_src_zone1_temp
+            name: Zone 1 temperature
+          - entity: input_text.heishahub_src_zone2_temp
+            name: Zone 2 temperature (blank if absent)
+          - entity: input_text.heishahub_src_dhw_temp
+            name: DHW tank temperature (blank if absent)
+          - entity: input_text.heishahub_src_dhw_target_temp
+            name: DHW target temperature
+          - entity: input_text.heishahub_src_buffer_temp
+            name: Buffer tank temperature (blank if absent)
+          - type: divider
+          - entity: binary_sensor.heishahub_has_hk2
+            name: HK2 detected
+          - entity: binary_sensor.heishahub_has_dhw
+            name: DHW detected
+          - entity: binary_sensor.heishahub_has_buffer
+            name: Buffer detected
 
       # ── Heat pump device entities (UI-configurable) ──
       - type: entities

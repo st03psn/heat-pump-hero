@@ -112,6 +112,33 @@ helpers in the UI (Settings → Devices → Helpers). All read paths follow.
 Write paths in `heishahub_control.yaml` are still heat-pump-specific by
 nature — see the comment header in that file.
 
+## Schema auto-detection
+
+Optional components (zone 2, DHW tank, buffer tank) are detected
+automatically from the source-facade availability:
+
+```
+input_text.heishahub_src_zone2_temp     → binary_sensor.heishahub_has_hk2
+input_text.heishahub_src_dhw_temp       → binary_sensor.heishahub_has_dhw
+input_text.heishahub_src_buffer_temp    → binary_sensor.heishahub_has_buffer
+                                            ↓
+                                  sensor.heishahub_schema_variant_detected
+                                            ↓ (resolved by selector)
+                                  sensor.heishahub_schema_variant_active
+                                            ↓
+                                  Schematic view (4 conditional bubble-cards)
+```
+
+The selector `input_select.heishahub_schema_variant` defaults to `auto`
+which follows detection. To force a specific schematic (e.g. preview a
+buffered install before adding sensors), set it to one of the four
+explicit options. To mark a component as definitely absent, blank out
+the corresponding `heishahub_src_*` helper.
+
+Each schematic SVG (`schema_a2w_*.svg`) has its own conditional
+bubble-card with hotspot positions calibrated to that variant's
+specific layout — there is no shared coordinate system across variants.
+
 ## COP / SCOP formulas
 
 - **Thermal power [W]**: `(supply − return) × flow_l/min × 4180 / 60`

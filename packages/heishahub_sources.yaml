@@ -101,6 +101,39 @@ input_text:
     max: 255
     initial: sensor.panasonic_heat_pump_main_discharge_temperature
 
+  # ─── Component-detection probes (presence inferred from availability) ──
+  # Defaults match Heishamon/kamaradclimber. Set to "" to mark a component
+  # as definitely absent (overrides auto-detection).
+  heishahub_src_zone1_temp:
+    name: HeishaHub source — Zone 1 supply / target temperature
+    icon: mdi:home-thermometer
+    max: 255
+    initial: sensor.panasonic_heat_pump_main_z1_water_temperature
+
+  heishahub_src_zone2_temp:
+    name: HeishaHub source — Zone 2 supply / target temperature
+    icon: mdi:home-thermometer-outline
+    max: 255
+    initial: sensor.panasonic_heat_pump_main_z2_water_temperature
+
+  heishahub_src_dhw_temp:
+    name: HeishaHub source — DHW tank temperature
+    icon: mdi:water-boiler
+    max: 255
+    initial: sensor.panasonic_heat_pump_main_dhw_temperature
+
+  heishahub_src_buffer_temp:
+    name: HeishaHub source — buffer-tank temperature
+    icon: mdi:propane-tank
+    max: 255
+    initial: sensor.panasonic_heat_pump_main_buffer_temperature
+
+  heishahub_src_dhw_target_temp:
+    name: HeishaHub source — DHW target temperature
+    icon: mdi:thermostat-cog
+    max: 255
+    initial: sensor.panasonic_heat_pump_main_dhw_target_temperature
+
   # ─── External meter entities (user fills in) ─────────────────────────────
   # Power sensors (W) — alternative to the calculated thermal_power.
   heishahub_src_external_thermal_power:
@@ -152,14 +185,15 @@ input_select:
     initial: heat_pump_internal
 
   heishahub_schema_variant:
-    name: HeishaHub — installation schematic
+    name: HeishaHub — installation schematic (auto follows detection)
     icon: mdi:graph-outline
     options:
+      - auto                       # follow heishahub_schema_variant_detected
       - a2w_hk1
       - a2w_hk1_dhw
       - a2w_hk1_hk2_dhw
       - a2w_hk1_hk2_dhw_buffer
-    initial: a2w_hk1
+    initial: auto
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 2. ACTIVE-SOURCE TEMPLATE SENSORS (the only thing other packages read)
@@ -261,6 +295,47 @@ template:
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
         state: "{{ states(states('input_text.heishahub_src_discharge_temp')) | float(0) }}"
 
+      # ─── Optional component facades (HK1/HK2 zone temps, DHW, buffer) ───
+      - name: "HeishaHub Source Zone 1 Temperature"
+        unique_id: heishahub_source_zone1_temp
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        availability: >-
+          {% set ent = states('input_text.heishahub_src_zone1_temp') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: "{{ states(states('input_text.heishahub_src_zone1_temp')) | float(0) }}"
+
+      - name: "HeishaHub Source Zone 2 Temperature"
+        unique_id: heishahub_source_zone2_temp
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        availability: >-
+          {% set ent = states('input_text.heishahub_src_zone2_temp') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: "{{ states(states('input_text.heishahub_src_zone2_temp')) | float(0) }}"
+
+      - name: "HeishaHub Source DHW Temperature"
+        unique_id: heishahub_source_dhw_temp
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        availability: >-
+          {% set ent = states('input_text.heishahub_src_dhw_temp') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: "{{ states(states('input_text.heishahub_src_dhw_temp')) | float(0) }}"
+
+      - name: "HeishaHub Source Buffer Temperature"
+        unique_id: heishahub_source_buffer_temp
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        availability: >-
+          {% set ent = states('input_text.heishahub_src_buffer_temp') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: "{{ states(states('input_text.heishahub_src_buffer_temp')) | float(0) }}"
+
       # ─── Active thermal power (selected source, for live COP + integration) ──
       # Returns 0 in `external_energy` mode — efficiency package will read
       # the energy counter directly and bypass the integration in that case.
@@ -358,6 +433,62 @@ template:
             {{ states('sensor.heishahub_electrical_energy') | float(0) }}
           {% endif %}
 
+      # ════════════════════════════════════════════════════════════════════
+      # COMPONENT AUTO-DETECTION
+      # Detects HK2 / DHW / Buffer presence by checking whether the
+      # corresponding source entity reports a valid number. Result feeds
+      # heishahub_schema_variant_detected → schema_variant_active.
+      # ════════════════════════════════════════════════════════════════════
+
+      - name: "HeishaHub Schema Variant Detected"
+        unique_id: heishahub_schema_variant_detected
+        icon: mdi:graph-outline
+        state: >-
+          {% set hk2 = is_state('binary_sensor.heishahub_has_hk2','on') %}
+          {% set dhw = is_state('binary_sensor.heishahub_has_dhw','on') %}
+          {% set buf = is_state('binary_sensor.heishahub_has_buffer','on') %}
+          {% if hk2 and buf %}a2w_hk1_hk2_dhw_buffer
+          {% elif hk2 and dhw %}a2w_hk1_hk2_dhw
+          {% elif buf %}a2w_hk1_hk2_dhw_buffer
+          {% elif dhw %}a2w_hk1_dhw
+          {% else %}a2w_hk1{% endif %}
+        attributes:
+          has_hk2: "{{ is_state('binary_sensor.heishahub_has_hk2','on') }}"
+          has_dhw: "{{ is_state('binary_sensor.heishahub_has_dhw','on') }}"
+          has_buffer: "{{ is_state('binary_sensor.heishahub_has_buffer','on') }}"
+          message: >-
+            {% set hk2 = is_state('binary_sensor.heishahub_has_hk2','on') %}
+            {% set dhw = is_state('binary_sensor.heishahub_has_dhw','on') %}
+            {% set buf = is_state('binary_sensor.heishahub_has_buffer','on') %}
+            {% set parts = [] %}
+            {% if hk2 %}{% set parts = parts + ['Zone 2'] %}{% endif %}
+            {% if dhw %}{% set parts = parts + ['DHW tank'] %}{% endif %}
+            {% if buf %}{% set parts = parts + ['Buffer tank'] %}{% endif %}
+            {% if parts | length == 0 %}
+            HK1 only — no optional components detected.
+            {% else %}
+            Detected: {{ parts | join(' + ') }} (plus zone 1).
+            {% endif %}
+
+      # ─── Active variant (manual override or follow detection) ───────────
+      - name: "HeishaHub Schema Variant Active"
+        unique_id: heishahub_schema_variant_active
+        icon: mdi:graph-outline
+        state: >-
+          {% set sel = states('input_select.heishahub_schema_variant') %}
+          {% if sel == 'auto' %}
+            {{ states('sensor.heishahub_schema_variant_detected') }}
+          {% else %}
+            {{ sel }}
+          {% endif %}
+        attributes:
+          source: >-
+            {% if states('input_select.heishahub_schema_variant') == 'auto' %}
+              auto-detected
+            {% else %}
+              manual override
+            {% endif %}
+
   - binary_sensor:
 
       # ─── Defrost state (resolved via configurable source) ───────────────
@@ -379,3 +510,44 @@ template:
         state: >-
           {% set ent = states('input_text.heishahub_src_aux_heater_state') %}
           {{ is_state(ent, 'on') }}
+
+      # ════════════════════════════════════════════════════════════════════
+      # COMPONENT-PRESENCE PROBES
+      # A component is "present" if its source entity-ID is set and reports
+      # a valid number. Empty entity-ID = explicitly absent.
+      # ════════════════════════════════════════════════════════════════════
+      - name: "HeishaHub Has HK2"
+        unique_id: heishahub_has_hk2
+        icon: mdi:home-thermometer-outline
+        state: >-
+          {% set ent = states('input_text.heishahub_src_zone2_temp') %}
+          {% if ent and ent not in ['unknown','unavailable','none',''] %}
+            {% set v = states(ent) %}
+            {{ v not in ['unknown','unavailable','none',''] and (v | float(-999)) > -100 }}
+          {% else %}
+            false
+          {% endif %}
+
+      - name: "HeishaHub Has DHW"
+        unique_id: heishahub_has_dhw
+        icon: mdi:water-boiler
+        state: >-
+          {% set ent = states('input_text.heishahub_src_dhw_temp') %}
+          {% if ent and ent not in ['unknown','unavailable','none',''] %}
+            {% set v = states(ent) %}
+            {{ v not in ['unknown','unavailable','none',''] and (v | float(-999)) > -100 }}
+          {% else %}
+            false
+          {% endif %}
+
+      - name: "HeishaHub Has Buffer"
+        unique_id: heishahub_has_buffer
+        icon: mdi:propane-tank
+        state: >-
+          {% set ent = states('input_text.heishahub_src_buffer_temp') %}
+          {% if ent and ent not in ['unknown','unavailable','none',''] %}
+            {% set v = states(ent) %}
+            {{ v not in ['unknown','unavailable','none',''] and (v | float(-999)) > -100 }}
+          {% else %}
+            false
+          {% endif %}

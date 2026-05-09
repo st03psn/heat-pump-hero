@@ -35,14 +35,26 @@ sequence:
       probe_entity: "sensor.{{ !input topic_prefix | replace('/', '_') }}_main_outside_temperature"
       found: "{{ states(probe_entity) not in ['unknown','unavailable','none'] }}"
 
-  - alias: Set default sources
+  - alias: Set default thermal source
     service: input_select.select_option
     target:
-      entity_id:
-        - input_select.heishahub_thermal_source
-        - input_select.heishahub_electrical_source
+      entity_id: input_select.heishahub_thermal_source
     data:
-      option: heishamon_internal
+      option: calculated
+
+  - alias: Set default electrical source
+    service: input_select.select_option
+    target:
+      entity_id: input_select.heishahub_electrical_source
+    data:
+      option: heat_pump_internal
+
+  - alias: Set schema variant to auto (follows detection)
+    service: input_select.select_option
+    target:
+      entity_id: input_select.heishahub_schema_variant
+    data:
+      option: auto
 
   - alias: Status notification
     service: persistent_notification.create
@@ -53,13 +65,19 @@ sequence:
         {% if found %}
         ✅ Heishamon entities detected.
 
+        Auto-detection results:
+        - Zone 2: {{ 'present' if is_state('binary_sensor.heishahub_has_hk2','on') else 'not detected' }}
+        - DHW tank: {{ 'present' if is_state('binary_sensor.heishahub_has_dhw','on') else 'not detected' }}
+        - Buffer tank: {{ 'present' if is_state('binary_sensor.heishahub_has_buffer','on') else 'not detected' }}
+
+        Schematic auto-selected: `{{ states('sensor.heishahub_schema_variant_active') }}`
+
         Next steps:
         1. Settings → Dashboards → Add Dashboard → From YAML →
            paste the contents of `dashboards/heishahub.yaml`.
-        2. If you have external electricity / heat meters: open
-           Settings → Devices & Services → Helpers and fill
-           `heishahub_shelly_entity` / `heishahub_wmz_entity`,
-           then switch the source to `external_*`.
+        2. (Optional) external meters — Settings → Devices & Services
+           → Helpers, fill `heishahub_src_external_*` entries and switch
+           the matching source mode to `external_power` or `external_energy`.
         3. (Optional) import the Grafana dashboards from `grafana/`.
         {% else %}
         ⚠️ Heishamon entities NOT found (probe: `{{ probe_entity }}`).
