@@ -491,12 +491,138 @@ views:
             color: "#17a2b8"
 
   # ════════════════════════════════════════════════════════════════════════
-  # 4) EFFICIENCY — period KPIs, tariff splits, multi-year trend
+  # 4) EFFICIENCY — period KPIs, comparisons, tariff splits, multi-year trend
   # ════════════════════════════════════════════════════════════════════════
   - title: Efficiency
     path: efficiency
     icon: mdi:chart-bar
     cards:
+      # ── Headline trend card ──
+      - type: custom:mushroom-template-card
+        primary: Efficiency trend
+        secondary: "{{ state_attr('sensor.heishahub_efficiency_trend','headline') }}"
+        icon: |-
+          {% set s = states('sensor.heishahub_efficiency_trend') %}
+          {% if s == 'great' %}mdi:rocket-launch
+          {% elif s == 'better' %}mdi:trending-up
+          {% elif s == 'critical' %}mdi:alert
+          {% elif s == 'worse' %}mdi:trending-down
+          {% else %}mdi:trending-neutral{% endif %}
+        icon_color: |-
+          {% set s = states('sensor.heishahub_efficiency_trend') %}
+          {% if s == 'great' %}green
+          {% elif s == 'better' %}light-green
+          {% elif s == 'critical' %}red
+          {% elif s == 'worse' %}orange
+          {% else %}grey{% endif %}
+        multiline_secondary: true
+        fill_container: true
+
+      # ── Side-by-side comparison cards (month / year) ──
+      - type: horizontal-stack
+        cards:
+          - type: custom:mushroom-template-card
+            primary: vs last month
+            secondary: |-
+              {% set p = states('sensor.heishahub_cop_change_month_pct') | float(0) %}
+              {% set cur = states('sensor.heishahub_cop_monthly') %}
+              {% set prev = states('sensor.heishahub_cop_last_month') %}
+              {% if prev | float(0) <= 0.1 %}
+                no data yet
+              {% else %}
+                COP {{ cur }} vs {{ prev }} ({{ '+' if p > 0 else '' }}{{ p }}%)
+              {% endif %}
+            icon: |-
+              {% set p = states('sensor.heishahub_cop_change_month_pct') | float(0) %}
+              {% if p > 1 %}mdi:arrow-up-bold
+              {% elif p < -1 %}mdi:arrow-down-bold
+              {% else %}mdi:equal{% endif %}
+            icon_color: |-
+              {% set p = states('sensor.heishahub_cop_change_month_pct') | float(0) %}
+              {% if p > 1 %}green
+              {% elif p < -1 %}red
+              {% else %}grey{% endif %}
+            multiline_secondary: true
+            fill_container: true
+
+          - type: custom:mushroom-template-card
+            primary: vs last year
+            secondary: |-
+              {% set p = states('sensor.heishahub_scop_change_year_pct') | float(0) %}
+              {% set cur = states('sensor.heishahub_scop') %}
+              {% set prev = states('sensor.heishahub_cop_last_year') %}
+              {% if prev | float(0) <= 0.1 %}
+                no data yet
+              {% else %}
+                SCOP {{ cur }} vs {{ prev }} ({{ '+' if p > 0 else '' }}{{ p }}%)
+              {% endif %}
+            icon: |-
+              {% set p = states('sensor.heishahub_scop_change_year_pct') | float(0) %}
+              {% if p > 1 %}mdi:arrow-up-bold
+              {% elif p < -1 %}mdi:arrow-down-bold
+              {% else %}mdi:equal{% endif %}
+            icon_color: |-
+              {% set p = states('sensor.heishahub_scop_change_year_pct') | float(0) %}
+              {% if p > 1 %}green
+              {% elif p < -1 %}red
+              {% else %}grey{% endif %}
+            multiline_secondary: true
+            fill_container: true
+
+      # ── Energy comparison cards ──
+      - type: horizontal-stack
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Thermal energy this month
+            secondary: |-
+              {% set cur = states('sensor.heishahub_thermal_monthly') | float(0) %}
+              {% set prev = states('sensor.heishahub_thermal_last_month') | float(0) %}
+              {% set p = states('sensor.heishahub_thermal_change_month_pct') | float(0) %}
+              {{ cur | round(1) }} kWh{% if prev > 0.1 %} ({{ '+' if p > 0 else '' }}{{ p }}% vs {{ prev | round(1) }} kWh){% endif %}
+            icon: mdi:fire
+            icon_color: red
+            multiline_secondary: true
+            fill_container: true
+
+          - type: custom:mushroom-template-card
+            primary: Electrical energy this month
+            secondary: |-
+              {% set cur = states('sensor.heishahub_electrical_monthly') | float(0) %}
+              {% set prev = states('sensor.heishahub_electrical_last_month') | float(0) %}
+              {% set p = states('sensor.heishahub_electrical_change_month_pct') | float(0) %}
+              {{ cur | round(1) }} kWh{% if prev > 0.1 %} ({{ '+' if p > 0 else '' }}{{ p }}% vs {{ prev | round(1) }} kWh){% endif %}
+            icon: mdi:flash
+            icon_color: yellow
+            multiline_secondary: true
+            fill_container: true
+
+      # ── Comparison detail (entities) ──
+      - type: entities
+        title: Comparisons — detail
+        entities:
+          - entity: sensor.heishahub_cop_monthly
+            name: COP this month
+          - entity: sensor.heishahub_cop_last_month
+            name: COP last month
+          - entity: sensor.heishahub_cop_change_month_pct
+            name: Change vs last month
+          - type: divider
+          - entity: sensor.heishahub_scop
+            name: SCOP year to date
+          - entity: sensor.heishahub_cop_last_year
+            name: SCOP previous year
+          - entity: sensor.heishahub_scop_change_year_pct
+            name: Change vs last year
+          - type: divider
+          - entity: sensor.heishahub_thermal_last_month
+            name: Thermal — last month
+          - entity: sensor.heishahub_electrical_last_month
+            name: Electrical — last month
+          - entity: sensor.heishahub_thermal_last_year
+            name: Thermal — last year
+          - entity: sensor.heishahub_electrical_last_year
+            name: Electrical — last year
+
       # ── Overall KPIs ──
       - type: entities
         title: Overall COP / SCOP
