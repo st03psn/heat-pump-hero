@@ -17,9 +17,12 @@ existing building blocks into something usable:
 
 ## Working with Claude
 
-- **Plan-first** for non-trivial edits: surface the change list (files,
-  sections, rationale) before touching anything. No silent multi-file
-  refactors.
+- **Plan-first.** Every edit not explicitly in the user request needs
+  approval before applying — including trivial ones (roadmap items,
+  typo fixes, doc cross-references). "It's just one line" is not a
+  Claude judgement call; the user owns project direction. Surface the
+  change list (files, sections, rationale) and wait. Multi-file
+  refactors need approval per file.
 - **Stop after 2 failures.** If a fix attempt fails the same check
   twice, stop and report the actual blocker rather than guessing.
 - **No scope creep.** A request to add a sensor adds a sensor — no

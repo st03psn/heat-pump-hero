@@ -73,12 +73,6 @@ For detailed per-release changes, see [`CHANGELOG.md`](../CHANGELOG.md).
 - [ ] Configurable legionella program
 - [ ] Screed dry-out program (for new builds)
 - [ ] Control automations vendor adapter (write paths swappable)
-- [ ] **Second Heishamon vendor preset**: `panasonic_heishamon_yaml`
-  for users who use the bundled `Integrations/Home Assistant/heishamon.yaml`
-  from the firmware repo (entity prefix `sensor.aquarea_*`) instead of
-  the kamaradclimber Python integration (`sensor.panasonic_heat_pump_main_*`).
-  Both are officially endorsed by the firmware project — kamaradclimber
-  remains our default, this adds a 1-click switch for the YAML path.
 
 ## v0.9 — Python custom integration (HACS plug-and-play)
 
