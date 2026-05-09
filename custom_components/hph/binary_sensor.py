@@ -83,7 +83,8 @@ class HphTemplateBinarySensor(BinarySensorEntity):
             self._attribute_tpls[k] = Template(str(v), hass)
 
         self._raw_is_on: bool | None = None
-        self._raw_available: bool = True
+        self._raw_available: bool = False
+        self._initialized: bool = False
         self._raw_attrs: dict[str, Any] = {}
 
     async def async_added_to_hass(self) -> None:
@@ -115,6 +116,7 @@ class HphTemplateBinarySensor(BinarySensorEntity):
                     if atpl is tpl:
                         self._raw_attrs[k] = result
                         break
+        self._initialized = True
         self.async_write_ha_state()
 
     @staticmethod
@@ -138,8 +140,10 @@ class HphTemplateBinarySensor(BinarySensorEntity):
 
     @property
     def available(self) -> bool:
+        if not self._initialized:
+            return False
         if self._availability_tpl is None:
-            return super().available
+            return True
         return bool(self._raw_available)
 
     @property

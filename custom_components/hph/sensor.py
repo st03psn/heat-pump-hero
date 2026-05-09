@@ -125,9 +125,13 @@ class HphTemplateSensor(SensorEntity):
         for attr_key, attr_tpl in (definition.get("attributes") or {}).items():
             self._attribute_tpls[attr_key] = Template(str(attr_tpl), hass)
 
-        # Working state
+        # Working state — starts unavailable until the first template
+        # evaluation completes. This prevents the utility_meter from seeing
+        # a spurious near-zero reading during integration reload (which
+        # would be interpreted as a meter reset and zero the daily counter).
         self._raw_state: Any = None
-        self._raw_available: bool = True
+        self._raw_available: bool = False
+        self._initialized: bool = False
         self._raw_attrs: dict[str, Any] = {}
         self._cancel_listeners: list = []
 
@@ -166,13 +170,17 @@ class HphTemplateSensor(SensorEntity):
                     if atpl is tpl:
                         self._raw_attrs[key] = result
                         break
+        # Mark as initialised after the first evaluation so that available
+        # returns a meaningful value (not forced-unavailable).
+        self._initialized = True
         self.async_write_ha_state()
 
     @property
     def available(self) -> bool:
+        if not self._initialized:
+            return False
         if self._availability_tpl is None:
-            base = super().available
-            return bool(base)
+            return True
         return bool(self._raw_available)
 
     @property
