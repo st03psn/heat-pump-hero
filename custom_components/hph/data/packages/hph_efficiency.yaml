@@ -7,14 +7,28 @@
 #
 # Do not edit — managed by the HeatPump Hero integration.
 
-# Exclude ephemeral HPH helpers from the recorder — they are operational/config
-# state with no long-term analytics value; excluding them keeps the DB lean.
+# Exclude HPH helpers from the recorder that have no long-term analytics value.
+# Kept in recorder: sensor.hph_* (COP/SCOP/power/energy) and
+# binary_sensor.hph_* (compressor timeline) and
+# number.hph_heating_limit_observed_c (seasonal trend).
 recorder:
   exclude:
     entity_globs:
       - text.hph_*        # source config, write helpers, JSON ring buffers
       - button.hph_*      # trigger-only, no meaningful state history
-      - datetime.hph_*    # operational timestamps; low analytics value
+      - datetime.hph_*    # operational timestamps
+      - select.hph_*      # pure config (vendor, model, schema, prog settings)
+      - switch.hph_*      # control toggles — rarely change, state is static config
+    entities:
+      # Daily counters — reset at midnight, no long-term value
+      - number.hph_cycles_today
+      - number.hph_short_cycles_today
+      - number.hph_dhw_fires_today
+      - number.hph_dhw_fires_yesterday
+      - number.hph_ctrl_price_dhw_fires_today
+      # Cycle state — instantaneous, derived sensors already aggregate this
+      - number.hph_cycle_last_duration_min
+      - number.hph_cycle_last_pause_min
 
 sensor:
 - platform: integration
