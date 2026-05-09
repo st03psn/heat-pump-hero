@@ -3,6 +3,57 @@
 All notable changes to HeatPump Hero. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.2] — 2026-05-09
+
+### Added — multi-platform read-only bridge
+
+`packages/hph_bridge.yaml` (new) — republishes a curated whitelist of
+~50 derived `sensor.hph_*` (COP, SCOP, advisor states, diagnostics,
+cycles, schema, model) back onto MQTT so non-HA platforms (ioBroker,
+openHAB, Node-RED, secondary HA instances) can read the computed
+metrics. HA stays the compute primary; the bridge is read-only by
+design — control paths remain HA-only.
+
+- Helpers: `input_boolean.hph_bridge_enabled` (default off),
+  `input_text.hph_bridge_prefix` (default `hph`)
+- Topic schema: `<prefix>/<domain>/<entity_id>/state` (raw value) and
+  `…/attributes` (all attributes as JSON), `retain=true`
+- Live-update automation `hph_bridge_publish_state` — indexed state
+  trigger, no event-loop overhead
+- Initial-publish automation `hph_bridge_publish_initial` — fires on
+  HA start and on enable transition; persistent notification confirms
+- Clear-on-disable automation `hph_bridge_clear_on_disable` — empty
+  retained payloads drop topics at the broker (MQTT-3.1.1 §3.3.1.3)
+- Status sensor `sensor.hph_bridge_last_publish` (timestamp,
+  available only when bridge is enabled)
+- Skip-on-`unknown`/`unavailable` condition prevents garbage publishes
+  during HA restarts
+
+### Hardware-abstraction guarantee
+
+Bridge republishes only `sensor.hph_*` (computed via the
+source-adapter facades), never `panasonic_heat_pump_*` or other vendor
+raw entities. Topic names stay stable across heat-pump and integration
+swaps — only the ~17 source-helpers need reconfiguration on the HA
+side; downstream subscribers are unaffected.
+
+### Added — docs
+
+- `docs/multivendor_bridge.md` — topic schema reference, recipes for
+  ioBroker (MQTT adapter), openHAB (Generic MQTT Thing), Node-RED
+  (mqtt-in node), secondary HA, plus limitations and whitelist
+  extension procedure
+
+### Changed
+
+- Dashboard Configuration view: new "Multi-platform bridge
+  (read-only)" section with toggle, prefix input, last-publish
+  timestamp, and link to the recipes doc
+- Roadmap: v0.8 expanded with weather-source-adapter,
+  DWD recipe, witterungs-adjusted SCOP, and optional
+  defrost-forecast advisor (groundwork for the existing
+  efficiency-drift YoY item)
+
 ## [0.7.1] — 2026-05-09
 
 ### Changed

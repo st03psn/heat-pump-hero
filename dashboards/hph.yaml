@@ -1407,6 +1407,26 @@ views:
             - entity: script.hph_export_now
               name: Export now
 
+      # ── Multi-platform bridge (read-only) ──
+      - type: entities
+        title: Multi-platform bridge (read-only)
+        entities:
+          - entity: input_boolean.hph_bridge_enabled
+            name: Bridge enabled
+          - entity: input_text.hph_bridge_prefix
+            name: MQTT topic prefix
+          - entity: sensor.hph_bridge_last_publish
+            name: Last publish
+      - type: markdown
+        content: |
+          When enabled, HeatPump Hero republishes ~50 derived sensors
+          (COP / SCOP / advisor / diagnostics) onto MQTT under
+          `<prefix>/<domain>/<entity_id>/state` and `/attributes`, so
+          ioBroker / openHAB / Node-RED can read them. Read-only —
+          control stays in HA. See
+          [docs/multivendor_bridge.md](https://github.com/st03psn/heat-pump-hero/blob/main/docs/multivendor_bridge.md)
+          for the topic schema and per-platform recipes.
+
       # ── Heat-curve auto-entities (Heishamon-specific UI shortcut) ──
       # Note: this filter pattern is heat-pump specific — adapt if you swap
       # to a non-Heishamon heat pump.

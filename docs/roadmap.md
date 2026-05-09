@@ -65,14 +65,36 @@ For detailed per-release changes, see [`CHANGELOG.md`](../CHANGELOG.md).
 - Price-driven DHW (Tibber / aWATTar — sensor-agnostic)
 - Weather-forecast pre-heating (cold-front anticipation)
 
+## ✅ v0.7.2 — multi-platform read-only bridge (current)
+
+- Republishes ~50 derived `sensor.hph_*` (COP / SCOP / advisor /
+  diagnostics) onto MQTT so ioBroker / openHAB / Node-RED / secondary
+  HA instances can subscribe
+- Topic schema `<prefix>/<domain>/<entity_id>/{state,attributes}`,
+  `retain=true`
+- Auto-clear-on-disable (empty retained payloads)
+- Hardware-abstraction guarantee: topic names stable across
+  vendor / integration swaps
+- Read-only by design; control extensions remain HA-exclusive
+
 ## v0.8 — advisor extensions
 
 - [ ] Pump-curve recommendation (spread histogram)
+- [ ] Weather-source-adapter package (`hph_weather.yaml`) — analog to
+  the heat-pump source-adapter, swappable weather providers (DWD /
+  OpenWeatherMap / Met.no / local weather station)
+- [ ] DWD recipe (`docs/weather/dwd.md`) — recommended provider for
+  DE users; license-free MOSMIX (T° / RH / solar) + monthly heating
+  degree days (HGT) + climate normals
 - [ ] Efficiency-drift detection (year-over-year, weather-adjusted)
+  via `sensor.hph_scop_weather_adjusted` — uses HGT for normalization
+- [ ] Optional defrost-forecast advisor — RH + T° → icing likelihood
 - [ ] DHW timing recommendation (usage pattern)
 - [ ] Configurable legionella program
 - [ ] Screed dry-out program (for new builds)
 - [ ] Control automations vendor adapter (write paths swappable)
+- [ ] Add `sensor.hph_weather_*` and `_scop_weather_adjusted` to the
+  v0.7.2 bridge whitelist (5-line patch)
 
 ## v0.9 — Python custom integration (HACS plug-and-play)
 

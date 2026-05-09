@@ -1,0 +1,316 @@
+# HeatPump Hero — multi-platform read-only bridge
+#
+# Republishes a curated whitelist of derived `sensor.hph_*` back onto
+# MQTT so non-Home-Assistant platforms (ioBroker, openHAB, Node-RED,
+# secondary HA instances) can read the computed metrics. HA stays the
+# compute primary; this bridge is read-only by design — control paths
+# remain HA-only because they target vendor-specific write entities
+# that would not be portable.
+#
+# Topic format:
+#   <prefix>/<domain>/<object_id>/state       (raw state value, plain text)
+#   <prefix>/<domain>/<object_id>/attributes  (all attributes as JSON)
+#
+# Default prefix = `hph`, configurable via input_text.hph_bridge_prefix.
+# All publishes use retain=true so subscribers connecting later see the
+# latest snapshot. On disable, retained topics are cleared (empty payload
+# with retain=true ⇒ MQTT broker drops the retained message).
+#
+# Hardware-abstraction note: this package republishes only `sensor.hph_*`
+# (computed). All entries trace back to the source-adapter facades in
+# `hph_sources.yaml`, so swapping the underlying heat pump or
+# integration changes nothing in this file. Topic names are stable
+# across vendor swaps.
+#
+# !!! KEEP IN SYNC !!! The whitelist appears in TWO places below:
+#   1. trigger.entity_id of `hph_bridge_publish_state` (for live updates)
+#   2. variables.entities of `hph_bridge_iterate` script (for initial /
+#      clear cycles)
+# When adding or removing an entity, update both.
+
+input_boolean:
+  hph_bridge_enabled:
+    name: HeatPump Hero — multi-platform bridge
+    icon: mdi:bridge
+    initial: false
+
+input_text:
+  hph_bridge_prefix:
+    name: HeatPump Hero — bridge topic prefix
+    icon: mdi:label-outline
+    initial: "hph"
+    max: 64
+
+template:
+  - sensor:
+      - name: HeatPump Hero — bridge last publish
+        unique_id: hph_bridge_last_publish
+        device_class: timestamp
+        state: >-
+          {{ state_attr('automation.hph_bridge_publish_state','last_triggered') }}
+        availability: >-
+          {{ is_state('input_boolean.hph_bridge_enabled','on') }}
+
+script:
+  # ════════════════════════════════════════════════════════════════════════
+  # Single-entity publish — used by both live updates and bulk iterations.
+  # mode = 'values' publishes the current state + attributes JSON.
+  # mode = 'clear'  publishes empty payload with retain=true to drop the
+  # retained message at the broker (MQTT-3.1.1 §3.3.1.3).
+  # ════════════════════════════════════════════════════════════════════════
+  hph_bridge_publish_one:
+    alias: HeatPump Hero — publish one entity to MQTT
+    mode: parallel
+    max: 50
+    fields:
+      entity:
+        description: "Full entity_id, e.g. sensor.hph_cop_daily"
+        example: "sensor.hph_cop_daily"
+      mode:
+        description: "values | clear"
+        example: "values"
+    sequence:
+      - service: mqtt.publish
+        data:
+          topic: >-
+            {{ states('input_text.hph_bridge_prefix') }}/{{ entity | replace('.','/') }}/state
+          payload: >-
+            {% if mode == 'clear' %}{% else %}{{ states(entity) }}{% endif %}
+          retain: true
+      - service: mqtt.publish
+        data:
+          topic: >-
+            {{ states('input_text.hph_bridge_prefix') }}/{{ entity | replace('.','/') }}/attributes
+          payload: >-
+            {% if mode == 'clear' %}{% else %}{{ states[entity].attributes | tojson }}{% endif %}
+          retain: true
+
+  # ════════════════════════════════════════════════════════════════════════
+  # Bulk iteration over the whitelist. Used by initial-publish on enable /
+  # HA start, and by clear-on-disable. Single source of truth for the
+  # entity list outside the live-update trigger.
+  # ════════════════════════════════════════════════════════════════════════
+  hph_bridge_iterate:
+    alias: HeatPump Hero — iterate bridge whitelist
+    mode: single
+    fields:
+      mode:
+        description: "values | clear"
+        example: "values"
+    variables:
+      entities:
+        # core
+        - sensor.hph_thermal_power
+        - sensor.hph_operating_mode
+        - binary_sensor.hph_compressor_running
+        - binary_sensor.hph_defrost_active
+        # efficiency — live + aggregate
+        - sensor.hph_cop_live
+        - sensor.hph_cop_daily
+        - sensor.hph_cop_monthly
+        - sensor.hph_scop
+        # efficiency — splits
+        - sensor.hph_cop_monthly_heating
+        - sensor.hph_cop_yearly_heating
+        - sensor.hph_cop_monthly_dhw
+        - sensor.hph_cop_yearly_dhw
+        # efficiency — period comparisons
+        - sensor.hph_cop_last_month
+        - sensor.hph_cop_last_year
+        # efficiency — thermal energy
+        - sensor.hph_thermal_daily
+        - sensor.hph_thermal_monthly
+        - sensor.hph_thermal_yearly
+        - sensor.hph_thermal_last_month
+        - sensor.hph_thermal_last_year
+        # efficiency — electrical energy
+        - sensor.hph_electrical_daily
+        - sensor.hph_electrical_monthly
+        - sensor.hph_electrical_yearly
+        - sensor.hph_electrical_last_month
+        - sensor.hph_electrical_last_year
+        # efficiency — change-pct
+        - sensor.hph_cop_change_month_pct
+        - sensor.hph_scop_change_year_pct
+        # cycles
+        - sensor.hph_avg_cycle_duration_24h
+        - sensor.hph_short_cycle_ratio
+        - sensor.hph_cycles_today
+        - sensor.hph_short_cycles_today
+        # advisor
+        - sensor.hph_advisor_summary
+        - sensor.hph_advisor_short_cycle
+        - sensor.hph_advisor_spread
+        - sensor.hph_advisor_defrost
+        - sensor.hph_advisor_heat_curve
+        - sensor.hph_advisor_dhw_runtime
+        - sensor.hph_advisor_heating_limit
+        - sensor.hph_advisor_diagnostics
+        - sensor.hph_advisor_pressure_trend
+        - sensor.hph_advisor_analysis
+        - sensor.hph_pressure_delta_7d
+        # diagnostics
+        - sensor.hph_diagnostics_current_error
+        - sensor.hph_diagnostics_recurrence
+        # analysis
+        - sensor.hph_indoor_temp_deviation
+        - sensor.hph_indoor_deviation_smoothed
+        # models / schema
+        - sensor.hph_schema_variant_active
+        - sensor.hph_model_refrigerant
+        - sensor.hph_model_description
+    sequence:
+      - repeat:
+          for_each: "{{ entities }}"
+          sequence:
+            - service: script.hph_bridge_publish_one
+              data:
+                entity: "{{ repeat.item }}"
+                mode: "{{ mode }}"
+
+automation:
+  # ════════════════════════════════════════════════════════════════════════
+  # Live update — fires on any state change of a whitelisted entity.
+  # State trigger with explicit entity_id list = indexed in HA, no
+  # event-loop overhead.
+  # !!! Keep this entity_id list in sync with hph_bridge_iterate.entities.
+  # ════════════════════════════════════════════════════════════════════════
+  - id: hph_bridge_publish_state
+    alias: HeatPump Hero Bridge — publish on state change
+    mode: queued
+    max: 100
+    trigger:
+      - platform: state
+        entity_id:
+          # core
+          - sensor.hph_thermal_power
+          - sensor.hph_operating_mode
+          - binary_sensor.hph_compressor_running
+          - binary_sensor.hph_defrost_active
+          # efficiency — live + aggregate
+          - sensor.hph_cop_live
+          - sensor.hph_cop_daily
+          - sensor.hph_cop_monthly
+          - sensor.hph_scop
+          # efficiency — splits
+          - sensor.hph_cop_monthly_heating
+          - sensor.hph_cop_yearly_heating
+          - sensor.hph_cop_monthly_dhw
+          - sensor.hph_cop_yearly_dhw
+          # efficiency — period comparisons
+          - sensor.hph_cop_last_month
+          - sensor.hph_cop_last_year
+          # efficiency — thermal energy
+          - sensor.hph_thermal_daily
+          - sensor.hph_thermal_monthly
+          - sensor.hph_thermal_yearly
+          - sensor.hph_thermal_last_month
+          - sensor.hph_thermal_last_year
+          # efficiency — electrical energy
+          - sensor.hph_electrical_daily
+          - sensor.hph_electrical_monthly
+          - sensor.hph_electrical_yearly
+          - sensor.hph_electrical_last_month
+          - sensor.hph_electrical_last_year
+          # efficiency — change-pct
+          - sensor.hph_cop_change_month_pct
+          - sensor.hph_scop_change_year_pct
+          # cycles
+          - sensor.hph_avg_cycle_duration_24h
+          - sensor.hph_short_cycle_ratio
+          - sensor.hph_cycles_today
+          - sensor.hph_short_cycles_today
+          # advisor
+          - sensor.hph_advisor_summary
+          - sensor.hph_advisor_short_cycle
+          - sensor.hph_advisor_spread
+          - sensor.hph_advisor_defrost
+          - sensor.hph_advisor_heat_curve
+          - sensor.hph_advisor_dhw_runtime
+          - sensor.hph_advisor_heating_limit
+          - sensor.hph_advisor_diagnostics
+          - sensor.hph_advisor_pressure_trend
+          - sensor.hph_advisor_analysis
+          - sensor.hph_pressure_delta_7d
+          # diagnostics
+          - sensor.hph_diagnostics_current_error
+          - sensor.hph_diagnostics_recurrence
+          # analysis
+          - sensor.hph_indoor_temp_deviation
+          - sensor.hph_indoor_deviation_smoothed
+          # models / schema
+          - sensor.hph_schema_variant_active
+          - sensor.hph_model_refrigerant
+          - sensor.hph_model_description
+    condition:
+      - condition: state
+        entity_id: input_boolean.hph_bridge_enabled
+        state: "on"
+      # Skip transitions to unknown / unavailable so we don't pollute
+      # subscribers with garbage when HA restarts or a source drops out.
+      - condition: template
+        value_template: >-
+          {{ trigger.to_state.state not in ['unknown','unavailable','none'] }}
+    action:
+      - service: script.hph_bridge_publish_one
+        data:
+          entity: "{{ trigger.entity_id }}"
+          mode: "values"
+
+  # ════════════════════════════════════════════════════════════════════════
+  # Initial publish — run on HA start (so values appear in the broker
+  # without waiting for the next state change) and on enable transitions.
+  # ════════════════════════════════════════════════════════════════════════
+  - id: hph_bridge_publish_initial
+    alias: HeatPump Hero Bridge — initial publish
+    mode: single
+    trigger:
+      - platform: homeassistant
+        event: start
+      - platform: state
+        entity_id: input_boolean.hph_bridge_enabled
+        from: "off"
+        to: "on"
+    condition:
+      - condition: state
+        entity_id: input_boolean.hph_bridge_enabled
+        state: "on"
+    action:
+      - service: script.hph_bridge_iterate
+        data:
+          mode: "values"
+      - service: persistent_notification.create
+        data:
+          notification_id: hph_bridge
+          title: HeatPump Hero — bridge active
+          message: >-
+            Multi-platform bridge published the initial snapshot to MQTT
+            under prefix `{{ states('input_text.hph_bridge_prefix') }}`.
+
+  # ════════════════════════════════════════════════════════════════════════
+  # Clear-on-disable — empties retained topics so subscribers don't keep
+  # consuming stale values after the bridge is turned off.
+  # ════════════════════════════════════════════════════════════════════════
+  - id: hph_bridge_clear_on_disable
+    alias: HeatPump Hero Bridge — clear on disable
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: input_boolean.hph_bridge_enabled
+        from: "on"
+        to: "off"
+    action:
+      - service: script.hph_bridge_iterate
+        data:
+          mode: "clear"
+      - service: persistent_notification.dismiss
+        data:
+          notification_id: hph_bridge
+      - service: persistent_notification.create
+        data:
+          notification_id: hph_bridge
+          title: HeatPump Hero — bridge disabled
+          message: >-
+            Multi-platform bridge stopped. Retained MQTT topics under
+            prefix `{{ states('input_text.hph_bridge_prefix') }}` were
+            cleared.

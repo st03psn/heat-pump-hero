@@ -14,9 +14,11 @@ installation schematic with live hotspots, and proper efficiency metrics
 
 ## Status
 
-🟢 **v0.7 — beta** — control extensions: adaptive heating curve
-(self-learning), price-driven DHW (Tibber/aWATTar), weather-forecast
-pre-heating. All gated, capped, transparent. See [CHANGELOG.md](CHANGELOG.md).
+🟢 **v0.7.2 — beta** — multi-platform read-only bridge: republishes
+~50 derived sensors (COP / SCOP / advisor / diagnostics) onto MQTT so
+ioBroker / openHAB / Node-RED can subscribe. v0.7 still current for
+control extensions (adaptive heating curve, price-driven DHW,
+weather-forecast pre-heating). See [CHANGELOG.md](CHANGELOG.md).
 
 ## Screenshots
 
@@ -80,6 +82,12 @@ reference install is online — see [docs/screenshots/](docs/screenshots/).)*
 - ✅ CCC (Compressor Cycle Control), SoftStart, Solar-DHW boost,
   night Quiet-Mode — all individually toggleable, master switch
   required, default off
+
+**Multi-platform bridge** _(new in v0.7.2)_
+- ✅ Republishes ~50 derived sensors (COP / SCOP / advisor /
+  diagnostics) onto MQTT for ioBroker / openHAB / Node-RED / secondary
+  HA — read-only, hardware-abstracted, retain + auto-clear-on-disable.
+  See [docs/multivendor_bridge.md](docs/multivendor_bridge.md)
 
 **Long-term, export, import**
 - ✅ Grafana boards: overview + multi-year SCOP / MAZ (real Flux queries)
@@ -155,6 +163,7 @@ Issues and pull requests welcome.
 - [docs/external_sensors.md](docs/external_sensors.md) — Shelly / heat meter
 - [docs/optimization.md](docs/optimization.md) — cycle analysis, advisor, control
 - [docs/tweaking.md](docs/tweaking.md) — power-user customizations
+- [docs/multivendor_bridge.md](docs/multivendor_bridge.md) — MQTT bridge for ioBroker / openHAB / Node-RED
 - [docs/roadmap.md](docs/roadmap.md) — what's next
 
 English-only until v1.0 (see [CONTRIBUTING.md](CONTRIBUTING.md)).
