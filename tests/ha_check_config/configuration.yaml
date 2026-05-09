@@ -88,6 +88,11 @@ input_select:
     options: ["Heat", "Cool", "DHW", "Heat+DHW"]
     initial: Heat
 
+# shell_command stub so heishahub_export.yaml can resolve its
+# script.heishahub_export_now reference in CI.
+shell_command:
+  heishahub_export: "echo stub"
+
 # Allow our packages to be loaded.
 homeassistant:
   packages: !include_dir_named ../../packages

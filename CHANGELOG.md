@@ -3,6 +3,26 @@
 All notable changes to HeishaHub. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and HeishaHub adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] — 2026-05-09
+
+### Added
+
+- **Export module** (`packages/heishahub_export.yaml` + `scripts/export_heishahub.py`)
+  - UI helpers: target path, format (csv/json/xlsx), period (last day/week/month/year/all), schedule (manual/daily/weekly/monthly)
+  - `script.heishahub_export_now` for manual triggers
+  - Scheduled automations (daily/weekly Mon/monthly 1st at 03:00)
+  - Python script reads HA REST API, writes one file per entity
+- **Import module** (`scripts/import_csv_to_ha_stats.py`)
+  - Backfills HA long-term statistics from CSV via `recorder/import_statistics` websocket
+  - For installs added mid-life — re-creates pre-HeishaHub history
+- **Database recommendations** (`docs/database.md`) — when SQLite is fine, when to switch to MariaDB / PostgreSQL, InfluxDB-for-analytics pattern
+- **Naming proposal** (`docs/naming_proposal.md`) — HeatLens recommended as universal rename to drop the Heishamon-specific branding
+
+### Fixed
+
+- **Panasonic M-series compressor min Hz**: 12 → **16** (community-verified empirical floor; spec-sheet estimate was off)
+- T-CAP min Hz aligned to 16 (was 14, no community evidence for 14)
+
 ## [0.4.0] — 2026-05-09
 
 Major step toward v1.0: **diagnostics module**, **vendor & model selectors

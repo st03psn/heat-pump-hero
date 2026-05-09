@@ -17,10 +17,9 @@ Schema mit Live-Hotspots und sauber gerechnete Effizienz-Kennzahlen
 
 ## Status
 
-🟢 **v0.4 — beta** — Diagnostics-Modul, Hersteller-/Modell-Selector mit
-Auto-Fill, **Panasonic M-Serie (R290-Flagschiff) unterstützt**,
-Leckage-Erkennung, Integration-UI-Mockup. Siehe [CHANGELOG.md](CHANGELOG.md)
-für Release-Notes und [docs/roadmap.md](docs/roadmap.md) für was kommt.
+🟢 **v0.5 — beta** — Diagnose, Hersteller-/Modell-Selector, M-Serie,
+**Export / Import**, DB-Empfehlung, Naming-Vorschlag. Siehe
+[CHANGELOG.md](CHANGELOG.md).
 
 ## Features
 

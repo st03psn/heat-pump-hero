@@ -1,0 +1,128 @@
+# HeishaHub — export
+#
+# Manual or scheduled export of HeishaHub statistics for external analysis
+# (Excel, Python, R, third-party tools).
+#
+# How it works:
+#   1. UI helpers configure target / format / schedule.
+#   2. The "export now" script fires a shell_command (must be defined in
+#      configuration.yaml) that runs scripts/export_heishahub.py.
+#   3. The Python script uses the HA REST API + recorder.statistics_during_period
+#      websocket call to fetch long-term statistics, writes them as CSV/JSON.
+#   4. A scheduled automation can call the same script on cadence.
+#
+# User responsibilities (one-time):
+#   - Add `shell_command:` block to configuration.yaml (see docs/export.md)
+#   - Create a long-lived access token and store it in secrets.yaml
+#   - Ensure scripts/export_heishahub.py is on the host filesystem
+#     (the install.sh script handles this)
+
+input_text:
+  heishahub_export_target_path:
+    name: Export — target directory (host path)
+    icon: mdi:folder-arrow-up
+    max: 255
+    initial: /config/heishahub_exports
+
+input_select:
+  heishahub_export_format:
+    name: Export — file format
+    icon: mdi:file-table
+    options:
+      - csv
+      - json
+      - xlsx
+    initial: csv
+
+  heishahub_export_period:
+    name: Export — period
+    icon: mdi:calendar-range
+    options:
+      - last_day
+      - last_week
+      - last_month
+      - last_year
+      - all_time
+    initial: last_month
+
+  heishahub_export_schedule:
+    name: Export — schedule
+    icon: mdi:clock-outline
+    options:
+      - manual_only
+      - daily_0300
+      - weekly_monday_0300
+      - monthly_1st_0300
+    initial: manual_only
+
+input_datetime:
+  heishahub_export_last_run:
+    name: Export — last run
+    icon: mdi:clock-check-outline
+    has_date: true
+    has_time: true
+
+# ─── Manual trigger script ─────────────────────────────────────────────────
+script:
+  heishahub_export_now:
+    alias: HeishaHub — export now
+    icon: mdi:download-circle
+    sequence:
+      - service: shell_command.heishahub_export
+      - service: input_datetime.set_datetime
+        target: { entity_id: input_datetime.heishahub_export_last_run }
+        data:
+          datetime: "{{ now().isoformat() }}"
+      - service: persistent_notification.create
+        data:
+          notification_id: heishahub_export_done
+          title: HeishaHub export
+          message: >-
+            Export written to {{ states('input_text.heishahub_export_target_path') }}
+            ({{ states('input_select.heishahub_export_format') }},
+            period {{ states('input_select.heishahub_export_period') }}).
+
+# ─── Scheduled exports ────────────────────────────────────────────────────
+automation:
+  - id: heishahub_export_daily
+    alias: HeishaHub export — daily 03:00
+    mode: single
+    trigger:
+      - platform: time
+        at: "03:00:00"
+    condition:
+      - condition: state
+        entity_id: input_select.heishahub_export_schedule
+        state: daily_0300
+    action:
+      - service: script.heishahub_export_now
+
+  - id: heishahub_export_weekly
+    alias: HeishaHub export — Monday 03:00
+    mode: single
+    trigger:
+      - platform: time
+        at: "03:00:00"
+    condition:
+      - condition: state
+        entity_id: input_select.heishahub_export_schedule
+        state: weekly_monday_0300
+      - condition: time
+        weekday: [mon]
+    action:
+      - service: script.heishahub_export_now
+
+  - id: heishahub_export_monthly
+    alias: HeishaHub export — 1st of month 03:00
+    mode: single
+    trigger:
+      - platform: time
+        at: "03:00:00"
+    condition:
+      - condition: state
+        entity_id: input_select.heishahub_export_schedule
+        state: monthly_1st_0300
+      - condition: template
+        value_template: "{{ now().day == 1 }}"
+    action:
+      - service: script.heishahub_export_now

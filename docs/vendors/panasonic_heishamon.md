@@ -11,11 +11,16 @@ thresholds for each generation:
 
 | Model | Refrigerant | Min Hz | Max Hz | Min flow | Max supply | Notes |
 |---|---|---|---|---|---|---|
-| **J** (Aquarea J / WH-MDC) | R410A | 22 | 90 | 11 L/min | 55 °C | Oldest inverter generation. **H23 prone**, more defrost cycles, narrower modulation range. Most aggressive short-cycling on under-sized installs. |
-| **K** | R410A | 18 | 90 | 11 L/min | 55 °C | Improved over J — wider modulation, fewer H23 events. |
-| **L** | R32 | 16 | 110 | 9 L/min | 55 °C | Current mainstream. R32 lower GWP. Most installations 2021+. |
-| **T-CAP / All Season** | R32 | 14 | 140 | 9 L/min | 55 °C | Holds rated capacity down to −15 °C outdoor. Lower modulation floor. |
-| **M** (Aquarea M / R290) | **R290 (propane)** | 12 | 120 | 8 L/min | **75 °C** | **New flagship since 2024.** R290 enables high supply temp without aux heater (ideal for radiator retrofits). Heishamon firmware support is **community-driven** — Panasonic changed the diagnostic protocol with M, but the IgorYbema fork has caught up. **Not officially advertised** on heishamon.nl yet — read the GitHub issues before flashing. |
+| **J** (Aquarea J / WH-MDC) | R410A | 22 | 90 | 11 L/min | 55 °C | Oldest inverter generation. H23-prone, more defrost cycles. |
+| **K** | R410A | 18 | 90 | 11 L/min | 55 °C | Improved modulation over J. |
+| **L** | R32 | 16 | 110 | 9 L/min | 55 °C | Current mainstream (2021+). |
+| **T-CAP / All Season** | R32 | 16 | 140 | 9 L/min | 55 °C | Holds capacity down to −15 °C outdoor. |
+| **M** (Aquarea M / R290) | **R290** | 16 | 120 | 8 L/min | **75 °C** | New flagship (2024+). R290 enables 75 °C supply without aux heater. Heishamon support is community-driven (IgorYbema fork) — not yet on heishamon.nl. |
+
+> Compressor minimums are empirical (community-verified). Earlier
+> spec-sheet estimate of 12 Hz for M-series was incorrect — M does not
+> modulate below 16 Hz. Override `input_number.heishahub_model_compressor_min_hz`
+> if your unit reports differently.
 
 > **Hint for M-series owners:** the H23 advisor commentary and stricter
 > defrost expectations only fire on J-series installs — HeishaHub picks

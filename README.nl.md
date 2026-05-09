@@ -17,10 +17,9 @@ over meerdere jaren.
 
 ## Status
 
-🟢 **v0.4 — beta** — diagnostics module, vendor & model selectors met
-auto-fill, **Panasonic M-serie (R290 vlaggenschip) ondersteund**,
-slow-leak detectie, integration UI mockup. Zie [CHANGELOG.md](CHANGELOG.md)
-voor release notes.
+🟢 **v0.5 — beta** — diagnostics, vendor & model selectors, M-serie,
+**export / import**, DB-richtlijnen, naming-voorstel. Zie
+[CHANGELOG.md](CHANGELOG.md).
 
 ## Functies
 

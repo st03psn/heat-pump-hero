@@ -1313,6 +1313,28 @@ views:
           - entity: input_text.heishahub_src_external_electrical_energy
             name: External electricity meter (kWh, total_increasing)
 
+      # ── Export / scheduled task ──
+      - type: entities
+        title: Export (long-term values for external analysis)
+        entities:
+          - entity: input_select.heishahub_export_format
+            name: Format
+          - entity: input_select.heishahub_export_period
+            name: Period
+          - entity: input_text.heishahub_export_target_path
+            name: Target directory
+          - entity: input_select.heishahub_export_schedule
+            name: Schedule
+          - entity: input_datetime.heishahub_export_last_run
+            name: Last run
+          - entity: script.heishahub_export_now
+            name: ▶ Export now (manual)
+        footer:
+          type: buttons
+          entities:
+            - entity: script.heishahub_export_now
+              name: Export now
+
       # ── Heat-curve auto-entities (Heishamon-specific UI shortcut) ──
       # Note: this filter pattern is heat-pump specific — adapt if you swap
       # to a non-Heishamon heat pump.

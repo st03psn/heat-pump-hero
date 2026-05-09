@@ -132,12 +132,15 @@ automation:
         target:
           entity_id: input_number.heishahub_model_compressor_min_hz
         data:
+          # Empirically verified compressor minimums from community data;
+          # M-series (R290) does not modulate below 16 Hz despite earlier
+          # estimates of 12 Hz from spec sheets.
           value: >-
             {% if model == 'panasonic_j_aqj' %}22
             {% elif model == 'panasonic_k_aqk' %}18
             {% elif model == 'panasonic_l_aql' %}16
-            {% elif model == 'panasonic_tcap' %}14
-            {% elif model == 'panasonic_m_aqm' %}12
+            {% elif model == 'panasonic_tcap' %}16
+            {% elif model == 'panasonic_m_aqm' %}16
             {% else %}16{% endif %}
       - service: input_number.set_value
         target:

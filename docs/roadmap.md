@@ -31,18 +31,26 @@ For detailed per-release changes, see [`CHANGELOG.md`](../CHANGELOG.md).
 - HK1+HK2+DHW and HK1+HK2+DHW+Buffer SVGs
 - NL translation, HACS path doc, vendor recipes
 
-## ✅ v0.4 — diagnostics & vendor support (current)
+## ✅ v0.4 — diagnostics & vendor support
 
 - Panasonic fault-code diagnostics (30+ H/F codes, model-specific notes)
 - Vendor preset selector with auto-fill (7 vendors)
 - Heat-pump model selector with auto thresholds
-- **Panasonic M-series (R290 flagship) supported**
+- Panasonic M-series (R290 flagship) supported
 - Water-pressure trend advisor (slow-leak detection)
 - Integration UI mockup (config flow + main panel)
 - HA min version corrected to 2024.4
 - HA Docker check_config CI
 
-## v0.5 — control extensions
+## ✅ v0.5 — export, import, DB, naming (current)
+
+- Export module: CSV / JSON / XLSX, manual or scheduled (daily/weekly/monthly)
+- Import module: backfill HA long-term statistics from CSV
+- Database recommendations doc (SQLite vs MariaDB vs PostgreSQL vs InfluxDB)
+- Naming proposal doc (HeatLens as universal rename candidate)
+- M-series compressor min Hz corrected (12 → 16, empirical)
+
+## v0.6 — control extensions
 
 - [ ] Heating-curve recommendation derived from data (linear regression
   of supply temp vs outdoor temp)
@@ -56,7 +64,7 @@ For detailed per-release changes, see [`CHANGELOG.md`](../CHANGELOG.md).
 - [ ] Screed dry-out program (for new builds)
 - [ ] Control automations vendor adapter (write paths swappable)
 
-## v0.6 — Python custom integration (HACS plug-and-play)
+## v0.7 — Python custom integration (HACS plug-and-play)
 
 - [ ] `custom_components/heishahub/` skeleton
 - [ ] Config flow for first-run setup (3 steps: vendor / model / extras)

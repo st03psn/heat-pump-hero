@@ -16,10 +16,8 @@ installation schematic with live hotspots, and proper efficiency metrics
 
 ## Status
 
-🟢 **v0.4 — beta** — diagnostics module, vendor & model selectors with
-auto-fill, **Panasonic M-series (R290 flagship) supported**, slow-leak
-detection, integration UI mockup. See [CHANGELOG.md](CHANGELOG.md) for
-release notes and [docs/roadmap.md](docs/roadmap.md) for what's coming.
+🟢 **v0.5 — beta** — diagnostics, vendor & model selectors, M-series,
+**export / import**, DB guidance, naming proposal. See [CHANGELOG.md](CHANGELOG.md).
 
 ## Screenshots
 
@@ -84,10 +82,13 @@ reference install is online — see [docs/screenshots/](docs/screenshots/).)*
   night Quiet-Mode — all individually toggleable, master switch
   required, default off
 
-**Long-term & export**
-- ✅ Grafana boards: overview + multi-year SCOP / MAZ with real
-  Flux queries
+**Long-term, export, import**
+- ✅ Grafana boards: overview + multi-year SCOP / MAZ (real Flux queries)
 - ✅ Telegraf MQTT → InfluxDB bridge config
+- ✅ Export module — CSV / JSON / XLSX, manual or scheduled
+- ✅ Import module — backfill HA long-term stats from CSV (e.g. legacy
+  Shelly / utility-cloud history before HeishaHub was installed)
+- ✅ Database guidance — SQLite vs MariaDB vs PostgreSQL vs InfluxDB
 - ✅ Setup blueprint and CLI installer
 
 ## Requirements
