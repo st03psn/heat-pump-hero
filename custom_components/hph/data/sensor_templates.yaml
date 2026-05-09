@@ -981,6 +981,56 @@ sensors:
         - (states('sensor.hph_source_inlet_temp') | float(0)))
        | round(2) }}
   _source_package: hph_advisor.yaml
+# ── Cost calculation ────────────────────────────────────────────────────────
+# Effective price: uses the price entity (e.g. sensor.tibber_current_price,
+# unit €/kWh) if configured and valid; otherwise falls back to the manual
+# number helper (hph_electricity_price_ct_per_kwh, unit ct/kWh).
+# Note: spot-price entities reflect the CURRENT price. Daily/monthly costs
+# computed with a live spot price are an estimate, not an exact bill figure.
+- name: HeatPump Hero Electricity Price Effective
+  unique_id: hph_electricity_price_effective
+  unit_of_measurement: ct/kWh
+  icon: mdi:cash-multiple
+  state: >-
+    {% set ent = states('text.hph_electricity_price_entity') %}
+    {% if ent and states(ent) not in ['unknown','unavailable','none',''] %}
+      {{ (states(ent) | float(0) * 100) | round(2) }}
+    {% else %}
+      {{ states('number.hph_electricity_price_ct_per_kwh') | float(30) | round(2) }}
+    {% endif %}
+  attributes:
+    source: >-
+      {% set ent = states('text.hph_electricity_price_entity') %}
+      {{ 'entity:' ~ ent if ent and states(ent) not in ['unknown','unavailable','none',''] else 'manual' }}
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero Cost Today
+  unique_id: hph_cost_today
+  unit_of_measurement: EUR
+  icon: mdi:currency-eur
+  state_class: total_increasing
+  state: >-
+    {% set kwh = states('sensor.hph_electrical_daily') | float(0) %}
+    {% set ct = states('sensor.hph_electricity_price_effective') | float(30) %}
+    {{ (kwh * ct / 100) | round(2) }}
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero Cost This Month
+  unique_id: hph_cost_monthly
+  unit_of_measurement: EUR
+  icon: mdi:currency-eur
+  state: >-
+    {% set kwh = states('sensor.hph_electrical_monthly') | float(0) %}
+    {% set ct = states('sensor.hph_electricity_price_effective') | float(30) %}
+    {{ (kwh * ct / 100) | round(2) }}
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero Cost This Season
+  unique_id: hph_cost_seasonal
+  unit_of_measurement: EUR
+  icon: mdi:currency-eur
+  state: >-
+    {% set kwh = states('sensor.hph_electrical_yearly') | float(0) %}
+    {% set ct = states('sensor.hph_electricity_price_effective') | float(30) %}
+    {{ (kwh * ct / 100) | round(2) }}
+  _source_package: hph_efficiency.yaml
 - name: HeatPump Hero Efficiency Trend
   unique_id: hph_efficiency_trend
   icon: "{% set v = states('sensor.hph_cop_change_month_pct') | float(0) %} {% if v > 5 %}mdi:rocket-launch {% elif v > 1 %}mdi:trending-up {% elif v < -5 %}mdi:alert {% elif v < -1 %}mdi:trending-down {% else %}mdi:trending-neutral{% endif %}"

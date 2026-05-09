@@ -98,6 +98,34 @@ views:
             secondary: "{{ states('sensor.hph_scop') | round(2, default=0) }}"
             icon: mdi:calendar
 
+      # ── Row B2: Electricity costs ─────────────────────────────────────
+      - type: horizontal-stack
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Cost today
+            secondary: >-
+              {{ states('sensor.hph_cost_today') | float(0) | round(2) }} €
+              ({{ states('sensor.hph_electricity_price_effective') | float(0) | round(1) }} ct/kWh)
+            icon: mdi:currency-eur
+            icon_color: >-
+              {% set v = states('sensor.hph_cost_today') | float(0) %}
+              {% if v > 5 %}red{% elif v > 2 %}orange{% else %}green{% endif %}
+
+          - type: custom:mushroom-template-card
+            primary: Cost this month
+            secondary: >-
+              {{ states('sensor.hph_cost_monthly') | float(0) | round(2) }} €
+            icon: mdi:calendar-month-outline
+
+          - type: custom:mushroom-template-card
+            primary: Cost this season
+            secondary: >-
+              {{ states('sensor.hph_cost_seasonal') | float(0) | round(2) }} €
+            icon: mdi:calendar-blank-multiple
+            tap_action:
+              action: navigate
+              navigation_path: /hph/efficiency
+
       # ── Row C: Schema & live values | Advisor summary ────────────────
       - type: horizontal-stack
         cards:
@@ -884,6 +912,24 @@ views:
           - entity: sensor.hph_electrical_daily
             name: Electrical (today)
 
+      # ── Cost overview ──
+      - type: entities
+        title: Electricity costs
+        entities:
+          - entity: sensor.hph_cost_today
+            name: Cost today (€)
+          - entity: sensor.hph_cost_monthly
+            name: Cost this month (€)
+          - entity: sensor.hph_cost_seasonal
+            name: Cost this season (€)
+          - type: divider
+          - entity: sensor.hph_electricity_price_effective
+            name: Effective price (ct/kWh)
+          - entity: number.hph_electricity_price_ct_per_kwh
+            name: Manual price fallback (ct/kWh)
+          - entity: text.hph_electricity_price_entity
+            name: Live price sensor (entity-ID, optional)
+
       # ── Energy split by mode (this month) ──
       - type: entities
         title: Energy by mode — this month
@@ -1648,6 +1694,26 @@ views:
             name: External electrical power (W)
           - entity: text.hph_src_external_electrical_energy
             name: External electricity meter (kWh, total_increasing)
+
+      # ── Electricity cost settings ──
+      - type: entities
+        title: Electricity cost
+        entities:
+          - entity: number.hph_electricity_price_ct_per_kwh
+            name: Manual price (ct/kWh)
+          - entity: text.hph_electricity_price_entity
+            name: Live price sensor (entity-ID, optional)
+          - entity: sensor.hph_electricity_price_effective
+            name: Effective price used (ct/kWh)
+      - type: markdown
+        content: |
+          Set **Manual price** to your flat rate (e.g. 30 ct/kWh).
+          Optionally enter the entity-ID of a live price sensor
+          (e.g. `sensor.tibber_current_price` from the Tibber
+          integration — unit must be **€/kWh**). When a live sensor
+          is set and valid, it takes precedence over the manual price.
+          Note: daily/monthly costs computed from a spot price are
+          estimates; only a flat rate gives exact figures.
 
       # ── Export / scheduled task ──
       - type: entities

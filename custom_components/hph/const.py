@@ -243,6 +243,10 @@ TEXT_HELPERS: Final[dict[str, dict[str, Any]]] = {
     # Export (hph_export.yaml)
     "hph_export_target_path": {"name": "Export target directory", "icon": "mdi:folder-download",
                                 "initial": "/config/www/hph_exports"},
+    # Cost calculation
+    "hph_electricity_price_entity": {"name": "Cost — electricity price sensor (entity-ID, optional)",
+                                      "icon": "mdi:cash-multiple",
+                                      "initial": ""},
 }
 
 # ─── Number helpers ──────────────────────────────────────────────────────
@@ -273,6 +277,11 @@ NUMBER_HELPERS: Final[dict[str, dict[str, Any]]] = {
     "hph_dhw_fires_yesterday": {"name": "HeatPump Hero — DHW fires yesterday",
                                   "icon": "mdi:water-boiler",
                                   "min": 0, "max": 50, "step": 1, "initial": 0},
+    # Cost calculation
+    "hph_electricity_price_ct_per_kwh": {"name": "Cost — electricity price (ct/kWh, manual fallback)",
+                                           "icon": "mdi:currency-eur",
+                                           "min": 0, "max": 200, "step": 0.1, "initial": 30,
+                                           "unit_of_measurement": "ct/kWh"},
     # Analysis
     "hph_indoor_target_default": {"name": "Analysis — fallback indoor target (°C)",
                                     "icon": "mdi:home-thermometer", "min": 15, "max": 25,
