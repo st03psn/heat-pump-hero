@@ -105,34 +105,40 @@ reference install is online — see [docs/screenshots/](docs/screenshots/).)*
   broker (default topic prefix: `panasonic_heat_pump`)
 - HACS installed
 
-## Quick install
+## Quick install (HACS, recommended — v0.9+)
 
-1. **Add HACS custom repository**
-   - HACS → Integrations → ⋮ → Custom repositories
+1. **Install dependencies in HACS** (frontend plugins, order doesn't matter):
+   apexcharts-card, bubble-card, mushroom, button-card,
+   auto-entities, card-mod. Plus the kamaradclimber Heishamon-HomeAssistant
+   integration (or your vendor equivalent).
+
+2. **Add HeatPump Hero as a HACS custom repository**
+   - HACS → ⋮ → Custom repositories
    - URL: `https://github.com/st03psn/heat-pump-hero`
-   - Category: *Lovelace* (until HACS supports mixed content)
+   - Category: **Integration**
+   - Install, restart HA.
 
-2. **Install dependencies** (HACS search, order doesn't matter):
-   - kamaradclimber Heishamon-HomeAssistant (integration)
-   - apexcharts-card, bubble-card, mushroom, button-card,
-     auto-entities, card-mod (frontend plugins)
+3. **Add the integration**
+   - Settings → Devices & Services → Add Integration → search "HeatPump
+     Hero" → run the 4-step wizard (vendor preset, pump model, optional
+     external sensors, confirm).
+   - Restart HA when prompted. The dashboard appears in the sidebar
+     automatically.
 
-3. **Enable packages** — in `configuration.yaml`:
-   ```yaml
-   homeassistant:
-     packages: !include_dir_named packages
-   ```
-   Copy the contents of this repo's `packages/` to `<config>/packages/`
-   (manually or via `scripts/install.sh`).
+4. **(Optional) External sensors** — open the integration's Configure
+   button or the dashboard's Configuration view to point HeatPump Hero
+   at a Shelly / heat meter / indoor reference thermometer.
 
-4. **Add the dashboard** — Settings → Dashboards → Add → From YAML →
-   paste `dashboards/hph.yaml`.
+To remove HeatPump Hero, simply delete the integration in **Settings →
+Devices & Services**: the integration cleans up every file it deployed.
+Recorder history of `sensor.hph_*` is preserved.
 
-5. **External sensors** (optional) — Settings → Devices & Services → Helpers:
-   set `hph_shelly_entity` and `hph_wmz_entity` to your sensor
-   entity-IDs. See [docs/external_sensors.md](docs/external_sensors.md).
+### Manual / script-based install (legacy)
 
-Detailed walkthrough: [docs/installation.md](docs/installation.md).
+Pre-v0.9 deployments and Windows users without HACS can still use
+`scripts/install.sh` (Linux) or `scripts/update.ps1` (Windows). See
+[docs/installation.md](docs/installation.md) and
+[docs/installation_windows.md](docs/installation_windows.md).
 
 ## Architecture
 

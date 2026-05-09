@@ -1,0 +1,1678 @@
+# HeatPump Hero Dashboard
+# Import via: Settings → Dashboards → Add → From YAML
+# Requirements: all frontend plugins listed in info.md, plus
+# kamaradclimber/heishamon-homeassistant.
+
+title: HeatPump Hero
+icon: mdi:heat-pump
+views:
+  # ════════════════════════════════════════════════════════════════════════
+  # 1) OVERVIEW — Heishamon-web-UI layout
+  # ════════════════════════════════════════════════════════════════════════
+  - title: Overview
+    path: overview
+    icon: mdi:view-dashboard
+    type: sections
+    sections:
+      - type: grid
+        title: System status
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Operation
+            secondary: "{{ states('switch.panasonic_heat_pump_main_heatpump_state') }}"
+            icon: mdi:power
+            icon_color: |-
+              {{ 'green' if is_state('switch.panasonic_heat_pump_main_heatpump_state','on') else 'disabled' }}
+          - type: custom:mushroom-template-card
+            primary: Mode
+            secondary: "{{ states('sensor.hph_source_operating_mode') }}"
+            icon: mdi:fire
+            icon_color: orange
+          - type: custom:mushroom-template-card
+            primary: Outdoor temperature
+            secondary: "{{ states('sensor.hph_source_outdoor_temp') }} °C"
+            icon: mdi:thermometer
+            icon_color: blue
+          - type: custom:mushroom-template-card
+            primary: Supply / return
+            secondary: >-
+              {{ states('sensor.hph_source_outlet_temp') }} °C /
+              {{ states('sensor.hph_source_inlet_temp') }} °C
+            icon: mdi:water-thermometer
+            icon_color: red
+          - type: custom:mushroom-template-card
+            primary: Water pressure
+            secondary: "{{ states('sensor.hph_source_pump_pressure') }} bar"
+            icon: mdi:gauge
+          - type: custom:mushroom-template-card
+            primary: Water flow
+            secondary: "{{ states('sensor.hph_source_flow_rate') }} L/min"
+            icon: mdi:water-pump
+
+      - type: grid
+        title: Compressor
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Frequency
+            secondary: "{{ states('sensor.hph_source_compressor_freq') }} Hz"
+            icon: mdi:sine-wave
+            icon_color: |-
+              {{ 'green' if is_state('binary_sensor.hph_compressor_running','on') else 'disabled' }}
+          - type: custom:mushroom-template-card
+            primary: Running hours
+            secondary: "{{ states('sensor.hph_source_compressor_hours') }} h"
+            icon: mdi:clock-outline
+          - type: custom:mushroom-template-card
+            primary: Starts
+            secondary: "{{ states('sensor.hph_source_compressor_starts') }}"
+            icon: mdi:counter
+          - type: custom:mushroom-template-card
+            primary: Defrost
+            secondary: >-
+              {{ 'Active' if is_state('binary_sensor.hph_defrost_active','on') else 'Off' }}
+            icon: mdi:snowflake-melt
+            icon_color: |-
+              {{ 'cyan' if is_state('binary_sensor.hph_defrost_active','on') else 'disabled' }}
+
+      - type: grid
+        title: Efficiency
+        cards:
+          - type: custom:mushroom-template-card
+            primary: COP (live)
+            secondary: "{{ states('sensor.hph_cop_live') }}"
+            icon: mdi:gauge
+            icon_color: |-
+              {% set v = states('sensor.hph_cop_live') | float(0) %}
+              {% if v >= 4 %}green{% elif v >= 3 %}yellow{% elif v > 0 %}orange{% else %}disabled{% endif %}
+          - type: custom:mushroom-template-card
+            primary: COP (today)
+            secondary: "{{ states('sensor.hph_cop_daily') }}"
+            icon: mdi:calendar-today
+          - type: custom:mushroom-template-card
+            primary: COP (month)
+            secondary: "{{ states('sensor.hph_cop_monthly') }}"
+            icon: mdi:calendar-month
+          - type: custom:mushroom-template-card
+            primary: SCOP
+            secondary: "{{ states('sensor.hph_scop') }}"
+            icon: mdi:calendar
+          - type: custom:mushroom-template-card
+            primary: Thermal energy (today)
+            secondary: "{{ states('sensor.hph_thermal_daily') }} kWh"
+            icon: mdi:fire
+            icon_color: red
+          - type: custom:mushroom-template-card
+            primary: Electrical energy (today)
+            secondary: "{{ states('sensor.hph_electrical_daily') }} kWh"
+            icon: mdi:flash
+            icon_color: yellow
+
+  # ════════════════════════════════════════════════════════════════════════
+  # 2) SCHEMATIC — auto-detected variant + Bubble-Card SVG with hotspots
+  #
+  # The active variant is auto-detected from which optional components
+  # report data (HK2 / DHW / Buffer) and is exposed as
+  # sensor.hph_schema_variant_active. Manual override via
+  # input_select.hph_schema_variant (option "auto" follows detection).
+  #
+  # Each variant has its own conditional Bubble-Card with the correct
+  # SVG background and variant-specific hotspot positions.
+  #
+  # Requires: Clooos/Bubble-Card >= 3.0
+  # SVGs served from /local/hph/schema_*.svg
+  # ════════════════════════════════════════════════════════════════════════
+  - title: Schematic
+    path: schema
+    icon: mdi:graph-outline
+    cards:
+      # ── Setup-status / detection card ──
+      - type: custom:mushroom-template-card
+        primary: |-
+          Installation: {{ states('sensor.hph_schema_variant_active') | replace('_',' ') | upper }}
+        secondary: |-
+          {% set src = state_attr('sensor.hph_schema_variant_active','source') %}
+          {% set msg = state_attr('sensor.hph_schema_variant_detected','message') %}
+          [{{ src }}] {{ msg }}
+        icon: |-
+          {% set v = states('sensor.hph_schema_variant_active') %}
+          {% if 'buffer' in v %}mdi:propane-tank
+          {% elif 'hk2' in v %}mdi:home-thermometer
+          {% elif 'dhw' in v %}mdi:water-boiler
+          {% else %}mdi:radiator{% endif %}
+        icon_color: blue
+        multiline_secondary: true
+        fill_container: true
+        tap_action:
+          action: navigate
+          navigation_path: /hph/config
+
+      - type: entities
+        title: Detection details
+        entities:
+          - entity: binary_sensor.hph_has_hk2
+            name: Zone 2 detected
+          - entity: binary_sensor.hph_has_dhw
+            name: DHW tank detected
+          - entity: binary_sensor.hph_has_buffer
+            name: Buffer tank detected
+          - type: divider
+          - entity: input_select.hph_schema_variant
+            name: Variant selector (auto / manual override)
+
+      # ═══════════════════════════════════════════════════════════════════
+      # Variant a2w_hk1
+      # ═══════════════════════════════════════════════════════════════════
+      - type: conditional
+        conditions:
+          - entity: sensor.hph_schema_variant_active
+            state: a2w_hk1
+        card:
+          type: custom:bubble-card
+          card_type: custom
+          card_mod:
+            style: |
+              ha-card {
+                background-image: url('/local/hph/schema_a2w_hk1.svg');
+                background-size: contain;
+                background-repeat: no-repeat;
+                background-position: center;
+                background-color: #0f1923;
+                min-height: 400px;
+                position: relative;
+              }
+          sub_buttons:
+            - entity: sensor.hph_source_operating_mode
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 44%; top: 5%; background: transparent; color: #8ca8c0; font-size: 11px; font-weight: 600; }
+            - entity: sensor.hph_source_outdoor_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 8%; top: 14%; background: transparent; color: #e0a800; font-size: 14px; font-weight: 700; }
+            - entity: sensor.hph_source_outlet_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 41%; top: 22%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            - entity: sensor.hph_source_inlet_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 41%; top: 70%; background: #1a252f; border: 1px solid #2980b9; color: #2980b9; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            - entity: sensor.hph_source_flow_rate
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 24%; top: 65%; background: #1a252f; border: 1px solid #2980b9; color: #4a9aca; font-size: 10px; border-radius: 6px; padding: 2px 4px; }
+            - entity: sensor.hph_source_compressor_freq
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 84%; top: 71%; background: #0f1923; border: 1px solid #3d5166; color: #bcbd22; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            - entity: sensor.hph_cop_live
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 37%; top: 88%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
+            - entity: sensor.hph_cop_daily
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 46%; top: 88%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
+            - entity: sensor.hph_scop
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 54%; top: 88%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
+      # ═══════════════════════════════════════════════════════════════════
+      # Variant a2w_hk1_dhw
+      # ═══════════════════════════════════════════════════════════════════
+      - type: conditional
+        conditions:
+          - entity: sensor.hph_schema_variant_active
+            state: a2w_hk1_dhw
+        card:
+          type: custom:bubble-card
+          card_type: custom
+          card_mod:
+            style: |
+              ha-card {
+                background-image: url('/local/hph/schema_a2w_hk1_dhw.svg');
+                background-size: contain;
+                background-repeat: no-repeat;
+                background-position: center;
+                background-color: #0f1923;
+                min-height: 420px;
+                position: relative;
+              }
+          sub_buttons:
+            - entity: sensor.hph_source_operating_mode
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 28%; top: 8%; background: transparent; color: #8ca8c0; font-size: 11px; font-weight: 600; }
+            - entity: sensor.hph_source_outdoor_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 9%; top: 17%; background: transparent; color: #e0a800; font-size: 14px; font-weight: 700; }
+            - entity: sensor.hph_source_outlet_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 35%; top: 25%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            - entity: sensor.hph_source_inlet_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 35%; top: 60%; background: #1a252f; border: 1px solid #2980b9; color: #2980b9; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            - entity: sensor.hph_source_compressor_freq
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 6%; top: 82%; background: #0f1923; border: 1px solid #3d5166; color: #bcbd22; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            - entity: sensor.hph_cop_live
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 22%; top: 91%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
+            - entity: sensor.hph_scop
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 38%; top: 91%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
+            - entity: sensor.hph_source_dhw_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 90%; top: 47%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+      # ═══════════════════════════════════════════════════════════════════
+      # Variant a2w_hk1_hk2_dhw
+      # ═══════════════════════════════════════════════════════════════════
+      - type: conditional
+        conditions:
+          - entity: sensor.hph_schema_variant_active
+            state: a2w_hk1_hk2_dhw
+        card:
+          type: custom:bubble-card
+          card_type: custom
+          card_mod:
+            style: |
+              ha-card {
+                background-image: url('/local/hph/schema_a2w_hk1_hk2_dhw.svg');
+                background-size: contain;
+                background-repeat: no-repeat;
+                background-position: center;
+                background-color: #0f1923;
+                min-height: 460px;
+                position: relative;
+              }
+          sub_buttons:
+            - entity: sensor.hph_source_operating_mode
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 30%; top: 7%; background: transparent; color: #8ca8c0; font-size: 11px; font-weight: 600; }
+            - entity: sensor.hph_source_outdoor_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 9%; top: 16%; background: transparent; color: #e0a800; font-size: 14px; font-weight: 700; }
+            - entity: sensor.hph_source_outlet_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 32%; top: 23%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            - entity: sensor.hph_source_inlet_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 32%; top: 55%; background: #1a252f; border: 1px solid #2980b9; color: #2980b9; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            - entity: sensor.hph_source_compressor_freq
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 84%; top: 81%; background: #0f1923; border: 1px solid #3d5166; color: #bcbd22; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            - entity: sensor.hph_cop_live
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 3%; top: 74%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
+            - entity: sensor.hph_scop
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 14%; top: 74%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
+            - entity: sensor.hph_source_dhw_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 91%; top: 44%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            - entity: sensor.hph_source_zone1_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 56%; top: 84%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 10px; border-radius: 4px; padding: 1px 3px; }
+            - entity: sensor.hph_source_zone2_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 33%; top: 84%; background: #1a252f; border: 1px solid #a78bfa; color: #a78bfa; font-size: 10px; border-radius: 4px; padding: 1px 3px; }
+      # ═══════════════════════════════════════════════════════════════════
+      # Variant a2w_hk1_hk2_dhw_buffer
+      # ═══════════════════════════════════════════════════════════════════
+      - type: conditional
+        conditions:
+          - entity: sensor.hph_schema_variant_active
+            state: a2w_hk1_hk2_dhw_buffer
+        card:
+          type: custom:bubble-card
+          card_type: custom
+          card_mod:
+            style: |
+              ha-card {
+                background-image: url('/local/hph/schema_a2w_hk1_hk2_dhw_buffer.svg');
+                background-size: contain;
+                background-repeat: no-repeat;
+                background-position: center;
+                background-color: #0f1923;
+                min-height: 500px;
+                position: relative;
+              }
+          sub_buttons:
+            - entity: sensor.hph_source_operating_mode
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 32%; top: 7%; background: transparent; color: #8ca8c0; font-size: 11px; font-weight: 600; }
+            - entity: sensor.hph_source_outdoor_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 9%; top: 15%; background: transparent; color: #e0a800; font-size: 14px; font-weight: 700; }
+            - entity: sensor.hph_source_outlet_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 16%; top: 22%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 10px; font-weight: 700; border-radius: 6px; padding: 2px 4px; }
+            - entity: sensor.hph_source_inlet_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 16%; top: 53%; background: #1a252f; border: 1px solid #2980b9; color: #2980b9; font-size: 10px; font-weight: 700; border-radius: 6px; padding: 2px 4px; }
+            - entity: sensor.hph_source_compressor_freq
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 84%; top: 22%; background: #0f1923; border: 1px solid #3d5166; color: #bcbd22; font-size: 11px; font-weight: 700; border-radius: 4px; padding: 2px 4px; }
+            - entity: sensor.hph_cop_live
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 78%; top: 17%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 10px; font-weight: 700; border-radius: 4px; padding: 1px 4px; }
+            - entity: sensor.hph_cop_daily
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 84%; top: 17%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 10px; font-weight: 700; border-radius: 4px; padding: 1px 4px; }
+            - entity: sensor.hph_scop
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 91%; top: 17%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 10px; font-weight: 700; border-radius: 4px; padding: 1px 4px; }
+            - entity: sensor.hph_source_dhw_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 91%; top: 42%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 10px; font-weight: 700; border-radius: 6px; padding: 2px 4px; }
+            - entity: sensor.hph_source_buffer_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 46%; top: 35%; background: #1a252f; border: 1px solid #e8a87c; color: #e8a87c; font-size: 10px; font-weight: 700; border-radius: 6px; padding: 2px 4px; }
+            - entity: sensor.hph_source_zone1_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 33%; top: 89%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 10px; border-radius: 4px; padding: 1px 3px; }
+            - entity: sensor.hph_source_zone2_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 67%; top: 89%; background: #1a252f; border: 1px solid #a78bfa; color: #a78bfa; font-size: 10px; border-radius: 4px; padding: 1px 3px; }
+
+  # ════════════════════════════════════════════════════════════════════════
+  # 3) ANALYSIS — ApexCharts (Service-Cloud-style)
+  # ════════════════════════════════════════════════════════════════════════
+  - title: Analysis
+    path: analysis
+    icon: mdi:chart-multiline
+    cards:
+      - type: custom:apexcharts-card
+        header:
+          show: true
+          title: Temperatures & compressor
+          show_states: true
+        graph_span: 12h
+        span:
+          end: minute
+        yaxis:
+          - id: temp
+            decimals: 1
+            apex_config:
+              title: { text: "°C" }
+          - id: hz
+            opposite: true
+            decimals: 0
+            apex_config:
+              title: { text: "Hz / rpm / L-min" }
+        series:
+          - entity: sensor.hph_source_outdoor_temp
+            name: Outdoor
+            yaxis_id: temp
+            color: "#e0a800"
+          - entity: sensor.hph_source_inlet_temp
+            name: Return
+            yaxis_id: temp
+            color: "#7ec1ff"
+          - entity: sensor.hph_source_outlet_temp
+            name: Supply
+            yaxis_id: temp
+            color: "#d62728"
+          - entity: sensor.hph_source_discharge_temp
+            name: Discharge
+            yaxis_id: temp
+            color: "#2ca02c"
+          - entity: sensor.hph_source_compressor_freq
+            name: Compressor frequency
+            yaxis_id: hz
+            color: "#bcbd22"
+          - entity: sensor.hph_source_flow_rate
+            name: Water flow
+            yaxis_id: hz
+            color: "#7fb3d5"
+
+      - type: custom:apexcharts-card
+        header:
+          show: true
+          title: COP trend
+        graph_span: 24h
+        yaxis:
+          - min: 0
+            max: 6
+            decimals: 1
+        series:
+          - entity: sensor.hph_cop_live
+            name: COP (live)
+            color: "#17a2b8"
+
+      # ── Heatmap: COP by day-of-week × hour-of-day (last 30 days) ──
+      # Reveals when the system is least efficient (e.g. cold mornings,
+      # DHW pulls in the evening).
+      - type: custom:apexcharts-card
+        header:
+          show: true
+          title: COP heatmap — day-of-week × hour-of-day (30 days)
+        chart_type: scatter
+        graph_span: 30d
+        apex_config:
+          chart:
+            type: heatmap
+            height: 320
+          dataLabels:
+            enabled: false
+          plotOptions:
+            heatmap:
+              colorScale:
+                ranges:
+                  - { from: 0,   to: 1,   color: "#7f1d1d", name: "very poor (<1)" }
+                  - { from: 1,   to: 2,   color: "#dc2626", name: "poor (1-2)" }
+                  - { from: 2,   to: 3,   color: "#f59e0b", name: "marginal (2-3)" }
+                  - { from: 3,   to: 4,   color: "#facc15", name: "ok (3-4)" }
+                  - { from: 4,   to: 5,   color: "#84cc16", name: "good (4-5)" }
+                  - { from: 5,   to: 100, color: "#15803d", name: "excellent (5+)" }
+          xaxis:
+            type: category
+        series:
+          - entity: sensor.hph_cop_live
+            name: COP
+            type: line
+            group_by:
+              func: avg
+              duration: 1h
+              fill: null
+
+      # ── Scatter: outdoor T° vs daily COP (correlation lens) ──
+      - type: custom:apexcharts-card
+        header:
+          show: true
+          title: COP vs outdoor temperature — correlation
+        chart_type: scatter
+        graph_span: 30d
+        apex_config:
+          chart:
+            height: 280
+          xaxis:
+            title: { text: "Outdoor T° (°C)" }
+            type: numeric
+          yaxis:
+            title: { text: "COP" }
+            min: 0
+            max: 6
+        series:
+          - entity: sensor.hph_cop_daily
+            name: Daily COP
+            color: "#17a2b8"
+            type: scatter
+            statistics:
+              type: state
+              period: day
+            extend_to: false
+
+  # ════════════════════════════════════════════════════════════════════════
+  # 4) EFFICIENCY — period KPIs, comparisons, tariff splits, multi-year trend
+  # ════════════════════════════════════════════════════════════════════════
+  - title: Efficiency
+    path: efficiency
+    icon: mdi:chart-bar
+    cards:
+      # ── Headline trend card ──
+      - type: custom:mushroom-template-card
+        primary: Efficiency trend
+        secondary: "{{ state_attr('sensor.hph_efficiency_trend','headline') }}"
+        icon: |-
+          {% set s = states('sensor.hph_efficiency_trend') %}
+          {% if s == 'great' %}mdi:rocket-launch
+          {% elif s == 'better' %}mdi:trending-up
+          {% elif s == 'critical' %}mdi:alert
+          {% elif s == 'worse' %}mdi:trending-down
+          {% else %}mdi:trending-neutral{% endif %}
+        icon_color: |-
+          {% set s = states('sensor.hph_efficiency_trend') %}
+          {% if s == 'great' %}green
+          {% elif s == 'better' %}light-green
+          {% elif s == 'critical' %}red
+          {% elif s == 'worse' %}orange
+          {% else %}grey{% endif %}
+        multiline_secondary: true
+        fill_container: true
+
+      # ── Side-by-side comparison cards (month / year) ──
+      - type: horizontal-stack
+        cards:
+          - type: custom:mushroom-template-card
+            primary: vs last month
+            secondary: |-
+              {% set p = states('sensor.hph_cop_change_month_pct') | float(0) %}
+              {% set cur = states('sensor.hph_cop_monthly') %}
+              {% set prev = states('sensor.hph_cop_last_month') %}
+              {% if prev | float(0) <= 0.1 %}
+                no data yet
+              {% else %}
+                COP {{ cur }} vs {{ prev }} ({{ '+' if p > 0 else '' }}{{ p }}%)
+              {% endif %}
+            icon: |-
+              {% set p = states('sensor.hph_cop_change_month_pct') | float(0) %}
+              {% if p > 1 %}mdi:arrow-up-bold
+              {% elif p < -1 %}mdi:arrow-down-bold
+              {% else %}mdi:equal{% endif %}
+            icon_color: |-
+              {% set p = states('sensor.hph_cop_change_month_pct') | float(0) %}
+              {% if p > 1 %}green
+              {% elif p < -1 %}red
+              {% else %}grey{% endif %}
+            multiline_secondary: true
+            fill_container: true
+
+          - type: custom:mushroom-template-card
+            primary: vs last year
+            secondary: |-
+              {% set p = states('sensor.hph_scop_change_year_pct') | float(0) %}
+              {% set cur = states('sensor.hph_scop') %}
+              {% set prev = states('sensor.hph_cop_last_year') %}
+              {% if prev | float(0) <= 0.1 %}
+                no data yet
+              {% else %}
+                SCOP {{ cur }} vs {{ prev }} ({{ '+' if p > 0 else '' }}{{ p }}%)
+              {% endif %}
+            icon: |-
+              {% set p = states('sensor.hph_scop_change_year_pct') | float(0) %}
+              {% if p > 1 %}mdi:arrow-up-bold
+              {% elif p < -1 %}mdi:arrow-down-bold
+              {% else %}mdi:equal{% endif %}
+            icon_color: |-
+              {% set p = states('sensor.hph_scop_change_year_pct') | float(0) %}
+              {% if p > 1 %}green
+              {% elif p < -1 %}red
+              {% else %}grey{% endif %}
+            multiline_secondary: true
+            fill_container: true
+
+      # ── Energy comparison cards ──
+      - type: horizontal-stack
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Thermal energy this month
+            secondary: |-
+              {% set cur = states('sensor.hph_thermal_monthly') | float(0) %}
+              {% set prev = states('sensor.hph_thermal_last_month') | float(0) %}
+              {% set p = states('sensor.hph_thermal_change_month_pct') | float(0) %}
+              {{ cur | round(1) }} kWh{% if prev > 0.1 %} ({{ '+' if p > 0 else '' }}{{ p }}% vs {{ prev | round(1) }} kWh){% endif %}
+            icon: mdi:fire
+            icon_color: red
+            multiline_secondary: true
+            fill_container: true
+
+          - type: custom:mushroom-template-card
+            primary: Electrical energy this month
+            secondary: |-
+              {% set cur = states('sensor.hph_electrical_monthly') | float(0) %}
+              {% set prev = states('sensor.hph_electrical_last_month') | float(0) %}
+              {% set p = states('sensor.hph_electrical_change_month_pct') | float(0) %}
+              {{ cur | round(1) }} kWh{% if prev > 0.1 %} ({{ '+' if p > 0 else '' }}{{ p }}% vs {{ prev | round(1) }} kWh){% endif %}
+            icon: mdi:flash
+            icon_color: yellow
+            multiline_secondary: true
+            fill_container: true
+
+      # ── Comparison detail (entities) ──
+      - type: entities
+        title: Comparisons — detail
+        entities:
+          - entity: sensor.hph_cop_monthly
+            name: COP this month
+          - entity: sensor.hph_cop_last_month
+            name: COP last month
+          - entity: sensor.hph_cop_change_month_pct
+            name: Change vs last month
+          - type: divider
+          - entity: sensor.hph_scop
+            name: SCOP year to date
+          - entity: sensor.hph_cop_last_year
+            name: SCOP previous year
+          - entity: sensor.hph_scop_change_year_pct
+            name: Change vs last year
+          - type: divider
+          - entity: sensor.hph_thermal_last_month
+            name: Thermal — last month
+          - entity: sensor.hph_electrical_last_month
+            name: Electrical — last month
+          - entity: sensor.hph_thermal_last_year
+            name: Thermal — last year
+          - entity: sensor.hph_electrical_last_year
+            name: Electrical — last year
+
+      # ── Overall KPIs ──
+      - type: entities
+        title: Overall COP / SCOP
+        entities:
+          - entity: sensor.hph_scop
+            name: SCOP (year to date)
+          - entity: sensor.hph_cop_monthly
+            name: COP this month
+          - entity: sensor.hph_cop_daily
+            name: COP today
+          - entity: sensor.hph_cop_live
+            name: COP live
+
+      # ── Mode-split COP ──
+      - type: entities
+        title: COP by mode
+        entities:
+          - entity: sensor.hph_cop_yearly_heating
+            name: SCOP heating (year)
+          - entity: sensor.hph_cop_monthly_heating
+            name: COP heating (month)
+          - entity: sensor.hph_cop_yearly_dhw
+            name: SCOP DHW (year)
+          - entity: sensor.hph_cop_monthly_dhw
+            name: COP DHW (month)
+
+      # ── Energy totals ──
+      - type: entities
+        title: Energy totals
+        entities:
+          - entity: sensor.hph_thermal_yearly
+            name: Thermal (year)
+          - entity: sensor.hph_electrical_yearly
+            name: Electrical (year)
+          - entity: sensor.hph_thermal_monthly
+            name: Thermal (month)
+          - entity: sensor.hph_electrical_monthly
+            name: Electrical (month)
+          - entity: sensor.hph_thermal_daily
+            name: Thermal (today)
+          - entity: sensor.hph_electrical_daily
+            name: Electrical (today)
+
+      # ── Energy split by mode (this month) ──
+      - type: entities
+        title: Energy by mode — this month
+        entities:
+          - entity: sensor.hph_thermal_monthly_split_heating
+            name: Thermal — heating
+          - entity: sensor.hph_electrical_monthly_split_heating
+            name: Electrical — heating
+          - entity: sensor.hph_thermal_monthly_split_dhw
+            name: Thermal — DHW
+          - entity: sensor.hph_electrical_monthly_split_dhw
+            name: Electrical — DHW
+          - entity: sensor.hph_thermal_monthly_split_cooling
+            name: Thermal — cooling
+          - entity: sensor.hph_electrical_monthly_split_cooling
+            name: Electrical — cooling
+
+      # ── 30-day bar chart ──
+      - type: custom:apexcharts-card
+        header:
+          show: true
+          title: Daily energy — last 30 days
+          show_states: true
+        graph_span: 30d
+        chart_type: bar
+        yaxis:
+          - id: energy
+            decimals: 1
+            apex_config:
+              title: { text: "kWh" }
+        series:
+          - entity: sensor.hph_thermal_daily
+            name: Thermal
+            type: column
+            color: "#d62728"
+            statistics:
+              type: state
+              period: day
+          - entity: sensor.hph_electrical_daily
+            name: Electrical
+            type: column
+            color: "#bcbd22"
+            statistics:
+              type: state
+              period: day
+
+      # ── COP trend (30 days) ──
+      - type: custom:apexcharts-card
+        header:
+          show: true
+          title: COP trend — last 30 days
+        graph_span: 30d
+        yaxis:
+          - min: 0
+            max: 6
+            decimals: 1
+        series:
+          - entity: sensor.hph_cop_daily
+            name: COP daily
+            color: "#17a2b8"
+            statistics:
+              type: state
+              period: day
+
+      # ── Statistics graph (built-in) ──
+      - type: statistics-graph
+        title: Cumulative energy (30 days)
+        days_to_show: 30
+        stat_types:
+          - sum
+        entities:
+          - sensor.hph_thermal_energy_active
+          - sensor.hph_electrical_energy_active
+
+      - type: markdown
+        content: |
+          **HA Energy Dashboard:** add `sensor.hph_thermal_energy_active`
+          and `sensor.hph_electrical_energy_active` as *Individual
+          Devices* under Settings → Energy. These follow your selected source
+          (calculated / external power / external energy meter), so the
+          Energy Dashboard always shows the correct counter.
+
+          **Multi-year comparison:** import the Grafana dashboard
+          `efficiency_jaz_maz.json` for cross-year SCOP/MAZ charts
+          (see [docs/installation.md](/local/hph/installation.md)).
+
+  # ════════════════════════════════════════════════════════════════════════
+  # 5) OPTIMIZATION — cycle analysis + advisor + control switches
+  # ════════════════════════════════════════════════════════════════════════
+  - title: Optimization
+    path: optimization
+    icon: mdi:tune-vertical
+    cards:
+      - type: custom:mushroom-template-card
+        primary: Aggregate verdict
+        secondary: >-
+          {% set s = states('sensor.hph_advisor_summary') %}
+          {% if s == 'critical' %}🔴 Action required
+          {% elif s == 'warn' %}🟡 Warnings present
+          {% else %}🟢 All clear{% endif %}
+        icon: mdi:lightbulb-on
+        icon_color: |-
+          {% set s = states('sensor.hph_advisor_summary') %}
+          {% if s == 'critical' %}red{% elif s == 'warn' %}yellow{% else %}green{% endif %}
+
+      - type: entities
+        title: Cycle analysis (today)
+        entities:
+          - sensor.hph_cycles_per_hour
+          - counter.hph_cycles_today
+          - counter.hph_short_cycles_today
+          - sensor.hph_short_cycle_ratio
+          - sensor.hph_avg_cycle_duration_24h
+          - input_number.hph_cycle_last_duration_min
+          - input_number.hph_cycle_last_pause_min
+          - input_number.hph_cycle_short_threshold_min
+
+      - type: custom:apexcharts-card
+        header:
+          show: true
+          title: Cycling — last 7 days
+        graph_span: 7d
+        series:
+          - entity: counter.hph_cycles_today
+            name: Cycles/day
+            type: column
+          - entity: counter.hph_short_cycles_today
+            name: Short cycles/day
+            type: column
+            color: "#d62728"
+
+      - type: entities
+        title: Advisor — recommendations
+        entities:
+          - entity: sensor.hph_advisor_short_cycle
+            name: Cycling
+            secondary_info: last-changed
+          - entity: sensor.hph_advisor_spread
+            name: Supply/return spread
+          - entity: sensor.hph_advisor_defrost
+            name: Defrost behaviour
+          - entity: sensor.hph_advisor_heat_curve
+            name: Heating curve / aux heater
+          - entity: sensor.hph_advisor_dhw_runtime
+            name: DHW run length
+          - entity: sensor.hph_advisor_heating_limit
+            name: Heating limit (auto-detected)
+          - entity: sensor.hph_advisor_pressure_trend
+            name: Water pressure trend (leak detection)
+          - entity: sensor.hph_advisor_diagnostics
+            name: Diagnostics (active fault / recurrence)
+          - entity: sensor.hph_advisor_analysis
+            name: Analysis (indoor temp deviation, curve recommendation)
+          - entity: sensor.hph_advisor_pump_curve
+            name: Pump curve (7-day spread mean / stdev)
+          - entity: sensor.hph_advisor_efficiency_drift
+            name: Efficiency drift (year-over-year SCOP)
+          - entity: sensor.hph_advisor_dhw_timing
+            name: DHW timing (fires per day)
+        state_color: true
+
+      # ── Analysis recommendation card ──
+      - type: custom:mushroom-template-card
+        primary: |-
+          {% set rec = state_attr('sensor.hph_advisor_analysis','recommendation_k') | float(0) %}
+          {% if rec == 0 %}Heating curve in band
+          {% elif rec > 0 %}Recommend heating curve +{{ rec }} K
+          {% else %}Recommend heating curve {{ rec }} K{% endif %}
+        secondary: >-
+          {{ state_attr('sensor.hph_advisor_analysis','message') }}
+        icon: |-
+          {% set s = states('sensor.hph_advisor_analysis') %}
+          {% if s == 'critical' %}mdi:alert-octagon
+          {% elif s == 'warn' %}mdi:alert
+          {% elif s == 'info' %}mdi:lightbulb-on-outline
+          {% else %}mdi:check-circle{% endif %}
+        icon_color: |-
+          {% set s = states('sensor.hph_advisor_analysis') %}
+          {% if s == 'critical' %}red
+          {% elif s == 'warn' %}orange
+          {% elif s == 'info' %}blue
+          {% else %}green{% endif %}
+        multiline_secondary: true
+        fill_container: true
+
+      # ── Active fault / diagnostics card ──
+      - type: custom:mushroom-template-card
+        primary: |-
+          {% set s = states('sensor.hph_diagnostics_current_error') %}
+          {% if s == 'ok' %}No active fault
+          {% else %}Fault: {{ s }}{% endif %}
+        secondary: >-
+          {{ state_attr('sensor.hph_diagnostics_current_error','message') }}
+        icon: |-
+          {% set sev = state_attr('sensor.hph_diagnostics_current_error','severity') %}
+          {% if sev == 'critical' %}mdi:alert-octagon
+          {% elif sev == 'warn' %}mdi:alert
+          {% elif sev == 'info' %}mdi:information-outline
+          {% else %}mdi:check-circle{% endif %}
+        icon_color: |-
+          {% set sev = state_attr('sensor.hph_diagnostics_current_error','severity') %}
+          {% if sev == 'critical' %}red
+          {% elif sev == 'warn' %}orange
+          {% elif sev == 'info' %}blue
+          {% else %}green{% endif %}
+        multiline_secondary: true
+        fill_container: true
+
+      - type: entities
+        title: Diagnostics — detail
+        entities:
+          - entity: sensor.hph_diagnostics_current_error
+            name: Active fault code
+          - entity: sensor.hph_diagnostics_recurrence
+            name: Recurrences (last 5 events)
+          - entity: input_datetime.hph_diag_last_error_time
+            name: Last error timestamp
+          - entity: input_text.hph_diag_error_history
+            name: Recent error history (JSON)
+
+      - type: entities
+        title: Heating limit — observed
+        entities:
+          - entity: sensor.hph_heating_limit_smoothed
+            name: Smoothed (7-day rolling avg)
+          - entity: input_number.hph_heating_limit_observed_c
+            name: Last observation
+          - entity: input_number.hph_advisor_heating_limit_target_c
+            name: Target setpoint
+
+      - type: markdown
+        title: Recommendation detail
+        content: |
+          ### Cycling
+          {{ state_attr('sensor.hph_advisor_short_cycle','message') }}
+
+          ### Spread
+          {{ state_attr('sensor.hph_advisor_spread','message') }}
+
+          ### Defrost
+          {{ state_attr('sensor.hph_advisor_defrost','message') }}
+
+          ### Heating curve / aux heater
+          {{ state_attr('sensor.hph_advisor_heat_curve','message') }}
+
+          ### DHW
+          {{ state_attr('sensor.hph_advisor_dhw_runtime','message') }}
+
+          ### Heating limit
+          {{ state_attr('sensor.hph_advisor_heating_limit','message') }}
+
+          ### Diagnostics
+          {{ state_attr('sensor.hph_advisor_diagnostics','message') }}
+
+          ### Water pressure trend
+          {{ state_attr('sensor.hph_advisor_pressure_trend','message') }}
+
+          ### Pump curve (v0.8)
+          {{ state_attr('sensor.hph_advisor_pump_curve','message') }}
+
+          ### Efficiency drift (v0.8)
+          {{ state_attr('sensor.hph_advisor_efficiency_drift','message') }}
+
+          ### DHW timing (v0.8)
+          {{ state_attr('sensor.hph_advisor_dhw_timing','message') }}
+
+      - type: entities
+        title: Control strategies (HeishaMoNR parity)
+        entities:
+          - input_boolean.hph_ctrl_master
+          - input_boolean.hph_ctrl_ccc
+          - input_number.hph_ctrl_ccc_min_pause_min
+          - input_number.hph_ctrl_ccc_min_runtime_min
+          - input_boolean.hph_ctrl_softstart
+          - input_boolean.hph_ctrl_quiet_night
+          - input_boolean.hph_ctrl_solar_dhw
+          - input_text.hph_ctrl_pv_surplus_entity
+          - input_number.hph_ctrl_solar_pv_threshold_w
+
+      - type: entities
+        title: Control extensions (v0.7) — adaptive curve / price / forecast
+        entities:
+          - type: section
+            label: Adaptive heating curve (self-learning, weekly)
+          - input_boolean.hph_ctrl_adaptive_curve
+          - input_number.hph_ctrl_adaptive_max_step_k
+          - input_number.hph_ctrl_adaptive_supply_min_c
+          - input_number.hph_ctrl_adaptive_supply_max_c
+          - input_datetime.hph_ctrl_adaptive_last_run
+          - type: section
+            label: Price-driven DHW (Tibber / aWATTar)
+          - input_boolean.hph_ctrl_price_dhw
+          - input_text.hph_ctrl_price_entity
+          - input_text.hph_ctrl_price_mean_entity
+          - input_number.hph_ctrl_price_threshold_factor
+          - input_number.hph_ctrl_price_max_per_day
+          - counter.hph_ctrl_price_dhw_fires_today
+          - input_datetime.hph_ctrl_price_dhw_last_fire
+          - type: section
+            label: Weather-forecast pre-heating
+          - input_boolean.hph_ctrl_forecast_preheat
+          - input_text.hph_ctrl_forecast_entity
+          - input_number.hph_ctrl_forecast_drop_threshold_k
+          - input_number.hph_ctrl_forecast_boost_k
+          - input_boolean.hph_ctrl_forecast_preheat_active
+
+      - type: entities
+        title: Advisor thresholds (power-user tweaks)
+        entities:
+          - input_number.hph_advisor_short_cycle_warn_pct
+          - input_number.hph_advisor_short_cycle_crit_pct
+          - input_number.hph_advisor_dt_target_k
+          - input_number.hph_advisor_dhw_min_runtime_min
+          - type: section
+            label: v0.8 advisors
+          - input_number.hph_advisor_drift_warn_pct
+          - input_number.hph_advisor_drift_crit_pct
+          - input_number.hph_advisor_dhw_max_fires_per_day
+          - input_number.hph_advisor_pump_spread_min_samples
+
+  # ════════════════════════════════════════════════════════════════════════
+  # 5b) PROGRAMS — multi-day / scheduled service programs (v0.8)
+  # ════════════════════════════════════════════════════════════════════════
+  - title: Programs
+    path: programs
+    icon: mdi:calendar-clock
+    cards:
+      - type: markdown
+        content: |
+          ## Service programs
+          Multi-day and scheduled service programs. All gated by the
+          master switch `Control master` — you must enable both the master
+          and the per-program switch for anything to actually run. The
+          status cards below show the current state at a glance.
+
+          Programs write directly to the heat pump via the configured
+          control write-helpers (see Configuration → Control write
+          targets). If a program does nothing when triggered, double-check
+          those helpers point at existing entities.
+
+      # ── Status cards ──
+      - type: horizontal-stack
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Legionella program
+            secondary: |-
+              {% set s = states('sensor.hph_prog_legionella_status') %}
+              {% if s == 'disabled' %}Disabled
+              {% elif s == 'pending' %}Armed — awaiting first run
+              {% elif s == 'ok' %}OK — last run within window
+              {% elif s == 'due' %}Due this week
+              {% elif s == 'overdue' %}Overdue — last run >8 days ago
+              {% else %}{{ s }}{% endif %}
+            icon: mdi:bacteria
+            icon_color: |-
+              {% set s = states('sensor.hph_prog_legionella_status') %}
+              {% if s == 'overdue' %}red
+              {% elif s == 'due' %}orange
+              {% elif s == 'ok' %}green
+              {% elif s == 'pending' %}blue
+              {% else %}grey{% endif %}
+            multiline_secondary: true
+            fill_container: true
+
+          - type: custom:mushroom-template-card
+            primary: Screed dry-out
+            secondary: |-
+              {% set s = states('sensor.hph_prog_screed_status') %}
+              {% set d = states('input_number.hph_prog_screed_day') | int(0) %}
+              {% set t = states('sensor.hph_prog_screed_target') %}
+              {% if s == 'disabled' %}Disabled
+              {% elif s == 'armed' %}Armed — not yet running
+              {% elif s == 'running' %}Day {{ d }} — target {{ t }} °C
+              {% else %}{{ s }}{% endif %}
+            icon: mdi:home-floor-a
+            icon_color: |-
+              {% set s = states('sensor.hph_prog_screed_status') %}
+              {% if s == 'running' %}orange
+              {% elif s == 'armed' %}blue
+              {% else %}grey{% endif %}
+            multiline_secondary: true
+            fill_container: true
+
+      # ── Master-switch reminder ──
+      - type: entities
+        title: Master switch (required for all control + programs)
+        entities:
+          - entity: input_boolean.hph_ctrl_master
+            name: Control master switch
+
+      # ── Legionella controls ──
+      - type: entities
+        title: Legionella — weekly DHW boost
+        entities:
+          - type: section
+            label: Schedule
+          - entity: input_boolean.hph_prog_legionella
+            name: Enable program
+          - entity: input_select.hph_prog_legionella_weekday
+            name: Weekday
+          - entity: input_number.hph_prog_legionella_hour
+            name: Start hour (0-23)
+          - type: section
+            label: Tank target
+          - entity: input_number.hph_prog_legionella_target_c
+            name: Target temperature (°C)
+          - entity: input_number.hph_prog_legionella_hold_min
+            name: Hold duration above target (min)
+          - type: section
+            label: Status
+          - entity: sensor.hph_prog_legionella_status
+            name: Status
+          - entity: input_datetime.hph_prog_legionella_last_run
+            name: Last successful run
+
+      # ── Screed dry-out controls ──
+      - type: entities
+        title: Screed dry-out program
+        entities:
+          - type: section
+            label: Profile selection (pick BEFORE arming)
+          - entity: input_select.hph_prog_screed_profile
+            name: Profile
+          - type: section
+            label: Arm / disarm
+          - entity: input_boolean.hph_prog_screed
+            name: Enable program (arming triggers Day 1)
+          - entity: input_boolean.hph_prog_screed_active
+            name: Currently running (status flag)
+          - type: section
+            label: Status
+          - entity: input_datetime.hph_prog_screed_start
+            name: Program start
+          - entity: input_number.hph_prog_screed_day
+            name: Current day index
+          - entity: sensor.hph_prog_screed_target
+            name: Today's supply target (°C)
+          - entity: sensor.hph_prog_screed_status
+            name: Status
+
+      # ── Profile reference ──
+      - type: markdown
+        title: Profile reference
+        content: |
+          | Day | functional_3d | combined_10d | din_18560_28d |
+          |---:|---:|---:|---:|
+          | 1 | 25 °C | 25 °C | 25 °C |
+          | 2 | 45 °C | 45 °C | 25 °C |
+          | 3 | 25 °C | 25 °C | 25 °C |
+          | 4 | end | 40 °C | 30 °C |
+          | 5 |  | 40 °C | 35 °C |
+          | 6 |  | 40 °C | 45 °C |
+          | 7-24 |  | 40 / 35 / 30 / 25 then end | 50 °C |
+          | 25-28 |  |  | 45 / 35 / 30 / 25 |
+
+          **functional_3d** — ISO EN 1264-4 §4.4.2 functional heating,
+          minimum proof of operation.
+
+          **combined_10d** — common compromise: 3 d functional + 7 d
+          curing taper.
+
+          **din_18560_28d** — full 28-day cement-screed protocol per
+          DIN 18560-1.
+
+          The current day's target is pushed to the configured Z1
+          heat-curve target_high entity at 00:01 daily. Curve is NOT
+          restored on program end — note your pre-program values from
+          Configuration → Heating curve.
+
+  # ════════════════════════════════════════════════════════════════════════
+  # 6) MOBILE — slim, single-column layout for phones
+  # ════════════════════════════════════════════════════════════════════════
+  - title: Mobile
+    path: mobile
+    icon: mdi:cellphone
+    type: panel
+    badges: []
+    cards:
+      - type: vertical-stack
+        cards:
+          # ── Hero card ──
+          - type: custom:mushroom-template-card
+            primary: HeatPump Hero
+            secondary: |-
+              {% set s = states('sensor.hph_efficiency_trend') %}
+              {% if s == 'great' %}🚀 great
+              {% elif s == 'better' %}📈 trending up
+              {% elif s == 'critical' %}⚠️ check advisor
+              {% elif s == 'worse' %}📉 trending down
+              {% else %}— stable —{% endif %}
+              · COP live {{ states('sensor.hph_cop_live') }}
+            icon: mdi:heat-pump
+            icon_color: |-
+              {% set s = states('sensor.hph_efficiency_trend') %}
+              {% if s == 'great' %}green
+              {% elif s == 'better' %}light-green
+              {% elif s == 'critical' %}red
+              {% elif s == 'worse' %}orange
+              {% else %}grey{% endif %}
+            multiline_secondary: true
+            fill_container: true
+
+          # ── Compact KPI strip ──
+          - type: custom:mushroom-chips-card
+            chips:
+              - type: template
+                icon: mdi:thermometer
+                icon_color: blue
+                content: "{{ states('sensor.hph_source_outdoor_temp') }}°"
+              - type: template
+                icon: mdi:water-thermometer
+                icon_color: red
+                content: "{{ states('sensor.hph_source_outlet_temp') }}°"
+              - type: template
+                icon: mdi:water-pump
+                icon_color: blue
+                content: "{{ states('sensor.hph_source_flow_rate') }}"
+              - type: template
+                icon: mdi:sine-wave
+                icon_color: |-
+                  {{ 'green' if is_state('binary_sensor.hph_compressor_running','on') else 'disabled' }}
+                content: "{{ states('sensor.hph_source_compressor_freq') }}Hz"
+              - type: template
+                icon: mdi:gauge
+                icon_color: |-
+                  {% set v = states('sensor.hph_cop_live') | float(0) %}
+                  {% if v >= 4 %}green{% elif v >= 3 %}yellow{% elif v > 0 %}orange{% else %}disabled{% endif %}
+                content: "{{ states('sensor.hph_cop_live') }}"
+              - type: template
+                icon: mdi:snowflake-melt
+                icon_color: |-
+                  {{ 'cyan' if is_state('binary_sensor.hph_defrost_active','on') else 'disabled' }}
+                content: ""
+
+          # ── Compact period-COP grid ──
+          - type: grid
+            columns: 3
+            square: false
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Today
+                secondary: "COP {{ states('sensor.hph_cop_daily') }}"
+                icon: mdi:calendar-today
+                fill_container: true
+              - type: custom:mushroom-template-card
+                primary: Month
+                secondary: "COP {{ states('sensor.hph_cop_monthly') }}"
+                icon: mdi:calendar-month
+                fill_container: true
+              - type: custom:mushroom-template-card
+                primary: Year
+                secondary: "SCOP {{ states('sensor.hph_scop') }}"
+                icon: mdi:calendar
+                fill_container: true
+
+          # ── Live trend ──
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: Last 6h
+            graph_span: 6h
+            apex_config:
+              chart: { height: 200 }
+              legend: { show: false }
+            yaxis:
+              - id: temp
+                decimals: 1
+              - id: hz
+                opposite: true
+                decimals: 0
+            series:
+              - entity: sensor.hph_source_outlet_temp
+                name: Supply
+                yaxis_id: temp
+                color: "#d62728"
+                stroke_width: 2
+              - entity: sensor.hph_source_inlet_temp
+                name: Return
+                yaxis_id: temp
+                color: "#7ec1ff"
+                stroke_width: 2
+              - entity: sensor.hph_source_compressor_freq
+                name: Hz
+                yaxis_id: hz
+                color: "#bcbd22"
+                stroke_width: 1.5
+
+          # ── Active fault (only shown when present) ──
+          - type: conditional
+            conditions:
+              - entity: sensor.hph_diagnostics_current_error
+                state_not: ok
+            card:
+              type: custom:mushroom-template-card
+              primary: |-
+                Fault: {{ states('sensor.hph_diagnostics_current_error') }}
+              secondary: >-
+                {{ state_attr('sensor.hph_diagnostics_current_error','message') }}
+              icon: mdi:alert-octagon
+              icon_color: red
+              multiline_secondary: true
+              fill_container: true
+              tap_action:
+                action: navigate
+                navigation_path: /hph/optimization
+
+          # ── Advisor verdict ──
+          - type: custom:mushroom-template-card
+            primary: Advisor
+            secondary: >-
+              {% set s = states('sensor.hph_advisor_summary') %}
+              {% if s == 'critical' %}🔴 action required
+              {% elif s == 'warn' %}🟡 {{ state_attr('sensor.hph_advisor_summary','warn_count') }} warning(s)
+              {% else %}🟢 all clear{% endif %}
+            icon: mdi:lightbulb-on
+            icon_color: |-
+              {% set s = states('sensor.hph_advisor_summary') %}
+              {% if s == 'critical' %}red{% elif s == 'warn' %}yellow{% else %}green{% endif %}
+            tap_action:
+              action: navigate
+              navigation_path: /hph/optimization
+
+          # ── Programs status (v0.8) ──
+          - type: conditional
+            conditions:
+              - entity: sensor.hph_prog_legionella_status
+                state_not: disabled
+            card:
+              type: custom:mushroom-template-card
+              primary: Legionella
+              secondary: >-
+                {% set s = states('sensor.hph_prog_legionella_status') %}
+                {% if s == 'overdue' %}🔴 overdue
+                {% elif s == 'due' %}🟡 due this week
+                {% elif s == 'pending' %}🔵 awaiting first run
+                {% else %}🟢 ok{% endif %}
+              icon: mdi:bacteria
+              icon_color: |-
+                {% set s = states('sensor.hph_prog_legionella_status') %}
+                {% if s == 'overdue' %}red
+                {% elif s == 'due' %}orange
+                {% elif s == 'pending' %}blue
+                {% else %}green{% endif %}
+              tap_action:
+                action: navigate
+                navigation_path: /hph/programs
+
+          - type: conditional
+            conditions:
+              - entity: sensor.hph_prog_screed_status
+                state: running
+            card:
+              type: custom:mushroom-template-card
+              primary: Screed running
+              secondary: >-
+                Day {{ states('input_number.hph_prog_screed_day') }} —
+                target {{ states('sensor.hph_prog_screed_target') }} °C
+              icon: mdi:home-floor-a
+              icon_color: orange
+              tap_action:
+                action: navigate
+                navigation_path: /hph/programs
+            fill_container: true
+
+  # ════════════════════════════════════════════════════════════════════════
+  # 7) CONFIGURATION
+  # ════════════════════════════════════════════════════════════════════════
+  - title: Configuration
+    path: config
+    icon: mdi:cog
+    cards:
+      - type: markdown
+        content: |
+          ## Source adapter
+          HeatPump Hero reads everything via the configurable source helpers
+          below. Defaults match the kamaradclimber Heishamon integration —
+          if you use a different heat pump or different meters, change the
+          relevant entity-ID and HeatPump Hero follows automatically. No YAML
+          editing required.
+
+      # ── Vendor preset & model selector (1-click setup) ──
+      - type: entities
+        title: Vendor & model
+        entities:
+          - entity: input_select.hph_vendor_preset
+            name: Vendor preset (auto-fills source helpers)
+            secondary_info: last-changed
+          - entity: input_select.hph_pump_model
+            name: Heat-pump model
+          - entity: sensor.hph_model_description
+            name: Model description
+          - entity: sensor.hph_model_refrigerant
+            name: Refrigerant
+
+      - type: entities
+        title: Model thresholds (auto-set on model change, override OK)
+        entities:
+          - entity: input_number.hph_model_compressor_min_hz
+            name: Compressor min Hz
+          - entity: input_number.hph_model_compressor_max_hz
+            name: Compressor max Hz
+          - entity: input_number.hph_model_min_flow_lpm
+            name: Minimum water flow (L/min)
+          - entity: input_number.hph_model_max_supply_c
+            name: Maximum supply temperature (°C)
+
+      # ── Source-mode selectors ──
+      - type: entities
+        title: Source modes
+        entities:
+          - entity: input_select.hph_thermal_source
+            name: Thermal source mode
+          - entity: input_select.hph_electrical_source
+            name: Electrical source mode
+          - entity: input_select.hph_schema_variant
+            name: Schematic variant (auto / manual)
+          - entity: sensor.hph_schema_variant_active
+            name: Schematic — active
+          - entity: sensor.hph_schema_variant_detected
+            name: Schematic — auto-detected
+
+      # ── Optional-component sources (zone 2 / DHW / buffer) ──
+      # Set the entity-ID to point at the right sensor, or leave blank to
+      # mark the component as definitely absent. Detection follows.
+      # ── Analysis sources (KI-Modul Layer 1) ──
+      - type: entities
+        title: Analysis (recommendations from observation)
+        entities:
+          - entity: input_text.hph_indoor_temp_entity
+            name: Indoor reference sensor (entity-ID)
+          - entity: input_text.hph_indoor_target_entity
+            name: Indoor target sensor (entity-ID, optional)
+          - entity: input_number.hph_indoor_target_default
+            name: Fallback indoor target (°C)
+          - entity: input_number.hph_analysis_window_days
+            name: Observation window (days)
+          - entity: input_number.hph_analysis_dead_band_k
+            name: Dead band (K)
+          - entity: sensor.hph_indoor_deviation_smoothed
+            name: Smoothed deviation
+          - entity: input_text.hph_heating_curve_recommendation
+            name: Heating-curve script output
+
+      - type: entities
+        title: Optional components
+        entities:
+          - entity: input_text.hph_src_zone1_temp
+            name: Zone 1 temperature
+          - entity: input_text.hph_src_zone2_temp
+            name: Zone 2 temperature (blank if absent)
+          - entity: input_text.hph_src_dhw_temp
+            name: DHW tank temperature (blank if absent)
+          - entity: input_text.hph_src_dhw_target_temp
+            name: DHW target temperature
+          - entity: input_text.hph_src_buffer_temp
+            name: Buffer tank temperature (blank if absent)
+          - entity: input_text.hph_src_error_code
+            name: Error / fault code source
+          - type: divider
+          - entity: binary_sensor.hph_has_hk2
+            name: HK2 detected
+          - entity: binary_sensor.hph_has_dhw
+            name: DHW detected
+          - entity: binary_sensor.hph_has_buffer
+            name: Buffer detected
+
+      # ── Heat pump device entities (UI-configurable) ──
+      - type: entities
+        title: Heat pump entities (configurable)
+        entities:
+          - entity: input_text.hph_src_inlet_temp
+            name: Inlet (return) T°
+          - entity: input_text.hph_src_outlet_temp
+            name: Outlet (supply) T°
+          - entity: input_text.hph_src_flow_rate
+            name: Water flow rate
+          - entity: input_text.hph_src_outdoor_temp
+            name: Outdoor T°
+          - entity: input_text.hph_src_compressor_freq
+            name: Compressor frequency
+          - entity: input_text.hph_src_compressor_hours
+            name: Compressor hours (lifetime)
+          - entity: input_text.hph_src_compressor_starts
+            name: Compressor starts (lifetime)
+          - entity: input_text.hph_src_discharge_temp
+            name: Discharge T°
+          - entity: input_text.hph_src_pump_pressure
+            name: Water pressure
+          - entity: input_text.hph_src_defrost_state
+            name: Defrost state (binary)
+          - entity: input_text.hph_src_aux_heater_state
+            name: Aux heater state (binary)
+          - entity: input_text.hph_src_operating_mode
+            name: Operating mode (select)
+          - entity: input_text.hph_src_internal_power
+            name: Internal power consumption (W)
+
+      # ── Control write targets (v0.8 vendor adapter) ──
+      # Auto-filled by the vendor preset above; override here only if
+      # your install uses non-standard entity-IDs (e.g. renamed entities,
+      # second heat-pump unit). All control automations and programs
+      # write through these helpers.
+      - type: entities
+        title: Control write targets (v0.8 vendor adapter)
+        entities:
+          - entity: input_text.hph_ctrl_write_quiet_mode
+            name: Quiet-mode select
+          - entity: input_text.hph_ctrl_write_force_dhw
+            name: Force-DHW button
+          - entity: input_text.hph_ctrl_write_z1_curve_high
+            name: Z1 heat-curve target_high (number)
+          - entity: input_text.hph_ctrl_write_z1_curve_low
+            name: Z1 heat-curve target_low (number)
+          - entity: input_text.hph_ctrl_write_dhw_target
+            name: DHW target temperature (number)
+
+      # ── External meter entities (optional) ──
+      - type: entities
+        title: External meters (optional)
+        entities:
+          - entity: input_text.hph_src_external_thermal_power
+            name: External thermal power (W)
+          - entity: input_text.hph_src_external_thermal_energy
+            name: External heat meter (kWh, total_increasing)
+          - entity: input_text.hph_src_external_electrical_power
+            name: External electrical power (W)
+          - entity: input_text.hph_src_external_electrical_energy
+            name: External electricity meter (kWh, total_increasing)
+
+      # ── Export / scheduled task ──
+      - type: entities
+        title: Export (long-term values for external analysis)
+        entities:
+          - entity: input_select.hph_export_format
+            name: Format
+          - entity: input_select.hph_export_period
+            name: Period
+          - entity: input_text.hph_export_target_path
+            name: Target directory
+          - entity: input_select.hph_export_schedule
+            name: Schedule
+          - entity: input_datetime.hph_export_last_run
+            name: Last run
+          - entity: script.hph_export_now
+            name: ▶ Export now (manual)
+        footer:
+          type: buttons
+          entities:
+            - entity: script.hph_export_now
+              name: Export now
+
+      # ── Multi-platform bridge (read-only) ──
+      - type: entities
+        title: Multi-platform bridge (read-only)
+        entities:
+          - entity: input_boolean.hph_bridge_enabled
+            name: Bridge enabled
+          - entity: input_text.hph_bridge_prefix
+            name: MQTT topic prefix
+          - entity: sensor.hph_bridge_last_publish
+            name: Last publish
+      - type: markdown
+        content: |
+          When enabled, HeatPump Hero republishes ~50 derived sensors
+          (COP / SCOP / advisor / diagnostics) onto MQTT under
+          `<prefix>/<domain>/<entity_id>/state` and `/attributes`, so
+          ioBroker / openHAB / Node-RED can read them. Read-only —
+          control stays in HA. See
+          [docs/multivendor_bridge.md](https://github.com/st03psn/heat-pump-hero/blob/main/docs/multivendor_bridge.md)
+          for the topic schema and per-platform recipes.
+
+      # ── Heat-curve auto-entities (Heishamon-specific UI shortcut) ──
+      # Note: this filter pattern is heat-pump specific — adapt if you swap
+      # to a non-Heishamon heat pump.
+      - type: custom:auto-entities
+        card:
+          type: entities
+          title: Heating curve — zone 1 (Heishamon-specific)
+        filter:
+          include:
+            - entity_id: number.panasonic_heat_pump_main_z1_heat_curve_*
+        show_empty: false
+      - type: custom:auto-entities
+        card:
+          type: entities
+          title: Heating curve — zone 2 (if present, Heishamon-specific)
+        filter:
+          include:
+            - entity_id: number.panasonic_heat_pump_main_z2_heat_curve_*
+        show_empty: false

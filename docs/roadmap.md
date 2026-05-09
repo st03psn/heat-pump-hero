@@ -107,16 +107,50 @@ Items added by v0.7.2 bridge that didn't make the v0.8 cut:
 - [ ] Add `sensor.hph_weather_*` and `_scop_weather_adjusted` to the
   v0.7.2 bridge whitelist (5-line patch)
 
-## v0.9 — Python custom integration (HACS plug-and-play)
+## ⏳ v0.9 — Python custom integration (HACS plug-and-play, in progress)
 
-- [ ] `custom_components/hph/` skeleton
-- [ ] Config flow for first-run setup (3 steps: vendor / model / extras)
-- [ ] Programmatic helper registration (no input_select / input_text YAML)
-- [ ] Programmatic sensor registration (replaces `template:` packages)
-- [ ] Dashboard auto-registration via `lovelace.dashboards`
+Phased delivery to keep regression risk manageable:
+
+### Phase 1 — skeleton + config-flow + helpers + dashboard auto-register (current)
+
+- ✅ `custom_components/hph/` skeleton with manifest, __init__,
+  bootstrap, services
+- ✅ Config flow (4-step wizard: vendor / model / optional external
+  sensors / confirm) and options flow
+- ✅ Programmatic helper registration via text / number / select /
+  switch / datetime / button platforms — replaces all v0.8
+  input_*/counter YAML
+- ✅ Dashboard auto-registration via
+  `frontend.async_register_built_in_panel`
+- ✅ Aggressive UI-uninstall (`async_remove_entry`) removes every
+  file the integration ever wrote; recorder DB stays
+- ✅ HACS metadata (`hacs.json`) updated to integration category
+
+### Phase 2 — port template sensors
+
+- [ ] Source-facade sensors (~20 in `hph_sources.yaml`) →
+  `sensor/sources.py`
+- [ ] Core, efficiency, cycles, diagnostics, advisor, schema, model,
+  analysis, programs, bridge sensors → respective `sensor/*.py`
+- [ ] `sensor.hph_*` and `binary_sensor.hph_*` entity_ids preserved
+  — recorder history continuity guaranteed via stable unique_ids
+
+### Phase 3 — port automations + bootstrap removal
+
+- [ ] All automations move to async event listeners / coordinators
+- [ ] Counter increments restored (cycles, dhw_fires, etc.)
+- [ ] `bootstrap.py` and `data/` directory deleted — integration
+  becomes fully self-contained, no YAML deployment to user's
+  config dir
+- [ ] One-time migration: detect leftover `<config>/packages/hph_*.yaml`
+  from earlier bootstrap installs and clean them up
+
+### Phase 4 — polish (after user testing)
+
 - [ ] Per-platform translations `translations/{en,de,nl}.json` →
   follows HA `hass.config.language` automatically
 - [ ] Repairs panel for missing frontend cards (apexcharts, mushroom, …)
+- [ ] pytest-based test suite mocking HA core
 - [ ] HACS-default-repository submission
 
 ## v1.0 — stable

@@ -1,0 +1,78 @@
+template:
+- sensor:
+  - name: HPH Source Indoor Temperature
+    unique_id: hph_source_indoor_temp
+    unit_of_measurement: °C
+    device_class: temperature
+    state_class: measurement
+    availability: '{% set ent = states(''text.hph_indoor_temp_entity'') %} {{
+      ent and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+    state: '{{ states(states(''text.hph_indoor_temp_entity'')) | float(0) }}'
+  - name: HPH Source Indoor Target
+    unique_id: hph_source_indoor_target
+    unit_of_measurement: °C
+    device_class: temperature
+    state_class: measurement
+    availability: "{{\n  (states('text.hph_indoor_target_entity') and\n   states(states('text.hph_indoor_target_entity'))\n\
+      \   not in ['unknown','unavailable','none',''])\n  or states('number.hph_indoor_target_default')\n\
+      \  not in ['unknown','unavailable','none','']\n}}"
+    state: "{% set ent = states('text.hph_indoor_target_entity') %} {% if ent\
+      \ and states(ent) not in ['unknown','unavailable','none',''] %}\n  {{ states(ent)\
+      \ | float(21) }}\n{% else %}\n  {{ states('number.hph_indoor_target_default')\
+      \ | float(21) }}\n{% endif %}"
+  - name: HPH Indoor Temp Deviation
+    unique_id: hph_indoor_temp_deviation
+    unit_of_measurement: K
+    state_class: measurement
+    availability: "{{ states('sensor.hph_source_indoor_temp')\n   not in ['unknown','unavailable','none']\n\
+      \   and states('sensor.hph_source_indoor_target')\n   not in ['unknown','unavailable','none']\
+      \ }}"
+    state: '{% set cur = states(''sensor.hph_source_indoor_temp'') | float(0) %} {%
+      set tgt = states(''sensor.hph_source_indoor_target'') | float(0) %} {{ (cur
+      - tgt) | round(2) }}'
+  - name: HPH Advisor Analysis
+    unique_id: hph_advisor_analysis
+    icon: mdi:robot-outline
+    state: '{% set d = states(''sensor.hph_indoor_deviation_smoothed'') | float(0)
+      %} {% set band = states(''number.hph_analysis_dead_band_k'') | float(0.5)
+      %} {% if d | abs <= band %}ok {% elif d | abs <= 2 %}info {% elif d | abs <=
+      4 %}warn {% else %}critical{% endif %}'
+    attributes:
+      deviation_k: '{{ states(''sensor.hph_indoor_deviation_smoothed'') }}'
+      dead_band_k: '{{ states(''number.hph_analysis_dead_band_k'') }}'
+      window_days: '{{ states(''number.hph_analysis_window_days'') }}'
+      recommendation_k: '{% set d = states(''sensor.hph_indoor_deviation_smoothed'')
+        | float(0) %} {% set band = states(''number.hph_analysis_dead_band_k'')
+        | float(0.5) %} {% if d | abs <= band %}0 {% else %}{{ (-d * 1.0) | round(1)
+        }}{% endif %}'
+      message: '{% set d = states(''sensor.hph_indoor_deviation_smoothed'') | float(0)
+        %} {% set band = states(''number.hph_analysis_dead_band_k'') | float(0.5)
+        %} {% set window = states(''number.hph_analysis_window_days'') %} {%
+        set ind = states(''text.hph_indoor_temp_entity'') %} {% if not ind or
+        ind in [''unknown'',''unavailable'',''none'',''''] %} Indoor temp source not
+        configured. Set text.hph_indoor_temp_entity to your reference room sensor
+        (e.g. sensor.living_room_temperature) under Configuration → Analysis sources.
+        {% elif d | abs <= band %} Indoor temperature is within the dead band ({{
+        band }} K). No curve adjustment needed. {% elif d > 0 %} Indoor temperature
+        averaged {{ d | round(1) }} K **above** target over the last {{ window }}
+        days. Recommend lowering the heating curve by ~{{ (d) | round(1) }} K, or
+        raising the target by the same amount if the room is comfortable. {% else
+        %} Indoor temperature averaged {{ (-d) | round(1) }} K **below** target over
+        the last {{ window }} days. Recommend raising the heating curve by ~{{ (-d)
+        | round(1) }} K, or checking thermostatic valves / hydraulic balancing. {%
+        endif %}
+
+        {% set hcurve = states(''text.hph_heating_curve_recommendation'') %}
+        {% if hcurve and hcurve | trim != '''' %} Heating-curve script recommendation:
+        {{ hcurve }} {% endif %}'
+sensor:
+- platform: statistics
+  name: HPH Indoor Deviation Smoothed
+  unique_id: hph_indoor_deviation_smoothed
+  entity_id: sensor.hph_indoor_temp_deviation
+  state_characteristic: average_linear
+  sampling_size: 1000
+  max_age:
+    hours: 168
+  keep_last_sample: true
+  precision: 2

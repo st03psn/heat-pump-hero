@@ -1,0 +1,14 @@
+export_now:
+  name: Export now
+  description: >-
+    Manually trigger the long-term export script. Honors the export
+    format / period / target path settings configured under the
+    Configuration view.
+
+run_legionella_now:
+  name: Run legionella program now
+  description: >-
+    Force-run the legionella DHW boost cycle once (bypass the weekly
+    schedule). Uses the configured target temperature and hold
+    duration. Master switch must be on; the per-program switch may
+    be off — this service explicitly overrides it for one run.

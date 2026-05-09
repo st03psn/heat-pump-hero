@@ -3,6 +3,83 @@
 All notable changes to HeatPump Hero. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0-rc1] — 2026-05-09
+
+### Added — Python custom integration (HACS-installable)
+
+`custom_components/hph/` (new) — replaces script-based deploy with a
+proper HACS Custom Integration. Phase 1 of the v0.9 milestone:
+helpers are programmatic, sensors and automations remain in YAML
+packages that the integration deploys at install time (a temporary
+bootstrap, removed in phase 3).
+
+- `manifest.json` — domain `hph`, integration_type `hub`, config_flow
+  enabled, single-instance.
+- `__init__.py` — async_setup_entry deploys YAML, registers
+  dashboard, applies vendor preset / pump model from the wizard.
+  async_remove_entry aggressively cleans every file the integration
+  ever wrote (recorder DB stays — HA-standard behavior).
+- `config_flow.py` — 4-step wizard (vendor / model / optional
+  external sensors / confirm). Options-flow re-runs the wizard from
+  the integration's Configure button.
+- `bootstrap.py` — copies bundled YAML packages, dashboard YAML,
+  asset SVGs and the legacy setup blueprint into `<config>/packages/`,
+  `<config>/hph/`, `<config>/www/hph/`, `<config>/blueprints/script/hph/`.
+  Also auto-registers the Lovelace dashboard panel (URL `/hph`,
+  icon `mdi:heat-pump`) so the user never has to "Add Dashboard from
+  YAML" manually.
+- Helper platforms (`text.py`, `number.py`, `select.py`, `switch.py`,
+  `datetime.py`, `button.py`) — replicate every input_text,
+  input_number, input_select, input_boolean, input_datetime, counter,
+  manual-trigger button from the previous YAML packages with
+  identical unique_ids.
+- `helpers/vendor_apply.py` — applies vendor preset / pump model on
+  config-flow submit (one-shot helper-seeding without YAML automations).
+
+### Changed
+
+- `hacs.json` — category implicit Integration (removed obsolete
+  Plugin-only fields `content_in_root` and `filename`); HACS
+  detects the integration automatically from
+  `custom_components/hph/manifest.json`.
+- `README.md` — HACS Custom Repository install promoted to primary
+  path. Script-based install demoted to "legacy" section pointing at
+  `docs/installation.md` and `docs/installation_windows.md`.
+
+### Migration notes for v0.8 users
+
+Helper entity_ids change platform domain in v0.9:
+
+| v0.8 (YAML packages) | v0.9 (Python platforms) |
+|---|---|
+| `input_text.hph_*` | `text.hph_*` |
+| `input_number.hph_*` | `number.hph_*` |
+| `input_select.hph_*` | `select.hph_*` |
+| `input_boolean.hph_*` | `switch.hph_*` |
+| `input_datetime.hph_*` | `datetime.hph_*` |
+| `counter.hph_*` | `number.hph_*` |
+
+Recorder history of these helpers is **not preserved** across the
+domain change — the historical values were UI configuration anyway,
+not measurement data. **Sensors (`sensor.hph_*`, `binary_sensor.hph_*`)
+are untouched in phase 1 and keep their full history.**
+
+Phase 2 (template sensors → Python) is the next deliverable; phase 3
+(automations → Python coordinators) finishes the port and removes the
+bootstrap entirely so the integration is fully self-contained.
+
+### Known limitations in this RC
+
+- Counters (`hph_cycles_today`, `hph_dhw_fires_today`, etc.) are
+  exposed as numbers but not auto-incremented — the cycle-tracking
+  automations that fed them in v0.8 still reference the old
+  `counter.*` service domain. Auto-increments come back in phase 3.
+- The Configuration view's "Vendor preset" selector is a Python
+  `select` entity now, but its companion auto-fill automation (in
+  `packages/hph_models.yaml`) still expects the old domain. Use the
+  config-flow / options-flow wizard to pick a vendor instead — it
+  takes effect immediately and reliably.
+
 ## [0.8.0] — 2026-05-09
 
 ### Added — advisor extensions

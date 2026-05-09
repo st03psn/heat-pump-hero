@@ -1,0 +1,60 @@
+script:
+  hph_export_now:
+    alias: HeatPump Hero — export now
+    icon: mdi:download-circle
+    sequence:
+    - service: shell_command.hph_export
+    - service: datetime.set_value
+      target:
+        entity_id: datetime.hph_export_last_run
+      data:
+        datetime: '{{ now().isoformat() }}'
+    - service: persistent_notification.create
+      data:
+        notification_id: hph_export_done
+        title: HeatPump Hero export
+        message: Export written to {{ states('text.hph_export_target_path')
+          }} ({{ states('select.hph_export_format') }}, period {{ states('select.hph_export_period')
+          }}).
+automation:
+- id: hph_export_daily
+  alias: HeatPump Hero export — daily 03:00
+  mode: single
+  trigger:
+  - platform: time
+    at: 03:00:00
+  condition:
+  - condition: state
+    entity_id: select.hph_export_schedule
+    state: daily_0300
+  action:
+  - service: script.hph_export_now
+- id: hph_export_weekly
+  alias: HeatPump Hero export — Monday 03:00
+  mode: single
+  trigger:
+  - platform: time
+    at: 03:00:00
+  condition:
+  - condition: state
+    entity_id: select.hph_export_schedule
+    state: weekly_monday_0300
+  - condition: time
+    weekday:
+    - mon
+  action:
+  - service: script.hph_export_now
+- id: hph_export_monthly
+  alias: HeatPump Hero export — 1st of month 03:00
+  mode: single
+  trigger:
+  - platform: time
+    at: 03:00:00
+  condition:
+  - condition: state
+    entity_id: select.hph_export_schedule
+    state: monthly_1st_0300
+  - condition: template
+    value_template: '{{ now().day == 1 }}'
+  action:
+  - service: script.hph_export_now

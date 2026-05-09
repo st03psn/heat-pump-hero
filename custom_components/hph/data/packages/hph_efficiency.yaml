@@ -1,0 +1,285 @@
+sensor:
+- platform: integration
+  source: sensor.hph_thermal_power_active
+  name: HeatPump Hero Thermal Energy
+  unique_id: hph_thermal_energy
+  unit_prefix: k
+  unit_time: h
+  method: left
+  round: 3
+  device_class: energy
+  state_class: total_increasing
+- platform: integration
+  source: sensor.hph_electrical_power_active
+  name: HeatPump Hero Electrical Energy
+  unique_id: hph_electrical_energy
+  unit_prefix: k
+  unit_time: h
+  method: left
+  round: 3
+  device_class: energy
+  state_class: total_increasing
+utility_meter:
+  hph_thermal_daily:
+    source: sensor.hph_thermal_energy_active
+    cycle: daily
+  hph_thermal_monthly:
+    source: sensor.hph_thermal_energy_active
+    cycle: monthly
+  hph_thermal_yearly:
+    source: sensor.hph_thermal_energy_active
+    cycle: yearly
+  hph_thermal_daily_split:
+    source: sensor.hph_thermal_energy_active
+    cycle: daily
+    tariffs:
+    - heating
+    - dhw
+    - cooling
+  hph_thermal_monthly_split:
+    source: sensor.hph_thermal_energy_active
+    cycle: monthly
+    tariffs:
+    - heating
+    - dhw
+    - cooling
+  hph_thermal_yearly_split:
+    source: sensor.hph_thermal_energy_active
+    cycle: yearly
+    tariffs:
+    - heating
+    - dhw
+    - cooling
+  hph_electrical_daily:
+    source: sensor.hph_electrical_energy_active
+    cycle: daily
+  hph_electrical_monthly:
+    source: sensor.hph_electrical_energy_active
+    cycle: monthly
+  hph_electrical_yearly:
+    source: sensor.hph_electrical_energy_active
+    cycle: yearly
+  hph_electrical_daily_split:
+    source: sensor.hph_electrical_energy_active
+    cycle: daily
+    tariffs:
+    - heating
+    - dhw
+    - cooling
+  hph_electrical_monthly_split:
+    source: sensor.hph_electrical_energy_active
+    cycle: monthly
+    tariffs:
+    - heating
+    - dhw
+    - cooling
+  hph_electrical_yearly_split:
+    source: sensor.hph_electrical_energy_active
+    cycle: yearly
+    tariffs:
+    - heating
+    - dhw
+    - cooling
+automation:
+- id: hph_tariff_switch
+  alias: HeatPump Hero — tariff switch (mode → heating/dhw/cooling)
+  mode: single
+  trigger:
+  - platform: state
+    entity_id: sensor.hph_operating_mode
+  action:
+  - variables:
+      tariff: '{% set m = states(''sensor.hph_operating_mode'') %} {% if m == ''dhw''
+        %}dhw {% elif m == ''cooling'' %}cooling {% else %}heating{% endif %}'
+  - service: utility_meter.select_tariff
+    target:
+      entity_id:
+      - sensor.hph_thermal_daily_split
+      - sensor.hph_thermal_monthly_split
+      - sensor.hph_thermal_yearly_split
+      - sensor.hph_electrical_daily_split
+      - sensor.hph_electrical_monthly_split
+      - sensor.hph_electrical_yearly_split
+    data:
+      tariff: '{{ tariff }}'
+template:
+- sensor:
+  - name: HeatPump Hero COP Live
+    unique_id: hph_cop_live
+    unit_of_measurement: x
+    state_class: measurement
+    availability: "{{ states('sensor.hph_thermal_power_active')\n   not in ['unknown','unavailable','none']\n\
+      \   and states('sensor.hph_electrical_power_active')\n   not in ['unknown','unavailable','none']\
+      \ }}"
+    state: "{% if is_state('binary_sensor.hph_defrost_active','on') %}\n  0\n{% else\
+      \ %}\n  {% set t = states('sensor.hph_thermal_power_active') | float(0) %}\n\
+      \  {% set e = states('sensor.hph_electrical_power_active') | float(0) %}\n \
+      \ {{ (t / e) | round(2) if e > 50 else 0 }}\n{% endif %}"
+  - name: HeatPump Hero COP Daily
+    unique_id: hph_cop_daily
+    unit_of_measurement: x
+    state_class: measurement
+    state: '{% set t = states(''sensor.hph_thermal_daily'') | float(0) %} {% set e
+      = states(''sensor.hph_electrical_daily'') | float(0) %} {{ (t / e) | round(2)
+      if e > 0.1 else 0 }}'
+  - name: HeatPump Hero COP Monthly
+    unique_id: hph_cop_monthly
+    unit_of_measurement: x
+    state_class: measurement
+    state: '{% set t = states(''sensor.hph_thermal_monthly'') | float(0) %} {% set
+      e = states(''sensor.hph_electrical_monthly'') | float(0) %} {{ (t / e) | round(2)
+      if e > 0.1 else 0 }}'
+  - name: HeatPump Hero SCOP
+    unique_id: hph_scop
+    unit_of_measurement: x
+    state_class: measurement
+    state: '{% set t = states(''sensor.hph_thermal_yearly'') | float(0) %} {% set
+      e = states(''sensor.hph_electrical_yearly'') | float(0) %} {{ (t / e) | round(2)
+      if e > 0.1 else 0 }}'
+  - name: HeatPump Hero COP Monthly Heating
+    unique_id: hph_cop_monthly_heating
+    unit_of_measurement: x
+    state_class: measurement
+    state: '{% set t = states(''sensor.hph_thermal_monthly_split_heating'') | float(0)
+      %} {% set e = states(''sensor.hph_electrical_monthly_split_heating'') | float(0)
+      %} {{ (t / e) | round(2) if e > 0.1 else 0 }}'
+  - name: HeatPump Hero COP Yearly Heating
+    unique_id: hph_cop_yearly_heating
+    unit_of_measurement: x
+    state_class: measurement
+    state: '{% set t = states(''sensor.hph_thermal_yearly_split_heating'') | float(0)
+      %} {% set e = states(''sensor.hph_electrical_yearly_split_heating'') | float(0)
+      %} {{ (t / e) | round(2) if e > 0.1 else 0 }}'
+  - name: HeatPump Hero COP Monthly DHW
+    unique_id: hph_cop_monthly_dhw
+    unit_of_measurement: x
+    state_class: measurement
+    state: '{% set t = states(''sensor.hph_thermal_monthly_split_dhw'') | float(0)
+      %} {% set e = states(''sensor.hph_electrical_monthly_split_dhw'') | float(0)
+      %} {{ (t / e) | round(2) if e > 0.1 else 0 }}'
+  - name: HeatPump Hero COP Yearly DHW
+    unique_id: hph_cop_yearly_dhw
+    unit_of_measurement: x
+    state_class: measurement
+    state: '{% set t = states(''sensor.hph_thermal_yearly_split_dhw'') | float(0)
+      %} {% set e = states(''sensor.hph_electrical_yearly_split_dhw'') | float(0)
+      %} {{ (t / e) | round(2) if e > 0.1 else 0 }}'
+  - name: HeatPump Hero COP Last Month
+    unique_id: hph_cop_last_month
+    unit_of_measurement: x
+    state: '{% set t = state_attr(''sensor.hph_thermal_monthly'',''last_period'')
+      | float(0) %} {% set e = state_attr(''sensor.hph_electrical_monthly'',''last_period'')
+      | float(0) %} {{ (t / e) | round(2) if e > 0.1 else 0 }}'
+  - name: HeatPump Hero COP Last Year
+    unique_id: hph_cop_last_year
+    unit_of_measurement: x
+    state: '{% set t = state_attr(''sensor.hph_thermal_yearly'',''last_period'') |
+      float(0) %} {% set e = state_attr(''sensor.hph_electrical_yearly'',''last_period'')
+      | float(0) %} {{ (t / e) | round(2) if e > 0.1 else 0 }}'
+  - name: HeatPump Hero Thermal Last Month
+    unique_id: hph_thermal_last_month
+    unit_of_measurement: kWh
+    state_class: measurement
+    state: '{{ state_attr(''sensor.hph_thermal_monthly'',''last_period'') | float(0)
+      | round(2) }}'
+  - name: HeatPump Hero Electrical Last Month
+    unique_id: hph_electrical_last_month
+    unit_of_measurement: kWh
+    state_class: measurement
+    state: '{{ state_attr(''sensor.hph_electrical_monthly'',''last_period'') | float(0)
+      | round(2) }}'
+  - name: HeatPump Hero Thermal Last Year
+    unique_id: hph_thermal_last_year
+    unit_of_measurement: kWh
+    state_class: measurement
+    state: '{{ state_attr(''sensor.hph_thermal_yearly'',''last_period'') | float(0)
+      | round(2) }}'
+  - name: HeatPump Hero Electrical Last Year
+    unique_id: hph_electrical_last_year
+    unit_of_measurement: kWh
+    state_class: measurement
+    state: '{{ state_attr(''sensor.hph_electrical_yearly'',''last_period'') | float(0)
+      | round(2) }}'
+  - name: HeatPump Hero COP Change Month %
+    unique_id: hph_cop_change_month_pct
+    unit_of_measurement: '%'
+    state_class: measurement
+    icon: '{% set v = states(''sensor.hph_cop_change_month_pct'') | float(0) %} {%
+      if v > 1 %}mdi:trending-up {% elif v < -1 %}mdi:trending-down {% else %}mdi:trending-neutral{%
+      endif %}'
+    state: "{% set cur = states('sensor.hph_cop_monthly') | float(0) %} {% set prev\
+      \ = states('sensor.hph_cop_last_month') | float(0) %} {% if prev > 0.1 %}\n\
+      \  {{ ((cur - prev) / prev * 100) | round(1) }}\n{% else %}\n  0\n{% endif %}"
+    attributes:
+      current: '{{ states(''sensor.hph_cop_monthly'') }}'
+      previous: '{{ states(''sensor.hph_cop_last_month'') }}'
+      message: "{% set cur = states('sensor.hph_cop_monthly') | float(0) %} {% set\
+        \ prev = states('sensor.hph_cop_last_month') | float(0) %} {% if prev <= 0.1\
+        \ %}\n  No data for previous month yet.\n{% else %}\n  {% set pct = ((cur\
+        \ - prev) / prev * 100) | round(1) %}\n  {% if pct > 0 %}\n    {{ pct }}%\
+        \ better than last month (COP {{ cur }} vs {{ prev }}).\n  {% elif pct < 0\
+        \ %}\n    {{ pct | abs }}% worse than last month (COP {{ cur }} vs {{ prev\
+        \ }}).\n  {% else %}\n    Unchanged from last month (COP {{ cur }}).\n  {%\
+        \ endif %}\n{% endif %}"
+  - name: HeatPump Hero SCOP Change Year %
+    unique_id: hph_scop_change_year_pct
+    unit_of_measurement: '%'
+    state_class: measurement
+    icon: '{% set v = states(''sensor.hph_scop_change_year_pct'') | float(0) %} {%
+      if v > 1 %}mdi:trending-up {% elif v < -1 %}mdi:trending-down {% else %}mdi:trending-neutral{%
+      endif %}'
+    state: "{% set cur = states('sensor.hph_scop') | float(0) %} {% set prev = states('sensor.hph_cop_last_year')\
+      \ | float(0) %} {% if prev > 0.1 %}\n  {{ ((cur - prev) / prev * 100) | round(1)\
+      \ }}\n{% else %}\n  0\n{% endif %}"
+    attributes:
+      current: '{{ states(''sensor.hph_scop'') }}'
+      previous: '{{ states(''sensor.hph_cop_last_year'') }}'
+      message: "{% set cur = states('sensor.hph_scop') | float(0) %} {% set prev =\
+        \ states('sensor.hph_cop_last_year') | float(0) %} {% if prev <= 0.1 %}\n\
+        \  No SCOP data for previous year yet — needs at least one full year.\n{%\
+        \ else %}\n  {% set pct = ((cur - prev) / prev * 100) | round(1) %}\n  {%\
+        \ if pct > 0 %}\n    {{ pct }}% better than previous year (SCOP {{ cur }}\
+        \ vs {{ prev }}).\n  {% elif pct < 0 %}\n    {{ pct | abs }}% worse than previous\
+        \ year (SCOP {{ cur }} vs {{ prev }}).\n  {% else %}\n    Same as previous\
+        \ year (SCOP {{ cur }}).\n  {% endif %}\n{% endif %}"
+  - name: HeatPump Hero Thermal Change Month %
+    unique_id: hph_thermal_change_month_pct
+    unit_of_measurement: '%'
+    state_class: measurement
+    state: "{% set cur = states('sensor.hph_thermal_monthly') | float(0) %} {% set\
+      \ prev = state_attr('sensor.hph_thermal_monthly','last_period') | float(0) %}\
+      \ {% if prev > 0.1 %}\n  {{ ((cur - prev) / prev * 100) | round(1) }}\n{% else\
+      \ %}\n  0\n{% endif %}"
+  - name: HeatPump Hero Electrical Change Month %
+    unique_id: hph_electrical_change_month_pct
+    unit_of_measurement: '%'
+    state_class: measurement
+    state: "{% set cur = states('sensor.hph_electrical_monthly') | float(0) %} {%\
+      \ set prev = state_attr('sensor.hph_electrical_monthly','last_period') | float(0)\
+      \ %} {% if prev > 0.1 %}\n  {{ ((cur - prev) / prev * 100) | round(1) }}\n{%\
+      \ else %}\n  0\n{% endif %}"
+  - name: HeatPump Hero Efficiency Trend
+    unique_id: hph_efficiency_trend
+    icon: '{% set v = states(''sensor.hph_cop_change_month_pct'') | float(0) %} {%
+      if v > 5 %}mdi:rocket-launch {% elif v > 1 %}mdi:trending-up {% elif v < -5
+      %}mdi:alert {% elif v < -1 %}mdi:trending-down {% else %}mdi:trending-neutral{%
+      endif %}'
+    state: '{% set v = states(''sensor.hph_cop_change_month_pct'') | float(0) %} {%
+      if v > 5 %}great {% elif v > 1 %}better {% elif v < -5 %}critical {% elif v
+      < -1 %}worse {% else %}stable{% endif %}'
+    attributes:
+      month_pct: '{{ states(''sensor.hph_cop_change_month_pct'') }}'
+      year_pct: '{{ states(''sensor.hph_scop_change_year_pct'') }}'
+      headline: "{% set m = states('sensor.hph_cop_change_month_pct') | float(0) %}\
+        \ {% set y = states('sensor.hph_scop_change_year_pct') | float(0) %} {% set\
+        \ m_prev = states('sensor.hph_cop_last_month') | float(0) %} {% set y_prev\
+        \ = states('sensor.hph_cop_last_year') | float(0) %} {% set parts = [] %}\
+        \ {% if m_prev > 0.1 %}\n  {% if m > 0 %}\n    {% set parts = parts + ['\U0001F4C8\
+        \ ' ~ m ~ '% better than last month'] %}\n  {% elif m < 0 %}\n    {% set parts\
+        \ = parts + ['\U0001F4C9 ' ~ (m | abs) ~ '% worse than last month'] %}\n \
+        \ {% endif %}\n{% endif %} {% if y_prev > 0.1 %}\n  {% if y > 0 %}\n    {%\
+        \ set parts = parts + ['\U0001F3C6 ' ~ y ~ '% better than last year'] %}\n\
+        \  {% elif y < 0 %}\n    {% set parts = parts + ['⚠️ ' ~ (y | abs) ~ '% worse\
+        \ than last year'] %}\n  {% endif %}\n{% endif %} {% if parts | length ==\
+        \ 0 %}\n  Trend stable — not enough data for comparison yet.\n{% else %}\n\
+        \  {{ parts | join(' · ') }}\n{% endif %}"

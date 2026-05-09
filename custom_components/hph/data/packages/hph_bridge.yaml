@@ -1,0 +1,213 @@
+template:
+- sensor:
+  - name: HeatPump Hero — bridge last publish
+    unique_id: hph_bridge_last_publish
+    device_class: timestamp
+    state: '{{ state_attr(''automation.hph_bridge_publish_state'',''last_triggered'')
+      }}'
+    availability: '{{ is_state(''switch.hph_bridge_enabled'',''on'') }}'
+script:
+  hph_bridge_publish_one:
+    alias: HeatPump Hero — publish one entity to MQTT
+    mode: parallel
+    max: 50
+    fields:
+      entity:
+        description: Full entity_id, e.g. sensor.hph_cop_daily
+        example: sensor.hph_cop_daily
+      mode:
+        description: values | clear
+        example: values
+    sequence:
+    - service: mqtt.publish
+      data:
+        topic: '{{ states(''text.hph_bridge_prefix'') }}/{{ entity | replace(''.'',''/'')
+          }}/state'
+        payload: '{% if mode == ''clear'' %}{% else %}{{ states(entity) }}{% endif
+          %}'
+        retain: true
+    - service: mqtt.publish
+      data:
+        topic: '{{ states(''text.hph_bridge_prefix'') }}/{{ entity | replace(''.'',''/'')
+          }}/attributes'
+        payload: '{% if mode == ''clear'' %}{% else %}{{ states[entity].attributes
+          | tojson }}{% endif %}'
+        retain: true
+  hph_bridge_iterate:
+    alias: HeatPump Hero — iterate bridge whitelist
+    mode: single
+    fields:
+      mode:
+        description: values | clear
+        example: values
+    variables:
+      entities:
+      - sensor.hph_thermal_power
+      - sensor.hph_operating_mode
+      - binary_sensor.hph_compressor_running
+      - binary_sensor.hph_defrost_active
+      - sensor.hph_cop_live
+      - sensor.hph_cop_daily
+      - sensor.hph_cop_monthly
+      - sensor.hph_scop
+      - sensor.hph_cop_monthly_heating
+      - sensor.hph_cop_yearly_heating
+      - sensor.hph_cop_monthly_dhw
+      - sensor.hph_cop_yearly_dhw
+      - sensor.hph_cop_last_month
+      - sensor.hph_cop_last_year
+      - sensor.hph_thermal_daily
+      - sensor.hph_thermal_monthly
+      - sensor.hph_thermal_yearly
+      - sensor.hph_thermal_last_month
+      - sensor.hph_thermal_last_year
+      - sensor.hph_electrical_daily
+      - sensor.hph_electrical_monthly
+      - sensor.hph_electrical_yearly
+      - sensor.hph_electrical_last_month
+      - sensor.hph_electrical_last_year
+      - sensor.hph_cop_change_month_pct
+      - sensor.hph_scop_change_year_pct
+      - sensor.hph_avg_cycle_duration_24h
+      - sensor.hph_short_cycle_ratio
+      - sensor.hph_cycles_today
+      - sensor.hph_short_cycles_today
+      - sensor.hph_advisor_summary
+      - sensor.hph_advisor_short_cycle
+      - sensor.hph_advisor_spread
+      - sensor.hph_advisor_defrost
+      - sensor.hph_advisor_heat_curve
+      - sensor.hph_advisor_dhw_runtime
+      - sensor.hph_advisor_heating_limit
+      - sensor.hph_advisor_diagnostics
+      - sensor.hph_advisor_pressure_trend
+      - sensor.hph_advisor_analysis
+      - sensor.hph_pressure_delta_7d
+      - sensor.hph_diagnostics_current_error
+      - sensor.hph_diagnostics_recurrence
+      - sensor.hph_indoor_temp_deviation
+      - sensor.hph_indoor_deviation_smoothed
+      - sensor.hph_schema_variant_active
+      - sensor.hph_model_refrigerant
+      - sensor.hph_model_description
+    sequence:
+    - repeat:
+        for_each: '{{ entities }}'
+        sequence:
+        - service: script.hph_bridge_publish_one
+          data:
+            entity: '{{ repeat.item }}'
+            mode: '{{ mode }}'
+automation:
+- id: hph_bridge_publish_state
+  alias: HeatPump Hero Bridge — publish on state change
+  mode: queued
+  max: 100
+  trigger:
+  - platform: state
+    entity_id:
+    - sensor.hph_thermal_power
+    - sensor.hph_operating_mode
+    - binary_sensor.hph_compressor_running
+    - binary_sensor.hph_defrost_active
+    - sensor.hph_cop_live
+    - sensor.hph_cop_daily
+    - sensor.hph_cop_monthly
+    - sensor.hph_scop
+    - sensor.hph_cop_monthly_heating
+    - sensor.hph_cop_yearly_heating
+    - sensor.hph_cop_monthly_dhw
+    - sensor.hph_cop_yearly_dhw
+    - sensor.hph_cop_last_month
+    - sensor.hph_cop_last_year
+    - sensor.hph_thermal_daily
+    - sensor.hph_thermal_monthly
+    - sensor.hph_thermal_yearly
+    - sensor.hph_thermal_last_month
+    - sensor.hph_thermal_last_year
+    - sensor.hph_electrical_daily
+    - sensor.hph_electrical_monthly
+    - sensor.hph_electrical_yearly
+    - sensor.hph_electrical_last_month
+    - sensor.hph_electrical_last_year
+    - sensor.hph_cop_change_month_pct
+    - sensor.hph_scop_change_year_pct
+    - sensor.hph_avg_cycle_duration_24h
+    - sensor.hph_short_cycle_ratio
+    - sensor.hph_cycles_today
+    - sensor.hph_short_cycles_today
+    - sensor.hph_advisor_summary
+    - sensor.hph_advisor_short_cycle
+    - sensor.hph_advisor_spread
+    - sensor.hph_advisor_defrost
+    - sensor.hph_advisor_heat_curve
+    - sensor.hph_advisor_dhw_runtime
+    - sensor.hph_advisor_heating_limit
+    - sensor.hph_advisor_diagnostics
+    - sensor.hph_advisor_pressure_trend
+    - sensor.hph_advisor_analysis
+    - sensor.hph_pressure_delta_7d
+    - sensor.hph_diagnostics_current_error
+    - sensor.hph_diagnostics_recurrence
+    - sensor.hph_indoor_temp_deviation
+    - sensor.hph_indoor_deviation_smoothed
+    - sensor.hph_schema_variant_active
+    - sensor.hph_model_refrigerant
+    - sensor.hph_model_description
+  condition:
+  - condition: state
+    entity_id: switch.hph_bridge_enabled
+    state: 'on'
+  - condition: template
+    value_template: '{{ trigger.to_state.state not in [''unknown'',''unavailable'',''none'']
+      }}'
+  action:
+  - service: script.hph_bridge_publish_one
+    data:
+      entity: '{{ trigger.entity_id }}'
+      mode: values
+- id: hph_bridge_publish_initial
+  alias: HeatPump Hero Bridge — initial publish
+  mode: single
+  trigger:
+  - platform: homeassistant
+    event: start
+  - platform: state
+    entity_id: switch.hph_bridge_enabled
+    from: 'off'
+    to: 'on'
+  condition:
+  - condition: state
+    entity_id: switch.hph_bridge_enabled
+    state: 'on'
+  action:
+  - service: script.hph_bridge_iterate
+    data:
+      mode: values
+  - service: persistent_notification.create
+    data:
+      notification_id: hph_bridge
+      title: HeatPump Hero — bridge active
+      message: Multi-platform bridge published the initial snapshot to MQTT under
+        prefix `{{ states('text.hph_bridge_prefix') }}`.
+- id: hph_bridge_clear_on_disable
+  alias: HeatPump Hero Bridge — clear on disable
+  mode: single
+  trigger:
+  - platform: state
+    entity_id: switch.hph_bridge_enabled
+    from: 'on'
+    to: 'off'
+  action:
+  - service: script.hph_bridge_iterate
+    data:
+      mode: clear
+  - service: persistent_notification.dismiss
+    data:
+      notification_id: hph_bridge
+  - service: persistent_notification.create
+    data:
+      notification_id: hph_bridge
+      title: HeatPump Hero — bridge disabled
+      message: Multi-platform bridge stopped. Retained MQTT topics under prefix `{{
+        states('text.hph_bridge_prefix') }}` were cleared.

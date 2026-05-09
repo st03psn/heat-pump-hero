@@ -264,6 +264,63 @@ def test_diagnostics_consistency() -> int:
 
     return failures
 
+def test_custom_integration_layout() -> int:
+    """v0.9: HACS integration scaffolding is present and well-formed."""
+    section("v0.9 custom_components/hph/ scaffolding")
+    failures = 0
+
+    cc = ROOT / "custom_components" / "hph"
+    if not cc.is_dir():
+        fail("custom_components/hph/ not found")
+        return 1
+    ok("custom_components/hph/ exists")
+
+    required = [
+        "manifest.json", "__init__.py", "const.py", "config_flow.py",
+        "bootstrap.py", "text.py", "number.py", "select.py", "switch.py",
+        "datetime.py", "button.py", "strings.json",
+        "translations/en.json", "services.yaml",
+    ]
+    for rel in required:
+        if (cc / rel).is_file():
+            ok(f"present: {rel}")
+        else:
+            fail(f"missing: {rel}")
+            failures += 1
+
+    manifest_path = cc / "manifest.json"
+    if manifest_path.is_file():
+        try:
+            mf = load_json(manifest_path)
+            for key in ("domain", "name", "version", "config_flow",
+                        "integration_type"):
+                if key not in mf:
+                    fail(f"manifest.json missing key: {key}")
+                    failures += 1
+            if mf.get("domain") != "hph":
+                fail(f"manifest.json domain is {mf.get('domain')!r}, expected 'hph'")
+                failures += 1
+            else:
+                ok("manifest.json domain == 'hph'")
+        except Exception as e:
+            fail(f"manifest.json broken: {e}")
+            failures += 1
+
+    data_pkg = cc / "data" / "packages"
+    if data_pkg.is_dir():
+        bundled = list(data_pkg.glob("hph_*.yaml"))
+        if bundled:
+            ok(f"data/packages/ bundles {len(bundled)} YAML files")
+        else:
+            fail("data/packages/ exists but is empty")
+            failures += 1
+    else:
+        fail("data/packages/ not bundled — bootstrap will fail")
+        failures += 1
+
+    return failures
+
+
 def main() -> int:
     print(f"HeatPump Hero smoke tests · root: {ROOT}")
     failures = 0
@@ -273,6 +330,7 @@ def main() -> int:
     failures += test_utility_meter_active_source()
     failures += test_advisor_summary_consistency()
     failures += test_diagnostics_consistency()
+    failures += test_custom_integration_layout()
 
     print()
     if failures:

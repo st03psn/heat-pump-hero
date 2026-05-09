@@ -1,0 +1,50 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "HeatPump Hero — vendor",
+        "description": "Pick the integration that already exposes your heat pump to Home Assistant. The most common choice is `panasonic_heishamon` (the kamaradclimber custom integration). Use `keep_current` if you've already configured the source helpers manually and want to skip auto-fill.",
+        "data": {
+          "vendor_preset": "Vendor preset"
+        }
+      },
+      "model": {
+        "title": "HeatPump Hero — model",
+        "description": "Pick the heat-pump generation. This pre-fills compressor min/max frequency, minimum water flow and maximum supply temperature with empirically validated values. Power-user overrides remain possible after install.",
+        "data": {
+          "pump_model": "Heat-pump model"
+        }
+      },
+      "sensors": {
+        "title": "HeatPump Hero — optional sensors",
+        "description": "These are optional. If you have a Shelly / IoTaWatt power meter, an MBus heat meter, or a dedicated indoor reference thermometer, point HeatPump Hero at them here. You can fill these in later via the integration options.",
+        "data": {
+          "indoor_temp_entity": "Indoor reference temperature sensor",
+          "external_thermal_power": "External thermal power (W)",
+          "external_electrical_power": "External electrical power (W)",
+          "external_thermal_energy": "External thermal energy meter (kWh)",
+          "external_electrical_energy": "External electrical energy meter (kWh)"
+        }
+      },
+      "confirm": {
+        "title": "HeatPump Hero — confirm",
+        "description": "About to install with vendor `{vendor}` and model `{model}`. After confirming, please **restart Home Assistant** so all helpers and the dashboard get loaded. The dashboard will appear in the sidebar automatically; no manual YAML import needed."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "HeatPump Hero is a single-instance integration — there can only be one entry."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "HeatPump Hero — settings",
+        "description": "Adjust vendor preset and pump model. Changes take effect on next reload (HA does this automatically).",
+        "data": {
+          "vendor_preset": "Vendor preset",
+          "pump_model": "Heat-pump model"
+        }
+      }
+    }
+  }
+}

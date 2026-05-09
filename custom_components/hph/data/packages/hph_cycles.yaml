@@ -1,0 +1,93 @@
+automation:
+- id: hph_cycle_on_start
+  alias: HeatPump Hero — cycle start
+  mode: single
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.hph_compressor_running
+    from: 'off'
+    to: 'on'
+  action:
+  - service: datetime.set_value
+    target:
+      entity_id: datetime.hph_cycle_last_start
+    data:
+      datetime: '{{ now().isoformat() }}'
+  - variables:
+      last_end: '{{ states(''datetime.hph_cycle_last_end'') }}'
+      pause_min: "{% if last_end not in ['unknown','unavailable','none'] %}\n  {{\
+        \ ((now() - as_datetime(last_end)).total_seconds() / 60) | round(1) }}\n{%\
+        \ else %}\n  0\n{% endif %}"
+  - service: number.set_value
+    target:
+      entity_id: number.hph_cycle_last_pause_min
+    data:
+      value: '{{ pause_min }}'
+  - service: counter.increment
+    target:
+      entity_id: number.hph_cycles_today
+- id: hph_cycle_on_stop
+  alias: HeatPump Hero — cycle end
+  mode: single
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.hph_compressor_running
+    from: 'on'
+    to: 'off'
+  action:
+  - service: datetime.set_value
+    target:
+      entity_id: datetime.hph_cycle_last_end
+    data:
+      datetime: '{{ now().isoformat() }}'
+  - variables:
+      last_start: '{{ states(''datetime.hph_cycle_last_start'') }}'
+      duration_min: "{% if last_start not in ['unknown','unavailable','none'] %}\n\
+        \  {{ ((now() - as_datetime(last_start)).total_seconds() / 60) | round(1)\
+        \ }}\n{% else %}\n  0\n{% endif %}"
+      threshold: '{{ states(''number.hph_cycle_short_threshold_min'') | float(10)
+        }}'
+  - service: number.set_value
+    target:
+      entity_id: number.hph_cycle_last_duration_min
+    data:
+      value: '{{ duration_min }}'
+  - if:
+    - condition: template
+      value_template: '{{ duration_min < threshold and duration_min > 0 }}'
+    then:
+    - service: counter.increment
+      target:
+        entity_id: number.hph_short_cycles_today
+- id: hph_cycles_daily_reset
+  alias: HeatPump Hero — daily counter reset
+  mode: single
+  trigger:
+  - platform: time
+    at: 00:00:00
+  action:
+  - service: counter.reset
+    target:
+      entity_id:
+      - number.hph_cycles_today
+      - number.hph_short_cycles_today
+template:
+- sensor:
+  - name: HeatPump Hero Avg Cycle Duration 24h
+    unique_id: hph_avg_cycle_duration_24h
+    unit_of_measurement: min
+    state: '{% set total = states(''sensor.hph_source_compressor_hours'') | float(0)
+      %} {% set cycles = states(''number.hph_cycles_today'') | float(0) %} {{ (total
+      * 60 / cycles) | round(1) if cycles > 0 else 0 }}'
+  - name: HeatPump Hero Short Cycle Ratio
+    unique_id: hph_short_cycle_ratio
+    unit_of_measurement: '%'
+    state: '{% set total = states(''number.hph_cycles_today'') | float(0) %} {% set
+      short = states(''number.hph_short_cycles_today'') | float(0) %} {{ (short /
+      total * 100) | round(0) if total > 0 else 0 }}'
+  - name: HeatPump Hero Cycles Per Hour
+    unique_id: hph_cycles_per_hour
+    unit_of_measurement: 1/h
+    state: '{% set cycles = states(''number.hph_cycles_today'') | float(0) %} {%
+      set hours = (now().hour + now().minute / 60) %} {{ (cycles / hours) | round(2)
+      if hours > 0.1 else 0 }}'

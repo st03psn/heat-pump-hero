@@ -1,0 +1,31 @@
+template:
+- sensor:
+  - name: HeatPump Hero Thermal Power
+    unique_id: hph_thermal_power
+    unit_of_measurement: W
+    device_class: power
+    state_class: measurement
+    availability: "{{ states('sensor.hph_source_inlet_temp')\n   not in ['unknown','unavailable','none']\n\
+      \   and states('sensor.hph_source_outlet_temp')\n   not in ['unknown','unavailable','none']\n\
+      \   and states('sensor.hph_source_flow_rate')\n   not in ['unknown','unavailable','none']\
+      \ }}"
+    state: '{% set tin = states(''sensor.hph_source_inlet_temp'') | float(0) %} {%
+      set tout = states(''sensor.hph_source_outlet_temp'') | float(0) %} {% set flow
+      = states(''sensor.hph_source_flow_rate'') | float(0) %} {% set power = (tout
+      - tin) * flow * 4180 / 60 %} {{ [power, 0] | max | round(0) }}'
+  - name: HeatPump Hero Compressor Running
+    unique_id: hph_compressor_running
+    state: "{{ states('sensor.hph_source_compressor_freq')\n   | float(0) > 0 }}"
+  - name: HeatPump Hero Operating Mode
+    unique_id: hph_operating_mode
+    availability: "{{ states('sensor.hph_source_operating_mode')\n   not in ['unknown','unavailable','none']\
+      \ }}"
+    state: '{% set m = states(''sensor.hph_source_operating_mode'') %} {% if ''Heat''
+      in m %}heating {% elif ''Cool'' in m %}cooling {% elif ''DHW'' in m or ''Tank''
+      in m %}dhw {% else %}{{ m | lower }}{% endif %}'
+- binary_sensor:
+  - name: HeatPump Hero Defrost Active
+    unique_id: hph_defrost_active
+    availability: "{{ states('binary_sensor.hph_source_defrost')\n   not in ['unknown','unavailable','none']\
+      \ }}"
+    state: '{{ is_state(''binary_sensor.hph_source_defrost'',''on'') }}'
