@@ -35,6 +35,8 @@ class HphSelect(SelectEntity, RestoreEntity):
         self._attr_options = list(cfg.get("options", []))
         self._initial = cfg.get("initial", self._attr_options[0] if self._attr_options else "")
         self._attr_current_option: str | None = self._initial
+        # Enable HA frontend state translations (entity.select.<unique_id>.state.*)
+        self._attr_translation_key = unique_id
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()

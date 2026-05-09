@@ -65,7 +65,65 @@
           "external_thermal_power": "External thermal power (W)",
           "external_electrical_power": "External electrical power (W)",
           "external_thermal_energy": "External thermal energy meter (kWh)",
-          "external_electrical_energy": "External electrical energy meter (kWh)"
+          "external_electrical_energy": "External electrical energy meter (kWh)",
+          "electricity_price_entity": "Electricity price sensor (€/kWh or ct/kWh — e.g. Tibber, aWATTar)",
+          "ctrl_pv_surplus_entity": "PV surplus power sensor (W) — for solar-DHW boost",
+          "ctrl_price_entity": "Current electricity price sensor (for price-driven DHW)",
+          "ctrl_forecast_entity": "Forecast temperature sensor (tomorrow's minimum °C)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "select": {
+      "hph_thermal_source": {
+        "state": {
+          "calculated": "Calculated (internal model)",
+          "external_power": "External power meter",
+          "external_energy": "External energy meter"
+        }
+      },
+      "hph_electrical_source": {
+        "state": {
+          "heat_pump_internal": "Internal (heat pump sensor)",
+          "external_power": "External power meter",
+          "external_energy": "External energy meter"
+        }
+      },
+      "hph_schema_variant": {
+        "state": {
+          "auto": "Auto-detect",
+          "hk1": "A2W — heating circuit only",
+          "hk1_dhw": "A2W + DHW tank",
+          "hk1_hk2_dhw": "A2W + 2 circuits + DHW",
+          "hk1_hk2_dhw_buffer": "A2W + 2 circuits + DHW + buffer"
+        }
+      },
+      "hph_export_format": {
+        "state": {
+          "csv": "CSV",
+          "json": "JSON",
+          "xlsx": "Excel (xlsx)"
+        }
+      },
+      "hph_export_period": {
+        "state": {
+          "last_24h": "Last 24 hours",
+          "last_7d": "Last 7 days",
+          "last_30d": "Last 30 days",
+          "this_month": "This month",
+          "last_month": "Last month",
+          "this_year": "This year",
+          "last_year": "Last year",
+          "all": "All data"
+        }
+      },
+      "hph_export_schedule": {
+        "state": {
+          "off": "Off",
+          "daily": "Daily",
+          "weekly": "Weekly",
+          "monthly": "Monthly"
         }
       }
     }

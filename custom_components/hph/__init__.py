@@ -99,12 +99,15 @@ async def _do_export(hass: HomeAssistant) -> None:
     import io
     from pathlib import Path
 
+    from homeassistant.util import dt as dt_util
+    now = dt_util.now()
+
     target_path_st = hass.states.get("text.hph_export_target_path")
     export_format_st = hass.states.get("select.hph_export_format")
     target_path = (
         target_path_st.state
         if target_path_st and target_path_st.state not in ("unknown", "unavailable", "")
-        else hass.config.path("www", "hph_export.csv")
+        else hass.config.path("www", "hph_exports")
     )
     fmt = (
         export_format_st.state
@@ -112,8 +115,14 @@ async def _do_export(hass: HomeAssistant) -> None:
         else "csv"
     )
 
-    from homeassistant.util import dt as dt_util
-    now = dt_util.now()
+    # If the path looks like a directory (no file extension), treat it as such
+    # and append a timestamped filename.
+    p = Path(target_path)
+    if not p.suffix or p.is_dir():
+        p.mkdir(parents=True, exist_ok=True)
+        ts_str = now.strftime("%Y-%m-%d_%H-%M-%S")
+        p = p / f"hph_export_{ts_str}.{fmt}"
+        target_path = str(p)
 
     sensor_ids = [
         "sensor.hph_cop_live",
@@ -336,7 +345,7 @@ async def _apply_sensor_config(hass: HomeAssistant, data: dict) -> None:
             blocking=False,
         )
 
-    # Seed the external entity text helpers.
+    # Seed all entity-ID text helpers from config/options flow data.
     _text_map = {
         "text.hph_src_external_thermal_power": external_thermal_power,
         "text.hph_src_external_thermal_energy": external_thermal_energy,
@@ -344,6 +353,10 @@ async def _apply_sensor_config(hass: HomeAssistant, data: dict) -> None:
         "text.hph_src_external_electrical_energy": external_electrical_energy,
         "text.hph_indoor_temp_entity": data.get("indoor_temp_entity", ""),
         "text.hph_outdoor_temp_override_entity": data.get("outdoor_temp_entity", ""),
+        "text.hph_electricity_price_entity": data.get("electricity_price_entity", ""),
+        "text.hph_ctrl_pv_surplus_entity": data.get("ctrl_pv_surplus_entity", ""),
+        "text.hph_ctrl_price_entity": data.get("ctrl_price_entity", ""),
+        "text.hph_ctrl_forecast_entity": data.get("ctrl_forecast_entity", ""),
     }
     for entity_id, value in _text_map.items():
         if value:
@@ -439,10 +452,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     _LOGGER.info("Setting up HeatPump Hero entry %s", entry.entry_id)
 
     hass.data.setdefault(DOMAIN, {})
+    # Merge options (written by the reconfigure flow) on top of the initial
+    # install data so that reconfiguring via the Configure button doesn't lose
+    # anything. Options always win over initial data for the same key.
+    merged = {**entry.data, **entry.options}
     hass.data[DOMAIN][entry.entry_id] = {
         DATA_HASS_CONFIG: hass.config.path(),
         "options": dict(entry.options) if entry.options else {},
-        "data": dict(entry.data) if entry.data else {},
+        "data": merged,
     }
 
     # Deploy dashboard + efficiency package; migrate old automation packages.
@@ -462,7 +479,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.async_create_task(_async_check_prerequisites(hass, entry))
 
     # Apply chosen vendor preset (one-shot on first install).
-    preset = entry.data.get("vendor_preset")
+    preset = merged.get("vendor_preset")
     if preset and preset != "keep_current":
         from .helpers.vendor_apply import async_apply_vendor_preset, async_apply_pump_model
         await async_apply_vendor_preset(hass, preset)
@@ -476,12 +493,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         from .helpers.vendor_apply import async_apply_pump_model
 
     # Apply chosen pump model thresholds (also updates select.hph_pump_model).
-    model = entry.data.get("pump_model")
+    model = merged.get("pump_model")
     if model:
         await async_apply_pump_model(hass, model)
 
-    # Apply step-3 external sensor config from config flow.
-    await _apply_sensor_config(hass, entry.data)
+    # Apply step-3 external sensor config from config flow (merged data).
+    await _apply_sensor_config(hass, merged)
 
     # Start coordinators (automation logic).
     from .coordinators import (

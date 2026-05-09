@@ -70,6 +70,16 @@ def _energy_selector() -> selector.EntitySelector:
     )
 
 
+def _any_sensor_selector() -> selector.EntitySelector:
+    """Unconstrained sensor selector — for price / PV / forecast entities."""
+    return selector.EntitySelector(
+        selector.EntitySelectorConfig(
+            domain="sensor",
+            multiple=False,
+        )
+    )
+
+
 class HphConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle the config flow for HeatPump Hero."""
 
@@ -132,6 +142,10 @@ class HphConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     "external_electrical_power": user_input.get("external_electrical_power", ""),
                     "external_thermal_energy": user_input.get("external_thermal_energy", ""),
                     "external_electrical_energy": user_input.get("external_electrical_energy", ""),
+                    "electricity_price_entity": user_input.get("electricity_price_entity", ""),
+                    "ctrl_pv_surplus_entity": user_input.get("ctrl_pv_surplus_entity", ""),
+                    "ctrl_price_entity": user_input.get("ctrl_price_entity", ""),
+                    "ctrl_forecast_entity": user_input.get("ctrl_forecast_entity", ""),
                 }
             )
             return await self.async_step_confirm()
@@ -144,6 +158,10 @@ class HphConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Optional("external_electrical_power"): _power_selector(),
                 vol.Optional("external_thermal_energy"): _energy_selector(),
                 vol.Optional("external_electrical_energy"): _energy_selector(),
+                vol.Optional("electricity_price_entity"): _any_sensor_selector(),
+                vol.Optional("ctrl_pv_surplus_entity"): _power_selector(),
+                vol.Optional("ctrl_price_entity"): _any_sensor_selector(),
+                vol.Optional("ctrl_forecast_entity"): _temp_selector(),
             }
         )
         return self.async_show_form(step_id="sensors", data_schema=schema)
@@ -218,6 +236,10 @@ class HphOptionsFlow(config_entries.OptionsFlow):
                     "external_electrical_power": user_input.get("external_electrical_power", ""),
                     "external_thermal_energy": user_input.get("external_thermal_energy", ""),
                     "external_electrical_energy": user_input.get("external_electrical_energy", ""),
+                    "electricity_price_entity": user_input.get("electricity_price_entity", ""),
+                    "ctrl_pv_surplus_entity": user_input.get("ctrl_pv_surplus_entity", ""),
+                    "ctrl_price_entity": user_input.get("ctrl_price_entity", ""),
+                    "ctrl_forecast_entity": user_input.get("ctrl_forecast_entity", ""),
                 }
             )
             return self.async_create_entry(title="", data=self._data)
@@ -248,6 +270,22 @@ class HphOptionsFlow(config_entries.OptionsFlow):
                     "external_electrical_energy",
                     default=self._data.get("external_electrical_energy", ""),
                 ): _energy_selector(),
+                vol.Optional(
+                    "electricity_price_entity",
+                    default=self._data.get("electricity_price_entity", ""),
+                ): _any_sensor_selector(),
+                vol.Optional(
+                    "ctrl_pv_surplus_entity",
+                    default=self._data.get("ctrl_pv_surplus_entity", ""),
+                ): _power_selector(),
+                vol.Optional(
+                    "ctrl_price_entity",
+                    default=self._data.get("ctrl_price_entity", ""),
+                ): _any_sensor_selector(),
+                vol.Optional(
+                    "ctrl_forecast_entity",
+                    default=self._data.get("ctrl_forecast_entity", ""),
+                ): _temp_selector(),
             }
         )
         return self.async_show_form(step_id="sensors", data_schema=schema)

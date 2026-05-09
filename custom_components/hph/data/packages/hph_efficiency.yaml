@@ -107,7 +107,7 @@ sensor:
   unit_prefix: k
   unit_time: h
   method: left
-  round: 3
+  round: 2
   device_class: energy
   state_class: total_increasing
 - platform: integration
@@ -117,7 +117,7 @@ sensor:
   unit_prefix: k
   unit_time: h
   method: left
-  round: 3
+  round: 2
   device_class: energy
   state_class: total_increasing
 
