@@ -122,63 +122,62 @@ sensor:
   state_class: total_increasing
 
 utility_meter:
+  # ── Daily ───────────────────────────────────────────────────────────────
   hph_thermal_daily:
     source: sensor.hph_thermal_energy_active
     cycle: daily
-  hph_thermal_monthly:
-    source: sensor.hph_thermal_energy_active
-    cycle: monthly
-  hph_thermal_yearly:
-    source: sensor.hph_thermal_energy_active
-    cycle: yearly
-  hph_thermal_daily_split:
-    source: sensor.hph_thermal_energy_active
-    cycle: daily
-    tariffs:
-      - heating
-      - dhw
-      - cooling
-  hph_thermal_monthly_split:
-    source: sensor.hph_thermal_energy_active
-    cycle: monthly
-    tariffs:
-      - heating
-      - dhw
-      - cooling
-  hph_thermal_yearly_split:
-    source: sensor.hph_thermal_energy_active
-    cycle: yearly
-    tariffs:
-      - heating
-      - dhw
-      - cooling
   hph_electrical_daily:
     source: sensor.hph_electrical_energy_active
     cycle: daily
-  hph_electrical_monthly:
-    source: sensor.hph_electrical_energy_active
-    cycle: monthly
-  hph_electrical_yearly:
-    source: sensor.hph_electrical_energy_active
-    cycle: yearly
+  hph_thermal_daily_split:
+    source: sensor.hph_thermal_energy_active
+    cycle: daily
+    tariffs: [heating, dhw, cooling]
   hph_electrical_daily_split:
     source: sensor.hph_electrical_energy_active
     cycle: daily
-    tariffs:
-      - heating
-      - dhw
-      - cooling
+    tariffs: [heating, dhw, cooling]
+
+  # ── Monthly (calendar month) ─────────────────────────────────────────
+  hph_thermal_monthly:
+    source: sensor.hph_thermal_energy_active
+    cycle: monthly
+  hph_electrical_monthly:
+    source: sensor.hph_electrical_energy_active
+    cycle: monthly
+  hph_thermal_monthly_split:
+    source: sensor.hph_thermal_energy_active
+    cycle: monthly
+    tariffs: [heating, dhw, cooling]
   hph_electrical_monthly_split:
     source: sensor.hph_electrical_energy_active
     cycle: monthly
-    tariffs:
-      - heating
-      - dhw
-      - cooling
+    tariffs: [heating, dhw, cooling]
+
+  # ── Heating season (Jul 1 – Jun 30, offset 181 days from Jan 1) ─────
+  # This is the JAZ / SCOP period used in DE/AT/CH/NL.
+  # To change the season start, update the offset:
+  #   Jul 1 = 181 days, Sep 1 = 243 days, Jan 1 = 0 days (calendar year)
+  # Restart HA after changing to apply the new start date.
+  hph_thermal_yearly:
+    source: sensor.hph_thermal_energy_active
+    cycle: yearly
+    offset:
+      days: 181
+  hph_electrical_yearly:
+    source: sensor.hph_electrical_energy_active
+    cycle: yearly
+    offset:
+      days: 181
+  hph_thermal_yearly_split:
+    source: sensor.hph_thermal_energy_active
+    cycle: yearly
+    offset:
+      days: 181
+    tariffs: [heating, dhw, cooling]
   hph_electrical_yearly_split:
     source: sensor.hph_electrical_energy_active
     cycle: yearly
-    tariffs:
-      - heating
-      - dhw
-      - cooling
+    offset:
+      days: 181
+    tariffs: [heating, dhw, cooling]

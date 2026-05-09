@@ -1157,7 +1157,6 @@ views:
           - switch.hph_ctrl_ccc
           - number.hph_ctrl_ccc_min_pause_min
           - number.hph_ctrl_ccc_min_runtime_min
-          - switch.hph_ctrl_softstart
           - switch.hph_ctrl_quiet_night
           - switch.hph_ctrl_solar_dhw
           - text.hph_ctrl_pv_surplus_entity
@@ -1225,47 +1224,24 @@ views:
           those helpers point at existing entities.
 
       # ── Status cards ──
-      - type: horizontal-stack
-        cards:
-          - type: custom:mushroom-template-card
-            primary: Legionella program
-            secondary: |-
-              {% set s = states('sensor.hph_prog_legionella_status') %}
-              {% if s == 'disabled' %}Disabled
-              {% elif s == 'pending' %}Armed — awaiting first run
-              {% elif s == 'ok' %}OK — last run within window
-              {% elif s == 'due' %}Due this week
-              {% elif s == 'overdue' %}Overdue — last run >8 days ago
-              {% else %}{{ s }}{% endif %}
-            icon: mdi:bacteria
-            icon_color: |-
-              {% set s = states('sensor.hph_prog_legionella_status') %}
-              {% if s == 'overdue' %}red
-              {% elif s == 'due' %}orange
-              {% elif s == 'ok' %}green
-              {% elif s == 'pending' %}blue
-              {% else %}grey{% endif %}
-            multiline_secondary: true
-            fill_container: true
-
-          - type: custom:mushroom-template-card
-            primary: Screed dry-out
-            secondary: |-
-              {% set s = states('sensor.hph_prog_screed_status') %}
-              {% set d = states('number.hph_prog_screed_day') | int(0) %}
-              {% set t = states('sensor.hph_prog_screed_target') %}
-              {% if s == 'disabled' %}Disabled
-              {% elif s == 'armed' %}Armed — not yet running
-              {% elif s == 'running' %}Day {{ d }} — target {{ t }} °C
-              {% else %}{{ s }}{% endif %}
-            icon: mdi:home-floor-a
-            icon_color: |-
-              {% set s = states('sensor.hph_prog_screed_status') %}
-              {% if s == 'running' %}orange
-              {% elif s == 'armed' %}blue
-              {% else %}grey{% endif %}
-            multiline_secondary: true
-            fill_container: true
+      - type: custom:mushroom-template-card
+        primary: Screed dry-out
+        secondary: |-
+          {% set s = states('sensor.hph_prog_screed_status') %}
+          {% set d = states('number.hph_prog_screed_day') | int(0) %}
+          {% set t = states('sensor.hph_prog_screed_target') %}
+          {% if s == 'disabled' %}Disabled
+          {% elif s == 'armed' %}Armed — not yet running
+          {% elif s == 'running' %}Day {{ d }} — target {{ t }} °C
+          {% else %}{{ s }}{% endif %}
+        icon: mdi:home-floor-a
+        icon_color: |-
+          {% set s = states('sensor.hph_prog_screed_status') %}
+          {% if s == 'running' %}orange
+          {% elif s == 'armed' %}blue
+          {% else %}grey{% endif %}
+        multiline_secondary: true
+        fill_container: true
 
       # ── Master-switch reminder ──
       - type: entities
@@ -1274,30 +1250,14 @@ views:
           - entity: switch.hph_ctrl_master
             name: Control master switch
 
-      # ── Legionella controls ──
-      - type: entities
-        title: Legionella — weekly DHW boost
-        entities:
-          - type: section
-            label: Schedule
-          - entity: switch.hph_prog_legionella
-            name: Enable program
-          - entity: select.hph_prog_legionella_weekday
-            name: Weekday
-          - entity: number.hph_prog_legionella_hour
-            name: Start hour (0-23)
-          - type: section
-            label: Tank target
-          - entity: number.hph_prog_legionella_target_c
-            name: Target temperature (°C)
-          - entity: number.hph_prog_legionella_hold_min
-            name: Hold duration above target (min)
-          - type: section
-            label: Status
-          - entity: sensor.hph_prog_legionella_status
-            name: Status
-          - entity: datetime.hph_prog_legionella_last_run
-            name: Last successful run
+      # ── Legionella ──
+      - type: markdown
+        content: |
+          ### Legionella protection
+          Configure the weekly anti-legionella DHW boost directly on
+          your heat pump controller or via the vendor app. Trigger a
+          one-off cycle using the **Run legionella program now** button
+          from **Settings → Devices & Services → HeatPump Hero**.
 
       # ── Screed dry-out controls ──
       - type: entities
@@ -1506,31 +1466,7 @@ views:
               action: navigate
               navigation_path: /hph/optimization
 
-          # ── Programs status (v0.8) ──
-          - type: conditional
-            conditions:
-              - entity: sensor.hph_prog_legionella_status
-                state_not: disabled
-            card:
-              type: custom:mushroom-template-card
-              primary: Legionella
-              secondary: >-
-                {% set s = states('sensor.hph_prog_legionella_status') %}
-                {% if s == 'overdue' %}🔴 overdue
-                {% elif s == 'due' %}🟡 due this week
-                {% elif s == 'pending' %}🔵 awaiting first run
-                {% else %}🟢 ok{% endif %}
-              icon: mdi:bacteria
-              icon_color: |-
-                {% set s = states('sensor.hph_prog_legionella_status') %}
-                {% if s == 'overdue' %}red
-                {% elif s == 'due' %}orange
-                {% elif s == 'pending' %}blue
-                {% else %}green{% endif %}
-              tap_action:
-                action: navigate
-                navigation_path: /hph/programs
-
+          # ── Programs status ──
           - type: conditional
             conditions:
               - entity: sensor.hph_prog_screed_status
@@ -1727,13 +1663,8 @@ views:
             name: Schedule
           - entity: datetime.hph_export_last_run
             name: Last run
-          - entity: script.hph_export_now
+          - entity: button.hph_export_now
             name: ▶ Export now (manual)
-        footer:
-          type: buttons
-          entities:
-            - entity: script.hph_export_now
-              name: Export now
 
       # ── Multi-platform bridge (read-only) ──
       - type: entities

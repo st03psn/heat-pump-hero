@@ -412,9 +412,10 @@ sensors:
 
     {% else %}mdi:information-outline{% endif %}'
   state: "{% set raw = states('sensor.hph_source_error_code') | upper %} {% set raw\
-    \ = raw | replace(' ','') | replace('NO_ERROR','OK')\n                | replace('NORMAL','OK')\
-    \ | replace('NONE','OK') %}\n{% if raw in ['','OK','UNKNOWN','UNAVAILABLE','0','H00']\
-    \ %}ok {% else %}{{ raw }}{% endif %}"
+    \ = raw | replace(' ','') | replace('NOERROR','OK') | replace('NO_ERROR','OK')\n\
+    \                | replace('NORMAL','OK') | replace('NONE','OK') %}\n{% if raw\
+    \ in ['','OK','UNKNOWN','UNAVAILABLE','0','H00'] %}ok {% else %}{{ raw }}{% endif\
+    \ %}"
   attributes:
     severity: "{% set s = states('sensor.hph_diagnostics_current_error') %} {% set\
       \ critical = ['F12','F14','F22','F23','F24','F27','F41','F46',\n           \
