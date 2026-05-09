@@ -108,8 +108,6 @@ sensor:
   unit_time: h
   method: left
   round: 2
-  device_class: energy
-  state_class: total_increasing
 - platform: integration
   source: sensor.hph_electrical_power_active
   name: HPH Electrical Energy
@@ -118,8 +116,6 @@ sensor:
   unit_time: h
   method: left
   round: 2
-  device_class: energy
-  state_class: total_increasing
 
 utility_meter:
   # ── Daily ───────────────────────────────────────────────────────────────
