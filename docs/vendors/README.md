@@ -1,10 +1,10 @@
 # Vendor & protocol recipes
 
-Heat Pump Hero's source-adapter (`packages/hph_sources.yaml`) is
+HeatPump Hero's source-adapter (`packages/hph_sources.yaml`) is
 protocol-agnostic. Any HA entity can drive any of the source-facade
 helpers. This directory collects recipes for the most common heat pumps
 and protocols. PRs welcome — Heishamon is the primary target, but
-Heat Pump Hero works with anything that produces HA entities.
+HeatPump Hero works with anything that produces HA entities.
 
 ## Primary target
 
@@ -38,11 +38,11 @@ Detailed:
 | **Modbus TCP** | Direct, low-latency, comprehensive register access | Setup is technical, requires register documentation | Vaillant, Stiebel, generic ModBus PLCs |
 | **eBUS** | Native Vaillant / Wolf / Bosch protocol | Hardware adapter required | Vaillant, Wolf |
 
-## How to add Heat Pump Hero on top of any of these
+## How to add HeatPump Hero on top of any of these
 
 1. Install whichever HA integration / MQTT setup gives you entities.
 2. Open *Settings → Devices & Services → Helpers* (or the Configuration
-   view of the Heat Pump Hero dashboard).
+   view of the HeatPump Hero dashboard).
 3. Edit each `input_text.hph_src_*` to point at the matching
    entity ID from your integration (e.g. `sensor.daikin_altherma_inlet_temp`
    instead of `sensor.panasonic_heat_pump_main_inlet_temperature`).

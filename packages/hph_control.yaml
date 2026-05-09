@@ -1,4 +1,4 @@
-# Heat Pump Hero — control (HeishaMoNR parity)
+# HeatPump Hero — control (HeishaMoNR parity)
 #
 # Optional control automations that mirror the optimization strategies
 # HeishaMoNR (Node-Red) ships. Every strategy is gated by an input_boolean
@@ -9,7 +9,7 @@
 # every input_boolean.hph_ctrl_* OFF.
 #
 # ─── Note on heat-pump portability ──────────────────────────────────────
-# Read paths in Heat Pump Hero are abstracted via hph_sources.yaml so
+# Read paths in HeatPump Hero are abstracted via hph_sources.yaml so
 # users can swap heat pumps without YAML edits. Write paths (the
 # select.* / button.* targets used here) are device-specific, since
 # every heat pump exposes different control actions. To adapt this
@@ -21,7 +21,7 @@
 
 input_boolean:
   hph_ctrl_master:
-    name: Heat Pump Hero Control — master switch
+    name: HeatPump Hero Control — master switch
     icon: mdi:robot-outline
     initial: false
   hph_ctrl_ccc:
@@ -74,7 +74,7 @@ automation:
   #           demand via Quiet-Mode 3.
   # ════════════════════════════════════════════════════════════════════════
   - id: hph_ctrl_ccc_block_short_pause
-    alias: Heat Pump Hero CCC — block short pause
+    alias: HeatPump Hero CCC — block short pause
     mode: single
     trigger:
       - platform: state
@@ -107,14 +107,14 @@ automation:
           option: "0"
       - service: persistent_notification.create
         data:
-          title: Heat Pump Hero CCC
+          title: HeatPump Hero CCC
           message: Short pause detected — Quiet-Mode engaged for 5 minutes.
 
   # ════════════════════════════════════════════════════════════════════════
   # SoftStart — frequency cap on compressor start
   # ════════════════════════════════════════════════════════════════════════
   - id: hph_ctrl_softstart
-    alias: Heat Pump Hero SoftStart
+    alias: HeatPump Hero SoftStart
     mode: single
     trigger:
       - platform: state
@@ -145,7 +145,7 @@ automation:
   # Solar-DHW boost — force DHW when PV surplus is high
   # ════════════════════════════════════════════════════════════════════════
   - id: hph_ctrl_solar_dhw
-    alias: Heat Pump Hero Solar-DHW boost
+    alias: HeatPump Hero Solar-DHW boost
     mode: single
     trigger:
       - platform: template
@@ -173,14 +173,14 @@ automation:
           entity_id: button.panasonic_heat_pump_main_force_dhw
       - service: persistent_notification.create
         data:
-          title: Heat Pump Hero Solar-DHW
+          title: HeatPump Hero Solar-DHW
           message: PV surplus detected — DHW force triggered.
 
   # ════════════════════════════════════════════════════════════════════════
   # Night Quiet-Mode — automatic 22:00 → 06:00
   # ════════════════════════════════════════════════════════════════════════
   - id: hph_ctrl_quiet_night_on
-    alias: Heat Pump Hero Quiet — night on
+    alias: HeatPump Hero Quiet — night on
     mode: single
     trigger:
       - platform: time
@@ -200,7 +200,7 @@ automation:
           option: "3"
 
   - id: hph_ctrl_quiet_night_off
-    alias: Heat Pump Hero Quiet — night off
+    alias: HeatPump Hero Quiet — night off
     mode: single
     trigger:
       - platform: time

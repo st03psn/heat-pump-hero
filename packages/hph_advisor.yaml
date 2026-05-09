@@ -1,4 +1,4 @@
-# Heat Pump Hero — advisor
+# HeatPump Hero — advisor
 #
 # Data-driven optimization recommendations. Each advisor sensor exposes:
 #   - state: "ok" | "warn" | "critical" | "info"
@@ -53,7 +53,7 @@ template:
       # ════════════════════════════════════════════════════════════════════
       # 1) Short-cycle diagnosis
       # ════════════════════════════════════════════════════════════════════
-      - name: "Heat Pump Hero Advisor Short Cycle"
+      - name: "HeatPump Hero Advisor Short Cycle"
         unique_id: hph_advisor_short_cycle
         icon: mdi:timer-alert
         state: >-
@@ -89,7 +89,7 @@ template:
       # ════════════════════════════════════════════════════════════════════
       # 2) Supply/return spread (pump speed)
       # ════════════════════════════════════════════════════════════════════
-      - name: "Heat Pump Hero Advisor Spread"
+      - name: "HeatPump Hero Advisor Spread"
         unique_id: hph_advisor_spread
         icon: mdi:thermometer-lines
         state: >-
@@ -129,7 +129,7 @@ template:
       # ════════════════════════════════════════════════════════════════════
       # 3) Defrost frequency
       # ════════════════════════════════════════════════════════════════════
-      - name: "Heat Pump Hero Advisor Defrost"
+      - name: "HeatPump Hero Advisor Defrost"
         unique_id: hph_advisor_defrost
         icon: mdi:snowflake-melt
         state: >-
@@ -152,7 +152,7 @@ template:
       # ════════════════════════════════════════════════════════════════════
       # 4) Heating-curve analysis (rolling)
       # ════════════════════════════════════════════════════════════════════
-      - name: "Heat Pump Hero Advisor Heat Curve"
+      - name: "HeatPump Hero Advisor Heat Curve"
         unique_id: hph_advisor_heat_curve
         icon: mdi:chart-bell-curve
         state: >-
@@ -179,7 +179,7 @@ template:
       # ════════════════════════════════════════════════════════════════════
       # 5) DHW run too short (hygiene / COP)
       # ════════════════════════════════════════════════════════════════════
-      - name: "Heat Pump Hero Advisor DHW Runtime"
+      - name: "HeatPump Hero Advisor DHW Runtime"
         unique_id: hph_advisor_dhw_runtime
         icon: mdi:water-boiler
         state: >-
@@ -197,7 +197,7 @@ template:
             hysteresis or check the anti-legionella schedule.
 
       # ─── Pressure delta vs 7-day mean (used by Advisor 7) ─────────────
-      - name: "Heat Pump Hero Pressure Delta 7d"
+      - name: "HeatPump Hero Pressure Delta 7d"
         unique_id: hph_pressure_delta_7d
         unit_of_measurement: "bar"
         state_class: measurement
@@ -214,7 +214,7 @@ template:
       # ════════════════════════════════════════════════════════════════════
       # 6) Diagnostics (active fault + recurrence)
       # ════════════════════════════════════════════════════════════════════
-      - name: "Heat Pump Hero Advisor Diagnostics"
+      - name: "HeatPump Hero Advisor Diagnostics"
         unique_id: hph_advisor_diagnostics
         icon: mdi:medical-bag
         state: >-
@@ -250,7 +250,7 @@ template:
       # Uses the rolling change-over-time of pump_pressure to detect a
       # slow loss. A drop > 0.2 bar over 7 days while the unit was idle
       # half the time is a strong leak indicator.
-      - name: "Heat Pump Hero Advisor Pressure Trend"
+      - name: "HeatPump Hero Advisor Pressure Trend"
         unique_id: hph_advisor_pressure_trend
         icon: mdi:gauge-low
         state: >-
@@ -282,7 +282,7 @@ template:
       # rolling smoothed value of the outdoor temp captured at the END of
       # long compressor runs (≥30 min) — see automation in this same
       # package. The advisor compares observed vs user-set target.
-      - name: "Heat Pump Hero Advisor Heating Limit"
+      - name: "HeatPump Hero Advisor Heating Limit"
         unique_id: hph_advisor_heating_limit
         icon: mdi:thermometer-off
         state: >-
@@ -324,7 +324,7 @@ template:
       # ════════════════════════════════════════════════════════════════════
       # 7) Aggregate traffic-light (for the dashboard overview)
       # ════════════════════════════════════════════════════════════════════
-      - name: "Heat Pump Hero Advisor Summary"
+      - name: "HeatPump Hero Advisor Summary"
         unique_id: hph_advisor_summary
         icon: mdi:lightbulb-on-outline
         state: >-
@@ -368,7 +368,7 @@ template:
 # ═══════════════════════════════════════════════════════════════════════════
 sensor:
   - platform: statistics
-    name: "Heat Pump Hero Heating Limit Smoothed"
+    name: "HeatPump Hero Heating Limit Smoothed"
     unique_id: hph_heating_limit_smoothed
     entity_id: input_number.hph_heating_limit_observed_c
     state_characteristic: average_linear
@@ -381,7 +381,7 @@ sensor:
   # 7-day pressure delta (last reading - mean) for leak detection.
   # Negative values mean pressure has dropped vs the 7-day average.
   - platform: statistics
-    name: "Heat Pump Hero Pressure 7-day Mean"
+    name: "HeatPump Hero Pressure 7-day Mean"
     unique_id: hph_pressure_7d_mean
     entity_id: sensor.hph_source_pump_pressure
     state_characteristic: mean
@@ -393,7 +393,7 @@ sensor:
 
 automation:
   - id: hph_record_heating_limit
-    alias: Heat Pump Hero — record heating-limit observation
+    alias: HeatPump Hero — record heating-limit observation
     description: >
       Captures the outdoor temperature at the end of each compressor run
       that lasted at least 30 minutes. The 7-day rolling average of this

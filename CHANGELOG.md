@@ -1,7 +1,35 @@
 # Changelog
 
-All notable changes to Heat Pump Hero. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and Heat Pump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+All notable changes to HeatPump Hero. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.7.1] — 2026-05-09
+
+### Changed
+
+- **Project name**: Heat Pump Hero → **HeatPump Hero** (display name
+  contracted; HPH initials and entity-ID prefix `hph_` unchanged).
+- **Language policy**: repo is now English-only until v1.0. Translations
+  of descriptive content (README / info / docs) resume at v1.0 alongside
+  the v0.9 Python custom integration that enables per-locale dashboard
+  strings. Until then, translation PRs add maintenance burden without
+  user value.
+
+### Removed
+
+- `README.de.md`, `README.nl.md`, `info.de.md`, `info.nl.md`,
+  `CLAUDE.de.md`, the entire `docs/de/` directory. No production
+  installs depended on them.
+- Language-switcher headers (`🌐 English (this file) · ...`) from every
+  remaining English file.
+- `CONTRIBUTING.md → Translation convention` block replaced with the
+  shorter "Language policy" block; the `i18n` issue tag is no longer
+  needed pre-v1.0.
+
+### Notes
+
+- `tests/_strip_and_rebrand.py` is the one-shot script used to apply
+  this rename + header removal across 50 files.
 
 ## [0.7.0] — 2026-05-09
 
@@ -49,7 +77,7 @@ the global `input_boolean.hph_ctrl_master` to also be on.
 
 ### Added — rebrand and analysis layer
 
-**Rebrand** — project renamed `HeishaHub` → **Heat Pump Hero (HPH)**.
+**Rebrand** — project renamed `HeishaHub` → **HeatPump Hero (HPH)**.
 - All identifiers `heishahub_*` → `hph_*` (entity IDs, helper names,
   package filenames, dashboard path)
 - All display strings updated across READMEs (EN/DE/NL), info files,
@@ -99,7 +127,7 @@ the global `input_boolean.hph_ctrl_master` to also be on.
   - Python script reads HA REST API, writes one file per entity
 - **Import module** (`scripts/import_csv_to_ha_stats.py`)
   - Backfills HA long-term statistics from CSV via `recorder/import_statistics` websocket
-  - For installs added mid-life — re-creates pre-Heat Pump Hero history
+  - For installs added mid-life — re-creates pre-HeatPump Hero history
 - **Database recommendations** (`docs/database.md`) — when SQLite is fine, when to switch to MariaDB / PostgreSQL, InfluxDB-for-analytics pattern
 - **Naming proposal** (`docs/naming_proposal.md`) — HeatLens recommended as universal rename to drop the Heishamon-specific branding
 
@@ -160,7 +188,7 @@ including the **Panasonic M-series (R290 flagship)**.
 - The vendor preset selector defaults to `keep_current`, so re-importing
   the package does not auto-clobber your existing source-helpers
 - M-series owners: set the model selector explicitly during setup —
-  Heat Pump Hero adjusts compressor Hz and supply-T° expectations to match
+  HeatPump Hero adjusts compressor Hz and supply-T° expectations to match
   R290 characteristics
 
 ## [0.3.0] — 2026-05-09

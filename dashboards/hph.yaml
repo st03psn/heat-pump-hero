@@ -1,9 +1,9 @@
-# Heat Pump Hero Dashboard
+# HeatPump Hero Dashboard
 # Import via: Settings → Dashboards → Add → From YAML
 # Requirements: all frontend plugins listed in info.md, plus
 # kamaradclimber/heishamon-homeassistant.
 
-title: Heat Pump Hero
+title: HeatPump Hero
 icon: mdi:heat-pump
 views:
   # ════════════════════════════════════════════════════════════════════════
@@ -1098,7 +1098,7 @@ views:
         cards:
           # ── Hero card ──
           - type: custom:mushroom-template-card
-            primary: Heat Pump Hero
+            primary: HeatPump Hero
             secondary: |-
               {% set s = states('sensor.hph_efficiency_trend') %}
               {% if s == 'great' %}🚀 great
@@ -1249,10 +1249,10 @@ views:
       - type: markdown
         content: |
           ## Source adapter
-          Heat Pump Hero reads everything via the configurable source helpers
+          HeatPump Hero reads everything via the configurable source helpers
           below. Defaults match the kamaradclimber Heishamon integration —
           if you use a different heat pump or different meters, change the
-          relevant entity-ID and Heat Pump Hero follows automatically. No YAML
+          relevant entity-ID and HeatPump Hero follows automatically. No YAML
           editing required.
 
       # ── Vendor preset & model selector (1-click setup) ──

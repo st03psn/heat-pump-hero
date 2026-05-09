@@ -1,5 +1,5 @@
 {
-  "__comment": "Heat Pump Hero — Grafana Overview dashboard. Requires InfluxDB v2 datasource. Data written by the official HA InfluxDB integration (component: influxdb, api_version: 2). All queries use entity_id tag filter — adjust bucket name to match your setup (default: 'homeassistant').",
+  "__comment": "HeatPump Hero — Grafana Overview dashboard. Requires InfluxDB v2 datasource. Data written by the official HA InfluxDB integration (component: influxdb, api_version: 2). All queries use entity_id tag filter — adjust bucket name to match your setup (default: 'homeassistant').",
   "annotations": { "list": [] },
   "editable": true,
   "fiscalYearStartMonth": 0,
@@ -261,7 +261,7 @@
   "time": { "from": "now-24h", "to": "now" },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Heat Pump Hero — Overview",
+  "title": "HeatPump Hero — Overview",
   "uid": "hph-overview",
   "version": 1
 }

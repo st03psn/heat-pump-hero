@@ -2,7 +2,7 @@
 
 🌐 English
 
-Heat Pump Hero ships an analysis layer that observes operation over
+HeatPump Hero ships an analysis layer that observes operation over
 time and produces **concrete, actionable recommendations** (in K, not
 hand-wavy hints). Three layers — only L1 is enabled by default; L2 is
 opt-in; L3 is roadmap.
@@ -81,7 +81,7 @@ moderate — typical for mixed underfloor / radiators. slope -0.65 K/K, intercep
 
 ## Layer 3 — LLM-based (roadmap, v0.7+)
 
-A future custom integration could expose Heat Pump Hero's structured
+A future custom integration could expose HeatPump Hero's structured
 data to an LLM via HA's `conversation` integration, enabling questions
 like *"Why did the unit cycle so much last Wednesday?"*. Not implemented
 in v0.6 — would require either an OpenAI/Anthropic API key or a local

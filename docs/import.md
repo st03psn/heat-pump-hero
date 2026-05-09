@@ -2,14 +2,14 @@
 
 🌐 English
 
-Backfill HA's long-term statistics with data from before Heat Pump Hero was
+Backfill HA's long-term statistics with data from before HeatPump Hero was
 installed — old Shelly / vendor cloud / utility-meter exports / a
 previous HA install.
 
 ## Mechanism
 
 HA exposes the websocket call `recorder/import_statistics` (since 2022.7).
-Heat Pump Hero provides `scripts/import_csv_to_ha_stats.py` as a thin wrapper:
+HeatPump Hero provides `scripts/import_csv_to_ha_stats.py` as a thin wrapper:
 read CSV → call websocket → done.
 
 ## CSV format
@@ -36,7 +36,7 @@ use HA's `recorder.statistics` directly.
 
 ## Usage
 
-1. Create the target sensor in Heat Pump Hero (e.g. switch the electrical
+1. Create the target sensor in HeatPump Hero (e.g. switch the electrical
    source to `external_energy` and point at a new `sensor.legacy_kwh_meter`).
 2. Make sure the entity exists in HA at least once.
 3. Prepare the CSV.
@@ -72,5 +72,5 @@ python3 scripts/import_csv_to_ha_stats.py \
 - Backup HA's recorder DB before bulk imports.
 - Importing into a `total_increasing` entity that already has live data:
   ensure timestamps don't overlap, otherwise sum jumps appear.
-- The websocket call requires `homeassistant >= 2022.7`. Heat Pump Hero min
+- The websocket call requires `homeassistant >= 2022.7`. HeatPump Hero min
   is 2024.4 so this is satisfied by default.

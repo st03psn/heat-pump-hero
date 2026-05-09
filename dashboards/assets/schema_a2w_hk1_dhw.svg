@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Heat Pump Hero — A2W installation schematic with DHW tank (HK1 + DHW)
+  HeatPump Hero — A2W installation schematic with DHW tank (HK1 + DHW)
   Version: v0.2
   Extends schema_a2w.svg by adding a DHW storage tank on the right side
   and the DHW branch pipe from the 3-way valve.
@@ -218,5 +218,5 @@
           id="hotspot-comp-starts" data-hotspot-x="118" data-hotspot-y="468"/>
   </g>
 
-  <text x="880" y="515" text-anchor="end" fill="#3d5166" font-size="8" opacity="0.6">Heat Pump Hero v0.2 · A2W+DHW</text>
+  <text x="880" y="515" text-anchor="end" fill="#3d5166" font-size="8" opacity="0.6">HeatPump Hero v0.2 · A2W+DHW</text>
 </svg>

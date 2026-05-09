@@ -20,7 +20,7 @@ the first reference install is up and running, only placeholders live here.
 
 ## How to capture
 
-1. Install Heat Pump Hero on a real HA instance (see [installation.md](../installation.md)).
+1. Install HeatPump Hero on a real HA instance (see [installation.md](../installation.md)).
 2. Wait for at least 24 h of data so the live values are populated.
 3. Use HA's *Settings → System → Logs* take-screenshot helper, or browser
    screenshot tools (PNG, 1600×900 typical).

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Heat Pump Hero — import CSV into HA Long-Term Statistics.
+HeatPump Hero — import CSV into HA Long-Term Statistics.
 
-Use case: Heat Pump Hero installed mid-life. You have historical kWh data from
+Use case: HeatPump Hero installed mid-life. You have historical kWh data from
 your old utility-meter export, Shelly cloud, vendor cloud, or a previous
 HA install. This script backfills it via HA's `recorder.import_statistics`
 websocket call so the long-term graphs and SCOP comparisons reach back
-into pre-Heat Pump Hero history.
+into pre-HeatPump Hero history.
 
 Input CSV format (header row required):
     timestamp,state,sum
@@ -50,7 +50,6 @@ try:
 except ImportError:
     print("websocket-client not installed. Install:  pip install websocket-client", file=sys.stderr)
     sys.exit(1)
-
 
 def main() -> int:
     p = argparse.ArgumentParser()
@@ -122,7 +121,6 @@ def main() -> int:
     else:
         print(f"import failed: {result}", file=sys.stderr)
         return 1
-
 
 if __name__ == "__main__":
     sys.exit(main())

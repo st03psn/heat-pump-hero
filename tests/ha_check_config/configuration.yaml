@@ -1,5 +1,5 @@
 # Minimal HA configuration for `hass --script check_config` validation.
-# This file exists *only* for CI: it stubs out every entity Heat Pump Hero
+# This file exists *only* for CI: it stubs out every entity HeatPump Hero
 # expects to find by default (kamaradclimber/heishamon entities) so the
 # `availability:` guards in our packages don't fail to resolve, and so
 # automation triggers can be parsed.

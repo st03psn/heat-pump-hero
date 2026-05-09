@@ -1,4 +1,4 @@
-# Heat Pump Hero — vendor & model selectors with auto-fill
+# HeatPump Hero — vendor & model selectors with auto-fill
 #
 # Two layers:
 #   1. hph_vendor_preset → which vendor + how it's connected to HA.
@@ -15,7 +15,7 @@
 
 input_select:
   hph_vendor_preset:
-    name: Heat Pump Hero — vendor preset (auto-fills source helpers)
+    name: HeatPump Hero — vendor preset (auto-fills source helpers)
     icon: mdi:factory
     options:
       - panasonic_heishamon          # default — kamaradclimber/heishamon-homeassistant
@@ -30,7 +30,7 @@ input_select:
     initial: keep_current
 
   hph_pump_model:
-    name: Heat Pump Hero — heat-pump model
+    name: HeatPump Hero — heat-pump model
     icon: mdi:heat-pump-outline
     options:
       # Panasonic Aquarea generations (oldest → newest)
@@ -82,7 +82,7 @@ input_number:
 template:
   - sensor:
       # ─── Model facts (read-only summary card) ────────────────────────
-      - name: "Heat Pump Hero Model Refrigerant"
+      - name: "HeatPump Hero Model Refrigerant"
         unique_id: hph_model_refrigerant
         icon: mdi:gas-cylinder
         state: >-
@@ -96,7 +96,7 @@ template:
           {% elif m == 'stiebel_wpl' %}R454C
           {% else %}unknown{% endif %}
 
-      - name: "Heat Pump Hero Model Description"
+      - name: "HeatPump Hero Model Description"
         unique_id: hph_model_description
         icon: mdi:information-outline
         state: >-
@@ -119,7 +119,7 @@ automation:
   # Power-user overrides after this fire are kept (we don't fight the user).
   # ─────────────────────────────────────────────────────────────────────
   - id: hph_model_apply_thresholds
-    alias: Heat Pump Hero — apply model-specific thresholds
+    alias: HeatPump Hero — apply model-specific thresholds
     mode: single
     trigger:
       - platform: state
@@ -173,7 +173,7 @@ automation:
       - service: persistent_notification.create
         data:
           notification_id: hph_model_change
-          title: Heat Pump Hero — model thresholds updated
+          title: HeatPump Hero — model thresholds updated
           message: >-
             Model set to {{ model }}.
             Compressor min/max Hz, min flow L/min and max supply °C
@@ -184,7 +184,7 @@ automation:
   # Vendor-preset → auto-fill all 17 source helpers in one click
   # ─────────────────────────────────────────────────────────────────────
   - id: hph_vendor_preset_apply
-    alias: Heat Pump Hero — apply vendor preset (auto-fill source helpers)
+    alias: HeatPump Hero — apply vendor preset (auto-fill source helpers)
     mode: single
     trigger:
       - platform: state
@@ -326,7 +326,7 @@ automation:
       - service: persistent_notification.create
         data:
           notification_id: hph_vendor_preset_change
-          title: Heat Pump Hero — vendor preset applied
+          title: HeatPump Hero — vendor preset applied
           message: >-
             Source helpers were auto-filled for preset "{{ preset }}". Please
             verify under Configuration → Heat-pump entities — non-existent

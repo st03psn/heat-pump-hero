@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Heat Pump Hero — A2W with HK1 + HK2 + DHW (mixed circuits + storage tank)
+  HeatPump Hero — A2W with HK1 + HK2 + DHW (mixed circuits + storage tank)
   Version: v0.3
   Adds a second heating circuit (HK2) with mixing valve, plus the DHW
   storage tank from the HK1+DHW variant.
@@ -240,5 +240,5 @@
           id="hotspot-comp-starts" data-hotspot-x="815" data-hotspot-y="521"/>
   </g>
 
-  <text x="880" y="575" text-anchor="end" fill="#3d5166" font-size="8" opacity="0.6">Heat Pump Hero v0.3 · A2W+HK1+HK2+DHW</text>
+  <text x="880" y="575" text-anchor="end" fill="#3d5166" font-size="8" opacity="0.6">HeatPump Hero v0.3 · A2W+HK1+HK2+DHW</text>
 </svg>

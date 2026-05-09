@@ -1,10 +1,8 @@
 # Contributing
 
-🌐 English (this file)
-
 Architecture and code rules live in [CLAUDE.md](CLAUDE.md). This file
-covers contributor process: how releases happen, how translations
-work, and how the repo is kept tidy.
+covers contributor process: release flow, language policy, and how
+the repo is kept tidy.
 
 ## Release flow
 
@@ -24,25 +22,21 @@ HACS-default plugin (currently custom-repo only).
 For SemVer scope (what counts as MAJOR / MINOR / PATCH), see
 [CLAUDE.md → SemVer scope](CLAUDE.md#semver-scope-post-v10).
 
-## Translation convention
+## Language policy
 
-Repo-level documentation is bilingual:
+**All repo content is English-only until v1.0.** README, CHANGELOG,
+docs, code comments, commit messages, advisor messages, dashboard
+strings, persistent_notification bodies — every word is English.
 
-- English is primary (`README.md`, `CHANGELOG.md`, `docs/*.md`,
-  `CLAUDE.md`).
-- German translations live alongside as `*.de.md` (root level) or under
-  `docs/de/*.md`.
-- Dutch translations follow the same pattern as `*.nl.md` for
-  high-traffic files only (currently `README.nl.md`, `info.nl.md`).
+Translations of descriptive content (README, docs, info) start at
+**v1.0**, alongside the v0.9 Python custom integration that enables
+per-locale dashboard strings via `translations/{en,de,nl}.json`. Until
+then, translation PRs add maintenance burden without user value (no
+production installs exist yet).
 
-When you change an English doc, the corresponding German file goes out
-of sync. Either update both in the same commit, or open a follow-up
-issue tagged `i18n` so the drift is visible.
-
-User-facing dashboard strings and advisor messages are **always
-English** (see CLAUDE.md). This is an architectural decision, not a
-translation gap — per-language dashboard strings require the v0.9
-Python custom integration.
+If a contributor's first language isn't English, write the doc in
+their language and ask for a translation review in the PR — easier
+than guessing English idioms.
 
 ## Line endings
 
@@ -82,5 +76,5 @@ Architecture / behavior — is the change consistent with CLAUDE.md?
 Process:
 
 - [ ] Commit message follows the convention
-- [ ] German translation kept in sync OR `i18n` issue opened
+- [ ] No new `*.de.md` / `*.nl.md` files — translations resume at v1.0
 - [ ] No drive-by reformatting outside the change scope

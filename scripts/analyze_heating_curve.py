@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Heat Pump Hero — heating curve regression analysis (Layer 2).
+HeatPump Hero — heating curve regression analysis (Layer 2).
 
 Fits a linear regression supply_temp = a + b * outdoor_temp over the last
 N days of HA history and writes a plain-language recommendation to
@@ -35,7 +35,6 @@ import urllib.request
 import urllib.error
 from datetime import datetime, timedelta, timezone
 
-
 def fetch_history(base_url: str, token: str, entity: str, start: datetime) -> list[dict]:
     url = f"{base_url}/api/history/period/{start.isoformat()}?filter_entity_id={entity}"
     req = urllib.request.Request(url, headers={
@@ -46,11 +45,9 @@ def fetch_history(base_url: str, token: str, entity: str, start: datetime) -> li
         data = json.loads(resp.read())
     return data[0] if data else []
 
-
 def parse_ts(s: str) -> datetime:
     # HA returns ISO8601 with timezone
     return datetime.fromisoformat(s.replace("Z", "+00:00"))
-
 
 def align(supply: list[dict], outdoor: list[dict], compressor: list[dict],
           tolerance_s: int = 60) -> list[tuple[float, float]]:
@@ -100,7 +97,6 @@ def align(supply: list[dict], outdoor: list[dict], compressor: list[dict],
             continue
     return pairs
 
-
 def least_squares(pairs: list[tuple[float, float]]) -> tuple[float, float, float]:
     """Return (slope, intercept, r2) for y = slope * x + intercept."""
     n = len(pairs)
@@ -123,7 +119,6 @@ def least_squares(pairs: list[tuple[float, float]]) -> tuple[float, float, float
         ss_res = sum((y - (slope * x + intercept)) ** 2 for x, y in pairs)
         r2 = 1.0 - ss_res / var_y
     return slope, intercept, r2
-
 
 def recommend(slope: float, intercept: float, r2: float, n: int) -> str:
     """Translate regression into plain-language recommendation."""
@@ -151,7 +146,6 @@ def recommend(slope: float, intercept: float, r2: float, n: int) -> str:
     base = f"slope {slope:.2f} K/K, intercept {intercept:.1f} °C, R²={r2:.2f}, n={n}"
     return f"{verdict}. {base}."
 
-
 def write_to_ha(base_url: str, token: str, entity: str, value: str) -> bool:
     url = f"{base_url}/api/services/input_text/set_value"
     req = urllib.request.Request(url, headers={
@@ -164,7 +158,6 @@ def write_to_ha(base_url: str, token: str, entity: str, value: str) -> bool:
     except urllib.error.HTTPError as e:
         print(f"failed to write {entity}: HTTP {e.code}", file=sys.stderr)
         return False
-
 
 def main() -> int:
     p = argparse.ArgumentParser()
@@ -203,7 +196,6 @@ def main() -> int:
     ok = write_to_ha(base_url, token,
                      "input_text.hph_heating_curve_recommendation", rec)
     return 0 if ok else 1
-
 
 if __name__ == "__main__":
     sys.exit(main())

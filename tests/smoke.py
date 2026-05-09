@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Heat Pump Hero — local smoke tests.
+HeatPump Hero — local smoke tests.
 
 Validates structural invariants without booting a real HA instance:
 
@@ -48,26 +48,20 @@ DASHBOARD_ALLOWED_PATTERNS = [
     r"number\.panasonic_heat_pump_main_z[12]_heat_curve_\*",
 ]
 
-
 def fail(msg: str) -> None:
     print(f"  [FAIL] {msg}")
-
 
 def ok(msg: str) -> None:
     print(f"  [ OK ] {msg}")
 
-
 def section(name: str) -> None:
     print(f"\n=== {name} ===")
-
 
 def load_yaml(path: Path) -> dict:
     return yaml.safe_load(path.read_text(encoding="utf-8"))
 
-
 def load_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
-
 
 # ─── Test 1: every YAML/JSON file parses ────────────────────────────────────
 def test_files_parse() -> int:
@@ -91,7 +85,6 @@ def test_files_parse() -> int:
             failures += 1
 
     return failures
-
 
 # ─── Test 2: source-adapter contract ────────────────────────────────────────
 def test_source_adapter_contract() -> int:
@@ -118,7 +111,6 @@ def test_source_adapter_contract() -> int:
             ok(f"{rel}: clean (uses source facade)")
 
     return failures
-
 
 # ─── Test 3: source-facade sensors used elsewhere all exist in sources.yaml ─
 def test_source_facade_resolution() -> int:
@@ -175,7 +167,6 @@ def test_source_facade_resolution() -> int:
 
     return failures
 
-
 # ─── Test 4: utility_meter sources point to the _active variants ────────────
 def test_utility_meter_active_source() -> int:
     section("utility_meter sources go through *_active dispatchers")
@@ -197,7 +188,6 @@ def test_utility_meter_active_source() -> int:
             failures += 1
 
     return failures
-
 
 # ─── Test 5: every advisor that summary aggregates is actually defined ───
 def test_advisor_summary_consistency() -> int:
@@ -235,7 +225,6 @@ def test_advisor_summary_consistency() -> int:
         ok(f"advisor summary aggregates {len(referenced)} declared advisors")
 
     return failures
-
 
 # ─── Test 6: diagnostics package self-consistency ────────────────────────
 def test_diagnostics_consistency() -> int:
@@ -277,9 +266,8 @@ def test_diagnostics_consistency() -> int:
 
     return failures
 
-
 def main() -> int:
-    print(f"Heat Pump Hero smoke tests · root: {ROOT}")
+    print(f"HeatPump Hero smoke tests · root: {ROOT}")
     failures = 0
     failures += test_files_parse()
     failures += test_source_adapter_contract()
@@ -294,7 +282,6 @@ def main() -> int:
         return 1
     print("PASSED: all smoke tests green.")
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

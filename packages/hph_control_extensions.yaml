@@ -1,4 +1,4 @@
-# Heat Pump Hero — control extensions (v0.7)
+# HeatPump Hero — control extensions (v0.7)
 #
 # Three optional control automations, all gated behind:
 #   1. input_boolean.hph_ctrl_master (global master switch)

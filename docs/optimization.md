@@ -1,12 +1,10 @@
 # Optimization — cycle analysis, advisor, control
 
-🌐 English (this file) · [Deutsch](de/optimization.md)
-
 ## Concept
 
 A heat pump runs most efficiently when it operates **long, even** cycles,
 **rarely** kicks in and out, and gets by with a **low supply temperature**.
-Heat Pump Hero provides three tools to get there:
+HeatPump Hero provides three tools to get there:
 
 1. **Cycle analysis** — measures cycles, run times, pauses.
 2. **Advisor** — interprets that data and produces plain-language hints.
@@ -75,7 +73,7 @@ are needed to enable any strategy:
 **Problem**: the heat pump restarts shortly after a stop → short cycles,
 high wear, poor COP.
 
-**Heat Pump Hero solution**: if the previous pause was shorter than
+**HeatPump Hero solution**: if the previous pause was shorter than
 `ctrl_ccc_min_pause_min` (default 15 min), Quiet-Mode 3 is engaged for 5
 minutes after the restart — this caps the maximum frequency and gives the
 unit a chance to modulate down rather than ramping up and shutting off again.
@@ -88,7 +86,7 @@ needed.
 **Problem**: cold-weather start spikes draw a high current and may trip the
 utility-supplier limiter.
 
-**Heat Pump Hero solution**: on compressor start, engage Quiet-Mode 2 for 10
+**HeatPump Hero solution**: on compressor start, engage Quiet-Mode 2 for 10
 minutes → gentle frequency ramp.
 
 ### Solar-DHW boost
@@ -96,7 +94,7 @@ minutes → gentle frequency ramp.
 **Problem**: PV surplus is exported while the heat pump heats DHW later from
 the grid.
 
-**Heat Pump Hero solution**: when the surplus sensor (entity-ID in
+**HeatPump Hero solution**: when the surplus sensor (entity-ID in
 `ctrl_pv_surplus_entity`) stays above `ctrl_solar_pv_threshold_w` (default
 1500 W) for 5 minutes **and** the tank is not full, fire `force_dhw`.
 

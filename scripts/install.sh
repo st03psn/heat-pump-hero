@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Heat Pump Hero — CLI installer
+# HeatPump Hero — CLI installer
 # Copies packages, dashboard, blueprint, scripts into an existing HA config.
 # Idempotent. Performs prereq checks and offers DB recommendations.
 #
@@ -58,7 +58,7 @@ if [[ ! -f "$HA_CONFIG/configuration.yaml" ]]; then
 fi
 
 # ─── prereq check ─────────────────────────────────────────────────────────
-echo "==> Heat Pump Hero installer"
+echo "==> HeatPump Hero installer"
 echo "==> Pre-flight checks"
 
 missing=()
@@ -116,7 +116,7 @@ if [[ -z "$DB_CHOICE" ]]; then
     cat <<EOF
 
 ==> Database recommendation
-    Heat Pump Hero stores everything via HA's recorder. Picking the
+    HeatPump Hero stores everything via HA's recorder. Picking the
     right backend matters for long-term performance:
 
     [1] sqlite      — default, fine for ≤1 year retention, single user
@@ -222,11 +222,11 @@ fi
 
 cat <<EOF
 
-==> Heat Pump Hero installed.
+==> HeatPump Hero installed.
 
 Next steps in Home Assistant:
   1. Restart HA (Settings → System → Restart).
-  2. Run "Heat Pump Hero Setup" blueprint
+  2. Run "HeatPump Hero Setup" blueprint
      (Settings → Automations → Blueprints).
   3. Add dashboard:
      Settings → Dashboards → Add Dashboard → From YAML

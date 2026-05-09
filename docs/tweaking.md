@@ -1,7 +1,5 @@
 # Tweaking — power-user customizations
 
-🌐 English (this file) · [Deutsch](de/tweaking.md)
-
 ## 1. Change the MQTT topic prefix
 
 Default: `panasonic_heat_pump`. If your Heishamon firmware uses a different
@@ -23,7 +21,7 @@ Add a block to `packages/hph_advisor.yaml`, e.g. "water pressure too
 low":
 
 ```yaml
-- name: "Heat Pump Hero Advisor Pressure"
+- name: "HeatPump Hero Advisor Pressure"
   unique_id: hph_advisor_pressure
   icon: mdi:gauge-low
   state: >-
@@ -65,7 +63,7 @@ that `scripts/install.sh` overwrites the file on update. If you want
 permanent customizations:
 
 - Duplicate the dashboard in the UI (UI → Dashboard → ⋮ → Duplicate).
-- Heat Pump Hero updates only refresh the original.
+- HeatPump Hero updates only refresh the original.
 
 ## 6. Localize / customize advisor messages
 

@@ -1,7 +1,5 @@
 # Roadmap
 
-🌐 English (this file) · [Deutsch](de/roadmap.md)
-
 For detailed per-release changes, see [`CHANGELOG.md`](../CHANGELOG.md).
 
 ## ✅ v0.1 — skeleton
@@ -11,7 +9,7 @@ For detailed per-release changes, see [`CHANGELOG.md`](../CHANGELOG.md).
 - Dashboard with 6 views
 - Setup blueprint, CLI installer, Telegraf bridge config
 - CI: yamllint, JSON validation, HACS action
-- Bilingual docs (EN / DE)
+- Docs (English-only until v1.0)
 
 ## ✅ v0.2 — universal counters
 
@@ -52,7 +50,7 @@ For detailed per-release changes, see [`CHANGELOG.md`](../CHANGELOG.md).
 
 ## ✅ v0.6 — rebrand + analysis (current)
 
-- Rebrand `HeishaHub` → **Heat Pump Hero (HPH)** across the entire
+- Rebrand `HeishaHub` → **HeatPump Hero (HPH)** across the entire
   codebase (entity IDs, files, docs, mockups)
 - Analysis module Layer 1 — statistical observation of indoor-temp
   deviation, recommends heating-curve adjustment in K
@@ -95,13 +93,15 @@ For detailed per-release changes, see [`CHANGELOG.md`](../CHANGELOG.md).
 - [ ] Video walkthrough
 - [ ] Adapter recipes for non-Panasonic vendors validated by users
 - [ ] Per-locale dashboard strings via integration translations
+- [ ] **Translations of repo docs** (README / docs / info) into DE and NL —
+  resumes at v1.0 with a defined sync workflow
 - [ ] **Logo & brand**: design a mark that combines heat, pump, and
   hero — superhero-stylised heat pump or a hero figure with a heat-pump
   emblem; SVG + PNG assets for README, HACS listing, dashboard header
 
 ## Out of scope
 
-- Cloud features (Heat Pump Hero stays 100 % local)
+- Cloud features (HeatPump Hero stays 100 % local)
 - Replacing kamaradclimber/heishamon-homeassistant — we wrap it, not
   duplicate it
 - Standalone control without an underlying heat-pump integration

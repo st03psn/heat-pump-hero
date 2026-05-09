@@ -1,13 +1,11 @@
 # External sensors and source-adapter
 
-🌐 English (this file) · [Deutsch](de/external_sensors.md)
-
 Heishamon publishes an **estimate** of electrical input and computes thermal
 power from internal temperature sensors — both with 10–20 % tolerance. For
 trustworthy SCOP / monthly figures you need a real electricity meter and
 optionally a heat meter.
 
-Heat Pump Hero abstracts ALL sources behind a configurable adapter layer
+HeatPump Hero abstracts ALL sources behind a configurable adapter layer
 (`packages/hph_sources.yaml`). You can:
 
 - swap individual entity-IDs (e.g. point `hph_src_inlet_temp` at a
@@ -112,7 +110,7 @@ a hypothetical Vaillant install:
 | `hph_src_flow_rate` | `sensor.panasonic_heat_pump_main_water_flow` | `sensor.vaillant_arotherm_flow_rate` |
 | ... | ... | ... |
 
-All Heat Pump Hero sensors keep working because they read from
+All HeatPump Hero sensors keep working because they read from
 `sensor.hph_source_*` (the resolved facade), never from the raw
 heat-pump entities directly.
 

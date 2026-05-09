@@ -1,8 +1,6 @@
 # Diagnostics — Panasonic Aquarea fault codes
 
-🌐 English (this file)
-
-Heat Pump Hero's diagnostics module reads `sensor.hph_source_error_code`
+HeatPump Hero's diagnostics module reads `sensor.hph_source_error_code`
 and maps the value to a human-readable description, severity, and
 model-specific commentary. The result is exposed as
 `sensor.hph_diagnostics_current_error` with these attributes:

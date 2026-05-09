@@ -1,6 +1,6 @@
-# Heat Pump Hero — integration UI mockup (v1.0 design preview)
+# HeatPump Hero — integration UI mockup (v1.0 design preview)
 
-This document shows what Heat Pump Hero's UI will look like once it becomes a
+This document shows what HeatPump Hero's UI will look like once it becomes a
 proper Python custom integration (planned for v0.6 → v1.0). The current
 v0.4 release ships YAML-based equivalents of every screen below.
 
@@ -29,7 +29,7 @@ Three steps:
 2. **Confirm model + components** — the screen shown in the mockup.
    Vendor and model dropdowns; auto-detected components (HK1, HK2, DHW,
    buffer) shown with the entities they came from. Each can be toggled
-   off explicitly if the user wants Heat Pump Hero to ignore it.
+   off explicitly if the user wants HeatPump Hero to ignore it.
 
 3. **Wire up extras** — optional Shelly / heat-meter / utility-meter
    entities; tariff splits; control automation toggle (CCC, SoftStart,

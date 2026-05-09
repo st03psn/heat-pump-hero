@@ -2,7 +2,7 @@
 
 🌐 English
 
-HA's recorder uses **SQLite** by default. Heat Pump Hero doesn't change that —
+HA's recorder uses **SQLite** by default. HeatPump Hero doesn't change that —
 but for heat-pump installs the recorder load is non-trivial (1-second
 MQTT updates × 47 Heishamon entities = ~4 M rows / week). Below is when
 SQLite is fine and when to switch.
@@ -29,7 +29,7 @@ In `configuration.yaml`:
 
 ```yaml
 recorder:
-  purge_keep_days: 30        # default is 10 — keep 30 for Heat Pump Hero comparisons
+  purge_keep_days: 30        # default is 10 — keep 30 for HeatPump Hero comparisons
   commit_interval: 5
   exclude:
     entity_globs:
@@ -41,7 +41,7 @@ recorder:
       - sensor.last_boot
 ```
 
-Excluding the source-facade sensors saves ~30 % of Heat Pump Hero's row volume
+Excluding the source-facade sensors saves ~30 % of HeatPump Hero's row volume
 because the underlying heat-pump entity is recorded anyway.
 
 ## MariaDB / PostgreSQL setup
@@ -60,7 +60,7 @@ Use the official MariaDB / PostgreSQL HA add-ons for least-pain setup.
 
 ## InfluxDB for long-term analytics
 
-Heat Pump Hero's Grafana boards (`grafana/efficiency_jaz_maz.json`) expect
+HeatPump Hero's Grafana boards (`grafana/efficiency_jaz_maz.json`) expect
 InfluxDB v2. Pair with the HA InfluxDB integration; HA writes
 duplicate state to Influx, you query for multi-year SCOP / MAZ from
 Grafana. Keep HA recorder retention shorter (e.g. 30 days), let
@@ -69,9 +69,9 @@ InfluxDB handle the long view.
 This is the pattern we recommend for v0.4+ installs: **SQLite or
 MariaDB for HA recorder + InfluxDB for analytics**.
 
-## What Heat Pump Hero itself stores
+## What HeatPump Hero itself stores
 
 Nothing extra outside HA's recorder. Everything is HA template sensors,
 utility_meter counters, statistics platform sensors, input_text /
 input_number / input_select helpers. Migration between recorder DB
-engines preserves all Heat Pump Hero data automatically.
+engines preserves all HeatPump Hero data automatically.

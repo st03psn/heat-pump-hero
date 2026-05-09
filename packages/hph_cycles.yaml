@@ -1,4 +1,4 @@
-# Heat Pump Hero — cycle analysis
+# HeatPump Hero — cycle analysis
 #
 # Tracks compressor cycles: start/stop events, run times, pauses, and the
 # short-cycle ratio. Feeds the advisor and any optimization decisions.
@@ -12,17 +12,17 @@
 
 input_datetime:
   hph_cycle_last_start:
-    name: Heat Pump Hero — last cycle start
+    name: HeatPump Hero — last cycle start
     has_date: true
     has_time: true
   hph_cycle_last_end:
-    name: Heat Pump Hero — last cycle end
+    name: HeatPump Hero — last cycle end
     has_date: true
     has_time: true
 
 input_number:
   hph_cycle_short_threshold_min:
-    name: Heat Pump Hero — "short cycle" threshold (minutes)
+    name: HeatPump Hero — "short cycle" threshold (minutes)
     min: 1
     max: 60
     step: 1
@@ -30,7 +30,7 @@ input_number:
     icon: mdi:timer-alert
 
   hph_cycle_last_duration_min:
-    name: Heat Pump Hero — last run duration (minutes)
+    name: HeatPump Hero — last run duration (minutes)
     min: 0
     max: 1440
     step: 0.1
@@ -38,7 +38,7 @@ input_number:
     icon: mdi:timer
 
   hph_cycle_last_pause_min:
-    name: Heat Pump Hero — last pause (minutes)
+    name: HeatPump Hero — last pause (minutes)
     min: 0
     max: 1440
     step: 0.1
@@ -47,18 +47,18 @@ input_number:
 
 counter:
   hph_cycles_today:
-    name: Heat Pump Hero — cycles today
+    name: HeatPump Hero — cycles today
     icon: mdi:counter
     initial: 0
   hph_short_cycles_today:
-    name: Heat Pump Hero — short cycles today
+    name: HeatPump Hero — short cycles today
     icon: mdi:timer-alert-outline
     initial: 0
 
 automation:
   # ─── Compressor STARTS ──────────────────────────────────────────────────
   - id: hph_cycle_on_start
-    alias: Heat Pump Hero — cycle start
+    alias: HeatPump Hero — cycle start
     mode: single
     trigger:
       - platform: state
@@ -90,7 +90,7 @@ automation:
 
   # ─── Compressor STOPS ───────────────────────────────────────────────────
   - id: hph_cycle_on_stop
-    alias: Heat Pump Hero — cycle end
+    alias: HeatPump Hero — cycle end
     mode: single
     trigger:
       - platform: state
@@ -127,7 +127,7 @@ automation:
 
   # ─── Daily counter reset at midnight ──────────────────────────────────
   - id: hph_cycles_daily_reset
-    alias: Heat Pump Hero — daily counter reset
+    alias: HeatPump Hero — daily counter reset
     mode: single
     trigger:
       - platform: time
@@ -142,7 +142,7 @@ automation:
 template:
   - sensor:
       # ─── Average run duration (rolling 24h) ───────────────────────────
-      - name: "Heat Pump Hero Avg Cycle Duration 24h"
+      - name: "HeatPump Hero Avg Cycle Duration 24h"
         unique_id: hph_avg_cycle_duration_24h
         unit_of_measurement: "min"
         state: >-
@@ -151,7 +151,7 @@ template:
           {{ (total * 60 / cycles) | round(1) if cycles > 0 else 0 }}
 
       # ─── Short-cycle ratio (%) ────────────────────────────────────────
-      - name: "Heat Pump Hero Short Cycle Ratio"
+      - name: "HeatPump Hero Short Cycle Ratio"
         unique_id: hph_short_cycle_ratio
         unit_of_measurement: "%"
         state: >-
@@ -160,7 +160,7 @@ template:
           {{ (short / total * 100) | round(0) if total > 0 else 0 }}
 
       # ─── Cycles per hour (today) ──────────────────────────────────────
-      - name: "Heat Pump Hero Cycles Per Hour"
+      - name: "HeatPump Hero Cycles Per Hour"
         unique_id: hph_cycles_per_hour
         unit_of_measurement: "1/h"
         state: >-

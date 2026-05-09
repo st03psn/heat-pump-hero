@@ -1,7 +1,7 @@
-# Heat Pump Hero — setup script blueprint
+# HeatPump Hero — setup script blueprint
 #
 # Run via: Settings → Automations & Scenes → Blueprints →
-#          "Heat Pump Hero Setup" → Create script → Run.
+#          "HeatPump Hero Setup" → Create script → Run.
 #
 # What it does:
 #   1. Probes whether the Heishamon integration has produced entities.
@@ -12,9 +12,9 @@
 #   - Does not write files (use scripts/install.sh or copy by hand).
 #   - Does not modify configuration.yaml.
 blueprint:
-  name: Heat Pump Hero Setup
+  name: HeatPump Hero Setup
   description: >
-    Initializes Heat Pump Hero helpers and verifies the installation. Run once
+    Initializes HeatPump Hero helpers and verifies the installation. Run once
     after copying the packages and the dashboard.
   domain: script
   source_url: https://github.com/st03psn/heat-pump-hero/blob/main/blueprints/hph_setup.yaml
@@ -60,7 +60,7 @@ sequence:
     service: persistent_notification.create
     data:
       notification_id: hph_setup
-      title: Heat Pump Hero Setup
+      title: HeatPump Hero Setup
       message: >
         {% if found %}
         ✅ Heishamon entities detected.

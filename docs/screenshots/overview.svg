@@ -2,7 +2,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" font-family="'Segoe UI', Arial, sans-serif">
   <rect width="1280" height="720" fill="#0f1923"/>
   <rect x="40" y="40" width="1200" height="60" rx="8" fill="#1a252f" stroke="#3d5166"/>
-  <text x="64" y="78" fill="#8ca8c0" font-size="22" font-weight="600">Heat Pump Hero — Overview</text>
+  <text x="64" y="78" fill="#8ca8c0" font-size="22" font-weight="600">HeatPump Hero — Overview</text>
 
   <!-- Three KPI columns -->
   <g>
@@ -70,7 +70,7 @@
   <!-- Footer placeholder bar -->
   <rect x="40" y="430" width="1200" height="240" rx="10" fill="#1a252f" stroke="#3d5166" stroke-dasharray="4,4"/>
   <text x="640" y="560" text-anchor="middle" fill="#3d5166" font-size="22" font-weight="600">screenshot pending — install required</text>
-  <text x="640" y="595" text-anchor="middle" fill="#3d5166" font-size="12">replace overview.png once Heat Pump Hero is running on a real HA instance</text>
+  <text x="640" y="595" text-anchor="middle" fill="#3d5166" font-size="12">replace overview.png once HeatPump Hero is running on a real HA instance</text>
 
-  <text x="1240" y="710" text-anchor="end" fill="#3d5166" font-size="10" opacity="0.6">Heat Pump Hero v0.3 — placeholder</text>
+  <text x="1240" y="710" text-anchor="end" fill="#3d5166" font-size="10" opacity="0.6">HeatPump Hero v0.3 — placeholder</text>
 </svg>

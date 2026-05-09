@@ -1,6 +1,6 @@
-# Heat Pump Hero — export
+# HeatPump Hero — export
 #
-# Manual or scheduled export of Heat Pump Hero statistics for external analysis
+# Manual or scheduled export of HeatPump Hero statistics for external analysis
 # (Excel, Python, R, third-party tools).
 #
 # How it works:
@@ -65,7 +65,7 @@ input_datetime:
 # ─── Manual trigger script ─────────────────────────────────────────────────
 script:
   hph_export_now:
-    alias: Heat Pump Hero — export now
+    alias: HeatPump Hero — export now
     icon: mdi:download-circle
     sequence:
       - service: shell_command.hph_export
@@ -76,7 +76,7 @@ script:
       - service: persistent_notification.create
         data:
           notification_id: hph_export_done
-          title: Heat Pump Hero export
+          title: HeatPump Hero export
           message: >-
             Export written to {{ states('input_text.hph_export_target_path') }}
             ({{ states('input_select.hph_export_format') }},
@@ -85,7 +85,7 @@ script:
 # ─── Scheduled exports ────────────────────────────────────────────────────
 automation:
   - id: hph_export_daily
-    alias: Heat Pump Hero export — daily 03:00
+    alias: HeatPump Hero export — daily 03:00
     mode: single
     trigger:
       - platform: time
@@ -98,7 +98,7 @@ automation:
       - service: script.hph_export_now
 
   - id: hph_export_weekly
-    alias: Heat Pump Hero export — Monday 03:00
+    alias: HeatPump Hero export — Monday 03:00
     mode: single
     trigger:
       - platform: time
@@ -113,7 +113,7 @@ automation:
       - service: script.hph_export_now
 
   - id: hph_export_monthly
-    alias: Heat Pump Hero export — 1st of month 03:00
+    alias: HeatPump Hero export — 1st of month 03:00
     mode: single
     trigger:
       - platform: time

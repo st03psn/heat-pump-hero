@@ -1,19 +1,17 @@
-# CLAUDE.md — Heat Pump Hero Project Context
-
-🌐 English (this file) · [Deutsch](CLAUDE.de.md)
+# CLAUDE.md — HeatPump Hero Project Context
 
 This guide is for AI assistants (Claude Code) and new human contributors. It
 explains the project in five minutes.
 
-## What is Heat Pump Hero?
+## What is HeatPump Hero?
 
-Heat Pump Hero is a **bundle** for Home Assistant that deploys a complete dashboard
+HeatPump Hero is a **bundle** for Home Assistant that deploys a complete dashboard
 and analytical layer onto a Heishamon-controlled Panasonic Aquarea heat pump
 installation. It does **not** replace any integration — it **combines**
 existing building blocks into something usable:
 
 - Entities come from [kamaradclimber/heishamon-homeassistant](https://github.com/kamaradclimber/heishamon-homeassistant)
-- Heat Pump Hero provides: HA packages (template sensors, COP/SCOP calculation),
+- HeatPump Hero provides: HA packages (template sensors, COP/SCOP calculation),
   Lovelace dashboard YAML, Bubble-Card SVG schematic, Grafana boards,
   setup blueprint.
 
@@ -88,7 +86,7 @@ release notes come from `CHANGELOG.md`.
 
 ## Naming conventions
 
-- **Heat Pump Hero-owned entities**: prefix `hph_` (e.g.
+- **HeatPump Hero-owned entities**: prefix `hph_` (e.g.
   `sensor.hph_scop`).
 - **Source-facade entities** (resolved from configurable helpers):
   prefix `hph_source_*` (e.g. `sensor.hph_source_inlet_temp`).
@@ -111,7 +109,7 @@ release notes come from `CHANGELOG.md`.
 
 ## Source-adapter architecture
 
-Everything Heat Pump Hero reads is funneled through `packages/hph_sources.yaml`:
+Everything HeatPump Hero reads is funneled through `packages/hph_sources.yaml`:
 
 ```
 input_text.hph_src_inlet_temp           ← user-configurable entity-ID
@@ -271,7 +269,7 @@ Both systems can listen on the same MQTT broker simultaneously — only
 control, leave every `input_boolean.hph_ctrl_*` off (including the v0.7
 extensions: `adaptive_curve`, `price_dhw`, `forecast_preheat`) and
 disable the kamaradclimber `number.*`/`select.*` entities. For pure
-Heat Pump Hero installs no constraint applies — HPH is the writer.
+HeatPump Hero installs no constraint applies — HPH is the writer.
 
 ## Advisor design
 
@@ -282,8 +280,8 @@ The advisor produces **recommendations, not commands**. Each sensor:
 - `attributes.metric` — the relevant measurement supporting the diagnosis
 
 All advisor `attributes.message` text and persistent_notification body
-text is English. The bilingual policy applies to repo-level docs, not
-to entity attributes — those follow the dashboard-string policy.
+text is English. Until v1.0 the entire repo (docs, code, dashboards,
+attributes, notifications) is English-only — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Thresholds are **always** exposed via `input_number.hph_advisor_*`. No
 hard-coded magic numbers in templates — if a value should be tunable,

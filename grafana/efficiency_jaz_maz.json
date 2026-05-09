@@ -1,5 +1,5 @@
 {
-  "__comment": "Heat Pump Hero — Multi-year SCOP/MAZ dashboard. Requires InfluxDB v2 datasource and at least 1 month of data from the HA InfluxDB integration. Adjust bucket variable to match your setup.",
+  "__comment": "HeatPump Hero — Multi-year SCOP/MAZ dashboard. Requires InfluxDB v2 datasource and at least 1 month of data from the HA InfluxDB integration. Adjust bucket variable to match your setup.",
   "annotations": { "list": [] },
   "editable": true,
   "fiscalYearStartMonth": 0,
@@ -283,7 +283,7 @@
   "time": { "from": "now-2y", "to": "now" },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Heat Pump Hero — Efficiency (SCOP / MAZ)",
+  "title": "HeatPump Hero — Efficiency (SCOP / MAZ)",
   "uid": "hph-efficiency",
   "version": 1
 }

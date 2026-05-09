@@ -1,7 +1,5 @@
 # Installation
 
-🌐 English (this file) · [Deutsch](de/installation.md)
-
 ## Prerequisites
 
 | Component | Minimum version | Source |
@@ -37,7 +35,7 @@ In HACS *Frontend*, search and install:
 - auto-entities
 - card-mod
 
-## Step 3 — Get the Heat Pump Hero repo
+## Step 3 — Get the HeatPump Hero repo
 
 ```bash
 cd /tmp
@@ -47,7 +45,7 @@ git clone https://github.com/st03psn/heat-pump-hero.git
 ## Step 4 — Run the installer (recommended)
 
 ```bash
-cd Heat Pump Hero
+cd HeatPump Hero
 ./scripts/install.sh /path/to/your/homeassistant/config
 ```
 
@@ -69,11 +67,11 @@ through the *File Editor* add-on) and append the line above to
 ## Step 5 — Restart Home Assistant
 
 `Settings → System → Restart`. After the restart, filter for `hph_` in
-*Developer Tools → States* — the Heat Pump Hero sensors should appear.
+*Developer Tools → States* — the HeatPump Hero sensors should appear.
 
 ## Step 6 — Run the setup blueprint
 
-`Settings → Automations & Scenes → Blueprints` → *Heat Pump Hero Setup* →
+`Settings → Automations & Scenes → Blueprints` → *HeatPump Hero Setup* →
 *Create script* → run it. It posts a persistent notification reporting
 whether your Heishamon entities were detected.
 
@@ -82,7 +80,7 @@ whether your Heishamon entities were detected.
 `Settings → Dashboards → Add Dashboard → From YAML`:
 
 ```yaml
-title: Heat Pump Hero
+title: HeatPump Hero
 icon: mdi:heat-pump
 mode: yaml
 filename: hph/dashboard.yaml
@@ -108,14 +106,14 @@ Both systems can listen on the same MQTT broker. **Only one** should write.
 While testing in parallel:
 
 - HeishaMoNR controls (schedules, CCC, RTC, SoftStart),
-- Heat Pump Hero reads and visualizes only — disable all `number.*` and
+- HeatPump Hero reads and visualizes only — disable all `number.*` and
   `select.*` entities of the kamaradclimber integration in HA
   (Entity → Disable).
 
 ## Updating
 
 ```bash
-cd /tmp/Heat Pump Hero
+cd /tmp/HeatPump Hero
 git pull
 ./scripts/install.sh /path/to/your/homeassistant/config
 ```

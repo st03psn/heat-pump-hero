@@ -2,14 +2,14 @@
 
 🌐 English
 
-Three ways to get Heat Pump Hero data out for external analysis.
+Three ways to get HeatPump Hero data out for external analysis.
 
 ## 1. Built-in HA UI (manual)
 
 Settings → Developer Tools → Statistics → pick entity → ⋯ → Download.
 Good for one-off Excel checks. No setup.
 
-## 2. Scheduled CSV / JSON / XLSX (Heat Pump Hero export module)
+## 2. Scheduled CSV / JSON / XLSX (HeatPump Hero export module)
 
 Helpers added by `packages/hph_export.yaml`:
 

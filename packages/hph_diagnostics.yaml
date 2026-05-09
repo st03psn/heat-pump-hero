@@ -1,4 +1,4 @@
-# Heat Pump Hero — diagnostics
+# HeatPump Hero — diagnostics
 #
 # Panasonic Aquarea fault-code analysis. Maps the active error code from
 # `sensor.hph_source_error_code` to a human-readable description,
@@ -38,7 +38,7 @@ template:
       # Active error → description + severity
       # State: error code (H00 / NORMAL / "" all map to "ok")
       # ════════════════════════════════════════════════════════════════════
-      - name: "Heat Pump Hero Diagnostics Current Error"
+      - name: "HeatPump Hero Diagnostics Current Error"
         unique_id: hph_diagnostics_current_error
         icon: |-
           {% set s = states('sensor.hph_diagnostics_current_error') %}
@@ -134,7 +134,7 @@ template:
             {% else %}Unknown fault code "{{ s }}" — refer to the service manual for your model.{% endif %}
 
       # ─── Recurrence pattern: same error within 24 h ──────────────────
-      - name: "Heat Pump Hero Diagnostics Recurrence"
+      - name: "HeatPump Hero Diagnostics Recurrence"
         unique_id: hph_diagnostics_recurrence
         state: >-
           {% set hist = states('input_text.hph_diag_error_history') %}
@@ -150,7 +150,7 @@ automation:
   # On error-code change: log to history, ping persistent notification.
   # ────────────────────────────────────────────────────────────────────
   - id: hph_diag_log_error_change
-    alias: Heat Pump Hero diagnostics — log error change
+    alias: HeatPump Hero diagnostics — log error change
     mode: queued
     max: 5
     trigger:
@@ -196,7 +196,7 @@ automation:
           - service: persistent_notification.create
             data:
               notification_id: hph_active_error
-              title: "Heat Pump Hero — heat-pump fault {{ new_code }}"
+              title: "HeatPump Hero — heat-pump fault {{ new_code }}"
               message: >-
                 **{{ state_attr('sensor.hph_diagnostics_current_error','severity') | upper }}**:
                 {{ state_attr('sensor.hph_diagnostics_current_error','message') }}

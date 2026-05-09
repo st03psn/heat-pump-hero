@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Heat Pump Hero — Mockup of the future custom_components/hph config flow.
+  HeatPump Hero — Mockup of the future custom_components/hph config flow.
   This is a design proposal for v1.0 — what the UI-driven setup would look
-  like once Heat Pump Hero becomes a real Python integration. Today this is
+  like once HeatPump Hero becomes a real Python integration. Today this is
   approximated by the input_select.hph_vendor_preset dropdown plus
   the hph_setup blueprint, both available now in v0.4.
 -->
@@ -27,8 +27,8 @@
 
   <!-- Main heading -->
   <g transform="translate(60,160)">
-    <text x="0" y="0" fill="#ffffff" font-size="22" font-weight="600">Heat Pump Hero — Heat-pump dashboard</text>
-    <text x="0" y="28" fill="#8ca8c0" font-size="13">Detected your heat pump. Confirm the model and pick which sources Heat Pump Hero should use.</text>
+    <text x="0" y="0" fill="#ffffff" font-size="22" font-weight="600">HeatPump Hero — Heat-pump dashboard</text>
+    <text x="0" y="28" fill="#8ca8c0" font-size="13">Detected your heat pump. Confirm the model and pick which sources HeatPump Hero should use.</text>
   </g>
 
   <!-- Card 1: vendor / model -->
@@ -94,5 +94,5 @@
     <text x="880" y="46" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="600">Submit</text>
   </g>
 
-  <text x="1050" y="745" text-anchor="end" fill="#3d5166" font-size="9" opacity="0.6">Heat Pump Hero config-flow mockup · v1.0 design preview · v0.4 ships YAML-based equivalent</text>
+  <text x="1050" y="745" text-anchor="end" fill="#3d5166" font-size="9" opacity="0.6">HeatPump Hero config-flow mockup · v1.0 design preview · v0.4 ships YAML-based equivalent</text>
 </svg>

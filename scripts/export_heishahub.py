@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Heat Pump Hero — export script.
+HeatPump Hero — export script.
 
-Reads HA long-term statistics for Heat Pump Hero entities and writes them
+Reads HA long-term statistics for HeatPump Hero entities and writes them
 to CSV / JSON / XLSX. Invoked by `shell_command.hph_export` (see
 the `hph_export.yaml` package).
 
@@ -62,7 +62,6 @@ DEFAULT_ENTITIES = [
     "sensor.hph_source_pump_pressure",
 ]
 
-
 def period_to_start(period: str) -> datetime:
     now = datetime.now(timezone.utc)
     return {
@@ -72,7 +71,6 @@ def period_to_start(period: str) -> datetime:
         "last_year":  now - timedelta(days=365),
         "all_time":   datetime(2000, 1, 1, tzinfo=timezone.utc),
     }.get(period, now - timedelta(days=30))
-
 
 def fetch_history(base_url: str, token: str, entity: str, start: datetime) -> list[dict]:
     """Fetch state history for an entity via the REST API."""
@@ -84,7 +82,6 @@ def fetch_history(base_url: str, token: str, entity: str, start: datetime) -> li
     with urllib.request.urlopen(req, timeout=30) as resp:
         data = json.loads(resp.read())
     return data[0] if data else []
-
 
 def write_csv(path: Path, entity: str, history: list[dict]) -> None:
     with path.open("w", newline="", encoding="utf-8") as f:
@@ -98,10 +95,8 @@ def write_csv(path: Path, entity: str, history: list[dict]) -> None:
                 row.get("attributes", {}).get("unit_of_measurement", ""),
             ])
 
-
 def write_json(path: Path, entity: str, history: list[dict]) -> None:
     path.write_text(json.dumps(history, indent=2), encoding="utf-8")
-
 
 def write_xlsx(path: Path, entity: str, history: list[dict]) -> None:
     try:
@@ -122,7 +117,6 @@ def write_xlsx(path: Path, entity: str, history: list[dict]) -> None:
             row.get("attributes", {}).get("unit_of_measurement", ""),
         ])
     wb.save(path)
-
 
 def main() -> int:
     base_url = os.environ.get("HA_BASE_URL", "http://homeassistant.local:8123").rstrip("/")
@@ -169,7 +163,6 @@ def main() -> int:
 
     print(f"\nExport complete: {len(written)} files in {target}")
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -1,4 +1,4 @@
-# Heat Pump Hero — sources adapter
+# HeatPump Hero — sources adapter
 #
 # Central abstraction layer for ALL underlying entities. Every hardcoded
 # entity-ID is replaced by an input_text helper here so users can swap:
@@ -24,85 +24,85 @@
 input_text:
   # ─── Heat pump device entities (defaults: Heishamon/kamaradclimber) ─────
   hph_src_inlet_temp:
-    name: Heat Pump Hero source — inlet (return) temperature
+    name: HeatPump Hero source — inlet (return) temperature
     icon: mdi:thermometer-low
     max: 255
     initial: sensor.panasonic_heat_pump_main_inlet_temperature
 
   hph_src_outlet_temp:
-    name: Heat Pump Hero source — outlet (supply) temperature
+    name: HeatPump Hero source — outlet (supply) temperature
     icon: mdi:thermometer-high
     max: 255
     initial: sensor.panasonic_heat_pump_main_outlet_temperature
 
   hph_src_flow_rate:
-    name: Heat Pump Hero source — water flow rate
+    name: HeatPump Hero source — water flow rate
     icon: mdi:water-pump
     max: 255
     initial: sensor.panasonic_heat_pump_main_water_flow
 
   hph_src_outdoor_temp:
-    name: Heat Pump Hero source — outdoor temperature
+    name: HeatPump Hero source — outdoor temperature
     icon: mdi:thermometer
     max: 255
     initial: sensor.panasonic_heat_pump_main_outside_temperature
 
   hph_src_compressor_freq:
-    name: Heat Pump Hero source — compressor frequency
+    name: HeatPump Hero source — compressor frequency
     icon: mdi:sine-wave
     max: 255
     initial: sensor.panasonic_heat_pump_main_compressor_frequency
 
   hph_src_defrost_state:
-    name: Heat Pump Hero source — defrost state (binary)
+    name: HeatPump Hero source — defrost state (binary)
     icon: mdi:snowflake-melt
     max: 255
     initial: binary_sensor.panasonic_heat_pump_main_defrost_state
 
   hph_src_operating_mode:
-    name: Heat Pump Hero source — operating mode (select)
+    name: HeatPump Hero source — operating mode (select)
     icon: mdi:fire
     max: 255
     initial: select.panasonic_heat_pump_main_operating_mode_state
 
   hph_src_pump_pressure:
-    name: Heat Pump Hero source — water pressure
+    name: HeatPump Hero source — water pressure
     icon: mdi:gauge
     max: 255
     initial: sensor.panasonic_heat_pump_main_pump_pressure
 
   hph_src_internal_power:
-    name: Heat Pump Hero source — heat pump internal power consumption
+    name: HeatPump Hero source — heat pump internal power consumption
     icon: mdi:flash
     max: 255
     initial: sensor.panasonic_heat_pump_main_consumed_power
 
   hph_src_aux_heater_state:
-    name: Heat Pump Hero source — auxiliary electric heater state (binary)
+    name: HeatPump Hero source — auxiliary electric heater state (binary)
     icon: mdi:radiator
     max: 255
     initial: binary_sensor.panasonic_heat_pump_main_heater_state
 
   hph_src_error_code:
-    name: Heat Pump Hero source — current error code (Heishamon-style)
+    name: HeatPump Hero source — current error code (Heishamon-style)
     icon: mdi:alert-circle-outline
     max: 255
     initial: sensor.panasonic_heat_pump_main_error
 
   hph_src_compressor_hours:
-    name: Heat Pump Hero source — compressor running hours (lifetime)
+    name: HeatPump Hero source — compressor running hours (lifetime)
     icon: mdi:clock-outline
     max: 255
     initial: sensor.panasonic_heat_pump_main_compressor_running_hours
 
   hph_src_compressor_starts:
-    name: Heat Pump Hero source — compressor starts (lifetime)
+    name: HeatPump Hero source — compressor starts (lifetime)
     icon: mdi:counter
     max: 255
     initial: sensor.panasonic_heat_pump_main_compressor_starts
 
   hph_src_discharge_temp:
-    name: Heat Pump Hero source — discharge temperature
+    name: HeatPump Hero source — discharge temperature
     icon: mdi:thermometer-high
     max: 255
     initial: sensor.panasonic_heat_pump_main_discharge_temperature
@@ -111,31 +111,31 @@ input_text:
   # Defaults match Heishamon/kamaradclimber. Set to "" to mark a component
   # as definitely absent (overrides auto-detection).
   hph_src_zone1_temp:
-    name: Heat Pump Hero source — Zone 1 supply / target temperature
+    name: HeatPump Hero source — Zone 1 supply / target temperature
     icon: mdi:home-thermometer
     max: 255
     initial: sensor.panasonic_heat_pump_main_z1_water_temperature
 
   hph_src_zone2_temp:
-    name: Heat Pump Hero source — Zone 2 supply / target temperature
+    name: HeatPump Hero source — Zone 2 supply / target temperature
     icon: mdi:home-thermometer-outline
     max: 255
     initial: sensor.panasonic_heat_pump_main_z2_water_temperature
 
   hph_src_dhw_temp:
-    name: Heat Pump Hero source — DHW tank temperature
+    name: HeatPump Hero source — DHW tank temperature
     icon: mdi:water-boiler
     max: 255
     initial: sensor.panasonic_heat_pump_main_dhw_temperature
 
   hph_src_buffer_temp:
-    name: Heat Pump Hero source — buffer-tank temperature
+    name: HeatPump Hero source — buffer-tank temperature
     icon: mdi:propane-tank
     max: 255
     initial: sensor.panasonic_heat_pump_main_buffer_temperature
 
   hph_src_dhw_target_temp:
-    name: Heat Pump Hero source — DHW target temperature
+    name: HeatPump Hero source — DHW target temperature
     icon: mdi:thermostat-cog
     max: 255
     initial: sensor.panasonic_heat_pump_main_dhw_target_temperature
@@ -143,13 +143,13 @@ input_text:
   # ─── External meter entities (user fills in) ─────────────────────────────
   # Power sensors (W) — alternative to the calculated thermal_power.
   hph_src_external_thermal_power:
-    name: Heat Pump Hero external thermal power sensor (entity-ID, optional)
+    name: HeatPump Hero external thermal power sensor (entity-ID, optional)
     icon: mdi:fire
     max: 255
     initial: ""
 
   hph_src_external_electrical_power:
-    name: Heat Pump Hero external electrical power sensor (entity-ID, e.g. Shelly)
+    name: HeatPump Hero external electrical power sensor (entity-ID, e.g. Shelly)
     icon: mdi:flash
     max: 255
     initial: ""
@@ -157,13 +157,13 @@ input_text:
   # Direct energy counters (kWh, total_increasing) — bypass the integration.
   # If set and selected, the integrator is skipped and the meter is used as-is.
   hph_src_external_thermal_energy:
-    name: Heat Pump Hero external heat-meter (kWh, total_increasing)
+    name: HeatPump Hero external heat-meter (kWh, total_increasing)
     icon: mdi:counter
     max: 255
     initial: ""
 
   hph_src_external_electrical_energy:
-    name: Heat Pump Hero external electricity-meter (kWh, total_increasing)
+    name: HeatPump Hero external electricity-meter (kWh, total_increasing)
     icon: mdi:counter
     max: 255
     initial: ""
@@ -173,7 +173,7 @@ input_text:
 # ═══════════════════════════════════════════════════════════════════════════
 input_select:
   hph_thermal_source:
-    name: Heat Pump Hero — thermal source
+    name: HeatPump Hero — thermal source
     icon: mdi:thermometer-water
     options:
       - calculated        # T_in/T_out × flow × cp (default, needs heat-pump entities)
@@ -182,7 +182,7 @@ input_select:
     initial: calculated
 
   hph_electrical_source:
-    name: Heat Pump Hero — electrical source
+    name: HeatPump Hero — electrical source
     icon: mdi:flash
     options:
       - heat_pump_internal  # heat pump's own consumed-power reading
@@ -191,7 +191,7 @@ input_select:
     initial: heat_pump_internal
 
   hph_schema_variant:
-    name: Heat Pump Hero — installation schematic (auto follows detection)
+    name: HeatPump Hero — installation schematic (auto follows detection)
     icon: mdi:graph-outline
     options:
       - auto                       # follow hph_schema_variant_detected
@@ -209,7 +209,7 @@ template:
 
       # ─── Facade reads (with availability guards) ─────────────────────────
       # These resolve the configured entity-ID once and expose a stable name.
-      - name: "Heat Pump Hero Source Inlet Temperature"
+      - name: "HeatPump Hero Source Inlet Temperature"
         unique_id: hph_source_inlet_temp
         unit_of_measurement: "°C"
         device_class: temperature
@@ -219,7 +219,7 @@ template:
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
         state: "{{ states(states('input_text.hph_src_inlet_temp')) | float(0) }}"
 
-      - name: "Heat Pump Hero Source Outlet Temperature"
+      - name: "HeatPump Hero Source Outlet Temperature"
         unique_id: hph_source_outlet_temp
         unit_of_measurement: "°C"
         device_class: temperature
@@ -229,7 +229,7 @@ template:
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
         state: "{{ states(states('input_text.hph_src_outlet_temp')) | float(0) }}"
 
-      - name: "Heat Pump Hero Source Flow Rate"
+      - name: "HeatPump Hero Source Flow Rate"
         unique_id: hph_source_flow_rate
         unit_of_measurement: "L/min"
         state_class: measurement
@@ -238,7 +238,7 @@ template:
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
         state: "{{ states(states('input_text.hph_src_flow_rate')) | float(0) }}"
 
-      - name: "Heat Pump Hero Source Outdoor Temperature"
+      - name: "HeatPump Hero Source Outdoor Temperature"
         unique_id: hph_source_outdoor_temp
         unit_of_measurement: "°C"
         device_class: temperature
@@ -248,7 +248,7 @@ template:
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
         state: "{{ states(states('input_text.hph_src_outdoor_temp')) | float(0) }}"
 
-      - name: "Heat Pump Hero Source Compressor Frequency"
+      - name: "HeatPump Hero Source Compressor Frequency"
         unique_id: hph_source_compressor_freq
         unit_of_measurement: "Hz"
         state_class: measurement
@@ -257,14 +257,14 @@ template:
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
         state: "{{ states(states('input_text.hph_src_compressor_freq')) | float(0) }}"
 
-      - name: "Heat Pump Hero Source Operating Mode"
+      - name: "HeatPump Hero Source Operating Mode"
         unique_id: hph_source_operating_mode
         availability: >-
           {% set ent = states('input_text.hph_src_operating_mode') %}
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
         state: "{{ states(states('input_text.hph_src_operating_mode')) }}"
 
-      - name: "Heat Pump Hero Source Pump Pressure"
+      - name: "HeatPump Hero Source Pump Pressure"
         unique_id: hph_source_pump_pressure
         unit_of_measurement: "bar"
         device_class: pressure
@@ -274,7 +274,7 @@ template:
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
         state: "{{ states(states('input_text.hph_src_pump_pressure')) | float(0) }}"
 
-      - name: "Heat Pump Hero Source Compressor Hours"
+      - name: "HeatPump Hero Source Compressor Hours"
         unique_id: hph_source_compressor_hours
         unit_of_measurement: "h"
         state_class: total_increasing
@@ -283,7 +283,7 @@ template:
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
         state: "{{ states(states('input_text.hph_src_compressor_hours')) | float(0) }}"
 
-      - name: "Heat Pump Hero Source Compressor Starts"
+      - name: "HeatPump Hero Source Compressor Starts"
         unique_id: hph_source_compressor_starts
         state_class: total_increasing
         availability: >-
@@ -291,7 +291,7 @@ template:
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
         state: "{{ states(states('input_text.hph_src_compressor_starts')) | float(0) }}"
 
-      - name: "Heat Pump Hero Source Discharge Temperature"
+      - name: "HeatPump Hero Source Discharge Temperature"
         unique_id: hph_source_discharge_temp
         unit_of_measurement: "°C"
         device_class: temperature
@@ -302,7 +302,7 @@ template:
         state: "{{ states(states('input_text.hph_src_discharge_temp')) | float(0) }}"
 
       # ─── Error-code facade ───────────────────────────────────────────────
-      - name: "Heat Pump Hero Source Error Code"
+      - name: "HeatPump Hero Source Error Code"
         unique_id: hph_source_error_code
         icon: mdi:alert-circle-outline
         availability: >-
@@ -311,7 +311,7 @@ template:
         state: "{{ states(states('input_text.hph_src_error_code')) | string | upper }}"
 
       # ─── Optional component facades (HK1/HK2 zone temps, DHW, buffer) ───
-      - name: "Heat Pump Hero Source Zone 1 Temperature"
+      - name: "HeatPump Hero Source Zone 1 Temperature"
         unique_id: hph_source_zone1_temp
         unit_of_measurement: "°C"
         device_class: temperature
@@ -321,7 +321,7 @@ template:
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
         state: "{{ states(states('input_text.hph_src_zone1_temp')) | float(0) }}"
 
-      - name: "Heat Pump Hero Source Zone 2 Temperature"
+      - name: "HeatPump Hero Source Zone 2 Temperature"
         unique_id: hph_source_zone2_temp
         unit_of_measurement: "°C"
         device_class: temperature
@@ -331,7 +331,7 @@ template:
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
         state: "{{ states(states('input_text.hph_src_zone2_temp')) | float(0) }}"
 
-      - name: "Heat Pump Hero Source DHW Temperature"
+      - name: "HeatPump Hero Source DHW Temperature"
         unique_id: hph_source_dhw_temp
         unit_of_measurement: "°C"
         device_class: temperature
@@ -341,7 +341,7 @@ template:
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
         state: "{{ states(states('input_text.hph_src_dhw_temp')) | float(0) }}"
 
-      - name: "Heat Pump Hero Source Buffer Temperature"
+      - name: "HeatPump Hero Source Buffer Temperature"
         unique_id: hph_source_buffer_temp
         unit_of_measurement: "°C"
         device_class: temperature
@@ -354,7 +354,7 @@ template:
       # ─── Active thermal power (selected source, for live COP + integration) ──
       # Returns 0 in `external_energy` mode — efficiency package will read
       # the energy counter directly and bypass the integration in that case.
-      - name: "Heat Pump Hero Thermal Power Active"
+      - name: "HeatPump Hero Thermal Power Active"
         unique_id: hph_thermal_power_active
         unit_of_measurement: "W"
         device_class: power
@@ -375,7 +375,7 @@ template:
           {% endif %}
 
       # ─── Active electrical power (selected source) ──────────────────────
-      - name: "Heat Pump Hero Electrical Power Active"
+      - name: "HeatPump Hero Electrical Power Active"
         unique_id: hph_electrical_power_active
         unit_of_measurement: "W"
         device_class: power
@@ -403,7 +403,7 @@ template:
       # ─── Active thermal energy (kWh, total_increasing) ──────────────────
       # Used by utility_meter. In `external_energy` mode reads the meter
       # directly; otherwise reads the integrator output.
-      - name: "Heat Pump Hero Thermal Energy Active"
+      - name: "HeatPump Hero Thermal Energy Active"
         unique_id: hph_thermal_energy_active
         unit_of_measurement: "kWh"
         device_class: energy
@@ -426,7 +426,7 @@ template:
           {% endif %}
 
       # ─── Active electrical energy (kWh, total_increasing) ───────────────
-      - name: "Heat Pump Hero Electrical Energy Active"
+      - name: "HeatPump Hero Electrical Energy Active"
         unique_id: hph_electrical_energy_active
         unit_of_measurement: "kWh"
         device_class: energy
@@ -455,7 +455,7 @@ template:
       # hph_schema_variant_detected → schema_variant_active.
       # ════════════════════════════════════════════════════════════════════
 
-      - name: "Heat Pump Hero Schema Variant Detected"
+      - name: "HeatPump Hero Schema Variant Detected"
         unique_id: hph_schema_variant_detected
         icon: mdi:graph-outline
         state: >-
@@ -486,7 +486,7 @@ template:
             {% endif %}
 
       # ─── Active variant (manual override or follow detection) ───────────
-      - name: "Heat Pump Hero Schema Variant Active"
+      - name: "HeatPump Hero Schema Variant Active"
         unique_id: hph_schema_variant_active
         icon: mdi:graph-outline
         state: >-
@@ -507,7 +507,7 @@ template:
   - binary_sensor:
 
       # ─── Defrost state (resolved via configurable source) ───────────────
-      - name: "Heat Pump Hero Source Defrost"
+      - name: "HeatPump Hero Source Defrost"
         unique_id: hph_source_defrost
         availability: >-
           {% set ent = states('input_text.hph_src_defrost_state') %}
@@ -517,7 +517,7 @@ template:
           {{ is_state(ent, 'on') }}
 
       # ─── Aux heater state (resolved via configurable source) ────────────
-      - name: "Heat Pump Hero Source Aux Heater"
+      - name: "HeatPump Hero Source Aux Heater"
         unique_id: hph_source_aux_heater
         availability: >-
           {% set ent = states('input_text.hph_src_aux_heater_state') %}
@@ -531,7 +531,7 @@ template:
       # A component is "present" if its source entity-ID is set and reports
       # a valid number. Empty entity-ID = explicitly absent.
       # ════════════════════════════════════════════════════════════════════
-      - name: "Heat Pump Hero Has HK2"
+      - name: "HeatPump Hero Has HK2"
         unique_id: hph_has_hk2
         icon: mdi:home-thermometer-outline
         state: >-
@@ -543,7 +543,7 @@ template:
             false
           {% endif %}
 
-      - name: "Heat Pump Hero Has DHW"
+      - name: "HeatPump Hero Has DHW"
         unique_id: hph_has_dhw
         icon: mdi:water-boiler
         state: >-
@@ -555,7 +555,7 @@ template:
             false
           {% endif %}
 
-      - name: "Heat Pump Hero Has Buffer"
+      - name: "HeatPump Hero Has Buffer"
         unique_id: hph_has_buffer
         icon: mdi:propane-tank
         state: >-

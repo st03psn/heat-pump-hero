@@ -1,11 +1,11 @@
 # Panasonic Aquarea + Heishamon (default)
 
-This is the **plug-and-play target** for Heat Pump Hero — every source-helper
+This is the **plug-and-play target** for HeatPump Hero — every source-helper
 default points to a kamaradclimber/heishamon-homeassistant entity.
 
 ## Supported models
 
-Heat Pump Hero recognises the model via `input_select.hph_pump_model` and
+HeatPump Hero recognises the model via `input_select.hph_pump_model` and
 auto-sets compressor frequency, minimum flow, and supply-temperature
 thresholds for each generation:
 
@@ -23,7 +23,7 @@ thresholds for each generation:
 > if your unit reports differently.
 
 > **Hint for M-series owners:** the H23 advisor commentary and stricter
-> defrost expectations only fire on J-series installs — Heat Pump Hero picks
+> defrost expectations only fire on J-series installs — HeatPump Hero picks
 > these rules based on `input_select.hph_pump_model`. Set this
 > correctly during setup or via *Configuration → Vendor & model*.
 
@@ -41,11 +41,11 @@ thresholds for each generation:
 2. Configure it to connect to your MQTT broker with the Heishamon topic
    prefix (default: `panasonic_heat_pump`).
 3. Wait until entities appear (`sensor.panasonic_heat_pump_main_*`).
-4. Run the Heat Pump Hero setup — no `hph_src_*` editing needed.
+4. Run the HeatPump Hero setup — no `hph_src_*` editing needed.
 
 ## Entity mapping (already the defaults)
 
-| Heat Pump Hero helper | Heishamon entity |
+| HeatPump Hero helper | Heishamon entity |
 |---|---|
 | `hph_src_inlet_temp` | `sensor.panasonic_heat_pump_main_inlet_temperature` |
 | `hph_src_outlet_temp` | `sensor.panasonic_heat_pump_main_outlet_temperature` |
@@ -68,7 +68,7 @@ and disable the kamaradclimber `number.*` / `select.*` entities.
 
 ## Diagnostics — Panasonic fault codes
 
-Heat Pump Hero maps the active error code from
+HeatPump Hero maps the active error code from
 `sensor.hph_source_error_code` to plain-language descriptions and
 severity. Model-specific commentary is added for known weak spots:
 

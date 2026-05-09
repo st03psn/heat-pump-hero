@@ -1,4 +1,4 @@
-# Heat Pump Hero — analysis module (Layer 1: rule-based observation)
+# HeatPump Hero — analysis module (Layer 1: rule-based observation)
 #
 # Continuously observes operation and produces actionable recommendations.
 # This is "smart automated observation" — statistics platform + template

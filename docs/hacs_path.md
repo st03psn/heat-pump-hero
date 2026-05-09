@@ -1,6 +1,6 @@
 # HACS path forward
 
-This doc explains how Heat Pump Hero can become **fully plug-and-play via
+This doc explains how HeatPump Hero can become **fully plug-and-play via
 HACS** — and what's blocking that today.
 
 ## What HACS can ship
@@ -56,7 +56,7 @@ A **Python custom integration** at `custom_components/hph/` that:
 ## What's possible today (without integration)
 
 - ✅ HACS plugin install of frontend cards (handled separately by user)
-- ✅ HACS plugin install of Heat Pump Hero assets (SVGs, future icon set)
+- ✅ HACS plugin install of HeatPump Hero assets (SVGs, future icon set)
 - ❌ Auto-install of frontend dependencies (apexcharts, mushroom, …) —
   HACS does not support this; only manual install via HACS UI
 - ⚠️ Setup blueprint can post a notification listing what's missing,
@@ -69,7 +69,7 @@ plugins. The `info.md` lists them and users must click through HACS
 manually.
 
 **With our future integration:** We can use `homeassistant.helpers.issue_registry`
-to raise repairs ("Heat Pump Hero: ApexCharts not installed — click here to
+to raise repairs ("HeatPump Hero: ApexCharts not installed — click here to
 open HACS"), but the actual install click still requires the user.
 
 ## Roadmap mapping

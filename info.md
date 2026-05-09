@@ -1,6 +1,4 @@
-# Heat Pump Hero
-
-🌐 English (this file) · [Deutsch](info.de.md) · [Nederlands](info.nl.md)
+# HeatPump Hero
 
 Bundle package for **Heishamon** in Home Assistant: dashboard laid out like
 the Heishamon web UI, Service-Cloud-style analytical graphs, installation

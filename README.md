@@ -1,15 +1,13 @@
-# Heat Pump Hero
+# HeatPump Hero
 
 > Universal Home Assistant package for Panasonic Aquarea heat pumps with
 > Heishamon — dashboard, statistics, optimization advisor, control automations.
-
-🌐 **Languages:** English (this file) · [Deutsch](README.de.md) · [Nederlands](README.nl.md)
 
 [![Validate](https://github.com/st03psn/heat-pump-hero/actions/workflows/validate.yml/badge.svg)](https://github.com/st03psn/heat-pump-hero/actions/workflows/validate.yml)
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Heat Pump Hero bundles what's missing today: an importable Home Assistant dashboard
+HeatPump Hero bundles what's missing today: an importable Home Assistant dashboard
 laid out like the Heishamon web UI, Service-Cloud-style analytical graphs, an
 installation schematic with live hotspots, and proper efficiency metrics
 (SCOP / monthly / daily / live COP) — including multi-year tracking.
@@ -88,7 +86,7 @@ reference install is online — see [docs/screenshots/](docs/screenshots/).)*
 - ✅ Telegraf MQTT → InfluxDB bridge config
 - ✅ Export module — CSV / JSON / XLSX, manual or scheduled
 - ✅ Import module — backfill HA long-term stats from CSV (e.g. legacy
-  Shelly / utility-cloud history before Heat Pump Hero was installed)
+  Shelly / utility-cloud history before HeatPump Hero was installed)
 - ✅ Database guidance — SQLite vs MariaDB vs PostgreSQL vs InfluxDB
 - ✅ Setup blueprint and CLI installer
 
@@ -145,7 +143,7 @@ Detailed walkthrough: [docs/installation.md](docs/installation.md).
 
 ## Project name
 
-**Heat Pump Hero** — a hub for everything around Heishamon: dashboard + control +
+**HeatPump Hero** — a hub for everything around Heishamon: dashboard + control +
 statistics in a single bundle.
 
 ## Contributing
@@ -159,7 +157,7 @@ Issues and pull requests welcome.
 - [docs/tweaking.md](docs/tweaking.md) — power-user customizations
 - [docs/roadmap.md](docs/roadmap.md) — what's next
 
-German translations live alongside as `*.de.md` and `docs/de/`.
+English-only until v1.0 (see [CONTRIBUTING.md](CONTRIBUTING.md)).
 
 ## License
 

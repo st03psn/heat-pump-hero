@@ -1,4 +1,4 @@
-# Heat Pump Hero — efficiency
+# HeatPump Hero — efficiency
 #
 # Live COP, energy integrals, daily/monthly/yearly utility_meters, and the
 # resulting period COPs (TAZ/MAZ/JAZ in German parlance, also exposed as
@@ -15,7 +15,7 @@ sensor:
   # ─── Energy integrals (Riemann sum → kWh) ──────────────────────────────
   - platform: integration
     source: sensor.hph_thermal_power_active
-    name: "Heat Pump Hero Thermal Energy"
+    name: "HeatPump Hero Thermal Energy"
     unique_id: hph_thermal_energy
     unit_prefix: k
     unit_time: h
@@ -26,7 +26,7 @@ sensor:
 
   - platform: integration
     source: sensor.hph_electrical_power_active
-    name: "Heat Pump Hero Electrical Energy"
+    name: "HeatPump Hero Electrical Energy"
     unique_id: hph_electrical_energy
     unit_prefix: k
     unit_time: h
@@ -110,7 +110,7 @@ automation:
   # Switches all six split utility_meters in one call whenever the heat pump
   # changes mode. Default/unknown → heating (safe fallback).
   - id: hph_tariff_switch
-    alias: Heat Pump Hero — tariff switch (mode → heating/dhw/cooling)
+    alias: HeatPump Hero — tariff switch (mode → heating/dhw/cooling)
     mode: single
     trigger:
       - platform: state
@@ -137,7 +137,7 @@ automation:
 template:
   - sensor:
       # ─── Live COP ────────────────────────────────────────────────────────
-      - name: "Heat Pump Hero COP Live"
+      - name: "HeatPump Hero COP Live"
         unique_id: hph_cop_live
         unit_of_measurement: "x"
         state_class: measurement
@@ -156,7 +156,7 @@ template:
           {% endif %}
 
       # ─── Daily COP (TAZ) — total ─────────────────────────────────────────
-      - name: "Heat Pump Hero COP Daily"
+      - name: "HeatPump Hero COP Daily"
         unique_id: hph_cop_daily
         unit_of_measurement: "x"
         state_class: measurement
@@ -166,7 +166,7 @@ template:
           {{ (t / e) | round(2) if e > 0.1 else 0 }}
 
       # ─── Monthly COP (MAZ) — total ───────────────────────────────────────
-      - name: "Heat Pump Hero COP Monthly"
+      - name: "HeatPump Hero COP Monthly"
         unique_id: hph_cop_monthly
         unit_of_measurement: "x"
         state_class: measurement
@@ -176,7 +176,7 @@ template:
           {{ (t / e) | round(2) if e > 0.1 else 0 }}
 
       # ─── Yearly COP / SCOP (JAZ) — total ─────────────────────────────────
-      - name: "Heat Pump Hero SCOP"
+      - name: "HeatPump Hero SCOP"
         unique_id: hph_scop
         unit_of_measurement: "x"
         state_class: measurement
@@ -186,7 +186,7 @@ template:
           {{ (t / e) | round(2) if e > 0.1 else 0 }}
 
       # ─── COP per mode — heating ───────────────────────────────────────────
-      - name: "Heat Pump Hero COP Monthly Heating"
+      - name: "HeatPump Hero COP Monthly Heating"
         unique_id: hph_cop_monthly_heating
         unit_of_measurement: "x"
         state_class: measurement
@@ -195,7 +195,7 @@ template:
           {% set e = states('sensor.hph_electrical_monthly_split_heating') | float(0) %}
           {{ (t / e) | round(2) if e > 0.1 else 0 }}
 
-      - name: "Heat Pump Hero COP Yearly Heating"
+      - name: "HeatPump Hero COP Yearly Heating"
         unique_id: hph_cop_yearly_heating
         unit_of_measurement: "x"
         state_class: measurement
@@ -205,7 +205,7 @@ template:
           {{ (t / e) | round(2) if e > 0.1 else 0 }}
 
       # ─── COP per mode — DHW ───────────────────────────────────────────────
-      - name: "Heat Pump Hero COP Monthly DHW"
+      - name: "HeatPump Hero COP Monthly DHW"
         unique_id: hph_cop_monthly_dhw
         unit_of_measurement: "x"
         state_class: measurement
@@ -214,7 +214,7 @@ template:
           {% set e = states('sensor.hph_electrical_monthly_split_dhw') | float(0) %}
           {{ (t / e) | round(2) if e > 0.1 else 0 }}
 
-      - name: "Heat Pump Hero COP Yearly DHW"
+      - name: "HeatPump Hero COP Yearly DHW"
         unique_id: hph_cop_yearly_dhw
         unit_of_measurement: "x"
         state_class: measurement
@@ -228,7 +228,7 @@ template:
       # ════════════════════════════════════════════════════════════════════
 
       # ─── COP last month (uses utility_meter last_period attribute) ───────
-      - name: "Heat Pump Hero COP Last Month"
+      - name: "HeatPump Hero COP Last Month"
         unique_id: hph_cop_last_month
         unit_of_measurement: "x"
         state: >-
@@ -237,7 +237,7 @@ template:
           {{ (t / e) | round(2) if e > 0.1 else 0 }}
 
       # ─── COP last year ───────────────────────────────────────────────────
-      - name: "Heat Pump Hero COP Last Year"
+      - name: "HeatPump Hero COP Last Year"
         unique_id: hph_cop_last_year
         unit_of_measurement: "x"
         state: >-
@@ -246,25 +246,25 @@ template:
           {{ (t / e) | round(2) if e > 0.1 else 0 }}
 
       # ─── Energy last month (raw kWh) ─────────────────────────────────────
-      - name: "Heat Pump Hero Thermal Last Month"
+      - name: "HeatPump Hero Thermal Last Month"
         unique_id: hph_thermal_last_month
         unit_of_measurement: "kWh"
         state_class: measurement
         state: "{{ state_attr('sensor.hph_thermal_monthly','last_period') | float(0) | round(2) }}"
 
-      - name: "Heat Pump Hero Electrical Last Month"
+      - name: "HeatPump Hero Electrical Last Month"
         unique_id: hph_electrical_last_month
         unit_of_measurement: "kWh"
         state_class: measurement
         state: "{{ state_attr('sensor.hph_electrical_monthly','last_period') | float(0) | round(2) }}"
 
-      - name: "Heat Pump Hero Thermal Last Year"
+      - name: "HeatPump Hero Thermal Last Year"
         unique_id: hph_thermal_last_year
         unit_of_measurement: "kWh"
         state_class: measurement
         state: "{{ state_attr('sensor.hph_thermal_yearly','last_period') | float(0) | round(2) }}"
 
-      - name: "Heat Pump Hero Electrical Last Year"
+      - name: "HeatPump Hero Electrical Last Year"
         unique_id: hph_electrical_last_year
         unit_of_measurement: "kWh"
         state_class: measurement
@@ -276,7 +276,7 @@ template:
 
       # ─── COP change month-over-month (%) ────────────────────────────────
       # Positive value = better than last month, negative = worse
-      - name: "Heat Pump Hero COP Change Month %"
+      - name: "HeatPump Hero COP Change Month %"
         unique_id: hph_cop_change_month_pct
         unit_of_measurement: "%"
         state_class: measurement
@@ -313,7 +313,7 @@ template:
             {% endif %}
 
       # ─── SCOP change year-over-year (%) ─────────────────────────────────
-      - name: "Heat Pump Hero SCOP Change Year %"
+      - name: "HeatPump Hero SCOP Change Year %"
         unique_id: hph_scop_change_year_pct
         unit_of_measurement: "%"
         state_class: measurement
@@ -350,7 +350,7 @@ template:
             {% endif %}
 
       # ─── Thermal energy change month-over-month (%) ─────────────────────
-      - name: "Heat Pump Hero Thermal Change Month %"
+      - name: "HeatPump Hero Thermal Change Month %"
         unique_id: hph_thermal_change_month_pct
         unit_of_measurement: "%"
         state_class: measurement
@@ -364,7 +364,7 @@ template:
           {% endif %}
 
       # ─── Electrical energy change month-over-month (%) ──────────────────
-      - name: "Heat Pump Hero Electrical Change Month %"
+      - name: "HeatPump Hero Electrical Change Month %"
         unique_id: hph_electrical_change_month_pct
         unit_of_measurement: "%"
         state_class: measurement
@@ -381,7 +381,7 @@ template:
       # AGGREGATE COMPARISON SUMMARY — single sensor with trend message
       # Used for the dashboard "headline" card.
       # ════════════════════════════════════════════════════════════════════
-      - name: "Heat Pump Hero Efficiency Trend"
+      - name: "HeatPump Hero Efficiency Trend"
         unique_id: hph_efficiency_trend
         icon: >-
           {% set v = states('sensor.hph_cop_change_month_pct') | float(0) %}
