@@ -95,6 +95,9 @@ For detailed per-release changes, see [`CHANGELOG.md`](../CHANGELOG.md).
 - [ ] Video walkthrough
 - [ ] Adapter recipes for non-Panasonic vendors validated by users
 - [ ] Per-locale dashboard strings via integration translations
+- [ ] **Logo & brand**: design a mark that combines heat, pump, and
+  hero — superhero-stylised heat pump or a hero figure with a heat-pump
+  emblem; SVG + PNG assets for README, HACS listing, dashboard header
 
 ## Out of scope
 

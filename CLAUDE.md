@@ -17,6 +17,19 @@ existing building blocks into something usable:
   Lovelace dashboard YAML, Bubble-Card SVG schematic, Grafana boards,
   setup blueprint.
 
+## Working with Claude
+
+- **Plan-first** for non-trivial edits: surface the change list (files,
+  sections, rationale) before touching anything. No silent multi-file
+  refactors.
+- **Stop after 2 failures.** If a fix attempt fails the same check
+  twice, stop and report the actual blocker rather than guessing.
+- **No scope creep.** A request to add a sensor adds a sensor — no
+  drive-by reformatting. File adjacent issues as separate proposals.
+- **One concrete question on ambiguity.** If a user instruction has
+  two reasonable interpretations, ask one specific question with
+  candidate answers, not three open-ended ones.
+
 ## Design principles
 
 1. **Universality.** Every template is `availability:`-guarded. A zone-1-only
@@ -25,6 +38,26 @@ existing building blocks into something usable:
 2. **Readable YAML.** No `!include` indirection inside templates, no Jinja
    `{% import %}`/`{% from %}`, no YAML anchors/aliases for non-trivial
    structure. Each card and sensor is self-contained at its top level.
+
+## Commands
+
+Local before commit:
+
+- `py tests/smoke.py` — 6-section structural check (must exit 0)
+- `yamllint -d "{extends: relaxed, rules: {line-length: disable, truthy: disable, comments: disable}}" .` — same config CI uses
+- `python -m json.tool grafana/<file>.json` — Grafana JSON validation (per file)
+
+Full HA syntax check (Docker, slower):
+
+- `docker run --rm -v "$PWD:/repo" -w /repo ghcr.io/home-assistant/home-assistant:stable python -m homeassistant --script check_config -c /repo/tests/ha_check_config`
+
+Install / deploy onto a real HA instance:
+
+- `bash scripts/install.sh /path/to/ha/config [--db sqlite|mariadb|postgresql]`
+
+CI (`.github/workflows/validate.yml`) runs all of the above plus HACS
+validation on every push and PR. There is no separate `release.yml` —
+release notes come from `CHANGELOG.md`.
 
 ## Repository layout
 
@@ -201,6 +234,36 @@ specific layout — there is no shared coordinate system across variants.
   switched by an automation that follows `sensor.hph_operating_mode`
   (which is itself derived from the configurable source-facade).
 
+## Recorder & SQL
+
+History flows out via three paths — **never** via direct DB queries
+against the recorder backing store (the schema is private and changes
+between HA versions):
+
+- **REST `/api/history/period/<iso>?filter_entity_id=<X>`** — short-term
+  state history. Used by `scripts/export_heishahub.py` and
+  `scripts/analyze_heating_curve.py`. Subject to recorder retention
+  (HA default 10 days; HPH recommends ≥30).
+- **WebSocket `recorder/import_statistics`** — backfilling long-term
+  statistics. Used by `scripts/import_csv_to_ha_stats.py`.
+- **InfluxDB Flux** — multi-year analytical queries from Grafana. HA
+  mirrors state via the core `influxdb:` integration; HPH never writes
+  here directly.
+
+Rules for new code that wants historical data:
+
+1. Use REST or WebSocket, not raw SQL.
+2. For windows >30 days, target InfluxDB via Flux.
+3. In templates, use the `statistics` platform for rolling aggregates;
+   don't walk `states.*` history.
+
+Open questions (not yet decided):
+
+- Should the scripts standardise on WebSocket (currently mixed: read via
+  REST, write via WS)?
+- Should HPH set a recorder `purge_keep_days:` recommendation in the
+  installer (currently only mentioned in `docs/database.md`)?
+
 ## Coexistence with HeishaMoNR
 
 Both systems can listen on the same MQTT broker simultaneously — only
@@ -271,6 +334,65 @@ default state-triggered ones. State-triggered templates re-evaluate on
 every dependency update — for `hph_thermal_power` (3 fast-updating
 dependencies) this means hundreds of evaluations per minute.
 
+## Template patterns
+
+**Why YAML, not UI helpers.** HA's UI helper for "Template" creates
+single-output entities without `availability:`, `unique_id`, or compound
+multi-source guards — none of which HPH can drop without losing
+"no `unknown` sensors". Packages stay YAML; the v0.9 Python custom
+integration will replace YAML with Python entity classes, never UI helpers.
+
+These are the idioms that put "no `unknown` sensors" into practice.
+Reuse them; don't invent variants.
+
+**Availability — single source**
+
+```yaml
+availability: >-
+  {{ states('sensor.X') not in ['unknown','unavailable','none'] }}
+```
+
+**Availability — multiple sources** (all required)
+
+```yaml
+availability: >-
+  {{ states('sensor.A') not in ['unknown','unavailable','none']
+     and states('sensor.B') not in ['unknown','unavailable','none'] }}
+```
+
+**Default-aware numeric coercion** (always pass a default to `float`)
+
+```jinja
+{{ states('sensor.X') | float(0) }}
+```
+
+**Source-facade read** (resolves an `input_text` to the underlying entity)
+
+```jinja
+{{ states(states('input_text.hph_src_X')) | float(0) }}
+```
+
+**Source-facade availability** (input_text may be empty)
+
+```jinja
+{% set ent = states('input_text.hph_src_X') %}
+{{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+```
+
+**Binary state check**
+
+```jinja
+{{ is_state('binary_sensor.X','on') }}
+```
+
+Anti-patterns to reject in review:
+
+- `{{ states('X') | float }}` without default — silently 0 on `unknown`
+  while masking the real problem
+- `availability:` omitted on a sensor that depends on the source-adapter
+- Hardcoded `panasonic_*` entity IDs in templates outside the three
+  whitelisted files (see Naming conventions)
+
 ## Definition of Done
 
 Before any commit:
@@ -291,15 +413,7 @@ Before any commit:
    and the body explains *why* (1-3 paragraphs typical for non-trivial
    changes)
 
-## Releasing
-
-- SemVer; tags `v0.x.y`.
-- `CHANGELOG.md` is the source of release notes — update it in the same
-  commit as the version bump.
-- HACS picks up every tag automatically once the repo is registered as
-  a HACS-default plugin (currently custom-repo only).
-
-SemVer scope (post v1.0):
+## SemVer scope (post v1.0)
 
 - **MAJOR**: rename of any `unique_id`, removal of a helper, change of
   a CSV/export column, breaking dashboard YAML schema
@@ -308,20 +422,11 @@ SemVer scope (post v1.0):
 - **PATCH**: threshold default change, fault-code addition, dashboard
   polish, doc fixes
 
-## Bilingual policy
+User-facing dashboard strings are English-only. Advisor messages and
+notification bodies are English (see Advisor design above).
 
-English is the primary language for all repository content (README, docs,
-code comments, commit messages, issue templates). German translations live
-alongside as `*.de.md` (root) or `docs/de/*.md`. User-facing dashboard
-strings are English-only. Per-language UI variants are not feasible in
-pure YAML — they require the Python custom integration on the v0.9
-roadmap (see `docs/hacs_path.md`).
-
-## Line endings
-
-The repo uses LF line endings. Add `.gitattributes` with
-`* text=auto eol=lf` if the warnings start mattering. Don't bypass with
-`core.autocrlf` settings on a per-developer basis.
+Architecture/code rules: this file. Contributor process (release flow,
+translation conventions, line endings, DCO): see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Vocabulary
 
