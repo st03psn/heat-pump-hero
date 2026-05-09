@@ -65,7 +65,7 @@ For detailed per-release changes, see [`CHANGELOG.md`](../CHANGELOG.md).
 - Price-driven DHW (Tibber / aWATTar — sensor-agnostic)
 - Weather-forecast pre-heating (cold-front anticipation)
 
-## ✅ v0.7.2 — multi-platform read-only bridge (current)
+## ✅ v0.7.2 — multi-platform read-only bridge
 
 - Republishes ~50 derived `sensor.hph_*` (COP / SCOP / advisor /
   diagnostics) onto MQTT so ioBroker / openHAB / Node-RED / secondary
@@ -77,22 +77,33 @@ For detailed per-release changes, see [`CHANGELOG.md`](../CHANGELOG.md).
   vendor / integration swaps
 - Read-only by design; control extensions remain HA-exclusive
 
-## v0.8 — advisor extensions
+## ✅ v0.8 — advisor extensions & programs (current)
 
-- [ ] Pump-curve recommendation (spread histogram)
+- Pump-curve recommendation (7-day spread mean/stdev)
+- Efficiency-drift detection (year-over-year SCOP)
+- DHW timing recommendation (fires/day rolling mean + start-hour buffer)
+- Configurable legionella program (weekday/hour/target/hold)
+- Screed dry-out program — three profiles (functional 3 d /
+  combined 10 d / DIN 18560-1 28 d)
+- Control automations vendor adapter (write-target input_text helpers,
+  vendor-preset auto-fill extended)
+- Second Heishamon vendor preset — bundled MQTT YAML naming (`aquarea_*`)
+
+### v0.8 follow-ups (still open)
+
+Items added by v0.7.2 bridge that didn't make the v0.8 cut:
+
 - [ ] Weather-source-adapter package (`hph_weather.yaml`) — analog to
   the heat-pump source-adapter, swappable weather providers (DWD /
   OpenWeatherMap / Met.no / local weather station)
 - [ ] DWD recipe (`docs/weather/dwd.md`) — recommended provider for
   DE users; license-free MOSMIX (T° / RH / solar) + monthly heating
   degree days (HGT) + climate normals
-- [ ] Efficiency-drift detection (year-over-year, weather-adjusted)
-  via `sensor.hph_scop_weather_adjusted` — uses HGT for normalization
+- [ ] Efficiency-drift weather-adjustment via
+  `sensor.hph_scop_weather_adjusted` — uses HGT to normalize the YoY
+  comparison (current advisor flags the unweighted drift but calls out
+  the caveat in the message)
 - [ ] Optional defrost-forecast advisor — RH + T° → icing likelihood
-- [ ] DHW timing recommendation (usage pattern)
-- [ ] Configurable legionella program
-- [ ] Screed dry-out program (for new builds)
-- [ ] Control automations vendor adapter (write paths swappable)
 - [ ] Add `sensor.hph_weather_*` and `_scop_weather_adjusted` to the
   v0.7.2 bridge whitelist (5-line patch)
 

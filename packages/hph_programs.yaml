@@ -1,0 +1,398 @@
+# HeatPump Hero — programs (v0.8)
+#
+# Multi-day / scheduled service programs that sit alongside the regular
+# control automations. Two programs are shipped:
+#
+#   1. LEGIONELLA — weekly anti-legionella DHW boost. Configurable day,
+#      time, target temperature, and minimum hold duration. Replaces the
+#      heat-pump's built-in legionella schedule for owners who want it
+#      under HA control (or whose heat pump cannot do it natively).
+#
+#   2. SCREED DRY-OUT — multi-day floor-screed curing program (functional
+#      heating + curing heating per ISO EN 1264-4 / DIN 18560-1). Daily
+#      target supply temperature ramps over a configured profile. Status
+#      sensors expose current day, target T°, and overall progress.
+#
+# Both programs are heat-pump-specific on the WRITE side: they target
+# vendor entities resolved via input_text.hph_ctrl_write_* (see
+# vendor-adapter section in hph_models.yaml). The READ side uses the
+# source-facade as usual.
+#
+# !!! IMPORTANT !!! Like all hph_ctrl_* features, these are gated by the
+# master switch input_boolean.hph_ctrl_master and individually toggleable.
+# They are OFF by default. Activation must be deliberate.
+
+input_boolean:
+  hph_prog_legionella:
+    name: HPH Program — legionella schedule
+    icon: mdi:bacteria
+    initial: false
+
+  hph_prog_screed:
+    name: HPH Program — screed dry-out
+    icon: mdi:home-floor-a
+    initial: false
+
+  hph_prog_screed_active:
+    name: HPH Program — screed program currently running
+    icon: mdi:play-circle-outline
+    initial: false
+
+input_select:
+  hph_prog_legionella_weekday:
+    name: Legionella — weekday
+    icon: mdi:calendar-week
+    options:
+      - mon
+      - tue
+      - wed
+      - thu
+      - fri
+      - sat
+      - sun
+    initial: sun
+
+  hph_prog_screed_profile:
+    name: Screed dry-out — profile
+    icon: mdi:chart-line
+    options:
+      # Functional heating only (3 days, ISO EN 1264-4 §4.4.2)
+      - functional_3d
+      # Functional + curing combined (10 days, common compromise)
+      - combined_10d
+      # Long curing per DIN 18560-1 (28-day cement-screed protocol)
+      - din_18560_28d
+    initial: functional_3d
+
+input_number:
+  hph_prog_legionella_target_c:
+    name: Legionella — target DHW temperature (°C)
+    min: 55
+    max: 75
+    step: 1
+    initial: 65
+    icon: mdi:thermometer-high
+
+  hph_prog_legionella_hold_min:
+    name: Legionella — hold duration above target (minutes)
+    min: 10
+    max: 120
+    step: 5
+    initial: 30
+    icon: mdi:timer-sand
+
+  hph_prog_legionella_hour:
+    name: Legionella — start hour (0-23)
+    min: 0
+    max: 23
+    step: 1
+    initial: 3
+    icon: mdi:clock-outline
+
+  hph_prog_screed_day:
+    name: Screed dry-out — current day index (0 = not running)
+    min: 0
+    max: 60
+    step: 1
+    initial: 0
+    icon: mdi:calendar-today
+
+input_datetime:
+  hph_prog_screed_start:
+    name: Screed dry-out — program start
+    icon: mdi:calendar-start
+    has_date: true
+    has_time: true
+
+  hph_prog_legionella_last_run:
+    name: Legionella — last successful run
+    icon: mdi:history
+    has_date: true
+    has_time: true
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Status sensors
+# ═══════════════════════════════════════════════════════════════════════════
+template:
+  - sensor:
+      # ─── Legionella status ────────────────────────────────────────────
+      - name: "HeatPump Hero Legionella Status"
+        unique_id: hph_prog_legionella_status
+        icon: mdi:bacteria-outline
+        state: >-
+          {% set en = is_state('input_boolean.hph_prog_legionella','on') %}
+          {% set last = states('input_datetime.hph_prog_legionella_last_run') %}
+          {% if not en %}disabled
+          {% elif last in ['unknown','unavailable',''] %}pending
+          {% else %}
+            {% set dt = as_datetime(last) %}
+            {% set days_since = (now() - dt).total_seconds() / 86400 %}
+            {% if days_since > 8 %}overdue
+            {% elif days_since > 7 %}due
+            {% else %}ok{% endif %}
+          {% endif %}
+        attributes:
+          last_run: "{{ states('input_datetime.hph_prog_legionella_last_run') }}"
+          weekday: "{{ states('input_select.hph_prog_legionella_weekday') }}"
+          target_c: "{{ states('input_number.hph_prog_legionella_target_c') }}"
+          hold_min: "{{ states('input_number.hph_prog_legionella_hold_min') }}"
+
+      # ─── Screed dry-out target supply temperature for current day ───
+      # Profiles encode the per-day supply-temperature targets. The
+      # heat-pump curve will be force-driven to these values during the
+      # program run.
+      - name: "HeatPump Hero Screed Target"
+        unique_id: hph_prog_screed_target
+        unit_of_measurement: "°C"
+        state_class: measurement
+        availability: >-
+          {{ is_state('input_boolean.hph_prog_screed_active','on') }}
+        state: >-
+          {% set p = states('input_select.hph_prog_screed_profile') %}
+          {% set d = states('input_number.hph_prog_screed_day') | int(0) %}
+          {% if p == 'functional_3d' %}
+            {# 3 days: 25 → 45 → 25 °C, then end #}
+            {% if d == 1 %}25
+            {% elif d == 2 %}45
+            {% elif d == 3 %}25
+            {% else %}0{% endif %}
+          {% elif p == 'combined_10d' %}
+            {# 3d functional + 7d curing #}
+            {% if d == 1 %}25
+            {% elif d == 2 %}45
+            {% elif d == 3 %}25
+            {% elif d in [4,5,6,7] %}40
+            {% elif d == 8 %}35
+            {% elif d == 9 %}30
+            {% elif d == 10 %}25
+            {% else %}0{% endif %}
+          {% elif p == 'din_18560_28d' %}
+            {# DIN 18560-1: 3d at 25, ramp to 50, hold 18d, cool 4d #}
+            {% if d in [1,2,3] %}25
+            {% elif d == 4 %}30
+            {% elif d == 5 %}35
+            {% elif d == 6 %}45
+            {% elif d in range(7, 25) %}50
+            {% elif d == 25 %}45
+            {% elif d == 26 %}35
+            {% elif d == 27 %}30
+            {% elif d == 28 %}25
+            {% else %}0{% endif %}
+          {% else %}0
+          {% endif %}
+
+      - name: "HeatPump Hero Screed Status"
+        unique_id: hph_prog_screed_status
+        icon: mdi:home-floor-a
+        state: >-
+          {% set en = is_state('input_boolean.hph_prog_screed','on') %}
+          {% set act = is_state('input_boolean.hph_prog_screed_active','on') %}
+          {% set d = states('input_number.hph_prog_screed_day') | int(0) %}
+          {% if not en %}disabled
+          {% elif not act %}armed
+          {% elif d == 0 %}armed
+          {% else %}running
+          {% endif %}
+        attributes:
+          profile: "{{ states('input_select.hph_prog_screed_profile') }}"
+          day: "{{ states('input_number.hph_prog_screed_day') }}"
+          target_c: "{{ states('sensor.hph_prog_screed_target') }}"
+          start: "{{ states('input_datetime.hph_prog_screed_start') }}"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Automations
+# ═══════════════════════════════════════════════════════════════════════════
+automation:
+  # ─── Legionella weekly fire ───────────────────────────────────────
+  - id: hph_prog_legionella_run
+    alias: HPH program — legionella weekly fire
+    mode: single
+    trigger:
+      - platform: time_pattern
+        minutes: 0
+    condition:
+      - condition: state
+        entity_id: input_boolean.hph_ctrl_master
+        state: "on"
+      - condition: state
+        entity_id: input_boolean.hph_prog_legionella
+        state: "on"
+      - condition: template
+        value_template: >-
+          {% set wd = states('input_select.hph_prog_legionella_weekday') %}
+          {% set wd_now = ['mon','tue','wed','thu','fri','sat','sun'][now().weekday()] %}
+          {{ wd == wd_now }}
+      - condition: template
+        value_template: >-
+          {{ now().hour == states('input_number.hph_prog_legionella_hour') | int(3) }}
+      # Skip if already run within the last 6 days (avoid re-fire on DST etc.)
+      - condition: template
+        value_template: >-
+          {% set last = states('input_datetime.hph_prog_legionella_last_run') %}
+          {% if last in ['unknown','unavailable',''] %}
+            {{ true }}
+          {% else %}
+            {{ (now() - as_datetime(last)).total_seconds() > 86400 * 6 }}
+          {% endif %}
+    action:
+      - variables:
+          target: "{{ states('input_number.hph_prog_legionella_target_c') | float(65) }}"
+          hold: "{{ states('input_number.hph_prog_legionella_hold_min') | int(30) }}"
+          dhw_target_entity: "{{ states('input_text.hph_ctrl_write_dhw_target') }}"
+          force_dhw_entity: "{{ states('input_text.hph_ctrl_write_force_dhw') }}"
+      # Raise the DHW target if a write entity is configured
+      - if:
+          - condition: template
+            value_template: "{{ dhw_target_entity not in ['', 'unknown', 'unavailable', 'none'] }}"
+        then:
+          - service: number.set_value
+            target:
+              entity_id: "{{ dhw_target_entity }}"
+            data:
+              value: "{{ target }}"
+      # Trigger DHW boost if a force-DHW button is configured
+      - if:
+          - condition: template
+            value_template: "{{ force_dhw_entity not in ['', 'unknown', 'unavailable', 'none'] }}"
+        then:
+          - service: button.press
+            target:
+              entity_id: "{{ force_dhw_entity }}"
+      # Wait for tank to reach target (cap at 4 h to avoid hangs)
+      - wait_template: >-
+          {{ states('sensor.hph_source_dhw_temp') | float(0) >= target }}
+        timeout: "04:00:00"
+        continue_on_timeout: true
+      - if:
+          - condition: template
+            value_template: >-
+              {{ states('sensor.hph_source_dhw_temp') | float(0) >= target }}
+        then:
+          # Hold above target for the configured duration
+          - delay:
+              minutes: "{{ hold }}"
+          - service: input_datetime.set_datetime
+            target:
+              entity_id: input_datetime.hph_prog_legionella_last_run
+            data:
+              datetime: "{{ now().isoformat() }}"
+          - service: persistent_notification.create
+            data:
+              notification_id: hph_prog_legionella
+              title: HPH legionella program — completed
+              message: >-
+                Tank reached {{ target }} °C and was held for
+                {{ hold }} min. Logged as last successful run.
+        else:
+          - service: persistent_notification.create
+            data:
+              notification_id: hph_prog_legionella
+              title: HPH legionella program — incomplete
+              message: >-
+                Tank did not reach {{ target }} °C within 4 h. Check the
+                heat-pump's DHW target ceiling and that the source helper
+                input_text.hph_ctrl_write_dhw_target points to a valid
+                number entity. Last run NOT updated.
+
+  # ─── Screed dry-out: arm program (records start, sets day 1) ───
+  - id: hph_prog_screed_arm
+    alias: HPH program — screed dry-out arm
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: input_boolean.hph_prog_screed
+        from: "off"
+        to: "on"
+    condition:
+      - condition: state
+        entity_id: input_boolean.hph_ctrl_master
+        state: "on"
+    action:
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.hph_prog_screed_start
+        data:
+          datetime: "{{ now().isoformat() }}"
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hph_prog_screed_day
+        data:
+          value: 1
+      - service: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.hph_prog_screed_active
+      - service: persistent_notification.create
+        data:
+          notification_id: hph_prog_screed
+          title: HPH screed program armed
+          message: >-
+            Profile {{ states('input_select.hph_prog_screed_profile') }} armed
+            on day 1. Day will advance daily at 00:01. Disable
+            input_boolean.hph_prog_screed to abort early.
+
+  # ─── Screed: daily day-advance + curve write ───────────────────
+  - id: hph_prog_screed_daily
+    alias: HPH program — screed dry-out daily advance
+    mode: single
+    trigger:
+      - platform: time
+        at: "00:01:00"
+    condition:
+      - condition: state
+        entity_id: input_boolean.hph_prog_screed
+        state: "on"
+      - condition: state
+        entity_id: input_boolean.hph_prog_screed_active
+        state: "on"
+    action:
+      - variables:
+          d: "{{ states('input_number.hph_prog_screed_day') | int(0) + 1 }}"
+          profile: "{{ states('input_select.hph_prog_screed_profile') }}"
+          last_day: >-
+            {% if profile == 'functional_3d' %}3
+            {% elif profile == 'combined_10d' %}10
+            {% elif profile == 'din_18560_28d' %}28
+            {% else %}0{% endif %}
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.hph_prog_screed_day
+        data:
+          value: "{{ d }}"
+      # Push the day's target to the heat-pump curve write entities if
+      # configured. Using only target_high (target_low stays at the
+      # comfort baseline so the unit can still throttle naturally).
+      - variables:
+          tgt: "{{ states('sensor.hph_prog_screed_target') | float(0) }}"
+          high_entity: "{{ states('input_text.hph_ctrl_write_z1_curve_high') }}"
+      - if:
+          - condition: template
+            value_template: >-
+              {{ tgt > 0 and high_entity
+                 not in ['', 'unknown', 'unavailable', 'none'] }}
+        then:
+          - service: number.set_value
+            target:
+              entity_id: "{{ high_entity }}"
+            data:
+              value: "{{ tgt }}"
+      # End of program → disarm
+      - if:
+          - condition: template
+            value_template: "{{ d | int >= last_day | int }}"
+        then:
+          - service: input_boolean.turn_off
+            target:
+              entity_id: input_boolean.hph_prog_screed_active
+          - service: input_number.set_value
+            target:
+              entity_id: input_number.hph_prog_screed_day
+            data:
+              value: 0
+          - service: persistent_notification.create
+            data:
+              notification_id: hph_prog_screed
+              title: HPH screed program — completed
+              message: >-
+                Profile {{ profile }} finished after {{ last_day }} days.
+                Heating curve was returned to user defaults — verify the
+                target_high value under Configuration.

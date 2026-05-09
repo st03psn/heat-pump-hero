@@ -19,6 +19,7 @@ input_select:
     icon: mdi:factory
     options:
       - panasonic_heishamon          # default — kamaradclimber/heishamon-homeassistant
+      - panasonic_heishamon_mqtt     # bundled HeishaMon MQTT YAML — entities aquarea_*
       - panasonic_smartcloud_mqtt    # Aquarea Smart Cloud via MQTT bridge
       - daikin_altherma_core         # HA core daikin_altherma integration
       - mitsubishi_melcloud_core     # HA core melcloud integration
@@ -46,6 +47,46 @@ input_select:
       - stiebel_wpl
       - generic
     initial: panasonic_l_aql
+
+# ─── Control vendor adapter (v0.8) ─────────────────────────────────────
+# Write-target helpers for the control automations. Defaults point to
+# kamaradclimber/heishamon-homeassistant entity IDs, matching the read
+# defaults in hph_sources.yaml. Vendor-preset auto-fill (below) re-points
+# these to the equivalent entities for other vendors.
+#
+# Control automations in hph_control.yaml and hph_control_extensions.yaml
+# read these via templated `target.entity_id`, so swapping the heat pump
+# no longer requires editing those files.
+input_text:
+  hph_ctrl_write_quiet_mode:
+    name: Control write — quiet-mode select entity
+    icon: mdi:volume-mute
+    max: 255
+    initial: select.panasonic_heat_pump_main_quiet_mode
+
+  hph_ctrl_write_force_dhw:
+    name: Control write — force-DHW button entity
+    icon: mdi:water-boiler
+    max: 255
+    initial: button.panasonic_heat_pump_main_force_dhw
+
+  hph_ctrl_write_z1_curve_high:
+    name: Control write — Z1 heat-curve target_high entity
+    icon: mdi:thermometer-high
+    max: 255
+    initial: number.panasonic_heat_pump_main_z1_heat_curve_target_high_temp
+
+  hph_ctrl_write_z1_curve_low:
+    name: Control write — Z1 heat-curve target_low entity
+    icon: mdi:thermometer-low
+    max: 255
+    initial: number.panasonic_heat_pump_main_z1_heat_curve_target_low_temp
+
+  hph_ctrl_write_dhw_target:
+    name: Control write — DHW target temperature (number)
+    icon: mdi:thermostat-cog
+    max: 255
+    initial: number.panasonic_heat_pump_main_dhw_target_temperature
 
 # Model-specific thresholds — auto-set by the model-change automation,
 # but power users can still override after the fact.
@@ -255,6 +296,103 @@ automation:
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_src_error_code }
                 data: { value: "sensor.panasonic_heat_pump_main_error" }
+              # ── Write-path helpers (v0.8 control vendor adapter) ──
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_ctrl_write_quiet_mode }
+                data: { value: "select.panasonic_heat_pump_main_quiet_mode" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_ctrl_write_force_dhw }
+                data: { value: "button.panasonic_heat_pump_main_force_dhw" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_ctrl_write_z1_curve_high }
+                data: { value: "number.panasonic_heat_pump_main_z1_heat_curve_target_high_temp" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_ctrl_write_z1_curve_low }
+                data: { value: "number.panasonic_heat_pump_main_z1_heat_curve_target_low_temp" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_ctrl_write_dhw_target }
+                data: { value: "number.panasonic_heat_pump_main_dhw_target_temperature" }
+
+          # ── Panasonic HeishaMon — bundled MQTT YAML (community) ──
+          # Naming convention: sensor.aquarea_* / select.aquarea_* /
+          # number.aquarea_* / button.aquarea_*. This is what users get
+          # who imported the HeishaMon project's stock packages/aquarea*.yaml
+          # rather than installing kamaradclimber's custom integration.
+          # Entity-IDs follow the HeishaMon MQTT topic convention 1:1.
+          - conditions:
+              - condition: template
+                value_template: "{{ preset == 'panasonic_heishamon_mqtt' }}"
+            sequence:
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_src_inlet_temp }
+                data: { value: "sensor.aquarea_main_inlet_temp" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_src_outlet_temp }
+                data: { value: "sensor.aquarea_main_outlet_temp" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_src_flow_rate }
+                data: { value: "sensor.aquarea_main_water_flow" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_src_outdoor_temp }
+                data: { value: "sensor.aquarea_main_outdoor_temp" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_src_compressor_freq }
+                data: { value: "sensor.aquarea_main_compressor_freq" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_src_compressor_hours }
+                data: { value: "sensor.aquarea_main_operations_hours" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_src_compressor_starts }
+                data: { value: "sensor.aquarea_main_operations_counter" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_src_discharge_temp }
+                data: { value: "sensor.aquarea_main_discharge_temp" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_src_pump_pressure }
+                data: { value: "sensor.aquarea_main_pump_pressure" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_src_internal_power }
+                data: { value: "sensor.aquarea_main_consumed_power" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_src_defrost_state }
+                data: { value: "binary_sensor.aquarea_main_defrost_state" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_src_aux_heater_state }
+                data: { value: "binary_sensor.aquarea_main_heater_state" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_src_operating_mode }
+                data: { value: "select.aquarea_main_operating_mode" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_src_zone1_temp }
+                data: { value: "sensor.aquarea_main_z1_water_temp" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_src_zone2_temp }
+                data: { value: "sensor.aquarea_main_z2_water_temp" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_src_dhw_temp }
+                data: { value: "sensor.aquarea_main_dhw_temp" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_src_buffer_temp }
+                data: { value: "sensor.aquarea_main_buffer_temp" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_src_error_code }
+                data: { value: "sensor.aquarea_main_error" }
+              # ── Write-path helpers ──
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_ctrl_write_quiet_mode }
+                data: { value: "select.aquarea_main_quiet_mode" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_ctrl_write_force_dhw }
+                data: { value: "button.aquarea_main_force_dhw" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_ctrl_write_z1_curve_high }
+                data: { value: "number.aquarea_main_z1_heat_curve_target_high_temp" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_ctrl_write_z1_curve_low }
+                data: { value: "number.aquarea_main_z1_heat_curve_target_low_temp" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_ctrl_write_dhw_target }
+                data: { value: "number.aquarea_main_dhw_target_temp" }
 
           # ── Daikin Altherma 3 (HA core daikin_altherma) ──
           - conditions:

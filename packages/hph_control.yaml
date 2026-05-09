@@ -8,16 +8,21 @@
 # Only ONE system may write at a time. If HeishaMoNR is active, leave
 # every input_boolean.hph_ctrl_* OFF.
 #
-# ─── Note on heat-pump portability ──────────────────────────────────────
-# Read paths in HeatPump Hero are abstracted via hph_sources.yaml so
-# users can swap heat pumps without YAML edits. Write paths (the
-# select.* / button.* targets used here) are device-specific, since
-# every heat pump exposes different control actions. To adapt this
-# package to a non-Heishamon heat pump:
-#   1. Disable / delete the automations below.
-#   2. Add equivalents that target your heat pump's write entities,
-#      gated by the same input_boolean.hph_ctrl_* switches so
-#      the dashboard UI keeps working.
+# ─── Note on heat-pump portability (v0.8 vendor adapter) ───────────────
+# Both READ and WRITE paths are now abstracted. Reads go via the
+# source-facade (sensor.hph_source_*) defined in hph_sources.yaml.
+# Writes target entities resolved at runtime from input_text helpers
+# in hph_models.yaml: hph_ctrl_write_quiet_mode, _force_dhw,
+# _z1_curve_high, _z1_curve_low, _dhw_target.
+# Vendor-preset auto-fill (in hph_models.yaml) re-points these helpers
+# along with the read helpers. Power users on unusual installs can
+# override any single helper from Settings → Devices → Helpers.
+#
+# Caveat: the *service domain* (select.select_option / button.press /
+# number.set_value) is still hard-coded per write target. A heat pump
+# whose quiet-mode is exposed as e.g. a number rather than a select
+# requires forking the relevant action — the helper alone cannot bridge
+# that gap.
 
 input_boolean:
   hph_ctrl_master:
@@ -96,13 +101,13 @@ automation:
       # Quiet-Mode caps the maximum frequency for a few minutes.
       - service: select.select_option
         target:
-          entity_id: select.panasonic_heat_pump_main_quiet_mode
+          entity_id: "{{ states('input_text.hph_ctrl_write_quiet_mode') }}"
         data:
           option: "3"
       - delay: "00:05:00"
       - service: select.select_option
         target:
-          entity_id: select.panasonic_heat_pump_main_quiet_mode
+          entity_id: "{{ states('input_text.hph_ctrl_write_quiet_mode') }}"
         data:
           option: "0"
       - service: persistent_notification.create
@@ -131,13 +136,13 @@ automation:
     action:
       - service: select.select_option
         target:
-          entity_id: select.panasonic_heat_pump_main_quiet_mode
+          entity_id: "{{ states('input_text.hph_ctrl_write_quiet_mode') }}"
         data:
           option: "2"
       - delay: "00:10:00"
       - service: select.select_option
         target:
-          entity_id: select.panasonic_heat_pump_main_quiet_mode
+          entity_id: "{{ states('input_text.hph_ctrl_write_quiet_mode') }}"
         data:
           option: "0"
 
@@ -161,16 +166,14 @@ automation:
       - condition: state
         entity_id: input_boolean.hph_ctrl_solar_dhw
         state: "on"
-      # Only trigger if the DHW tank is not already hot. Sample sensor —
-      # adjust per installation.
+      # Only trigger if the DHW tank is not already hot.
       - condition: template
         value_template: >-
-          {{ states('sensor.panasonic_heat_pump_main_z1_water_temperature') | float(99)
-             < 55 }}
+          {{ states('sensor.hph_source_dhw_temp') | float(99) < 55 }}
     action:
       - service: button.press
         target:
-          entity_id: button.panasonic_heat_pump_main_force_dhw
+          entity_id: "{{ states('input_text.hph_ctrl_write_force_dhw') }}"
       - service: persistent_notification.create
         data:
           title: HeatPump Hero Solar-DHW
@@ -195,7 +198,7 @@ automation:
     action:
       - service: select.select_option
         target:
-          entity_id: select.panasonic_heat_pump_main_quiet_mode
+          entity_id: "{{ states('input_text.hph_ctrl_write_quiet_mode') }}"
         data:
           option: "3"
 
@@ -215,6 +218,6 @@ automation:
     action:
       - service: select.select_option
         target:
-          entity_id: select.panasonic_heat_pump_main_quiet_mode
+          entity_id: "{{ states('input_text.hph_ctrl_write_quiet_mode') }}"
         data:
           option: "0"
