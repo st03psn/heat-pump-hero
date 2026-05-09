@@ -1,5 +1,9 @@
 # Installation
 
+> **Windows users:** a step-by-step guide with file-mapping table and
+> a dedicated uninstall section is in
+> [installation_windows.md](installation_windows.md).
+
 ## Prerequisites
 
 | Component | Minimum version | Source |
@@ -120,3 +124,10 @@ git pull
 
 Existing helper values (source selection, external entity-IDs) are preserved
 because the installer does not reset `input_*` entities.
+
+## Uninstalling
+
+To remove every file the installer ever wrote — without touching the
+recorder DB, Long-Term Statistics, HACS, or other people's packages —
+use `scripts/uninstall.sh /path/to/config` (Linux) or see the
+[Windows uninstall section](installation_windows.md#step-7--uninstall-when-youre-done-testing).
