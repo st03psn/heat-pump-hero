@@ -3,6 +3,59 @@
 All notable changes to HeatPump Hero. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0-rc4] — 2026-05-10
+
+### Fixed
+
+- **utility_meter platform completely broken**: `offset: days: 181` is
+  rejected by HA 2024.4+. Because any invalid config in the block fails
+  the entire platform, all 12 utility_meter sensors (daily/monthly/yearly)
+  stopped loading → COP today/month/season = 0 and all energy entities
+  unavailable. Fixed by using `cron: "0 0 1 7 *"` (Jul 1 at midnight) for
+  the four yearly meters; daily/monthly meters are unchanged.
+- **Blocking I/O on event loop**: `_load_definitions()` in sensor.py and
+  binary_sensor.py read YAML files synchronously inside `async_setup_entry`.
+  HA 2026.x detects and warns about this. Moved to
+  `hass.async_add_executor_job(_load_definitions)`.
+- **Duplicate sensor definition**: `hph_efficiency_trend` appeared twice in
+  `sensor_templates.yaml` (once with emoji templates, once clean). Second
+  (correct) copy kept; first removed.
+- **Config data lost on reconfigure**: Options flow stores to `entry.options`
+  but setup only read `entry.data`. Fixed with
+  `merged = {**entry.data, **entry.options}` in `async_setup_entry`.
+- **External thermal power not propagated after reconfigure**: Same root
+  cause as above; now uses the merged config dict.
+- **Source mode labels showing raw values** (`heat_pump_internal` instead
+  of "Internal (heat pump sensor)"): Added `_attr_translation_key` to
+  select entities and `entity.select.*` translations in strings.json / en.json.
+- **Energy values showing excessive decimals**: Added `| round(2)` to
+  `hph_thermal_energy_active` and `hph_electrical_energy_active` templates.
+- **Export creates a directory instead of a file**: Detects when target path
+  has no extension or is an existing directory; auto-generates
+  `hph_export_<timestamp>.<fmt>` inside it.
+- **`device_class`/`state_class` invalid in `platform: integration`**: The
+  Riemann sum integration does not accept these keys — they're inferred from
+  the source sensor. Removing them unblocked the cascade failure.
+- **Sensor startup race condition**: Template sensors started with
+  `_raw_available = True`, causing the first evaluation (before select
+  RestoreEntity completes) to emit a wrong energy value. Utility_meter
+  interpreted the drop as a meter reset and zeroed the daily counter.
+  Fixed with `_initialized = False`; sensors are unavailable until the
+  first template evaluation completes.
+
+### Changed
+
+- Default export path changed from `/config/www/hph_exports` (web-accessible)
+  to `/config/hph/exports` (private, inside the integration config dir).
+- Uninstall cleanup now **preserves** `/config/hph/exports/` (user data).
+  Only `dashboard.yaml` and `/config/www/hph/` (auto-generated SVGs) are
+  removed. A log message reports the preserved path.
+- Entity selector fields in the config/options flow (electricity price,
+  PV surplus, price signal, forecast entity) are now proper dropdowns
+  instead of free-text fields.
+
+---
+
 ## [0.9.0-rc3] — 2026-05-09
 
 ### Added — Phase 3: Python automation coordinators, zero YAML deployment

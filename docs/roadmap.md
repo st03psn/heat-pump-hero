@@ -97,7 +97,7 @@ For detailed per-release changes, see [`CHANGELOG.md`](../CHANGELOG.md).
 
 ## ✅ v0.9 — Python custom integration (HACS plug-and-play)
 
-Released as v0.9.0-rc3. User testing phase.
+Released as v0.9.0-rc4. User testing phase (active).
 
 ### ✅ Phase 1 — skeleton + config-flow + helpers + dashboard auto-register
 
@@ -146,10 +146,13 @@ these) plus dashboard + assets. Migration removes old automation packages.
 
 ### ⏳ Phase 4 — polish (after user testing)
 
+- [ ] GitHub Release tag (v0.9.0) so HACS can show update notifications
 - [ ] Per-platform translations `translations/{en,de,nl}.json`
 - [ ] Repairs panel for missing frontend cards (apexcharts, mushroom, …)
 - [ ] pytest-based test suite mocking HA core
 - [ ] HACS-default-repository submission
+- [ ] PV self-consumption net cost sensor (`hph_cost_today_net`)
+- [ ] Picture-elements live values card (ported from dashboard-warmepumpe/0)
 
 ## v1.0 — stable
 
