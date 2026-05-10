@@ -516,28 +516,40 @@ def build_monthly_cop_stats(
 def build_scop_stats(
     totals: dict[tuple[int, int], dict[str, float | None]],
 ) -> list[dict]:
-    """Build mean-value statistics for sensor.hph_scop (one entry per month,
-    showing the cumulative seasonal SCOP up to that month).
+    """Build mean-value statistics for sensor.hph_scop: ONE entry per heating
+    season (Jul 1 – Jun 30).
 
-    The SCOP chart reads type:mean,period:month so each bar shows the
-    running SCOP for the heating season Jul-Jun.
+    For a completed season the entry is placed at Jun 30 23:00 UTC (season end).
+    For the current ongoing season the entry is placed at today so the chart
+    shows one bar labeled with the season-start year.
+
+    The SCOP chart uses statistics: type: mean, period: month.  One entry per
+    season means one bar per season in the chart.
     """
-    stats: list[dict] = []
     now_utc = datetime.now(timezone.utc).replace(tzinfo=None, minute=0, second=0, microsecond=0)
-    th_acc = el_acc = 0.0
+
+    # Group months by heating season start year (Jul = new season)
+    seasons: dict[int, dict[str, float]] = {}  # {season_start_year: {th, el}}
     for yr, mo in MONTHS:
         t = totals.get((yr, mo), {})
         th = t.get("thermal")
         el = t.get("electrical")
         if th is None or el is None:
             continue
-        th_acc += th
-        el_acc += el
-        if el_acc < 0.05:
+        season_yr = yr if mo >= 7 else yr - 1
+        s = seasons.setdefault(season_yr, {"th": 0.0, "el": 0.0})
+        s["th"] += th
+        s["el"] += el
+
+    stats: list[dict] = []
+    for season_yr, s in sorted(seasons.items()):
+        if s["el"] < 0.05:
             continue
-        scop = round(th_acc / el_acc, 3)
-        ts_end = min(_month_end_utc(yr, mo) - timedelta(hours=1), now_utc)
-        stats.append({"start": _iso(ts_end), "mean": scop, "min": scop, "max": scop})
+        scop = round(s["th"] / s["el"], 3)
+        # Season ends Jun 30; if that date is in the future use now instead
+        season_end = datetime(season_yr + 1, 6, 30, 22, 0, 0)  # Jun 30 22:00 UTC (≈ midnight CET)
+        ts = min(season_end, now_utc)
+        stats.append({"start": _iso(ts), "mean": scop, "min": scop, "max": scop})
     return stats
 
 

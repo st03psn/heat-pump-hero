@@ -1366,8 +1366,8 @@ views:
             text: "Sammele Daten — der 30-Tage-Trend füllt sich nach mehreren Tagen Betrieb."
 
       # ── SCOP per heating season (Jul 1 – Jun 30, last 10 seasons) ──
-      # apexcharts-card span.end accepts day/hour/minute only — "year"
-      # caused a configuration error. Use day end + a long graph_span.
+      # One LTS entry per season → one bar per season. graph_span covers 10 years
+      # so future seasons appear automatically without config change.
       - type: custom:apexcharts-card
         header:
           show: true
@@ -1389,14 +1389,14 @@ views:
             height: 280
           plotOptions:
             bar:
-              columnWidth: "40%"
+              columnWidth: "20%"
           yaxis:
             decimalsInFloat: 2
             title:
               text: "SCOP"
           xaxis:
             labels:
-              format: "yyyy"
+              format: "MMM yyyy"
           noData:
             text: "Sammele Daten — SCOP-Trend füllt sich nach der ersten kompletten Heizsaison."
 
