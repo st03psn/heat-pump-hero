@@ -107,7 +107,7 @@ async def _do_export(hass: HomeAssistant) -> None:
     target_path = (
         target_path_st.state
         if target_path_st and target_path_st.state not in ("unknown", "unavailable", "")
-        else hass.config.path("www", "hph_exports")
+        else hass.config.path("hph", "exports")
     )
     fmt = (
         export_format_st.state

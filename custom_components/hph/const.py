@@ -242,7 +242,7 @@ TEXT_HELPERS: Final[dict[str, dict[str, Any]]] = {
                              "icon": "mdi:water-boiler", "initial": "[]", "max": 64},
     # Export (hph_export.yaml)
     "hph_export_target_path": {"name": "Export target directory", "icon": "mdi:folder-download",
-                                "initial": "/config/www/hph_exports"},
+                                "initial": "/config/hph/exports"},
     # Outdoor temperature override (optional weather station)
     "hph_outdoor_temp_override_entity": {"name": "Outdoor temperature — external sensor override (entity-ID, optional)",
                                           "icon": "mdi:weather-partly-cloudy", "initial": ""},

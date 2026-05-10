@@ -228,16 +228,29 @@ def _clean_sync(config_dir: Path) -> None:
             except OSError:
                 pass
 
-    # 2. Dashboard YAML + dir
+    # 2. Dashboard YAML only — exports are user data and are preserved.
     dash_dir = config_dir / "hph"
+    dashboard_file = dash_dir / "dashboard.yaml"
+    if dashboard_file.exists():
+        try:
+            dashboard_file.unlink()
+            _LOGGER.info("Removed %s", dashboard_file)
+        except OSError as exc:
+            _LOGGER.warning("Could not remove %s: %s", dashboard_file, exc)
+    # Remove the hph/ folder only if it is now empty (exports dir may still have user files).
     if dash_dir.exists():
         try:
-            shutil.rmtree(dash_dir)
-            _LOGGER.info("Removed %s", dash_dir)
-        except OSError as exc:
-            _LOGGER.warning("Could not remove %s: %s", dash_dir, exc)
+            dash_dir.rmdir()  # only succeeds if the directory is empty
+            _LOGGER.info("Removed empty directory %s", dash_dir)
+        except OSError:
+            exports_dir = dash_dir / "exports"
+            if exports_dir.exists() and any(exports_dir.iterdir()):
+                _LOGGER.info(
+                    "HPH exports preserved at %s — delete manually if no longer needed",
+                    exports_dir,
+                )
 
-    # 3. Asset dir
+    # 3. Asset dir (auto-generated SVGs — not user data)
     asset_dir = config_dir / "www" / "hph"
     if asset_dir.exists():
         try:

@@ -150,30 +150,23 @@ utility_meter:
     cycle: monthly
     tariffs: [heating, dhw, cooling]
 
-  # ── Heating season (Jul 1 – Jun 30, offset 181 days from Jan 1) ─────
+  # ── Heating season (Jul 1 – Jun 30) ─────────────────────────────────
   # This is the JAZ / SCOP period used in DE/AT/CH/NL.
-  # To change the season start, update the offset:
-  #   Jul 1 = 181 days, Sep 1 = 243 days, Jan 1 = 0 days (calendar year)
-  # Restart HA after changing to apply the new start date.
+  # Cron resets at 00:00 on July 1 each year.
+  # To change the season start, adjust the cron month/day fields:
+  #   Jul 1 → "0 0 1 7 *"   Sep 1 → "0 0 1 9 *"   Jan 1 → "0 0 1 1 *"
+  # Note: HA 2024.4+ requires cron patterns for offsets > 28 days.
   hph_thermal_yearly:
     source: sensor.hph_thermal_energy_active
-    cycle: yearly
-    offset:
-      days: 181
+    cron: "0 0 1 7 *"
   hph_electrical_yearly:
     source: sensor.hph_electrical_energy_active
-    cycle: yearly
-    offset:
-      days: 181
+    cron: "0 0 1 7 *"
   hph_thermal_yearly_split:
     source: sensor.hph_thermal_energy_active
-    cycle: yearly
-    offset:
-      days: 181
+    cron: "0 0 1 7 *"
     tariffs: [heating, dhw, cooling]
   hph_electrical_yearly_split:
     source: sensor.hph_electrical_energy_active
-    cycle: yearly
-    offset:
-      days: 181
+    cron: "0 0 1 7 *"
     tariffs: [heating, dhw, cooling]
