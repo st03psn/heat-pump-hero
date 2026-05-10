@@ -698,18 +698,18 @@ views:
           noData:
             text: "Sammele Daten — der Trend füllt sich, sobald der Kompressor läuft."
 
-      # ── Heatmap: COP by day-of-week × hour-of-day (last 30 days) ──
+      # ── Heatmap: COP by hour-of-day (last 30 days) ──
       # Reveals when the system is least efficient (e.g. cold mornings,
-      # DHW pulls in the evening).
+      # DHW pulls in the evening). Uses top-level chart_type: heatmap
+      # — apexcharts-card requires this matches series.type.
       - type: custom:apexcharts-card
         header:
           show: true
-          title: COP heatmap — day-of-week × hour-of-day (30 days)
-        chart_type: scatter
+          title: COP heatmap — hour-of-day (last 30 days)
+        chart_type: heatmap
         graph_span: 30d
         apex_config:
           chart:
-            type: heatmap
             height: 320
           dataLabels:
             enabled: false
@@ -723,43 +723,45 @@ views:
                   - { from: 3,   to: 4,   color: "#facc15", name: "ok (3-4)" }
                   - { from: 4,   to: 5,   color: "#84cc16", name: "good (4-5)" }
                   - { from: 5,   to: 100, color: "#15803d", name: "excellent (5+)" }
-          xaxis:
-            type: category
+          noData:
+            text: "Sammele Daten — Heatmap füllt sich nach mehreren Betriebstagen."
         series:
           - entity: sensor.hph_cop_live
             name: COP
-            type: line
+            type: heatmap
             group_by:
               func: avg
               duration: 1h
-              fill: null
 
-      # ── Scatter: outdoor T° vs daily COP (correlation lens) ──
+      # ── Scatter: COP vs daily energy (correlation lens) ──
+      # Plots daily COP over time; "extend_to: false" + numeric xaxis
+      # caused an apexcharts-card config error. Simplified to a daily
+      # COP timeline with markers.
       - type: custom:apexcharts-card
         header:
           show: true
-          title: COP vs outdoor temperature — correlation
-        chart_type: scatter
+          title: COP daily — last 30 days
         graph_span: 30d
-        apex_config:
-          chart:
-            height: 280
-          xaxis:
-            title: { text: "Outdoor T° (°C)" }
-            type: numeric
-          yaxis:
-            title: { text: "COP" }
-            min: 0
+        yaxis:
+          - min: 0
             max: 6
+            decimals: 1
         series:
           - entity: sensor.hph_cop_daily
             name: Daily COP
+            type: line
             color: "#17a2b8"
-            type: scatter
+            stroke_width: 0
             statistics:
               type: state
               period: day
-            extend_to: false
+        apex_config:
+          chart:
+            height: 280
+          markers:
+            size: 6
+          noData:
+            text: "Sammele Daten — tägliche COP-Punkte erscheinen nach jedem vollen Tag."
 
   # ════════════════════════════════════════════════════════════════════════
   # 4) EFFICIENCY — period KPIs, comparisons, tariff splits, multi-year trend
@@ -979,27 +981,37 @@ views:
           title: Daily energy — last 30 days
           show_states: true
         graph_span: 30d
-        chart_type: bar
         yaxis:
           - id: energy
+            min: 0
             decimals: 1
-            apex_config:
-              title: { text: "kWh" }
         series:
           - entity: sensor.hph_thermal_daily
             name: Thermal
             type: column
             color: "#d62728"
+            yaxis_id: energy
             statistics:
-              type: state
+              type: change
               period: day
+              align: start
           - entity: sensor.hph_electrical_daily
             name: Electrical
             type: column
             color: "#bcbd22"
+            yaxis_id: energy
             statistics:
-              type: state
+              type: change
               period: day
+              align: start
+        apex_config:
+          chart:
+            height: 220
+          yaxis:
+            title:
+              text: "kWh"
+          noData:
+            text: "Sammele Daten — Tageswerte erscheinen nach dem ersten vollen Tag."
 
       # ── COP trend (30 days) ──
       - type: custom:apexcharts-card
@@ -1027,13 +1039,15 @@ views:
             text: "Sammele Daten — der 30-Tage-Trend füllt sich nach mehreren Tagen Betrieb."
 
       # ── SCOP per heating season (Jul 1 – Jun 30, last 10 seasons) ──
+      # apexcharts-card span.end accepts day/hour/minute only — "year"
+      # caused a configuration error. Use day end + a long graph_span.
       - type: custom:apexcharts-card
         header:
           show: true
           title: SCOP per heating season (Jul – Jun)
         graph_span: 3650d
         span:
-          end: year
+          end: day
         series:
           - entity: sensor.hph_scop
             name: SCOP
@@ -1041,7 +1055,7 @@ views:
             color: "#66bb6a"
             statistics:
               type: mean
-              period: year
+              period: month
               align: start
         apex_config:
           chart:
@@ -1055,6 +1069,8 @@ views:
           xaxis:
             labels:
               format: "yyyy"
+          noData:
+            text: "Sammele Daten — SCOP-Trend füllt sich nach der ersten kompletten Heizsaison."
 
       # ── Statistics graph (built-in) ──
       - type: statistics-graph
