@@ -353,10 +353,20 @@ NUMBER_HELPERS: Final[dict[str, dict[str, Any]]] = {
     "hph_model_max_supply_c": {"name": "Model — maximum supply temperature (°C)",
                                  "icon": "mdi:thermometer-high", "min": 35, "max": 80,
                                  "step": 1, "initial": 55},
-    # Programs
+    # Programs — screed
     "hph_prog_screed_day": {"name": "Screed dry-out — current day index (0 = not running)",
                               "icon": "mdi:calendar-today",
                               "min": 0, "max": 60, "step": 1, "initial": 0},
+    # Programs — legionella
+    "hph_prog_legionella_target_c": {"name": "Legionella — DHW target temperature (°C)",
+                                      "icon": "mdi:thermometer-high",
+                                      "min": 55, "max": 75, "step": 1, "initial": 65},
+    "hph_prog_legionella_hold_min": {"name": "Legionella — hold time at target (min)",
+                                      "icon": "mdi:timer-outline",
+                                      "min": 10, "max": 120, "step": 5, "initial": 30},
+    "hph_prog_legionella_hour": {"name": "Legionella — start hour (0–23)",
+                                  "icon": "mdi:clock-outline",
+                                  "min": 0, "max": 23, "step": 1, "initial": 3},
 }
 
 # ─── Select helpers ──────────────────────────────────────────────────────
@@ -384,11 +394,16 @@ SELECT_HELPERS: Final[dict[str, dict[str, Any]]] = {
                         "icon": "mdi:heat-pump-outline",
                         "options": list(PUMP_MODELS.keys()),
                         "initial": "panasonic_l_aql"},
-    # Programs
+    # Programs — screed
     "hph_prog_screed_profile": {"name": "Screed dry-out — profile",
                                   "icon": "mdi:chart-line",
                                   "options": ["functional_3d", "combined_10d", "din_18560_28d"],
                                   "initial": "functional_3d"},
+    # Programs — legionella
+    "hph_prog_legionella_weekday": {"name": "Legionella — weekday for scheduled boost",
+                                     "icon": "mdi:calendar-week",
+                                     "options": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
+                                     "initial": "sun"},
     # Export
     "hph_export_format": {"name": "Export format",
                             "icon": "mdi:file-export",
@@ -423,11 +438,14 @@ SWITCH_HELPERS: Final[dict[str, dict[str, Any]]] = {
                                     "icon": "mdi:weather-snowy", "initial": False},
     "hph_ctrl_forecast_preheat_active": {"name": "HPH Control — forecast pre-heat is currently boosting",
                                             "icon": "mdi:weather-snowy-heavy", "initial": False},
-    # Programs
+    # Programs — screed
     "hph_prog_screed": {"name": "HPH Program — screed dry-out",
                          "icon": "mdi:home-floor-a", "initial": False},
     "hph_prog_screed_active": {"name": "HPH Program — screed program currently running",
                                  "icon": "mdi:play-circle-outline", "initial": False},
+    # Programs — legionella
+    "hph_prog_legionella": {"name": "HPH Program — legionella protection schedule",
+                              "icon": "mdi:shield-bug", "initial": False},
     # Bridge
     "hph_bridge_enabled": {"name": "HPH Bridge — multi-platform read-only MQTT republisher",
                              "icon": "mdi:lan-connect", "initial": False},
@@ -448,6 +466,8 @@ DATETIME_HELPERS: Final[dict[str, dict[str, Any]]] = {
                                        "icon": "mdi:clock-check-outline", "has_date": True, "has_time": True},
     "hph_prog_screed_start": {"name": "Screed dry-out — program start",
                                 "icon": "mdi:calendar-start", "has_date": True, "has_time": True},
+    "hph_prog_legionella_last_run": {"name": "Legionella — last run timestamp",
+                                      "icon": "mdi:clock-check-outline", "has_date": True, "has_time": True},
 }
 
 # ─── Counter helpers (mapped onto HA Counter via Number-with-restore) ────

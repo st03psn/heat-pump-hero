@@ -137,6 +137,33 @@ sensor:
   unit_time: h
   method: left
   round: 2
+# Mode-gated electrical energy integrators — accumulate only while
+# compressor runs in the specific mode. Used as denominator for
+# per-mode COP so standby power is never included.
+- platform: integration
+  source: sensor.hph_electrical_power_heating_runtime
+  name: HPH Electrical Energy Heating Runtime
+  unique_id: hph_electrical_energy_heating_runtime
+  unit_prefix: k
+  unit_time: h
+  method: left
+  round: 2
+- platform: integration
+  source: sensor.hph_electrical_power_dhw_runtime
+  name: HPH Electrical Energy DHW Runtime
+  unique_id: hph_electrical_energy_dhw_runtime
+  unit_prefix: k
+  unit_time: h
+  method: left
+  round: 2
+- platform: integration
+  source: sensor.hph_electrical_power_cooling_runtime
+  name: HPH Electrical Energy Cooling Runtime
+  unique_id: hph_electrical_energy_cooling_runtime
+  unit_prefix: k
+  unit_time: h
+  method: left
+  round: 2
 
 utility_meter:
   # ── Daily ───────────────────────────────────────────────────────────────
@@ -184,6 +211,17 @@ utility_meter:
     source: sensor.hph_electrical_energy_active
     cycle: monthly
     tariffs: [heating, dhw, cooling]
+  # Runtime-gated per-mode electrical monthly — used as denominator for
+  # mode COP so standby power is never included in any mode's COP.
+  hph_electrical_heating_runtime_monthly:
+    source: sensor.hph_electrical_energy_heating_runtime
+    cycle: monthly
+  hph_electrical_dhw_runtime_monthly:
+    source: sensor.hph_electrical_energy_dhw_runtime
+    cycle: monthly
+  hph_electrical_cooling_runtime_monthly:
+    source: sensor.hph_electrical_energy_cooling_runtime
+    cycle: monthly
 
   # ── Heating season (Jul 1 – Jun 30) ─────────────────────────────────
   # This is the JAZ / SCOP period used in DE/AT/CH/NL.
@@ -212,3 +250,13 @@ utility_meter:
     source: sensor.hph_electrical_energy_active
     cron: "0 0 1 7 *"
     tariffs: [heating, dhw, cooling]
+  # Runtime-gated per-mode electrical yearly — denominator for yearly mode COP.
+  hph_electrical_heating_runtime_yearly:
+    source: sensor.hph_electrical_energy_heating_runtime
+    cron: "0 0 1 7 *"
+  hph_electrical_dhw_runtime_yearly:
+    source: sensor.hph_electrical_energy_dhw_runtime
+    cron: "0 0 1 7 *"
+  hph_electrical_cooling_runtime_yearly:
+    source: sensor.hph_electrical_energy_cooling_runtime
+    cron: "0 0 1 7 *"

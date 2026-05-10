@@ -641,25 +641,28 @@ sensors:
   unique_id: hph_cop_monthly_heating
   unit_of_measurement: x
   state_class: measurement
-  state: '{% set t = states(''sensor.hph_thermal_monthly_split_heating'') | float(0)
-    %} {% set e = states(''sensor.hph_electrical_monthly_split_heating'') | float(0)
-    %} {{ (t / e) | round(2) if e > 0.1 else 0 }}'
+  state: >-
+    {% set t = states('sensor.hph_thermal_monthly_split_heating') | float(0) %}
+    {% set e = states('sensor.hph_electrical_heating_runtime_monthly') | float(0) %}
+    {{ (t / e) | round(2) if e > 0.1 else 0 }}
   _source_package: hph_efficiency.yaml
 - name: HeatPump Hero COP Yearly Heating
   unique_id: hph_cop_yearly_heating
   unit_of_measurement: x
   state_class: measurement
-  state: '{% set t = states(''sensor.hph_thermal_yearly_split_heating'') | float(0)
-    %} {% set e = states(''sensor.hph_electrical_yearly_split_heating'') | float(0)
-    %} {{ (t / e) | round(2) if e > 0.1 else 0 }}'
+  state: >-
+    {% set t = states('sensor.hph_thermal_yearly_split_heating') | float(0) %}
+    {% set e = states('sensor.hph_electrical_heating_runtime_yearly') | float(0) %}
+    {{ (t / e) | round(2) if e > 0.1 else 0 }}
   _source_package: hph_efficiency.yaml
 - name: HeatPump Hero COP Monthly DHW
   unique_id: hph_cop_monthly_dhw
   unit_of_measurement: x
   state_class: measurement
-  state: '{% set t = states(''sensor.hph_thermal_monthly_split_dhw'') | float(0) %}
-    {% set e = states(''sensor.hph_electrical_monthly_split_dhw'') | float(0) %} {{
-    (t / e) | round(2) if e > 0.1 else 0 }}'
+  state: >-
+    {% set t = states('sensor.hph_thermal_monthly_split_dhw') | float(0) %}
+    {% set e = states('sensor.hph_electrical_dhw_runtime_monthly') | float(0) %}
+    {{ (t / e) | round(2) if e > 0.1 else 0 }}
   _source_package: hph_efficiency.yaml
 - name: HeatPump Hero COP Yearly DHW
   unique_id: hph_cop_yearly_dhw
@@ -1061,6 +1064,44 @@ sensors:
   state_class: measurement
   state: >-
     {% if is_state('binary_sensor.hph_compressor_running','on') %}
+      {{ states('sensor.hph_electrical_power_active') | float(0) }}
+    {% else %}0{% endif %}
+  _source_package: hph_efficiency.yaml
+# Mode-gated runtime power sensors — emit electrical power only when
+# BOTH conditions hold: compressor running AND active mode matches.
+# These feed per-mode COP (monthly/yearly) so that standby power
+# is never included in any mode's electrical denominator.
+# Thermal uses the existing tariff-split meters (no standby thermal).
+- name: HeatPump Hero Electrical Power Heating Runtime
+  unique_id: hph_electrical_power_heating_runtime
+  unit_of_measurement: W
+  device_class: power
+  state_class: measurement
+  state: >-
+    {% if is_state('binary_sensor.hph_compressor_running','on')
+       and is_state('sensor.hph_source_operating_mode','heating') %}
+      {{ states('sensor.hph_electrical_power_active') | float(0) }}
+    {% else %}0{% endif %}
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero Electrical Power DHW Runtime
+  unique_id: hph_electrical_power_dhw_runtime
+  unit_of_measurement: W
+  device_class: power
+  state_class: measurement
+  state: >-
+    {% if is_state('binary_sensor.hph_compressor_running','on')
+       and is_state('sensor.hph_source_operating_mode','dhw') %}
+      {{ states('sensor.hph_electrical_power_active') | float(0) }}
+    {% else %}0{% endif %}
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero Electrical Power Cooling Runtime
+  unique_id: hph_electrical_power_cooling_runtime
+  unit_of_measurement: W
+  device_class: power
+  state_class: measurement
+  state: >-
+    {% if is_state('binary_sensor.hph_compressor_running','on')
+       and is_state('sensor.hph_source_operating_mode','cooling') %}
       {{ states('sensor.hph_electrical_power_active') | float(0) }}
     {% else %}0{% endif %}
   _source_package: hph_efficiency.yaml
