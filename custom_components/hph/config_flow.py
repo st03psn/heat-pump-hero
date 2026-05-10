@@ -261,7 +261,7 @@ class HphOptionsFlow(config_entries.OptionsFlow):
                     "ctrl_forecast_entity": user_input.get("ctrl_forecast_entity", ""),
                 }
             )
-            return self.async_create_entry(title="", data=self._data)
+            return await self.async_step_programs()
 
         # Build schema dynamically — only set default for fields where the
         # user has a non-empty stored value. EntitySelector validates the
@@ -287,3 +287,49 @@ class HphOptionsFlow(config_entries.OptionsFlow):
             else:
                 schema_dict[vol.Optional(key)] = sel
         return self.async_show_form(step_id="sensors", data_schema=vol.Schema(schema_dict))
+
+    async def async_step_programs(self, user_input: dict[str, Any] | None = None) -> Any:
+        """Step 3 — legionella program settings."""
+        if user_input is not None:
+            self._data.update(
+                {
+                    "prog_legionella_weekday": user_input.get("prog_legionella_weekday", "sun"),
+                    "prog_legionella_hour": user_input.get("prog_legionella_hour", 3),
+                    "prog_legionella_target_c": user_input.get("prog_legionella_target_c", 65),
+                    "prog_legionella_hold_min": user_input.get("prog_legionella_hold_min", 30),
+                }
+            )
+            return self.async_create_entry(title="", data=self._data)
+
+        schema = vol.Schema(
+            {
+                vol.Optional(
+                    "prog_legionella_weekday",
+                    default=self._data.get("prog_legionella_weekday", "sun"),
+                ): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
+                        mode=selector.SelectSelectorMode.DROPDOWN,
+                    )
+                ),
+                vol.Optional(
+                    "prog_legionella_hour",
+                    default=self._data.get("prog_legionella_hour", 3),
+                ): selector.NumberSelector(
+                    selector.NumberSelectorConfig(min=0, max=23, step=1, mode=selector.NumberSelectorMode.BOX)
+                ),
+                vol.Optional(
+                    "prog_legionella_target_c",
+                    default=self._data.get("prog_legionella_target_c", 65),
+                ): selector.NumberSelector(
+                    selector.NumberSelectorConfig(min=55, max=75, step=1, mode=selector.NumberSelectorMode.SLIDER)
+                ),
+                vol.Optional(
+                    "prog_legionella_hold_min",
+                    default=self._data.get("prog_legionella_hold_min", 30),
+                ): selector.NumberSelector(
+                    selector.NumberSelectorConfig(min=10, max=120, step=5, mode=selector.NumberSelectorMode.SLIDER)
+                ),
+            }
+        )
+        return self.async_show_form(step_id="programs", data_schema=schema)

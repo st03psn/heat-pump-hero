@@ -71,6 +71,16 @@
           "ctrl_price_entity": "Current electricity price sensor (for price-driven DHW)",
           "ctrl_forecast_entity": "Forecast temperature sensor (tomorrow's minimum °C)"
         }
+      },
+      "programs": {
+        "title": "HeatPump Hero — legionella program",
+        "description": "Configure the weekly anti-legionella DHW boost. Enable the program via the switch entity after saving. Leave at defaults if your heat pump controller handles legionella natively.",
+        "data": {
+          "prog_legionella_weekday": "Weekday for weekly boost",
+          "prog_legionella_hour": "Start hour (0 = midnight, 3 = 3 AM)",
+          "prog_legionella_target_c": "Target DHW temperature (°C)",
+          "prog_legionella_hold_min": "Hold duration at target (minutes)"
+        }
       }
     }
   },
