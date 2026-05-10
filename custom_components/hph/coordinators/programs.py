@@ -1,8 +1,9 @@
 """HeatPump Hero — programs coordinator.
 
-Screed dry-out program only.
-Legionella protection is handled by the heat pump's own built-in schedule.
-The manual one-off trigger (run_legionella_now service) lives in __init__.py.
+Manages two programs:
+  - Screed dry-out: multi-day supply-temperature ramp per ISO EN 1264-4 / DIN 18560-1.
+  - Legionella protection schedule: weekly DHW boost at a user-configured weekday/hour.
+    The manual one-off trigger (run_legionella_now service) lives in __init__.py.
 """
 
 from __future__ import annotations
@@ -27,6 +28,10 @@ _PROFILE_DAYS = {
     "functional_3d": 3,
     "combined_10d": 10,
     "din_18560_28d": 28,
+}
+
+_WEEKDAY_INDEX = {
+    "mon": 0, "tue": 1, "wed": 2, "thu": 3, "fri": 4, "sat": 5, "sun": 6,
 }
 
 
@@ -160,5 +165,79 @@ async def async_setup(hass: HomeAssistant, entry: ConfigEntry) -> list[Callable]
 
     unsubs.append(async_track_time_change(hass, _screed_daily, hour=0, minute=1, second=0))
 
-    _LOGGER.debug("HPH programs coordinator started (screed only)")
+    # ── Legionella: hourly tick, fires the boost on the configured weekday/hour ─
+    @callback
+    def _legionella_tick(now: datetime) -> None:
+        if _st(hass, "switch.hph_prog_legionella") != "on":
+            return
+        configured_hour = int(_flt(hass, "number.hph_prog_legionella_hour", 3))
+        if now.hour != configured_hour:
+            return
+        weekday_key = _st(hass, "select.hph_prog_legionella_weekday")
+        configured_wd = _WEEKDAY_INDEX.get(weekday_key, 6)
+        if now.weekday() != configured_wd:
+            return
+        hass.async_create_task(_run_legionella_schedule())
+
+    async def _run_legionella_schedule() -> None:
+        target_c = _flt(hass, "number.hph_prog_legionella_target_c", 65.0)
+
+        dhw_holder = hass.states.get("text.hph_ctrl_write_dhw_target")
+        if dhw_holder and dhw_holder.state not in ("unknown", "unavailable", ""):
+            dhw_eid = dhw_holder.state.strip()
+            if dhw_eid:
+                try:
+                    await hass.services.async_call(
+                        "number", "set_value",
+                        {"entity_id": dhw_eid, "value": target_c},
+                        blocking=False,
+                    )
+                    _LOGGER.info("legionella schedule: set %s → %.0f °C", dhw_eid, target_c)
+                except Exception as exc:  # noqa: BLE001
+                    _LOGGER.warning("legionella schedule: set DHW target failed: %s", exc)
+
+        force_holder = hass.states.get("text.hph_ctrl_write_force_dhw")
+        if force_holder and force_holder.state not in ("unknown", "unavailable", ""):
+            force_eid = force_holder.state.strip()
+            if force_eid:
+                try:
+                    await hass.services.async_call(
+                        "button", "press", {"entity_id": force_eid}, blocking=False,
+                    )
+                    _LOGGER.info("legionella schedule: triggered %s", force_eid)
+                except Exception as exc:  # noqa: BLE001
+                    _LOGGER.warning("legionella schedule: force-DHW press failed: %s", exc)
+
+        try:
+            await hass.services.async_call(
+                "datetime", "set_value",
+                {
+                    "entity_id": "datetime.hph_prog_legionella_last_run",
+                    "datetime": dt_util.now().isoformat(),
+                },
+                blocking=True,
+            )
+        except Exception as exc:  # noqa: BLE001
+            _LOGGER.warning("legionella schedule: timestamp update failed: %s", exc)
+
+        hold_min = int(_flt(hass, "number.hph_prog_legionella_hold_min", 30))
+        weekday_key = _st(hass, "select.hph_prog_legionella_weekday")
+        await hass.services.async_call(
+            "persistent_notification", "create",
+            {
+                "notification_id": "hph_prog_legionella",
+                "title": "HPH legionella program triggered",
+                "message": (
+                    f"Weekly anti-legionella DHW boost started on {weekday_key}. "
+                    f"Target: {target_c:.0f} °C, hold: {hold_min} min. "
+                    "Check your DHW temperature to confirm the heat pump responded."
+                ),
+            },
+            blocking=True,
+        )
+
+    # Fires at minute=0, second=0 every hour — weekday/hour check inside the callback.
+    unsubs.append(async_track_time_change(hass, _legionella_tick, minute=0, second=0))
+
+    _LOGGER.debug("HPH programs coordinator started")
     return unsubs
