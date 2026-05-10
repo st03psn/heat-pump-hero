@@ -562,6 +562,46 @@ def build_hourly_energy_stats(
 # WebSocket import
 # ---------------------------------------------------------------------------
 
+def _ws_connect():
+    """Open an authenticated WebSocket connection, return ws object."""
+    import urllib.parse
+    parsed = urllib.parse.urlparse(HA_BASE)
+    ws_scheme = "wss" if parsed.scheme == "https" else "ws"
+    ws_url = f"{ws_scheme}://{parsed.netloc}/api/websocket"
+
+    ws = websocket.create_connection(ws_url, timeout=60)
+    auth_required = json.loads(ws.recv())
+    assert auth_required["type"] == "auth_required", auth_required
+    ws.send(json.dumps({"type": "auth", "access_token": HA_TOKEN}))
+    auth_ok = json.loads(ws.recv())
+    if auth_ok.get("type") != "auth_ok":
+        ws.close()
+        raise RuntimeError(f"WebSocket auth failed: {auth_ok}")
+    return ws
+
+
+def ws_clear(statistic_ids: list[str]) -> bool:
+    """Delete all existing LTS rows for the given statistic IDs.
+
+    Must be called before re-importing data into entities that already have
+    LTS entries, to avoid backwards-sum conflicts that cause HA to silently
+    reject the new rows.
+    """
+    try:
+        ws = _ws_connect()
+        ws.send(json.dumps({
+            "id": 1,
+            "type": "recorder/clear_statistics",
+            "statistic_ids": statistic_ids,
+        }))
+        result = json.loads(ws.recv())
+        ws.close()
+        return result.get("success", False)
+    except Exception as exc:
+        print(f"  ws_clear error: {exc}", file=sys.stderr)
+        return False
+
+
 def ws_import(
     entity_id: str,
     stats: list[dict],
@@ -569,21 +609,19 @@ def ws_import(
     has_sum: bool = True,
     has_mean: bool = False,
 ) -> bool:
-    import urllib.parse
+    # Split large imports into chunks to avoid WebSocket message-size issues
+    CHUNK = 500
+    if len(stats) > CHUNK:
+        for i in range(0, len(stats), CHUNK):
+            chunk = stats[i:i + CHUNK]
+            if not ws_import(entity_id, chunk, unit=unit, has_sum=has_sum, has_mean=has_mean):
+                return False
+        return True
 
-    parsed = urllib.parse.urlparse(HA_BASE)
-    ws_scheme = "wss" if parsed.scheme == "https" else "ws"
-    ws_url = f"{ws_scheme}://{parsed.netloc}/api/websocket"
-
-    ws = websocket.create_connection(ws_url, timeout=30)
-    auth_required = json.loads(ws.recv())
-    assert auth_required["type"] == "auth_required", auth_required
-
-    ws.send(json.dumps({"type": "auth", "access_token": HA_TOKEN}))
-    auth_ok = json.loads(ws.recv())
-    if auth_ok.get("type") != "auth_ok":
-        print(f"  auth failed: {auth_ok}", file=sys.stderr)
-        ws.close()
+    try:
+        ws = _ws_connect()
+    except RuntimeError as exc:
+        print(f"  {exc}", file=sys.stderr)
         return False
 
     msg = {
@@ -695,6 +733,20 @@ def main() -> int:
             (HPH_THERMAL_ENERGY_ACTIVE,    th_hourly, "hourly cumulative", True, False),
             (HPH_ELECTRICAL_ENERGY_ACTIVE, el_hourly, "hourly cumulative", True, False),
         ]
+
+    # -- Clear existing LTS for daily/hourly targets before re-import --------
+    # HA's recorder/import_statistics silently rejects historical entries when
+    # existing LTS rows have a higher sum than the imported historical rows
+    # (backwards-sum conflict). Clearing first lets the import write cleanly.
+    if args.confirm and args.full:
+        clear_ids = [
+            HPH_THERMAL_DAILY, HPH_ELECTRICAL_DAILY, HPH_COP_DAILY,
+            HPH_THERMAL_ENERGY_ACTIVE, HPH_ELECTRICAL_ENERGY_ACTIVE,
+        ]
+        print("-- Clearing existing daily/hourly LTS (avoids sum-conflict) --------")
+        ok = ws_clear(clear_ids)
+        print(f"  clear: {'OK' if ok else 'FAILED'}")
+        print()
 
     # -- Print + import all targets ----------------------------------------
     print("-- Import targets ---------------------------------------------------")
