@@ -321,6 +321,136 @@ def test_custom_integration_layout() -> int:
     return failures
 
 
+def test_bundled_dashboard_entities() -> int:
+    """Every hph_* entity referenced by the bundled v0.9 dashboard must
+    be defined somewhere in the integration (sensor templates, binary
+    sensor templates, deployed efficiency package, or const.py helper
+    dicts). Catches "Entität nicht gefunden" errors before deploy.
+    """
+    section("Bundled dashboard entity references")
+    failures = 0
+
+    cc = ROOT / "custom_components" / "hph"
+    dash = cc / "data" / "dashboards" / "hph.yaml"
+    if not dash.is_file():
+        fail(f"bundled dashboard not found: {dash.relative_to(ROOT)}")
+        return 1
+
+    raw = dash.read_text(encoding="utf-8")
+
+    # Domains of entities the integration owns.
+    owned_domains = (
+        "sensor", "binary_sensor", "number", "text", "select",
+        "switch", "datetime", "button",
+    )
+    # Find every "<domain>.hph_<name>" reference.
+    refs: set[str] = set()
+    for domain in owned_domains:
+        pat = re.compile(rf"\b{domain}\.hph_[a-z0-9_]+", re.IGNORECASE)
+        refs.update(pat.findall(raw))
+
+    # Strip wildcards / globs / Jinja artifacts.
+    refs = {r for r in refs if not r.endswith("_") and "*" not in r}
+
+    # Build the defined-set from each source.
+    defined: set[str] = set()
+
+    # 1. sensor_templates.yaml + binary_sensor_templates.yaml
+    # Files are dicts with a top-level key (sensors / binary_sensors).
+    for fname, domain in (
+        ("sensor_templates.yaml", "sensor"),
+        ("binary_sensor_templates.yaml", "binary_sensor"),
+    ):
+        path = cc / "data" / fname
+        if not path.is_file():
+            continue
+        try:
+            data = load_yaml(path) or {}
+            items: list = []
+            if isinstance(data, list):
+                items = data
+            elif isinstance(data, dict):
+                # Find the first list-valued key (e.g. "sensors").
+                for v in data.values():
+                    if isinstance(v, list):
+                        items = v
+                        break
+            for item in items:
+                uid = item.get("unique_id") if isinstance(item, dict) else None
+                if uid:
+                    defined.add(f"{domain}.{uid}")
+        except Exception as e:
+            fail(f"{fname} parse error: {e}")
+            failures += 1
+
+    # 2. deployed packages: utility_meter (sensor.<key>) and platform sensors
+    eff = cc / "data" / "packages" / "hph_efficiency.yaml"
+    if eff.is_file():
+        try:
+            data = load_yaml(eff) or {}
+            for key in (data.get("utility_meter") or {}):
+                defined.add(f"sensor.{key}")
+                # tariff splits expose extra entities sensor.<key>_<tariff>
+                tariffs = ((data.get("utility_meter") or {}).get(key) or {}).get("tariffs") or []
+                for t in tariffs:
+                    defined.add(f"sensor.{key}_{t}")
+            for item in (data.get("sensor") or []):
+                uid = item.get("unique_id") if isinstance(item, dict) else None
+                if uid:
+                    defined.add(f"sensor.{uid}")
+        except Exception as e:
+            fail(f"hph_efficiency.yaml parse error: {e}")
+            failures += 1
+
+    # 3. const.py helper dicts (parse keys via regex — avoids importing HA)
+    const_py = cc / "const.py"
+    if const_py.is_file():
+        text = const_py.read_text(encoding="utf-8")
+        helper_blocks = {
+            "TEXT_HELPERS": "text",
+            "NUMBER_HELPERS": "number",
+            "SELECT_HELPERS": "select",
+            "SWITCH_HELPERS": "switch",
+            "DATETIME_HELPERS": "datetime",
+            "COUNTER_HELPERS": "number",  # counters surface as number.*
+            "BUTTON_DEFS": "button",
+        }
+        for var, domain in helper_blocks.items():
+            m = re.search(
+                rf"^{var}.*?=\s*\{{(.*?)^\}}",
+                text, re.DOTALL | re.MULTILINE,
+            )
+            if not m:
+                continue
+            block = m.group(1)
+            for key_match in re.finditer(r'^\s*"(hph_[a-z0-9_]+)":', block, re.MULTILINE):
+                defined.add(f"{domain}.{key_match.group(1)}")
+
+    # Allowlist: heat-pump native entities the dashboard references in
+    # auto-entities filters (Heishamon-specific by design).
+    allowlist_prefixes = (
+        "sensor.hph_source_",       # source facades, defined in YAML packages user installs
+        "binary_sensor.hph_source_",
+        "binary_sensor.hph_has_",
+        "binary_sensor.hph_defrost_active",
+        "binary_sensor.hph_compressor_running",
+    )
+
+    missing = sorted(
+        r for r in refs
+        if r not in defined and not any(r.startswith(p) for p in allowlist_prefixes)
+    )
+
+    if missing:
+        for m in missing:
+            fail(f"dashboard references undefined entity: {m}")
+        failures += len(missing)
+    else:
+        ok(f"all {len(refs)} dashboard hph_* references resolve")
+
+    return failures
+
+
 def main() -> int:
     print(f"HeatPump Hero smoke tests · root: {ROOT}")
     failures = 0
@@ -331,6 +461,7 @@ def main() -> int:
     failures += test_advisor_summary_consistency()
     failures += test_diagnostics_consistency()
     failures += test_custom_integration_layout()
+    failures += test_bundled_dashboard_entities()
 
     print()
     if failures:

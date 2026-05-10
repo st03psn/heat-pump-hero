@@ -181,6 +181,8 @@ views:
           yaxis:
             title:
               text: "kWh"
+          noData:
+            text: "Sammele Daten — Werte erscheinen nach dem ersten vollen Tag."
 
       # ── Row E: COP per month (13 months) — ported from dashboard-warmepumpe ─
       - type: custom:apexcharts-card
@@ -208,8 +210,14 @@ views:
             decimalsInFloat: 2
             title:
               text: "COP"
+          noData:
+            text: "Sammele Daten — monatliche COP-Werte erscheinen nach dem ersten vollen Monat."
 
       # ── Row F: Cycling last 7 days ───────────────────────────────────────
+      # number.* entities don't produce HA long-term statistics (no
+      # state_class on the number domain). Use group_by/func: max over
+      # raw history instead — counters reset at 00:00, so the daily
+      # peak == the day's total.
       - type: custom:apexcharts-card
         header:
           show: true
@@ -222,21 +230,23 @@ views:
             name: Cycles/day
             type: column
             color: "#66bb6a"
-            statistics:
-              type: max
-              period: day
-              align: start
+            group_by:
+              func: max
+              duration: 1d
+              start_with_last: false
           - entity: number.hph_short_cycles_today
             name: Short cycles/day
             type: column
             color: "#d62728"
-            statistics:
-              type: max
-              period: day
-              align: start
+            group_by:
+              func: max
+              duration: 1d
+              start_with_last: false
         apex_config:
           chart:
             height: 160px
+          noData:
+            text: "Sammele Daten — Tageswerte erscheinen, sobald der Kompressor läuft."
 
   # ════════════════════════════════════════════════════════════════════════
   # 2) SCHEMATIC — auto-detected variant + Bubble-Card SVG with hotspots
@@ -676,7 +686,17 @@ views:
         series:
           - entity: sensor.hph_cop_live
             name: COP (live)
+            type: line
             color: "#17a2b8"
+            stroke_width: 2
+            extend_to: now
+        apex_config:
+          markers:
+            size: 3
+          stroke:
+            curve: smooth
+          noData:
+            text: "Sammele Daten — der Trend füllt sich, sobald der Kompressor läuft."
 
       # ── Heatmap: COP by day-of-week × hour-of-day (last 30 days) ──
       # Reveals when the system is least efficient (e.g. cold mornings,
@@ -994,10 +1014,17 @@ views:
         series:
           - entity: sensor.hph_cop_daily
             name: COP daily
+            type: line
             color: "#17a2b8"
+            stroke_width: 2
             statistics:
               type: state
               period: day
+        apex_config:
+          markers:
+            size: 4
+          noData:
+            text: "Sammele Daten — der 30-Tage-Trend füllt sich nach mehreren Tagen Betrieb."
 
       # ── SCOP per heating season (Jul 1 – Jun 30, last 10 seasons) ──
       - type: custom:apexcharts-card
@@ -1087,14 +1114,27 @@ views:
           show: true
           title: Cycling — last 7 days
         graph_span: 7d
+        span:
+          end: day
         series:
           - entity: number.hph_cycles_today
             name: Cycles/day
             type: column
+            group_by:
+              func: max
+              duration: 1d
+              start_with_last: false
           - entity: number.hph_short_cycles_today
             name: Short cycles/day
             type: column
             color: "#d62728"
+            group_by:
+              func: max
+              duration: 1d
+              start_with_last: false
+        apex_config:
+          noData:
+            text: "Sammele Daten — Tageswerte erscheinen, sobald der Kompressor läuft."
 
       - type: entities
         title: Advisor — recommendations
@@ -1185,15 +1225,44 @@ views:
           - entity: text.hph_diag_error_history
             name: Recent error history (JSON)
 
-      - type: entities
-        title: Heating limit — observed
-        entities:
+      # Heating limit — observed.
+      # The smoothed sensor is a platform:statistics sensor that needs the
+      # source (number.hph_heating_limit_observed_c) to receive at least one
+      # sample within the 7-day window before it becomes available. Show a
+      # friendly fallback if the sensor isn't ready yet.
+      - type: conditional
+        conditions:
           - entity: sensor.hph_heating_limit_smoothed
-            name: Smoothed (7-day rolling avg)
-          - entity: number.hph_heating_limit_observed_c
-            name: Last observation
-          - entity: number.hph_advisor_heating_limit_target_c
-            name: Target setpoint
+            state_not: unavailable
+          - entity: sensor.hph_heating_limit_smoothed
+            state_not: unknown
+        card:
+          type: entities
+          title: Heating limit — observed
+          entities:
+            - entity: sensor.hph_heating_limit_smoothed
+              name: Smoothed (7-day rolling avg)
+            - entity: number.hph_heating_limit_observed_c
+              name: Last observation
+            - entity: number.hph_advisor_heating_limit_target_c
+              name: Target setpoint
+      - type: conditional
+        conditions:
+          - entity: sensor.hph_heating_limit_smoothed
+            state:
+              - unavailable
+              - unknown
+        card:
+          type: markdown
+          title: Heating limit — observed
+          content: |
+            Wird verfügbar, sobald der erste **Kompressorlauf ≥ 30 min**
+            mit anschließendem Stopp aufgezeichnet wurde. Der Wert ist ein
+            7-Tage-rollierender Durchschnitt der Außentemperatur beim
+            Stoppen — er zeigt, ab welcher Außentemperatur deine
+            Heizung aufhört zu laufen.
+
+            **Zielwert:** {{ states('number.hph_advisor_heating_limit_target_c') }} °C
 
       - type: markdown
         title: Recommendation detail

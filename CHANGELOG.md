@@ -3,6 +3,43 @@
 All notable changes to HeatPump Hero. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Dashboard remediation Stage 1
+
+### Fixed
+
+- **Dashboard charts stuck on "Loading…" forever**: ApexCharts shows the
+  "Loading…" placeholder when statistics queries return empty (fresh
+  install without history). Added `apex_config.noData` text on Energy 7-day,
+  Cycling 7-day (both views), COP 13-months, COP 24h, and COP 30-day charts
+  so users see "Sammele Daten — …" instead of an indefinite spinner.
+- **Cycling 7-day chart never populates**: The chart referenced
+  `number.hph_cycles_today` / `hph_short_cycles_today` with a `statistics:`
+  block, but the `number` domain doesn't produce HA long-term statistics
+  (no `state_class` on number entities). Replaced with `group_by: { func: max,
+  duration: 1d }` over raw history. Counters reset at 00:00, so the daily
+  peak == the day's total. Fixes both views (Overview row F and Optimization).
+- **"Heating limit — observed: Entität nicht gefunden"**: The
+  `sensor.hph_heating_limit_smoothed` (platform:statistics, 7-day rolling
+  avg) is `unavailable` until the source has at least one sample within
+  the window. Replaced the static entities-card with a conditional pair:
+  the entities card shows when the sensor is ready, otherwise a markdown
+  card explains what's expected and shows the configured target.
+- **COP trend rendered as bars due to sparse data**: View 3 24h trend
+  and View 4 30-day trend now explicitly set `type: line`, `stroke_width: 2`,
+  and `markers.size` so individual data points are visible as both line
+  and dots, not just isolated bar-like spikes.
+
+### Added
+
+- **Smoke test: bundled dashboard entity-reference check**
+  (`tests/smoke.py:test_bundled_dashboard_entities`). Scans
+  `custom_components/hph/data/dashboards/hph.yaml` for every
+  `<owned_domain>.hph_*` reference and verifies it's defined in
+  `sensor_templates.yaml`, `binary_sensor_templates.yaml`, the deployed
+  `hph_efficiency.yaml` package, or one of the const.py helper dicts.
+  Catches "Entität nicht gefunden" before deploy. Currently resolves all
+  182 references.
+
 ## [0.9.0-rc4] — 2026-05-10
 
 ### Fixed
