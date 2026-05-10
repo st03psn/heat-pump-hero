@@ -26,6 +26,13 @@ binary_sensors:
   state: '{% set ent = states(''text.hph_src_aux_heater_state'') %} {{ is_state(ent,
     ''on'') }}'
   _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Heater State
+  unique_id: hph_source_heater_state
+  availability: '{% set ent = states(''text.hph_src_heater_state'') %} {{
+    ent and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{% set ent = states(''text.hph_src_heater_state'') %} {{ is_state(ent,
+    ''on'') }}'
+  _source_package: hph_sources.yaml
 - name: HeatPump Hero Has HK2
   unique_id: hph_has_hk2
   icon: mdi:home-thermometer-outline

@@ -284,6 +284,54 @@ views:
                 tap_action:
                   action: navigate
                   navigation_path: /hph/efficiency
+              - type: conditional
+                conditions:
+                  - entity: sensor.hph_source_target_supply_temp
+                    state_not: unavailable
+                card:
+                  type: custom:mushroom-template-card
+                  primary: >-
+                    {{ states('sensor.hph_source_target_supply_temp') | float(0) | round(1) }}°C
+                    → {{ states('sensor.hph_source_outlet_temp') | float(0) | round(1) }}°C
+                  secondary: Target / actual supply
+                  icon: mdi:thermometer-chevron-up
+                  icon_color: deep-orange
+              - type: conditional
+                conditions:
+                  - entity: sensor.hph_source_zone1_setpoint
+                    state_not: unavailable
+                card:
+                  type: custom:mushroom-template-card
+                  primary: >-
+                    Z1 {{ states('sensor.hph_source_zone1_temp') | float(0) | round(1) }}°C
+                    / set {{ states('sensor.hph_source_zone1_setpoint') | float(0) | round(1) }}°C
+                  secondary: Zone 1 actual / setpoint
+                  icon: mdi:thermostat
+                  icon_color: >-
+                    {% set diff = (states('sensor.hph_source_zone1_temp') | float(0))
+                                - (states('sensor.hph_source_zone1_setpoint') | float(0)) %}
+                    {% if diff | abs > 3 %}red{% elif diff | abs > 1.5 %}amber{% else %}green{% endif %}
+              - type: conditional
+                conditions:
+                  - entity: sensor.hph_source_room_temp
+                    state_not: unavailable
+                card:
+                  type: custom:mushroom-template-card
+                  primary: "{{ states('sensor.hph_source_room_temp') | float(0) | round(1) }}°C"
+                  secondary: Room temperature
+                  icon: mdi:home-thermometer
+                  icon_color: blue
+              - type: conditional
+                conditions:
+                  - entity: sensor.hph_source_pump_speed
+                    state_not: unavailable
+                card:
+                  type: custom:mushroom-template-card
+                  primary: "{{ states('sensor.hph_source_pump_speed') | float(0) | round(0) | int }} %"
+                  secondary: Pump speed
+                  icon: mdi:pump
+                  icon_color: >-
+                    {{ 'green' if is_state('binary_sensor.hph_compressor_running','on') else 'grey' }}
 
           # ── Row: Installation schematic (auto-detected variant) ──────────────
           # Requires: Clooos/Bubble-Card >= 3.0; SVGs from /local/hph/schema_*.svg
