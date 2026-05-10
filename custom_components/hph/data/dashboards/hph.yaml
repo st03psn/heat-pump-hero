@@ -338,76 +338,44 @@ views:
                   noData:
                     text: "Sammele Daten — Werte erscheinen nach dem ersten vollen Tag."
 
-          # ── 2-col: COP 30d (left) + Cycling 7d (right) ──────────────────────
+          # ── Cycling 7d (full width) ───────────────────────────────────────────
           # number.* entities don't produce HA long-term statistics (no
           # state_class on the number domain). Use group_by/func: max over
           # raw history instead — counters reset at 00:00, so the daily
           # peak == the day's total.
-          - type: grid
-            columns: 2
-            square: false
-            cards:
-              - type: custom:apexcharts-card
-                header:
-                  show: true
-                  title: COP — last 30 days
-                graph_span: 30d
-                yaxis:
-                  - decimals: 1
-                series:
-                  - entity: sensor.hph_cop_daily
-                    name: COP daily
-                    type: line
-                    color: "#66bb6a"
-                    stroke_width: 2
-                    statistics:
-                      type: mean
-                      period: day
-                apex_config:
-                  chart:
-                    height: 260
-                    background: transparent
-                    foreColor: var(--primary-text-color)
-                  grid:
-                    borderColor: var(--divider-color)
-                  markers:
-                    size: 4
-                  noData:
-                    text: "Sammele Daten — erscheint nach mehreren Betriebstagen."
-
-              - type: custom:apexcharts-card
-                header:
-                  show: true
-                  title: Cycling — last 7 days
-                graph_span: 7d
-                span:
-                  end: day
-                series:
-                  - entity: number.hph_cycles_today
-                    name: Cycles/day
-                    type: column
-                    color: "#66bb6a"
-                    group_by:
-                      func: max
-                      duration: 1d
-                      start_with_last: false
-                  - entity: number.hph_short_cycles_today
-                    name: Short cycles/day
-                    type: column
-                    color: "#d62728"
-                    group_by:
-                      func: max
-                      duration: 1d
-                      start_with_last: false
-                apex_config:
-                  chart:
-                    height: 260
-                    background: transparent
-                    foreColor: var(--primary-text-color)
-                  grid:
-                    borderColor: var(--divider-color)
-                  noData:
-                    text: "Sammele Daten — Tageswerte erscheinen, sobald der Kompressor läuft."
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: Cycling — last 7 days
+            graph_span: 7d
+            span:
+              end: day
+            series:
+              - entity: number.hph_cycles_today
+                name: Cycles/day
+                type: column
+                color: "#66bb6a"
+                group_by:
+                  func: max
+                  duration: 1d
+                  start_with_last: false
+              - entity: number.hph_short_cycles_today
+                name: Short cycles/day
+                type: column
+                color: "#d62728"
+                group_by:
+                  func: max
+                  duration: 1d
+                  start_with_last: false
+            apex_config:
+              chart:
+                height: 260
+                background: transparent
+                foreColor: var(--primary-text-color)
+              grid:
+                borderColor: var(--divider-color)
+              noData:
+                text: "Sammele Daten — Tageswerte erscheinen, sobald der Kompressor läuft."
 
   # ════════════════════════════════════════════════════════════════════════
   # 2) SCHEMATIC — auto-detected variant + Bubble-Card SVG with hotspots
