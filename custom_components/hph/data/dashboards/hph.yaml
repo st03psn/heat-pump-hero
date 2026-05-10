@@ -354,7 +354,6 @@ views:
                 graph_span: 30d
                 yaxis:
                   - min: 0
-                    max: 6
                     decimals: 1
                 series:
                   - entity: sensor.hph_cop_daily
@@ -1491,7 +1490,6 @@ views:
               columnWidth: "40%"
           yaxis:
             min: 0
-            max: 8
             decimalsInFloat: 2
             title:
               text: "SCOP"
