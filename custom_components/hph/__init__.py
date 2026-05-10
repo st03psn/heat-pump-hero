@@ -38,6 +38,75 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
+# Map of legacy entity_id → desired entity_id for the one-time rename.
+# Triggered by name change in the deployed hph_efficiency.yaml package
+# from "HeatPump Hero …" to "HPH …" — fresh installs already get the
+# desired entity_id, but existing installs have the old slugified name
+# baked into the entity registry.
+_ENTITY_ID_MIGRATIONS = {
+    "sensor.heatpump_hero_heating_limit_smoothed": "sensor.hph_heating_limit_smoothed",
+    "sensor.heatpump_hero_spread_7_day_mean":      "sensor.hph_spread_7d_mean",
+    "sensor.heatpump_hero_spread_7_day_stdev":     "sensor.hph_spread_7d_stdev",
+    "sensor.heatpump_hero_dhw_fires_7_day_mean":   "sensor.hph_dhw_fires_7d_mean",
+    "sensor.heatpump_hero_pressure_7_day_mean":    "sensor.hph_pressure_7d_mean",
+    "sensor.heatpump_hero_indoor_deviation_smoothed": "sensor.hph_indoor_deviation_smoothed",
+}
+
+
+async def _migrate_entity_ids(hass: HomeAssistant) -> None:
+    """Rename legacy 'heatpump_hero_*' entity_ids to 'hph_*' and
+    consolidate the price-driven-DHW price helper into the cost-calc
+    one. Both migrations are idempotent — safe on every startup."""
+    from homeassistant.helpers import entity_registry as er
+
+    registry = er.async_get(hass)
+    renamed = 0
+    for old, new in _ENTITY_ID_MIGRATIONS.items():
+        if registry.async_get(old) is None:
+            continue  # not present (fresh install or already renamed)
+        if registry.async_get(new) is not None:
+            # Conflict: both old and new exist — drop the old (its
+            # statistics are usually empty since the new name was
+            # registered on a fresh restart).
+            try:
+                registry.async_remove(old)
+                _LOGGER.info("hph migration: removed conflicting legacy entity %s", old)
+            except Exception as exc:  # noqa: BLE001
+                _LOGGER.warning("hph migration: cannot remove %s: %s", old, exc)
+            continue
+        try:
+            registry.async_update_entity(old, new_entity_id=new)
+            _LOGGER.info("hph migration: renamed %s → %s", old, new)
+            renamed += 1
+        except Exception as exc:  # noqa: BLE001
+            _LOGGER.warning("hph migration: rename %s → %s failed: %s", old, new, exc)
+    if renamed:
+        _LOGGER.info("hph migration: renamed %d legacy 'heatpump_hero_*' entities", renamed)
+
+    # Consolidate the double price sensor: copy text.hph_ctrl_price_entity
+    # value into text.hph_electricity_price_entity if the latter is empty.
+    cost_ent = "text.hph_electricity_price_entity"
+    ctrl_ent = "text.hph_ctrl_price_entity"
+    cost_state = hass.states.get(cost_ent)
+    ctrl_state = hass.states.get(ctrl_ent)
+    if (cost_state is not None and ctrl_state is not None
+            and not (cost_state.state or '').strip()
+            and (ctrl_state.state or '').strip()
+            and ctrl_state.state not in ('unknown', 'unavailable')):
+        try:
+            await hass.services.async_call(
+                "text", "set_value",
+                {"entity_id": cost_ent, "value": ctrl_state.state},
+                blocking=True,
+            )
+            _LOGGER.info(
+                "hph migration: copied price sensor %r from %s into %s",
+                ctrl_state.state, ctrl_ent, cost_ent,
+            )
+        except Exception as exc:  # noqa: BLE001
+            _LOGGER.warning("hph migration: price-sensor consolidation failed: %s", exc)
+
+
 async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
     """Set up the integration domain key. Registers bridge services."""
     hass.data.setdefault(DOMAIN, {})
@@ -353,9 +422,13 @@ async def _apply_sensor_config(hass: HomeAssistant, data: dict) -> None:
         "text.hph_src_external_electrical_energy": external_electrical_energy,
         "text.hph_indoor_temp_entity": data.get("indoor_temp_entity", ""),
         "text.hph_outdoor_temp_override_entity": data.get("outdoor_temp_entity", ""),
-        "text.hph_electricity_price_entity": data.get("electricity_price_entity", ""),
+        # Unified electricity-price helper — used by both cost calc
+        # and price-driven DHW. Setup-flow legacy key 'ctrl_price_entity'
+        # falls back into the same helper if the dedicated cost-calc key
+        # wasn't filled.
+        "text.hph_electricity_price_entity":
+            data.get("electricity_price_entity") or data.get("ctrl_price_entity", ""),
         "text.hph_ctrl_pv_surplus_entity": data.get("ctrl_pv_surplus_entity", ""),
-        "text.hph_ctrl_price_entity": data.get("ctrl_price_entity", ""),
         "text.hph_ctrl_forecast_entity": data.get("ctrl_forecast_entity", ""),
     }
     for entity_id, value in _text_map.items():
@@ -465,6 +538,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Deploy dashboard + efficiency package; migrate old automation packages.
     deployed = await async_deploy_yaml_packages(hass)
     hass.data[DOMAIN][entry.entry_id]["bootstrap"] = deployed
+
+    # One-time migration: rename platform:statistics entities created by
+    # earlier rc4 versions with name "HeatPump Hero …" → entity_id
+    # sensor.heatpump_hero_* over to sensor.hph_* for naming consistency.
+    # Also unifies the price-driven-DHW helper text.hph_ctrl_price_entity
+    # into text.hph_electricity_price_entity (the cost-calc helper).
+    await _migrate_entity_ids(hass)
 
     # Forward to platforms (text/number/select/switch/datetime/button/sensor/binary_sensor).
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)

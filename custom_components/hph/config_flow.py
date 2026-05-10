@@ -144,7 +144,6 @@ class HphConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     "external_electrical_energy": user_input.get("external_electrical_energy", ""),
                     "electricity_price_entity": user_input.get("electricity_price_entity", ""),
                     "ctrl_pv_surplus_entity": user_input.get("ctrl_pv_surplus_entity", ""),
-                    "ctrl_price_entity": user_input.get("ctrl_price_entity", ""),
                     "ctrl_forecast_entity": user_input.get("ctrl_forecast_entity", ""),
                 }
             )
@@ -160,7 +159,6 @@ class HphConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Optional("external_electrical_energy"): _energy_selector(),
                 vol.Optional("electricity_price_entity"): _any_sensor_selector(),
                 vol.Optional("ctrl_pv_surplus_entity"): _power_selector(),
-                vol.Optional("ctrl_price_entity"): _any_sensor_selector(),
                 vol.Optional("ctrl_forecast_entity"): _temp_selector(),
             }
         )
@@ -238,7 +236,6 @@ class HphOptionsFlow(config_entries.OptionsFlow):
                     "external_electrical_energy": user_input.get("external_electrical_energy", ""),
                     "electricity_price_entity": user_input.get("electricity_price_entity", ""),
                     "ctrl_pv_surplus_entity": user_input.get("ctrl_pv_surplus_entity", ""),
-                    "ctrl_price_entity": user_input.get("ctrl_price_entity", ""),
                     "ctrl_forecast_entity": user_input.get("ctrl_forecast_entity", ""),
                 }
             )
@@ -278,10 +275,6 @@ class HphOptionsFlow(config_entries.OptionsFlow):
                     "ctrl_pv_surplus_entity",
                     default=self._data.get("ctrl_pv_surplus_entity", ""),
                 ): _power_selector(),
-                vol.Optional(
-                    "ctrl_price_entity",
-                    default=self._data.get("ctrl_price_entity", ""),
-                ): _any_sensor_selector(),
                 vol.Optional(
                     "ctrl_forecast_entity",
                     default=self._data.get("ctrl_forecast_entity", ""),

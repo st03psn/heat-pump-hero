@@ -141,7 +141,10 @@ async def async_setup(hass: HomeAssistant, entry: ConfigEntry) -> list[Callable]
             or _st(hass, "switch.hph_ctrl_price_dhw") != "on"
         ):
             return
-        price_holder = _st(hass, "text.hph_ctrl_price_entity")
+        # Use the unified electricity-price helper (was a separate
+        # text.hph_ctrl_price_entity in v0.7-v0.9; consolidated in
+        # rc4-stage4 — bootstrap migrates the value).
+        price_holder = _st(hass, "text.hph_electricity_price_entity")
         mean_holder = _st(hass, "text.hph_ctrl_price_mean_entity")
         if price_holder in ("unknown", "unavailable", "") or mean_holder in ("unknown", "unavailable", ""):
             return

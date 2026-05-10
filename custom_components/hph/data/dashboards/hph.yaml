@@ -1509,7 +1509,8 @@ views:
           - type: section
             label: Price-driven DHW (Tibber / aWATTar)
           - switch.hph_ctrl_price_dhw
-          - text.hph_ctrl_price_entity
+          - entity: text.hph_electricity_price_entity
+            name: Current price sensor (shared with cost calc)
           - text.hph_ctrl_price_mean_entity
           - number.hph_ctrl_price_threshold_factor
           - number.hph_ctrl_price_max_per_day

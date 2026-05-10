@@ -3,6 +3,40 @@
 All notable changes to HeatPump Hero. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Naming consistency + price-helper consolidation
+
+### Fixed
+
+- **Entity-ID naming drift**: Six `platform:statistics` sensors in the
+  deployed `hph_efficiency.yaml` had names starting with "HeatPump
+  Hero …", which HA slugified into entity IDs `sensor.heatpump_hero_*`.
+  All other HPH sensors are `sensor.hph_*`. Renamed to "HPH …" so
+  fresh installs get consistent entity IDs. Existing installs are
+  auto-migrated on integration setup via a new
+  `_migrate_entity_ids()` hook in `__init__.py` that calls
+  `entity_registry.async_update_entity` to rename:
+  - `sensor.heatpump_hero_heating_limit_smoothed` → `sensor.hph_heating_limit_smoothed`
+  - `sensor.heatpump_hero_spread_7_day_mean` → `sensor.hph_spread_7d_mean`
+  - `sensor.heatpump_hero_spread_7_day_stdev` → `sensor.hph_spread_7d_stdev`
+  - `sensor.heatpump_hero_dhw_fires_7_day_mean` → `sensor.hph_dhw_fires_7d_mean`
+  - `sensor.heatpump_hero_pressure_7_day_mean` → `sensor.hph_pressure_7d_mean`
+  - `sensor.heatpump_hero_indoor_deviation_smoothed` → `sensor.hph_indoor_deviation_smoothed`
+  Recorder history is preserved (entity_registry rename keeps
+  unique_id → state mapping).
+
+- **Double electricity-price helper consolidated**. The setup wizard
+  showed two fields for the same concept:
+  - "Electricity price sensor" → cost calculation (`text.hph_electricity_price_entity`)
+  - "Current electricity price sensor (for price-driven DHW)" → control automation (`text.hph_ctrl_price_entity`)
+  Both expected the same Tibber/aWATTar/Awattar entity. Removed the
+  duplicate `text.hph_ctrl_price_entity` from `TEXT_HELPERS`, the
+  config-flow Step 3 schema, and the dashboard. The price-DHW
+  coordinator now reads from `text.hph_electricity_price_entity`.
+  Bootstrap copies the legacy `text.hph_ctrl_price_entity` value into
+  the unified helper if the latter is empty, then leaves the legacy
+  entity orphaned (HA will surface it as removable in the entity
+  registry).
+
 ## [Unreleased] — Heishamon-native thermal source + control passthrough
 
 ### Added

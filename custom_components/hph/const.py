@@ -231,7 +231,10 @@ TEXT_HELPERS: Final[dict[str, dict[str, Any]]] = {
     # Control (hph_control.yaml)
     "hph_ctrl_pv_surplus_entity": {"name": "PV surplus sensor (entity-ID)", "icon": "mdi:solar-power", "initial": ""},
     # Control extensions (hph_control_extensions.yaml)
-    "hph_ctrl_price_entity": {"name": "Price-DHW — current price sensor (entity-ID)", "icon": "mdi:currency-eur", "initial": ""},
+    # NOTE: hph_ctrl_price_entity removed in rc4-stage4 — price-driven
+    # DHW now reads from text.hph_electricity_price_entity (the same
+    # helper used for cost calculation). Bootstrap migrates the value
+    # for existing installs.
     "hph_ctrl_price_mean_entity": {"name": "Price-DHW — daily mean price sensor (entity-ID)", "icon": "mdi:percent", "initial": ""},
     "hph_ctrl_forecast_entity": {"name": "Forecast pre-heat — forecast temperature sensor (entity-ID)",
                                   "icon": "mdi:weather-cloudy-clock", "initial": ""},

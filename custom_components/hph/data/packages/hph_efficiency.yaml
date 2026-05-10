@@ -35,7 +35,7 @@ sensor:
 # stop after ≥30-min run). Used by the advisor and the Optimization dashboard.
 # platform: statistics cannot be registered via Python API — stays in YAML.
 - platform: statistics
-  name: "HeatPump Hero Heating Limit Smoothed"
+  name: "HPH Heating Limit Smoothed"
   unique_id: hph_heating_limit_smoothed
   entity_id: number.hph_heating_limit_observed_c
   state_characteristic: average_linear
@@ -46,7 +46,7 @@ sensor:
   precision: 1
 
 - platform: statistics
-  name: "HeatPump Hero Spread 7-day Mean"
+  name: "HPH Spread 7-day Mean"
   unique_id: hph_spread_7d_mean
   entity_id: sensor.hph_water_spread
   state_characteristic: mean
@@ -57,7 +57,7 @@ sensor:
   precision: 2
 
 - platform: statistics
-  name: "HeatPump Hero Spread 7-day Stdev"
+  name: "HPH Spread 7-day Stdev"
   unique_id: hph_spread_7d_stdev
   entity_id: sensor.hph_water_spread
   state_characteristic: standard_deviation
@@ -68,7 +68,7 @@ sensor:
   precision: 2
 
 - platform: statistics
-  name: "HeatPump Hero DHW Fires 7-day Mean"
+  name: "HPH DHW Fires 7-day Mean"
   unique_id: hph_dhw_fires_7d_mean
   entity_id: number.hph_dhw_fires_yesterday
   state_characteristic: mean
@@ -79,7 +79,7 @@ sensor:
   precision: 2
 
 - platform: statistics
-  name: "HeatPump Hero Pressure 7-day Mean"
+  name: "HPH Pressure 7-day Mean"
   unique_id: hph_pressure_7d_mean
   entity_id: sensor.hph_source_pump_pressure
   state_characteristic: mean
