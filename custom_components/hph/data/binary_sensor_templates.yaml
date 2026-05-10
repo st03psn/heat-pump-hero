@@ -50,3 +50,32 @@ binary_sensors:
     \  {{ v not in ['unknown','unavailable','none',''] and (v | float(-999)) > -100\
     \ }}\n{% else %}\n  false\n{% endif %}"
   _source_package: hph_sources.yaml
+- name: HeatPump Hero Has Native DHW
+  unique_id: hph_has_native_dhw
+  icon: mdi:water-boiler
+  # True when the heat pump exposes its own DHW controls (target temp,
+  # delta, force-DHW). Different from hph_has_dhw which checks the
+  # configured DHW temperature *sensor* — a user can have a DHW tank
+  # without exposing the heat pump's native DHW select/number entities
+  # (e.g. when DHW is handled by a separate boiler or when the user
+  # disabled them in the kamaradclimber integration).
+  state: "{{ states('number.panasonic_heat_pump_main_dhw_target_temp')\n   not in\
+    \ ['unknown','unavailable','none'] }}"
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Has Bivalent
+  unique_id: hph_has_bivalent
+  icon: mdi:radiator
+  # True when the heat pump exposes bivalent / aux-heater controls.
+  # Most A2W installs without an electric backup heater don't expose
+  # these and the kamaradclimber integration disables them.
+  state: "{{ states('select.panasonic_heat_pump_main_bivalent_mode')\n   not in\
+    \ ['unknown','unavailable','none'] }}"
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Has Cooling
+  unique_id: hph_has_cooling
+  icon: mdi:snowflake
+  # True when the heat pump exposes cooling-mode controls. Heat-only
+  # installs disable cool_delta etc. by default.
+  state: "{{ states('number.panasonic_heat_pump_main_cool_delta')\n   not in\
+    \ ['unknown','unavailable','none'] }}"
+  _source_package: hph_sources.yaml
