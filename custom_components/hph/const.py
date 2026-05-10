@@ -286,6 +286,17 @@ NUMBER_HELPERS: Final[dict[str, dict[str, Any]]] = {
     "hph_dhw_fires_yesterday": {"name": "HeatPump Hero — DHW fires yesterday",
                                   "icon": "mdi:water-boiler",
                                   "min": 0, "max": 50, "step": 1, "initial": 0},
+    # Runtime kWh today — driven by coordinators/runtime_kwh.py.
+    # Accumulates external-meter delta during compressor-on intervals.
+    # Resets at midnight; restored across HA reloads via Number platform.
+    "hph_thermal_runtime_today_kwh": {"name": "HeatPump Hero — thermal runtime kWh today",
+                                        "icon": "mdi:fire",
+                                        "min": 0, "max": 9999, "step": 0.001, "initial": 0,
+                                        "unit_of_measurement": "kWh"},
+    "hph_electrical_runtime_today_kwh": {"name": "HeatPump Hero — electrical runtime kWh today",
+                                           "icon": "mdi:flash",
+                                           "min": 0, "max": 9999, "step": 0.001, "initial": 0,
+                                           "unit_of_measurement": "kWh"},
     # Cost calculation
     "hph_electricity_price_ct_per_kwh": {"name": "Cost — electricity price (ct/kWh, manual fallback)",
                                            "icon": "mdi:currency-eur",

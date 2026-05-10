@@ -44,16 +44,58 @@ def _config(hass: HomeAssistant) -> Path:
 
 # ─── Deploy ───────────────────────────────────────────────────────────────
 async def async_deploy_yaml_packages(hass: HomeAssistant) -> dict[str, Any]:
-    """Deploy dashboard, assets, efficiency package; migrate old packages."""
-    return await hass.async_add_executor_job(_deploy_sync, _config(hass))
+    """Deploy dashboard, assets, efficiency package; migrate old packages.
+
+    Reads the active config entry to optionally redirect utility_meter
+    sources to the user's external energy meters (Stage A of the
+    standby-breakdown fix). When `external_*_energy` is set, utility_meter
+    `source:` lines that point to the template-sensor wrapper
+    `sensor.hph_*_energy_active` are rewritten to point at the external
+    entity directly. This avoids accumulator gaps caused by the wrapper
+    going `unavailable` during integration reloads.
+    """
+    ext_thermal = ""
+    ext_electrical = ""
+    entries = hass.config_entries.async_entries(DOMAIN)
+    if entries:
+        cfg = {**dict(entries[0].data or {}), **dict(entries[0].options or {})}
+        ext_thermal = (cfg.get("external_thermal_energy") or "").strip()
+        ext_electrical = (cfg.get("external_electrical_energy") or "").strip()
+    return await hass.async_add_executor_job(
+        _deploy_sync, _config(hass), ext_thermal, ext_electrical
+    )
 
 
-def _deploy_sync(config_dir: Path) -> dict[str, Any]:
+def _render_efficiency(yaml_text: str, ext_thermal: str, ext_electrical: str) -> str:
+    """Substitute utility_meter sources for external energy entities.
+
+    Only touches lines indented at 4 spaces (utility_meter dict body) so
+    integration platform `source:` (2-space indent) stays untouched —
+    those still feed the runtime-gated kWh integrations used by Stage B.
+    """
+    if ext_thermal:
+        yaml_text = yaml_text.replace(
+            "    source: sensor.hph_thermal_energy_active",
+            f"    source: {ext_thermal}",
+        )
+    if ext_electrical:
+        yaml_text = yaml_text.replace(
+            "    source: sensor.hph_electrical_energy_active",
+            f"    source: {ext_electrical}",
+        )
+    return yaml_text
+
+
+def _deploy_sync(
+    config_dir: Path, ext_thermal: str = "", ext_electrical: str = ""
+) -> dict[str, Any]:
     deployed: dict[str, Any] = {
         "migrated_removed": [],
         "dashboard": [],
         "assets": [],
         "efficiency": False,
+        "ext_thermal_redirected": bool(ext_thermal),
+        "ext_electrical_redirected": bool(ext_electrical),
     }
 
     # 1. Migration: remove old hph_*.yaml automation packages.
@@ -72,7 +114,9 @@ def _deploy_sync(config_dir: Path) -> dict[str, Any]:
     # 2. Deploy hph_efficiency.yaml (utility_meter + integration sensors).
     if _DATA_EFFICIENCY.exists():
         pkg_dst.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(_DATA_EFFICIENCY, pkg_dst / _DATA_EFFICIENCY.name)
+        text = _DATA_EFFICIENCY.read_text(encoding="utf-8")
+        text = _render_efficiency(text, ext_thermal, ext_electrical)
+        (pkg_dst / _DATA_EFFICIENCY.name).write_text(text, encoding="utf-8")
         deployed["efficiency"] = True
         _ensure_packages_include(config_dir / "configuration.yaml")
 

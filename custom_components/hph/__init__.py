@@ -719,10 +719,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         export,
         models,
         programs,
+        runtime_kwh,
     )
 
     all_unsubs: list = []
-    for coord in [cycles, advisor, diagnostics, control, control_ext, programs, bridge, export, efficiency, models]:
+    for coord in [cycles, advisor, diagnostics, control, control_ext, programs, bridge, export, efficiency, models, runtime_kwh]:
         try:
             unsubs = await coord.async_setup(hass, entry)
             all_unsubs.extend(unsubs)

@@ -632,9 +632,21 @@ sensors:
   unit_of_measurement: kWh
   device_class: energy
   state_class: total_increasing
+  # Stage A redirects hph_electrical_daily directly to the external meter so
+  # the total survives HPH integration reloads. Stage B feeds runtime kWh
+  # from the runtime_kwh coordinator (sampling external meter at compressor
+  # on/off) instead of the Riemann-integrated _runtime_daily utility_meter,
+  # which loses minutes during reloads. The sensor stays unavailable until
+  # both inputs have a value, so a freshly-installed integration shows "—"
+  # in the dashboard rather than a misleading number on day 1.
+  availability: >-
+    {{ states('sensor.hph_electrical_daily')
+         not in ['unknown','unavailable','none','']
+       and states('number.hph_electrical_runtime_today_kwh')
+         not in ['unknown','unavailable','none',''] }}
   state: >-
     {% set total = states('sensor.hph_electrical_daily') | float(0) %}
-    {% set runtime = states('sensor.hph_electrical_runtime_daily') | float(0) %}
+    {% set runtime = states('number.hph_electrical_runtime_today_kwh') | float(0) %}
     {{ [total - runtime, 0] | max | round(2) }}
   _source_package: hph_efficiency.yaml
 - name: HeatPump Hero COP Monthly Heating

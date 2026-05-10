@@ -53,6 +53,8 @@ class HphNumber(NumberEntity, RestoreEntity):
         self._attr_native_min_value = float(cfg.get("min", 0))
         self._attr_native_max_value = float(cfg.get("max", 100))
         self._attr_native_step = float(cfg.get("step", 1))
+        if "unit_of_measurement" in cfg:
+            self._attr_native_unit_of_measurement = cfg["unit_of_measurement"]
         self._initial = float(cfg.get("initial", 0))
         self._attr_native_value: float = self._initial
 

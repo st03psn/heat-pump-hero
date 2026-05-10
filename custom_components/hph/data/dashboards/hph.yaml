@@ -1310,20 +1310,34 @@ views:
             secondary_info: last-changed
 
       # ── Runtime vs. standby breakdown ──
-      # COP daily/monthly/SCOP now use compressor-runtime kWh only, so
-      # 24h-of-standby doesn't pull the integral COP down to ~1.
-      # This card shows where the standby kWh actually went.
+      # Runtime values are sampled from the external meters at each
+      # compressor on/off transition (coordinators/runtime_kwh.py) so
+      # they survive integration reloads and don't depend on Riemann
+      # integration of a template-sensor wrapper. Totals come straight
+      # from the configured external meters via utility_meter daily
+      # cycle. Standby = total − runtime; shows "—" until the runtime
+      # accumulator has had a full day to fill (first-day-after-install).
       - type: markdown
         title: Runtime vs. standby (today)
         content: |
+          {% set t_run = states('number.hph_thermal_runtime_today_kwh') %}
+          {% set e_run = states('number.hph_electrical_runtime_today_kwh') %}
+          {% set t_total = states('sensor.hph_thermal_daily') %}
+          {% set e_total = states('sensor.hph_electrical_daily') %}
+          {% set e_standby = states('sensor.hph_standby_electrical_daily') %}
+          {% set bad = ['unknown','unavailable','none',''] %}
+          {% macro fmt(s) -%}
+            {%- if s in bad -%}—{%- else -%}{{ s | float(0) | round(2) }} kWh{%- endif -%}
+          {%- endmacro %}
           | | Thermal | Electrical |
           |---|---:|---:|
-          | **Compressor runtime** | {{ states('sensor.hph_thermal_runtime_daily') | float(0) | round(2) }} kWh | {{ states('sensor.hph_electrical_runtime_daily') | float(0) | round(2) }} kWh |
-          | **Standby losses** | — | {{ states('sensor.hph_standby_electrical_daily') | float(0) | round(2) }} kWh |
-          | **Total (Energy Dashboard)** | {{ states('sensor.hph_thermal_daily') | float(0) | round(2) }} kWh | {{ states('sensor.hph_electrical_daily') | float(0) | round(2) }} kWh |
+          | **Compressor runtime** | {{ fmt(t_run) }} | {{ fmt(e_run) }} |
+          | **Standby losses** | — | {{ fmt(e_standby) }} |
+          | **Total (Energy Dashboard)** | {{ fmt(t_total) }} | {{ fmt(e_total) }} |
 
-          *COP today uses runtime values only. Total values feed the HA
-          Energy Dashboard and cost calculation.*
+          *Runtime sampled at compressor transitions from the external
+          meters. Total values feed the HA Energy Dashboard and cost
+          calculation.*
 
       # ── Tariff breakdown — visual progress bars (this month) ─────────────
       # card-mod background gradient simulates a proportional progress bar.
