@@ -697,11 +697,12 @@ def main() -> int:
     print(f"{'TOTAL':<10}  {th_total:10.0f}  {el_total:10.1f}  {scop:6.2f}  (SCOP)\n")
 
     # Build monthly/yearly stat sets
-    targets: list[tuple[str, list[dict], str, bool, bool]] = [
-        (HPH_THERMAL_MONTHLY,    build_monthly_stats(totals, "thermal"),   "monthly", True,  False),
-        (HPH_ELECTRICAL_MONTHLY, build_monthly_stats(totals, "electrical"), "monthly", True, False),
-        (HPH_THERMAL_YEARLY,     build_yearly_stats(totals,  "thermal"),   "yearly",  True,  False),
-        (HPH_ELECTRICAL_YEARLY,  build_yearly_stats(totals,  "electrical"), "yearly",  True, False),
+    # (entity_id, stats, label, has_sum, has_mean, unit)
+    targets: list[tuple[str, list[dict], str, bool, bool, str]] = [
+        (HPH_THERMAL_MONTHLY,    build_monthly_stats(totals, "thermal"),    "monthly",     True,  False, "kWh"),
+        (HPH_ELECTRICAL_MONTHLY, build_monthly_stats(totals, "electrical"), "monthly",     True,  False, "kWh"),
+        (HPH_THERMAL_YEARLY,     build_yearly_stats(totals,  "thermal"),    "yearly",      True,  False, "kWh"),
+        (HPH_ELECTRICAL_YEARLY,  build_yearly_stats(totals,  "electrical"), "yearly",      True,  False, "kWh"),
     ]
 
     # -- Daily totals (--full) --------------------------------------------
@@ -712,9 +713,9 @@ def main() -> int:
         print(f"  {day_count} days with data\n")
 
         targets += [
-            (HPH_THERMAL_DAILY,    build_daily_meter_stats(daily_totals, "thermal"),   "daily",     True,  False),
-            (HPH_ELECTRICAL_DAILY, build_daily_meter_stats(daily_totals, "electrical"), "daily",    True,  False),
-            (HPH_COP_DAILY,        build_daily_cop_stats(daily_totals),                 "daily COP", False, True),
+            (HPH_THERMAL_DAILY,    build_daily_meter_stats(daily_totals, "thermal"),    "daily",     True,  False, "kWh"),
+            (HPH_ELECTRICAL_DAILY, build_daily_meter_stats(daily_totals, "electrical"), "daily",     True,  False, "kWh"),
+            (HPH_COP_DAILY,        build_daily_cop_stats(daily_totals),                 "daily COP", False, True,  "x"),
         ]
 
     # -- Hourly cumulative (--full) ----------------------------------------
@@ -731,8 +732,8 @@ def main() -> int:
         con.close()
 
         targets += [
-            (HPH_THERMAL_ENERGY_ACTIVE,    th_hourly, "hourly cumulative", True, False),
-            (HPH_ELECTRICAL_ENERGY_ACTIVE, el_hourly, "hourly cumulative", True, False),
+            (HPH_THERMAL_ENERGY_ACTIVE,    th_hourly, "hourly cumulative", True, False, "kWh"),
+            (HPH_ELECTRICAL_ENERGY_ACTIVE, el_hourly, "hourly cumulative", True, False, "kWh"),
         ]
 
     # -- Clear existing LTS for daily/hourly targets before re-import --------
@@ -751,10 +752,10 @@ def main() -> int:
 
     # -- Print + import all targets ----------------------------------------
     print("-- Import targets ---------------------------------------------------")
-    for entity_id, stats, meter_type, has_sum, has_mean in targets:
+    for entity_id, stats, meter_type, has_sum, has_mean, unit in targets:
         print(f"  {entity_id}  ({meter_type})  --> {len(stats)} entries")
         if args.confirm:
-            ok = ws_import(entity_id, stats, has_sum=has_sum, has_mean=has_mean)
+            ok = ws_import(entity_id, stats, unit=unit, has_sum=has_sum, has_mean=has_mean)
             print(f"    {'OK' if ok else 'FAILED'}")
         else:
             if stats:
