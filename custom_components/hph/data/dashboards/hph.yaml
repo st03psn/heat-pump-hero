@@ -353,8 +353,7 @@ views:
                   title: COP — last 30 days
                 graph_span: 30d
                 yaxis:
-                  - min: 0
-                    decimals: 1
+                  - decimals: 1
                 series:
                   - entity: sensor.hph_cop_daily
                     name: COP daily
@@ -956,9 +955,7 @@ views:
           title: COP trend — last 24h
         graph_span: 24h
         yaxis:
-          - min: 0
-            max: 6
-            decimals: 1
+          - decimals: 1
         series:
           - entity: sensor.hph_cop_live
             name: COP (live)
@@ -1029,9 +1026,7 @@ views:
           title: COP daily — last 30 days
         graph_span: 30d
         yaxis:
-          - min: 0
-            max: 6
-            decimals: 1
+          - decimals: 1
         series:
           - entity: sensor.hph_cop_daily
             name: Daily COP
@@ -1406,7 +1401,6 @@ views:
         graph_span: 30d
         yaxis:
           - id: energy
-            min: 0
             decimals: 1
         series:
           - entity: sensor.hph_thermal_daily
@@ -1443,9 +1437,7 @@ views:
           title: COP trend — last 30 days
         graph_span: 30d
         yaxis:
-          - min: 0
-            max: 6
-            decimals: 1
+          - decimals: 1
         series:
           - entity: sensor.hph_cop_daily
             name: COP daily
@@ -1489,7 +1481,6 @@ views:
             bar:
               columnWidth: "40%"
           yaxis:
-            min: 0
             decimalsInFloat: 2
             title:
               text: "SCOP"

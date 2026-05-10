@@ -101,10 +101,9 @@ Released as v0.9.0-rc4. User testing phase (active).
 
 ### ✅ Phase 1 — skeleton + config-flow + helpers + dashboard auto-register
 
-- `custom_components/hph/` skeleton with manifest, __init__, bootstrap,
-  services
-- Config flow (4-step wizard: vendor / model / optional external sensors /
-  confirm) and options flow
+- `custom_components/hph/` skeleton with manifest, __init__, bootstrap, services
+- Config flow (4-step wizard: vendor / model / optional external sensors / confirm)
+  and options flow
 - Programmatic helper registration via text / number / select / switch /
   datetime / button platforms — replaces all v0.8 input_*/counter YAML
 - Dashboard auto-registration via `frontend.async_register_built_in_panel`
@@ -146,39 +145,55 @@ these) plus dashboard + assets. Migration removes old automation packages.
 
 ### ⏳ Phase 4 — polish (active, post-rc4 user testing)
 
-- [ ] **Dashboard remediation** (active, see `.claude/plans/folgende-fehler-probleme-...`):
-      cycling-chart `group_by` fix, "Sammele Daten" no-data placeholders,
-      heating-limit conditional fallback, COP-trend explicit line+markers
-      — Stage 1 landed; Stages 2-7 in progress
-- [ ] **Demo mode** — `switch.hph_demo_mode` + `hph.demo_seed_history`
-      service that injects 13 months of synthetic statistics so all
-      views can be reviewed without waiting for real data
-- [x] **Vs-same-month-last-year comparison** — replaced
-      `hph_cop_change_month_pct` (vs. previous calendar month, near-useless)
-      with `hph_cop_change_yoy_pct` (vs. same calendar month last year)
-      via `statistic_during_period` over `hph_thermal_energy` /
-      `hph_electrical_energy`. Thermal + electrical change-pct sensors
-      and the dashboard Efficiency view follow suit.
-- [ ] **OptionsFlow entity-pickers** — replace `text.hph_src_*` text-box
-      configuration with HA-native entity selectors
-- [ ] **View consolidation** — collapse Mobile (View 7) into Overview
-      (View 1) responsively; reduce 8 tabs → 7
-- [ ] **View 6 (Programs) reduction** — strip status/schedule cards; keep
-      only `hph.run_legionella_now` button + markdown hint
-- [x] **Long-term export bugfix** — `hph.export_now` now honours
-      csv/json/xlsx selector, discovers all `sensor.hph_*` /
-      `binary_sensor.hph_*` / `number.hph_*` dynamically (skipping
-      source-facade mirrors), and raises `HomeAssistantError` on
-      failure instead of swallowing it.
+**Dashboard — 8 views (current inventory)**
+
+| # | View | Path | Purpose | Key charts |
+|---|------|------|---------|------------|
+| 1 | Overview | `overview` | Live status at a glance. Operating mode, COP live, KPI strip (COP today/month/SCOP/cost), energy last 7d, COP last 30d, cycling last 7d. | Energy 7d · COP 30d · Cycling 7d |
+| 2 | Schematic | `schema` | Installation schematic (SVG with live hotspots). Auto-detects variant (HK1 / +DHW / +HK2 / +buffer). | — |
+| 3 | Analysis | `analysis` | Short-term diagnosis (≤24h). Temperature 12h, compressor+flow 12h, COP trend 24h, COP heatmap (hour-of-day, 30d), COP daily 30d. | Temps 12h · Compressor 12h · COP 24h · Heatmap 30d · COP daily 30d |
+| 4 | Efficiency | `efficiency` | Long-term statistics. KPIs, YoY comparisons, energy by mode, daily energy 30d, COP trend 30d, SCOP per heating season, cumulative energy. | Energy 30d · COP 30d · SCOP seasonal |
+| 5 | Optimization | `optimization` | Actionable recommendations. Advisor summary, cycle analysis, diagnostics, heating-curve recommendation. | Cycling 7d |
+| 6 | Heat pump | `heatpump` | Operating controls + heating-curve configuration. Quick actions (holiday/force-DHW), comfort chips, Z1/Z2 curve points, advanced settings, control extensions, advisor thresholds. | — |
+| 7 | Programs | `programs` | Service programs. Legionella one-off boost + documentation. | — |
+| 8 | Configuration | `config` | Source adapter setup. Vendor/model preset, source modes, external meters, electricity costs, export settings, bridge config. | — |
+
+All charts auto-scale (no fixed y-axis min/max as of this revision).
+
+**Open tasks:**
+
+- [ ] **View consolidation (long-term → Efficiency)** — move "COP last 30 days"
+      from Overview and "COP daily last 30 days" from Analysis into Efficiency;
+      replace in Overview/Analysis with shorter-window equivalents or remove.
+      Agreed direction; not yet implemented.
+- [ ] **Demo mode** — `switch.hph_demo_mode` + `hph.demo_seed_history` service
+      injects 13 months of synthetic statistics so all views can be reviewed
+      without real data
+- [ ] **OptionsFlow entity-pickers** — replace `text.hph_src_*` text-boxes
+      with HA-native entity selectors
 - [ ] **COP-live transparency** — show `thermal_w / electrical_w` inputs
-      next to the COP value
-- [ ] GitHub Release tag (v0.9.0) so HACS can show update notifications
-- [ ] Per-platform translations `translations/{en,de,nl}.json`
-- [ ] Repairs panel for missing frontend cards (apexcharts, mushroom, …)
-- [ ] pytest-based test suite mocking HA core
-- [ ] HACS-default-repository submission
-- [ ] PV self-consumption net cost sensor (`hph_cost_today_net`)
-- [ ] Picture-elements live values card (ported from dashboard-warmepumpe/0)
+      alongside the COP value
+- [ ] **GitHub Release tag (v0.9.0)** so HACS shows update notifications
+- [ ] **Per-platform translations** `translations/{en,de,nl}.json`
+- [ ] **Repairs panel** for missing frontend cards (apexcharts, mushroom, …)
+- [ ] **pytest-based test suite** mocking HA core
+- [ ] **HACS-default-repository submission**
+- [ ] **PV self-consumption net cost sensor** (`hph_cost_today_net`)
+- [ ] **Recorder exclusions** — identify and exclude intermediate/instantaneous
+      HPH sensors from HA recorder LTS to reduce DB growth (standby power,
+      live COP, thermal power, etc.)
+- [ ] **COP by mode re-add** — per-mode COP cards (`sensor.hph_cop_monthly_heating`,
+      `_monthly_dhw`) on Efficiency view
+- [x] **Vs-same-month-last-year comparison** — `hph_cop_change_yoy_pct` replacing
+      previous-month comparison; thermal + electrical change-pct sensors added
+- [x] **Long-term export bugfix** — `hph.export_now` honours csv/json/xlsx selector,
+      discovers entities dynamically
+- [x] **Historical LTS backfill** — `scripts/backfill_from_external_meters.py`
+      imports Sensostar + Shelly history (monthly/daily/hourly) including
+      daily COP, monthly COP, and seasonal SCOP into HA LTS
+- [x] **external_energy thermal power fix** — `hph_thermal_power_active` now
+      reads Sensostar power sensor in `external_energy` mode (was falling
+      through to calculated ΔT×flow)
 
 ## v1.0 — stable
 
@@ -196,8 +211,7 @@ these) plus dashboard + assets. Migration removes old automation packages.
 
 ## Backlog (post-v1.0 ideas)
 
-User-suggested features that don't yet have a target version. Capture
-the *what* and *why*; sequence and design get decided when scheduled.
+User-suggested features that don't yet have a target version.
 
 - [ ] **Per-mode long-term statistics with multi-year overlay views.**
       What: persistent LTS for thermal and electrical kWh **and** COP
@@ -206,32 +220,17 @@ the *what* and *why*; sequence and design get decided when scheduled.
       two or more years on the same chart. Year-on-year comparisons
       already exist as point values (`hph_*_change_yoy_pct`); this is
       the visual / drill-down layer on top.
-      Why: the user wants to answer "did we use more hot-water energy
-      this year than last, and what did it cost?" without leaving HA
-      for Grafana. Same for "is this winter's heating SCOP trending up
-      or down vs the previous two winters?"
-      Existing primitives: `hph_thermal_*_split_{heating,dhw,cooling}`
-      and matching electrical splits already exist (utility_meter with
-      tariffs, switched by `coordinators/efficiency.py` from
-      `sensor.hph_operating_mode`). `hph_cop_monthly_heating`,
-      `hph_cop_yearly_heating`, `hph_cop_monthly_dhw`,
-      `hph_cop_yearly_dhw` already exist. Missing: a multi-year UI
-      (apexcharts `graph_span: 3y` with explicit per-year series
-      overlay), and a reliability story for the mode-split sum vs.
-      the external Shelly total (the two should agree to within
-      measurement error).
-      Optional input: a separate DHW heat meter. Most installs put the
-      WMZ in the heating return and so cannot directly measure DHW
-      thermal output; if a second `text.hph_src_external_dhw_thermal_energy`
-      is provided, use it directly for DHW kWh and subtract from total
-      for heating kWh — more accurate than tariff-split inference.
-      Acceptance criteria when scheduled: (1) `Σ split_{heat,dhw,cool}
-      ≈ external total` to within 2 % over a calendar month;
-      (2) dashboard view shows COP / kWh per mode for the active
-      year and an overlay of N previous years (N configurable);
-      (3) Grafana board imports the same series via InfluxDB.
-      Effort estimate: ~6–10 h once scheduled (depends on whether
-      the optional DHW WMZ branch is in scope for v1).
+      Why: answer "did we use more hot-water energy this year than last?"
+      without leaving HA for Grafana.
+      Existing primitives: `hph_thermal_*_split_{heating,dhw,cooling}`,
+      `hph_cop_monthly_heating/dhw`, `hph_cop_yearly_heating/dhw`.
+      Missing: multi-year UI and reliability story for mode-split vs.
+      external Shelly total.
+      Effort: ~6–10 h once scheduled.
+
+- [ ] **Weather-source-adapter package** — swappable weather providers
+      (DWD / OpenWeatherMap / Met.no / local weather station);
+      `sensor.hph_scop_weather_adjusted`; DWD recipe for DE users.
 
 ## Out of scope
 
