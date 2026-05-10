@@ -56,6 +56,25 @@ views:
                   - condition: state
                     entity: binary_sensor.hph_defrost_active
                     state: "on"
+              - type: template
+                icon: mdi:database-alert
+                content: >-
+                  {% set h = states('sensor.hph_source_health') %}
+                  {% if h == 'thermal_stale' %}WMZ stale
+                  {% elif h == 'electrical_stale' %}Strom stale
+                  {% elif h == 'both_stale' %}Quellen stale
+                  {% else %}{% endif %}
+                icon_color: red
+                tap_action:
+                  action: navigate
+                  navigation_path: /hph/optimization
+                conditions:
+                  - condition: state
+                    entity: sensor.hph_source_health
+                    state:
+                      - thermal_stale
+                      - electrical_stale
+                      - both_stale
 
           # ── Row B: Hero — efficiency trend headline (from former Mobile view) ─
           - type: custom:mushroom-template-card
@@ -1249,6 +1268,8 @@ views:
             name: Efficiency drift (year-over-year SCOP)
           - entity: sensor.hph_advisor_dhw_timing
             name: DHW timing (fires per day)
+          - entity: sensor.hph_advisor_source_health
+            name: External source health (heat meter / power meter)
         state_color: true
 
       # ── Analysis recommendation card ──

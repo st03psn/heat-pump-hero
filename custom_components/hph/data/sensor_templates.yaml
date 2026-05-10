@@ -257,6 +257,104 @@ sensors:
       ({{ mean | round(1) }} fires/day on average). Recent start hours: {{ hrs }}.
       {% endif %}'
   _source_package: hph_advisor.yaml
+# Source-health diagnostic — detects when an externally-configured
+# kWh / power source goes stale. Common cause: the M-Bus heat meter or
+# the Shelly drops off the WLAN. Without this advisor, the dashboard
+# silently shows frozen values for days. last_changed > 60 min on a
+# total_increasing source while the compressor is running == stale.
+- name: HeatPump Hero Source Health
+  unique_id: hph_source_health
+  icon: mdi:database-check
+  state: >-
+    {% set t_mode = states('select.hph_thermal_source') %}
+    {% set e_mode = states('select.hph_electrical_source') %}
+    {% set t_ent = states('text.hph_src_external_thermal_energy') %}
+    {% set e_ent = states('text.hph_src_external_electrical_energy') %}
+    {% set t_ext = t_mode == 'external_energy' and t_ent
+                   and t_ent not in ['unknown','unavailable','none',''] %}
+    {% set e_ext = e_mode in ['external_energy','external_power']
+                   and e_ent and e_ent not in ['unknown','unavailable','none',''] %}
+    {% set t_state = states(t_ent) if t_ext else 'n/a' %}
+    {% set e_state = states(e_ent) if e_ext else 'n/a' %}
+    {% set t_unavail = t_ext and t_state in ['unknown','unavailable','none'] %}
+    {% set e_unavail = e_ext and e_state in ['unknown','unavailable','none'] %}
+    {% set t_age = ((now() - states[t_ent].last_changed).total_seconds() / 60)
+                   if t_ext and not t_unavail else 0 %}
+    {% set e_age = ((now() - states[e_ent].last_changed).total_seconds() / 60)
+                   if e_ext and not e_unavail else 0 %}
+    {% set t_stale = t_unavail or (t_ext and t_age > 60
+                     and is_state('binary_sensor.hph_compressor_running','on')) %}
+    {% set e_stale = e_unavail or (e_ext and e_age > 60
+                     and is_state('binary_sensor.hph_compressor_running','on')) %}
+    {% if not t_ext and not e_ext %}internal
+    {% elif t_stale and e_stale %}both_stale
+    {% elif t_stale %}thermal_stale
+    {% elif e_stale %}electrical_stale
+    {% else %}ok{% endif %}
+  attributes:
+    thermal_source: >-
+      {% set t_mode = states('select.hph_thermal_source') %}
+      {% if t_mode == 'external_energy' %}{{ states('text.hph_src_external_thermal_energy') or 'unset' }}
+      {% else %}{{ t_mode }} (internal){% endif %}
+    electrical_source: >-
+      {% set e_mode = states('select.hph_electrical_source') %}
+      {% if e_mode in ['external_energy','external_power'] %}{{ states('text.hph_src_external_electrical_energy') or 'unset' }}
+      {% else %}{{ e_mode }} (internal){% endif %}
+    thermal_age_min: >-
+      {% set ent = states('text.hph_src_external_thermal_energy') %}
+      {% if states('select.hph_thermal_source') == 'external_energy' and ent
+            and states(ent) not in ['unknown','unavailable','none',''] %}
+        {{ ((now() - states[ent].last_changed).total_seconds() / 60) | round(0) }}
+      {% else %}n/a{% endif %}
+    electrical_age_min: >-
+      {% set ent = states('text.hph_src_external_electrical_energy') %}
+      {% if states('select.hph_electrical_source') in ['external_energy','external_power']
+            and ent and states(ent) not in ['unknown','unavailable','none',''] %}
+        {{ ((now() - states[ent].last_changed).total_seconds() / 60) | round(0) }}
+      {% else %}n/a{% endif %}
+  _source_package: hph_advisor.yaml
+
+- name: HeatPump Hero Advisor Source Health
+  unique_id: hph_advisor_source_health
+  icon: mdi:database-alert
+  state: >-
+    {% set h = states('sensor.hph_source_health') %}
+    {% if h == 'internal' %}info
+    {% elif h == 'ok' %}ok
+    {% elif h == 'both_stale' %}critical
+    {% else %}warn{% endif %}
+  attributes:
+    metric: "{{ states('sensor.hph_source_health') }}"
+    message: >-
+      {% set h = states('sensor.hph_source_health') %}
+      {% set t_age = state_attr('sensor.hph_source_health','thermal_age_min') %}
+      {% set e_age = state_attr('sensor.hph_source_health','electrical_age_min') %}
+      {% set t_src = state_attr('sensor.hph_source_health','thermal_source') %}
+      {% set e_src = state_attr('sensor.hph_source_health','electrical_source') %}
+      {% if h == 'internal' %}
+        Using internal calculation for both thermal and electrical — no
+        external meter configured. To use a heat meter or external power
+        sensor, switch source mode in Configuration → Source modes.
+      {% elif h == 'ok' %}
+        External sources fresh: thermal {{ t_src }} ({{ t_age }} min ago),
+        electrical {{ e_src }} ({{ e_age }} min ago).
+      {% elif h == 'both_stale' %}
+        Both external sources are stale. Thermal ({{ t_src }}) and
+        electrical ({{ e_src }}) haven't reported recent values. Check
+        WLAN / battery / M-Bus connection. Heat-pump statistics are
+        frozen until they recover.
+      {% elif h == 'thermal_stale' %}
+        Thermal source {{ t_src }} hasn't reported in {{ t_age }} min
+        (or is unavailable). COP and energy totals will be wrong until
+        the meter reconnects. Common causes: WLAN drop, low battery,
+        M-Bus gateway offline.
+      {% elif h == 'electrical_stale' %}
+        Electrical source {{ e_src }} hasn't reported in {{ e_age }} min
+        (or is unavailable). Cost and COP will diverge from reality
+        until the meter reconnects.
+      {% endif %}
+  _source_package: hph_advisor.yaml
+
 - name: HeatPump Hero Advisor Summary
   unique_id: hph_advisor_summary
   icon: mdi:lightbulb-on-outline
@@ -265,7 +363,8 @@ sensors:
     \  states('sensor.hph_advisor_dhw_runtime'),\n  states('sensor.hph_advisor_heating_limit'),\n\
     \  states('sensor.hph_advisor_diagnostics'),\n  states('sensor.hph_advisor_pressure_trend'),\n\
     \  states('sensor.hph_advisor_analysis'),\n  states('sensor.hph_advisor_pump_curve'),\n\
-    \  states('sensor.hph_advisor_efficiency_drift'),\n  states('sensor.hph_advisor_dhw_timing')\n\
+    \  states('sensor.hph_advisor_efficiency_drift'),\n  states('sensor.hph_advisor_dhw_timing'),\n\
+    \  states('sensor.hph_advisor_source_health')\n\
     ] %} {% if 'critical' in advisors %}critical {% elif 'warn' in advisors %}warn\
     \ {% else %}ok{% endif %}"
   attributes:
@@ -274,7 +373,8 @@ sensors:
       \    states('sensor.hph_advisor_dhw_runtime'),\n    states('sensor.hph_advisor_heating_limit'),\n\
       \    states('sensor.hph_advisor_diagnostics'),\n    states('sensor.hph_advisor_pressure_trend'),\n\
       \    states('sensor.hph_advisor_analysis'),\n    states('sensor.hph_advisor_pump_curve'),\n\
-      \    states('sensor.hph_advisor_efficiency_drift'),\n    states('sensor.hph_advisor_dhw_timing')]\n\
+      \    states('sensor.hph_advisor_efficiency_drift'),\n    states('sensor.hph_advisor_dhw_timing'),\n\
+      \    states('sensor.hph_advisor_source_health')]\n\
       \   | select('in', ['warn','critical']) | list | count }}"
   _source_package: hph_advisor.yaml
 - name: HPH Source Indoor Temperature

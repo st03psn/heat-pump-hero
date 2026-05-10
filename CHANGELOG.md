@@ -3,6 +3,36 @@
 All notable changes to HeatPump Hero. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Source-health advisor
+
+### Added
+
+- **`sensor.hph_source_health`** — diagnostic with state `ok` /
+  `thermal_stale` / `electrical_stale` / `both_stale` / `internal`.
+  Detects when a configured external heat meter or external electrical
+  meter goes silent. Stale = the source entity is `unavailable`, OR
+  it hasn't reported a new value in > 60 min while the compressor is
+  running (a `total_increasing` source should tick at least every cycle
+  during runtime). Attributes carry both source entity-IDs and their
+  age in minutes. The user just hit this exactly: a Sensostar M-Bus
+  heat meter went offline 6 days ago, and the dashboard kept silently
+  showing frozen values from the meter's last reading. There was no
+  signal that the data was stale.
+
+- **`sensor.hph_advisor_source_health`** — follows the standard advisor
+  schema (`ok` / `warn` / `critical` / `info`), aggregated into
+  `hph_advisor_summary`. Critical when both sources are stale, warn
+  when one is, info when running on internal calculation, ok when
+  fresh. Plain-language `attributes.message` names the failing source
+  and points at WLAN / battery / M-Bus gateway as common causes.
+
+- **Conditional source-stale chip on the Overview status bar**
+  (`mdi:database-alert`, red) — visible only when at least one source
+  is stale. Tap navigates to Optimization for full details.
+
+- **Source-health row in the Optimization → Advisor recommendations**
+  card so the verdict is also reachable from the advisor list.
+
 ## [Unreleased] — Dashboard remediation Stage 3
 
 ### Changed
