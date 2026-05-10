@@ -929,15 +929,18 @@ views:
 
       # ── Energy totals (markdown for 2-decimal display — utility_meter
       # accumulates with float precision, has no round option, and the
-      # entity-registry display_precision can't be set from YAML) ──
+      # entity-registry display_precision can't be set from YAML).
+      # HA renders Jinja first, then markdown — pipes inside {{...}}
+      # are Jinja filters, pipes outside are table separators. They
+      # don't collide and must NOT be escaped. ──
       - type: markdown
         title: Energy totals
         content: |
-          | | Thermal | Electrical |
+          |   | Thermal | Electrical |
           |---|---:|---:|
-          | **Year** | {{ states('sensor.hph_thermal_yearly') \| float(0) \| round(2) }} kWh | {{ states('sensor.hph_electrical_yearly') \| float(0) \| round(2) }} kWh |
-          | **Month** | {{ states('sensor.hph_thermal_monthly') \| float(0) \| round(2) }} kWh | {{ states('sensor.hph_electrical_monthly') \| float(0) \| round(2) }} kWh |
-          | **Today** | {{ states('sensor.hph_thermal_daily') \| float(0) \| round(2) }} kWh | {{ states('sensor.hph_electrical_daily') \| float(0) \| round(2) }} kWh |
+          | **Year** | {{ states('sensor.hph_thermal_yearly') | float(0) | round(2) }} kWh | {{ states('sensor.hph_electrical_yearly') | float(0) | round(2) }} kWh |
+          | **Month** | {{ states('sensor.hph_thermal_monthly') | float(0) | round(2) }} kWh | {{ states('sensor.hph_electrical_monthly') | float(0) | round(2) }} kWh |
+          | **Today** | {{ states('sensor.hph_thermal_daily') | float(0) | round(2) }} kWh | {{ states('sensor.hph_electrical_daily') | float(0) | round(2) }} kWh |
 
       # ── Cost overview ──
       - type: entities
@@ -963,9 +966,9 @@ views:
         content: |
           | Mode | Thermal | Electrical |
           |---|---:|---:|
-          | Heating | {{ states('sensor.hph_thermal_monthly_split_heating') \| float(0) \| round(2) }} kWh | {{ states('sensor.hph_electrical_monthly_split_heating') \| float(0) \| round(2) }} kWh |
-          | DHW | {{ states('sensor.hph_thermal_monthly_split_dhw') \| float(0) \| round(2) }} kWh | {{ states('sensor.hph_electrical_monthly_split_dhw') \| float(0) \| round(2) }} kWh |
-          | Cooling | {{ states('sensor.hph_thermal_monthly_split_cooling') \| float(0) \| round(2) }} kWh | {{ states('sensor.hph_electrical_monthly_split_cooling') \| float(0) \| round(2) }} kWh |
+          | Heating | {{ states('sensor.hph_thermal_monthly_split_heating') | float(0) | round(2) }} kWh | {{ states('sensor.hph_electrical_monthly_split_heating') | float(0) | round(2) }} kWh |
+          | DHW | {{ states('sensor.hph_thermal_monthly_split_dhw') | float(0) | round(2) }} kWh | {{ states('sensor.hph_electrical_monthly_split_dhw') | float(0) | round(2) }} kWh |
+          | Cooling | {{ states('sensor.hph_thermal_monthly_split_cooling') | float(0) | round(2) }} kWh | {{ states('sensor.hph_electrical_monthly_split_cooling') | float(0) | round(2) }} kWh |
 
       # ── 30-day bar chart ──
       - type: custom:apexcharts-card
