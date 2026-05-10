@@ -76,27 +76,55 @@ views:
                       - electrical_stale
                       - both_stale
 
-          # ── Row B: Hero — efficiency trend headline (from former Mobile view) ─
+          # ── Row B: Hero — operating mode + live COP (Panasonic-style) ─────
+          # Left border color follows active mode. Values are the headline;
+          # label is secondary. badge shows COP quality at a glance.
           - type: custom:mushroom-template-card
-            primary: HeatPump Hero
-            secondary: |-
-              {% set s = states('sensor.hph_efficiency_trend') %}
-              {% if s == 'great' %}🚀 great
-              {% elif s == 'better' %}📈 trending up
-              {% elif s == 'critical' %}⚠️ check advisor
-              {% elif s == 'worse' %}📉 trending down
-              {% else %}— stable —{% endif %}
-              · COP live {{ states('sensor.hph_cop_live') }}
-            icon: mdi:heat-pump
-            icon_color: |-
-              {% set s = states('sensor.hph_efficiency_trend') %}
-              {% if s == 'great' %}green
-              {% elif s == 'better' %}light-green
-              {% elif s == 'critical' %}red
-              {% elif s == 'worse' %}orange
-              {% else %}grey{% endif %}
+            primary: >-
+              {% set mode = states('sensor.hph_source_operating_mode') %}
+              {% if mode == 'heating' %}Heating
+              {% elif mode == 'dhw' %}Hot Water
+              {% elif mode == 'cooling' %}Cooling
+              {% else %}Standby{% endif %}
+              — COP live {{ states('sensor.hph_cop_live') | float(0) | round(2) }}
+            secondary: >-
+              Supply {{ states('sensor.hph_source_outlet_temp') }}°C → Return {{ states('sensor.hph_source_inlet_temp') }}°C
+              · Δ {{ states('sensor.hph_water_spread') | float(0) | round(1) }} K
+              · {{ states('sensor.hph_source_flow_rate') }} L/min
+              · Thermal {{ states('sensor.hph_thermal_power_active') | float(0) | round(2) }} kW
+              · Electrical {{ states('sensor.hph_electrical_power_active') | float(0) | round(2) }} kW
+            icon: >-
+              {% set mode = states('sensor.hph_source_operating_mode') %}
+              {% if mode == 'heating' %}mdi:radiator
+              {% elif mode == 'dhw' %}mdi:water-boiler
+              {% elif mode == 'cooling' %}mdi:snowflake
+              {% else %}mdi:heat-pump{% endif %}
+            icon_color: >-
+              {% set mode = states('sensor.hph_source_operating_mode') %}
+              {% if mode == 'heating' %}deep-orange
+              {% elif mode == 'dhw' %}light-blue
+              {% elif mode == 'cooling' %}cyan
+              {% else %}blue-grey{% endif %}
+            badge_icon: >-
+              {% set cop = states('sensor.hph_cop_live') | float(0) %}
+              {% if cop >= 3.5 %}mdi:star
+              {% elif cop >= 2.5 %}mdi:star-half-full
+              {% elif cop > 0 %}mdi:star-outline
+              {% else %}mdi:pause-circle-outline{% endif %}
+            badge_color: >-
+              {% set cop = states('sensor.hph_cop_live') | float(0) %}
+              {% if cop >= 3.5 %}green{% elif cop >= 2.5 %}amber{% elif cop > 0 %}red{% else %}grey{% endif %}
             multiline_secondary: true
             fill_container: true
+            card_mod:
+              style: >-
+                ha-card {
+                  border-left: 4px solid
+                    {% if is_state('sensor.hph_source_operating_mode','heating') %}#FF7043
+                    {% elif is_state('sensor.hph_source_operating_mode','dhw') %}#42A5F5
+                    {% elif is_state('sensor.hph_source_operating_mode','cooling') %}#64B5F6
+                    {% else %}#78909C{% endif %};
+                }
 
           # ── Row C: Conditional active fault (only when present) ─────────────
           - type: conditional
@@ -117,91 +145,61 @@ views:
                 action: navigate
                 navigation_path: /hph/optimization
 
-          # ── Row D: Combined KPI grid (COP + Costs) — 5 cards per row ──────
-          # Wraps responsively on narrow screens. Replaces the previously
-          # split 3-up COP grid and 2-up Cost grid (visually too stretched
-          # in panel-mode single-column layout).
+          # ── Row D: KPI strip — values as primary (large), label as secondary ─
+          # COP cards are color-coded: ≥3.5 green, 2.5-3.49 amber, <2.5 red.
           - type: grid
             columns: 5
             square: false
             cards:
               - type: custom:mushroom-template-card
-                primary: COP today
-                secondary: "{{ states('sensor.hph_cop_daily') | round(2, default=0) }}"
+                primary: "{{ states('sensor.hph_cop_daily') | float(0) | round(2) }}"
+                secondary: COP today
                 icon: mdi:calendar-today
+                icon_color: >-
+                  {% set cop = states('sensor.hph_cop_daily') | float(0) %}
+                  {% if cop >= 3.5 %}green{% elif cop >= 2.5 %}amber{% elif cop > 0 %}red{% else %}grey{% endif %}
                 fill_container: true
+                tap_action:
+                  action: navigate
+                  navigation_path: /hph/efficiency
               - type: custom:mushroom-template-card
-                primary: COP month
-                secondary: "{{ states('sensor.hph_cop_monthly') | round(2, default=0) }}"
+                primary: "{{ states('sensor.hph_cop_monthly') | float(0) | round(2) }}"
+                secondary: COP month
                 icon: mdi:calendar-month
+                icon_color: >-
+                  {% set cop = states('sensor.hph_cop_monthly') | float(0) %}
+                  {% if cop >= 3.5 %}green{% elif cop >= 2.5 %}amber{% elif cop > 0 %}red{% else %}grey{% endif %}
                 fill_container: true
+                tap_action:
+                  action: navigate
+                  navigation_path: /hph/efficiency
               - type: custom:mushroom-template-card
-                primary: SCOP
-                secondary: "{{ states('sensor.hph_scop') | round(2, default=0) }}"
+                primary: "{{ states('sensor.hph_scop') | float(0) | round(2) }}"
+                secondary: SCOP season
                 icon: mdi:calendar-star
+                icon_color: >-
+                  {% set cop = states('sensor.hph_scop') | float(0) %}
+                  {% if cop >= 3.5 %}green{% elif cop >= 2.5 %}amber{% elif cop > 0 %}red{% else %}grey{% endif %}
                 fill_container: true
+                tap_action:
+                  action: navigate
+                  navigation_path: /hph/efficiency
               - type: custom:mushroom-template-card
-                primary: Cost today
-                secondary: "{{ states('sensor.hph_cost_today') | float(0) | round(2) }} €"
+                primary: "{{ states('sensor.hph_cost_today') | float(0) | round(2) }} €"
+                secondary: Cost today
                 icon: mdi:currency-eur
                 icon_color: >-
                   {% set v = states('sensor.hph_cost_today') | float(0) %}
                   {% if v > 5 %}red{% elif v > 2 %}orange{% else %}green{% endif %}
                 fill_container: true
               - type: custom:mushroom-template-card
-                primary: Cost month
-                secondary: "{{ states('sensor.hph_cost_monthly') | float(0) | round(2) }} €"
+                primary: "{{ states('sensor.hph_cost_monthly') | float(0) | round(2) }} €"
+                secondary: Cost month
                 icon: mdi:currency-eur
                 fill_container: true
                 tap_action:
                   action: navigate
                   navigation_path: /hph/efficiency
-
-          # ── Row F: Schema & Advisor ──────────────────────────────────────────
-          - type: horizontal-stack
-            cards:
-              - type: custom:mushroom-template-card
-                primary: >-
-                  {{ states('sensor.hph_schema_variant_active') | replace('_',' ') | upper }}
-                secondary: >-
-                  Supply {{ states('sensor.hph_source_outlet_temp') }}°C
-                  · Return {{ states('sensor.hph_source_inlet_temp') }}°C
-                  · ΔT {{ states('sensor.hph_water_spread') | float(0) | round(1) }} K
-                  · {{ states('sensor.hph_source_flow_rate') }} L/min
-                icon: mdi:graph-outline
-                icon_color: blue
-                multiline_secondary: true
-                tap_action:
-                  action: navigate
-                  navigation_path: /hph/schema
-
-              - type: custom:mushroom-template-card
-                primary: >-
-                  Advisor: {{ states('sensor.hph_advisor_summary') | title }}
-                secondary: >-
-                  {% set advisors = [
-                    'sensor.hph_advisor_short_cycle',
-                    'sensor.hph_advisor_spread',
-                    'sensor.hph_advisor_heat_curve',
-                    'sensor.hph_advisor_heating_limit',
-                    'sensor.hph_advisor_dhw_runtime',
-                  ] %}
-                  {% set ns = namespace(crits=0, warns=0) %}
-                  {% for a in advisors %}
-                    {% if states(a) == 'critical' %}{% set ns.crits = ns.crits + 1 %}{% endif %}
-                    {% if states(a) == 'warn' %}{% set ns.warns = ns.warns + 1 %}{% endif %}
-                  {% endfor %}
-                  {% if ns.crits > 0 %}{{ ns.crits }} critical — open Optimization
-                  {% elif ns.warns > 0 %}{{ ns.warns }} warning(s) — open Optimization
-                  {% else %}All advisors OK{% endif %}
-                icon: mdi:lightbulb-on
-                icon_color: >-
-                  {% set s = states('sensor.hph_advisor_summary') %}
-                  {% if s == 'critical' %}red{% elif s == 'warn' %}yellow{% else %}green{% endif %}
-                multiline_secondary: true
-                tap_action:
-                  action: navigate
-                  navigation_path: /hph/optimization
 
           # ── Row G: Conditional Screed running (only during program) ─────────
           - type: conditional
@@ -221,103 +219,178 @@ views:
                 action: navigate
                 navigation_path: /hph/programs
 
-          # ── Row H: 7-day energy chart ────────────────────────────────────────
-          - type: custom:apexcharts-card
-            header:
-              show: true
-              title: Energy — last 7 days (kWh)
-            graph_span: 7d
-            span:
-              end: day
-            series:
-              - entity: sensor.hph_thermal_daily
-                name: Thermal kWh
-                type: column
-                color: "#ff7043"
-                statistics:
-                  type: change
-                  period: day
-                  align: start
-              - entity: sensor.hph_electrical_daily
-                name: Electrical kWh
-                type: column
-                color: "#42a5f5"
-                statistics:
-                  type: change
-                  period: day
-                  align: start
-            apex_config:
-              chart:
-                height: 260
-              yaxis:
-                title:
-                  text: "kWh"
-              noData:
-                text: "Sammele Daten — Werte erscheinen nach dem ersten vollen Tag."
+          # ── 2-col: Live Status Panel (left) + Energy 7d chart (right) ───────
+          # Service-Cloud pattern: current value on the left, trend on the right.
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              # Left 1/2: Compact live status panel
+              - type: vertical-stack
+                cards:
+                  - type: custom:mushroom-template-card
+                    primary: >-
+                      {{ states('sensor.hph_source_outlet_temp') }}°C → {{ states('sensor.hph_source_inlet_temp') }}°C
+                    secondary: Supply / Return
+                    icon: mdi:water-thermometer
+                    icon_color: orange
+                    fill_container: true
+                  - type: custom:mushroom-template-card
+                    primary: >-
+                      Δ {{ states('sensor.hph_water_spread') | float(0) | round(1) }} K · {{ states('sensor.hph_source_flow_rate') }} L/min
+                    secondary: Spread · Flow
+                    icon: mdi:waves-arrow-right
+                    icon_color: blue
+                    fill_container: true
+                  - type: custom:mushroom-template-card
+                    primary: "{{ states('sensor.hph_source_outdoor_temp') }}°C"
+                    secondary: Outdoor temperature
+                    icon: mdi:thermometer
+                    icon_color: yellow
+                    fill_container: true
+                  - type: custom:mushroom-template-card
+                    primary: "{{ states('sensor.hph_source_compressor_freq') }} Hz"
+                    secondary: Compressor frequency
+                    icon: mdi:sine-wave
+                    icon_color: >-
+                      {{ 'green' if is_state('binary_sensor.hph_compressor_running','on') else 'grey' }}
+                    fill_container: true
+                  - type: custom:mushroom-template-card
+                    primary: >-
+                      {% set s = states('sensor.hph_advisor_summary') %}
+                      {% if s == 'critical' %}Action required
+                      {% elif s == 'warn' %}Warnings present
+                      {% else %}All clear{% endif %}
+                    secondary: Advisor
+                    icon: mdi:lightbulb-on
+                    icon_color: >-
+                      {% set s = states('sensor.hph_advisor_summary') %}
+                      {% if s == 'critical' %}red{% elif s == 'warn' %}amber{% else %}green{% endif %}
+                    fill_container: true
+                    tap_action:
+                      action: navigate
+                      navigation_path: /hph/optimization
+                  - type: custom:mushroom-template-card
+                    primary: >-
+                      {{ states('sensor.hph_schema_variant_active') | replace('_',' ') | upper }}
+                    secondary: Installation variant
+                    icon: mdi:graph-outline
+                    icon_color: blue
+                    fill_container: true
+                    tap_action:
+                      action: navigate
+                      navigation_path: /hph/schema
 
-          # ── Row E: COP per month (13 months) — ported from dashboard-warmepumpe ─
-          - type: custom:apexcharts-card
-            header:
-              show: true
-              title: COP — last 13 months
-            graph_span: 13month
-            span:
-              end: month
-            series:
-              - entity: sensor.hph_cop_monthly
-                name: COP month
-                type: column
-                color: "#66bb6a"
-                statistics:
-                  type: mean
-                  period: month
-                  align: start
-            apex_config:
-              chart:
-                height: 260
-              yaxis:
-                min: 0
-                max: 7
-                decimalsInFloat: 2
-                title:
-                  text: "COP"
-              noData:
-                text: "Sammele Daten — monatliche COP-Werte erscheinen nach dem ersten vollen Monat."
+              # Right 1/2: Energy 7d chart
+              - type: custom:apexcharts-card
+                header:
+                  show: true
+                  title: Energy — last 7 days (kWh)
+                graph_span: 7d
+                span:
+                  end: day
+                series:
+                  - entity: sensor.hph_thermal_daily
+                    name: Thermal kWh
+                    type: column
+                    color: "#ff7043"
+                    statistics:
+                      type: change
+                      period: day
+                      align: start
+                  - entity: sensor.hph_electrical_daily
+                    name: Electrical kWh
+                    type: column
+                    color: "#42a5f5"
+                    statistics:
+                      type: change
+                      period: day
+                      align: start
+                apex_config:
+                  chart:
+                    height: 380
+                    background: transparent
+                    foreColor: var(--primary-text-color)
+                  grid:
+                    borderColor: var(--divider-color)
+                  yaxis:
+                    title:
+                      text: "kWh"
+                  noData:
+                    text: "Sammele Daten — Werte erscheinen nach dem ersten vollen Tag."
 
-          # ── Row F: Cycling last 7 days ───────────────────────────────────────
+          # ── 2-col: COP 30d trend (left) + Cycling 7d (right) ─────────────────
           # number.* entities don't produce HA long-term statistics (no
           # state_class on the number domain). Use group_by/func: max over
           # raw history instead — counters reset at 00:00, so the daily
           # peak == the day's total.
-          - type: custom:apexcharts-card
-            header:
-              show: true
-              title: Cycling — last 7 days
-            graph_span: 7d
-            span:
-              end: day
-            series:
-              - entity: number.hph_cycles_today
-                name: Cycles/day
-                type: column
-                color: "#66bb6a"
-                group_by:
-                  func: max
-                  duration: 1d
-                  start_with_last: false
-              - entity: number.hph_short_cycles_today
-                name: Short cycles/day
-                type: column
-                color: "#d62728"
-                group_by:
-                  func: max
-                  duration: 1d
-                  start_with_last: false
-            apex_config:
-              chart:
-                height: 260
-              noData:
-                text: "Sammele Daten — Tageswerte erscheinen, sobald der Kompressor läuft."
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: custom:apexcharts-card
+                header:
+                  show: true
+                  title: COP — last 30 days
+                graph_span: 30d
+                yaxis:
+                  - min: 0
+                    max: 6
+                    decimals: 1
+                series:
+                  - entity: sensor.hph_cop_daily
+                    name: COP daily
+                    type: line
+                    color: "#66bb6a"
+                    stroke_width: 2
+                    statistics:
+                      type: state
+                      period: day
+                apex_config:
+                  chart:
+                    height: 260
+                    background: transparent
+                    foreColor: var(--primary-text-color)
+                  grid:
+                    borderColor: var(--divider-color)
+                  markers:
+                    size: 4
+                  noData:
+                    text: "Sammele Daten — erscheint nach mehreren Betriebstagen."
+
+              - type: custom:apexcharts-card
+                header:
+                  show: true
+                  title: Cycling — last 7 days
+                graph_span: 7d
+                span:
+                  end: day
+                series:
+                  - entity: number.hph_cycles_today
+                    name: Cycles/day
+                    type: column
+                    color: "#66bb6a"
+                    group_by:
+                      func: max
+                      duration: 1d
+                      start_with_last: false
+                  - entity: number.hph_short_cycles_today
+                    name: Short cycles/day
+                    type: column
+                    color: "#d62728"
+                    group_by:
+                      func: max
+                      duration: 1d
+                      start_with_last: false
+                apex_config:
+                  chart:
+                    height: 260
+                    background: transparent
+                    foreColor: var(--primary-text-color)
+                  grid:
+                    borderColor: var(--divider-color)
+                  noData:
+                    text: "Sammele Daten — Tageswerte erscheinen, sobald der Kompressor läuft."
 
   # ════════════════════════════════════════════════════════════════════════
   # 2) SCHEMATIC — auto-detected variant + Bubble-Card SVG with hotspots
@@ -701,57 +774,160 @@ views:
     path: analysis
     icon: mdi:chart-multiline
     cards:
-      - type: custom:apexcharts-card
-        header:
-          show: true
-          title: Temperatures & compressor
-          show_states: true
-        graph_span: 12h
-        span:
-          end: minute
-        yaxis:
-          - id: temp
-            decimals: 1
-            apex_config:
-              title: { text: "°C" }
-          - id: hz
-            opposite: true
-            decimals: 0
-            apex_config:
-              title: { text: "Hz / rpm / L-min" }
-        apex_config:
-          chart:
-            height: 360
-        series:
-          - entity: sensor.hph_source_outdoor_temp
-            name: Outdoor
-            yaxis_id: temp
-            color: "#e0a800"
-          - entity: sensor.hph_source_inlet_temp
-            name: Return
-            yaxis_id: temp
-            color: "#7ec1ff"
-          - entity: sensor.hph_source_outlet_temp
-            name: Supply
-            yaxis_id: temp
-            color: "#d62728"
-          - entity: sensor.hph_source_discharge_temp
-            name: Discharge
-            yaxis_id: temp
-            color: "#2ca02c"
-          - entity: sensor.hph_source_compressor_freq
-            name: Compressor frequency
-            yaxis_id: hz
-            color: "#bcbd22"
-          - entity: sensor.hph_source_flow_rate
-            name: Water flow
-            yaxis_id: hz
-            color: "#7fb3d5"
+      # ── Service-Cloud layout: status panel (left) + matching chart (right) ─
+      # Pattern: the number on the left is the same data point as the rightmost
+      # value in the chart. Instant cross-reference without any mental leap.
 
+      # Row 1: Temperature status panel (left) + Temperatures chart (right)
+      - type: grid
+        columns: 2
+        square: false
+        cards:
+          - type: vertical-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: "{{ states('sensor.hph_source_outlet_temp') }}°C"
+                secondary: Supply (Vorlauf)
+                icon: mdi:water-thermometer
+                icon_color: red
+                fill_container: true
+              - type: custom:mushroom-template-card
+                primary: "{{ states('sensor.hph_source_inlet_temp') }}°C"
+                secondary: Return (Rücklauf)
+                icon: mdi:water-thermometer-outline
+                icon_color: blue
+                fill_container: true
+              - type: custom:mushroom-template-card
+                primary: "{{ states('sensor.hph_source_outdoor_temp') }}°C"
+                secondary: Outdoor
+                icon: mdi:thermometer
+                icon_color: yellow
+                fill_container: true
+              - type: custom:mushroom-template-card
+                primary: "{{ states('sensor.hph_source_discharge_temp') }}°C"
+                secondary: Discharge (Heißgas)
+                icon: mdi:thermometer-high
+                icon_color: deep-orange
+                fill_container: true
+
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: Temperatures — last 12h
+              show_states: true
+            graph_span: 12h
+            span:
+              end: minute
+            yaxis:
+              - id: temp
+                decimals: 1
+                apex_config:
+                  title: { text: "°C" }
+            apex_config:
+              chart:
+                height: 320
+                background: transparent
+                foreColor: var(--primary-text-color)
+              grid:
+                borderColor: var(--divider-color)
+            series:
+              - entity: sensor.hph_source_outdoor_temp
+                name: Outdoor
+                yaxis_id: temp
+                color: "#e0a800"
+              - entity: sensor.hph_source_inlet_temp
+                name: Return
+                yaxis_id: temp
+                color: "#7ec1ff"
+              - entity: sensor.hph_source_outlet_temp
+                name: Supply
+                yaxis_id: temp
+                color: "#d62728"
+              - entity: sensor.hph_source_discharge_temp
+                name: Discharge
+                yaxis_id: temp
+                color: "#2ca02c"
+
+      # Row 2: Power/COP status panel (left) + Compressor/flow chart (right)
+      - type: grid
+        columns: 2
+        square: false
+        cards:
+          - type: vertical-stack
+            cards:
+              - type: custom:mushroom-template-card
+                primary: "{{ states('sensor.hph_thermal_power_active') | float(0) | round(2) }} kW"
+                secondary: Thermal power
+                icon: mdi:fire
+                icon_color: red
+                fill_container: true
+              - type: custom:mushroom-template-card
+                primary: "{{ states('sensor.hph_electrical_power_active') | float(0) | round(2) }} kW"
+                secondary: Electrical power
+                icon: mdi:flash
+                icon_color: yellow
+                fill_container: true
+              - type: custom:mushroom-template-card
+                primary: "{{ states('sensor.hph_cop_live') | float(0) | round(2) }}"
+                secondary: COP live
+                icon: mdi:speedometer
+                icon_color: >-
+                  {% set cop = states('sensor.hph_cop_live') | float(0) %}
+                  {% if cop >= 3.5 %}green{% elif cop >= 2.5 %}amber{% elif cop > 0 %}red{% else %}grey{% endif %}
+                fill_container: true
+              - type: custom:mushroom-template-card
+                primary: "{{ states('sensor.hph_source_compressor_freq') }} Hz"
+                secondary: Compressor frequency
+                icon: mdi:sine-wave
+                icon_color: >-
+                  {{ 'green' if is_state('binary_sensor.hph_compressor_running','on') else 'grey' }}
+                fill_container: true
+              - type: custom:mushroom-template-card
+                primary: "{{ states('sensor.hph_source_flow_rate') }} L/min"
+                secondary: Water flow
+                icon: mdi:waves-arrow-right
+                icon_color: blue
+                fill_container: true
+
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: Compressor & flow — last 12h
+            graph_span: 12h
+            span:
+              end: minute
+            yaxis:
+              - id: hz
+                decimals: 0
+                apex_config:
+                  title: { text: "Hz" }
+              - id: lpm
+                opposite: true
+                decimals: 1
+                apex_config:
+                  title: { text: "L/min" }
+            apex_config:
+              chart:
+                height: 320
+                background: transparent
+                foreColor: var(--primary-text-color)
+              grid:
+                borderColor: var(--divider-color)
+            series:
+              - entity: sensor.hph_source_compressor_freq
+                name: Compressor frequency
+                yaxis_id: hz
+                color: "#bcbd22"
+              - entity: sensor.hph_source_flow_rate
+                name: Water flow
+                yaxis_id: lpm
+                color: "#7fb3d5"
+
+      # Row 3: COP trend (24h) full width
       - type: custom:apexcharts-card
         header:
           show: true
-          title: COP trend
+          title: COP trend — last 24h
         graph_span: 24h
         yaxis:
           - min: 0
@@ -766,7 +942,11 @@ views:
             extend_to: now
         apex_config:
           chart:
-            height: 280
+            height: 260
+            background: transparent
+            foreColor: var(--primary-text-color)
+          grid:
+            borderColor: var(--divider-color)
           markers:
             size: 3
           stroke:
@@ -787,6 +967,10 @@ views:
         apex_config:
           chart:
             height: 320
+            background: transparent
+            foreColor: var(--primary-text-color)
+          grid:
+            borderColor: var(--divider-color)
           dataLabels:
             enabled: false
           plotOptions:
@@ -809,7 +993,7 @@ views:
               func: avg
               duration: 1h
 
-      # ── Scatter: COP vs daily energy (correlation lens) ──
+      # ── COP daily — scatter/marker view (30 days) ────────────────────────
       # Plots daily COP over time; "extend_to: false" + numeric xaxis
       # caused an apexcharts-card config error. Simplified to a daily
       # COP timeline with markers.
@@ -834,6 +1018,10 @@ views:
         apex_config:
           chart:
             height: 280
+            background: transparent
+            foreColor: var(--primary-text-color)
+          grid:
+            borderColor: var(--divider-color)
           markers:
             size: 6
           noData:
@@ -848,16 +1036,22 @@ views:
     cards:
       # ── Headline trend card ──
       - type: custom:mushroom-template-card
-        primary: Efficiency trend
+        primary: >-
+          {% set s = states('sensor.hph_efficiency_trend') %}
+          {% if s == 'great' %}🚀 Excellent efficiency
+          {% elif s == 'better' %}📈 Trending up
+          {% elif s == 'critical' %}⚠️ Check advisor
+          {% elif s == 'worse' %}📉 Trending down
+          {% else %}── Stable{% endif %}
         secondary: "{{ state_attr('sensor.hph_efficiency_trend','headline') }}"
-        icon: |-
+        icon: >-
           {% set s = states('sensor.hph_efficiency_trend') %}
           {% if s == 'great' %}mdi:rocket-launch
           {% elif s == 'better' %}mdi:trending-up
           {% elif s == 'critical' %}mdi:alert
           {% elif s == 'worse' %}mdi:trending-down
           {% else %}mdi:trending-neutral{% endif %}
-        icon_color: |-
+        icon_color: >-
           {% set s = states('sensor.hph_efficiency_trend') %}
           {% if s == 'great' %}green
           {% elif s == 'better' %}light-green
@@ -866,6 +1060,60 @@ views:
           {% else %}grey{% endif %}
         multiline_secondary: true
         fill_container: true
+        card_mod:
+          style: >-
+            ha-card {
+              border-left: 4px solid
+                {% set s = states('sensor.hph_efficiency_trend') %}
+                {% if s == 'great' %}#66BB6A
+                {% elif s == 'better' %}#AED581
+                {% elif s == 'critical' %}#EF5350
+                {% elif s == 'worse' %}#FFA726
+                {% else %}#78909C{% endif %};
+            }
+
+      # ── KPI strip — same layout as Overview for cross-view consistency ──
+      - type: grid
+        columns: 5
+        square: false
+        cards:
+          - type: custom:mushroom-template-card
+            primary: "{{ states('sensor.hph_cop_daily') | float(0) | round(2) }}"
+            secondary: COP today
+            icon: mdi:calendar-today
+            icon_color: >-
+              {% set cop = states('sensor.hph_cop_daily') | float(0) %}
+              {% if cop >= 3.5 %}green{% elif cop >= 2.5 %}amber{% elif cop > 0 %}red{% else %}grey{% endif %}
+            fill_container: true
+          - type: custom:mushroom-template-card
+            primary: "{{ states('sensor.hph_cop_monthly') | float(0) | round(2) }}"
+            secondary: COP month
+            icon: mdi:calendar-month
+            icon_color: >-
+              {% set cop = states('sensor.hph_cop_monthly') | float(0) %}
+              {% if cop >= 3.5 %}green{% elif cop >= 2.5 %}amber{% elif cop > 0 %}red{% else %}grey{% endif %}
+            fill_container: true
+          - type: custom:mushroom-template-card
+            primary: "{{ states('sensor.hph_scop') | float(0) | round(2) }}"
+            secondary: SCOP season
+            icon: mdi:calendar-star
+            icon_color: >-
+              {% set cop = states('sensor.hph_scop') | float(0) %}
+              {% if cop >= 3.5 %}green{% elif cop >= 2.5 %}amber{% elif cop > 0 %}red{% else %}grey{% endif %}
+            fill_container: true
+          - type: custom:mushroom-template-card
+            primary: "{{ states('sensor.hph_cost_today') | float(0) | round(2) }} €"
+            secondary: Cost today
+            icon: mdi:currency-eur
+            icon_color: >-
+              {% set v = states('sensor.hph_cost_today') | float(0) %}
+              {% if v > 5 %}red{% elif v > 2 %}orange{% else %}green{% endif %}
+            fill_container: true
+          - type: custom:mushroom-template-card
+            primary: "{{ states('sensor.hph_cost_monthly') | float(0) | round(2) }} €"
+            secondary: Cost month
+            icon: mdi:currency-eur
+            fill_container: true
 
       # ── Side-by-side comparison cards (month / year) ──
       - type: horizontal-stack
@@ -1045,15 +1293,64 @@ views:
           *COP today uses runtime values only. Total values feed the HA
           Energy Dashboard and cost calculation.*
 
-      # ── Energy split by mode (this month) ──
-      - type: markdown
-        title: Energy by mode — this month
-        content: |
-          | Mode | Thermal | Electrical |
-          |---|---:|---:|
-          | Heating | {{ states('sensor.hph_thermal_monthly_split_heating') | float(0) | round(2) }} kWh | {{ states('sensor.hph_electrical_monthly_split_heating') | float(0) | round(2) }} kWh |
-          | DHW | {{ states('sensor.hph_thermal_monthly_split_dhw') | float(0) | round(2) }} kWh | {{ states('sensor.hph_electrical_monthly_split_dhw') | float(0) | round(2) }} kWh |
-          | Cooling | {{ states('sensor.hph_thermal_monthly_split_cooling') | float(0) | round(2) }} kWh | {{ states('sensor.hph_electrical_monthly_split_cooling') | float(0) | round(2) }} kWh |
+      # ── Tariff breakdown — visual progress bars (this month) ─────────────
+      # card-mod background gradient simulates a proportional progress bar.
+      # The thermal total is used as denominator (what was produced).
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: "**Energy by mode — this month**"
+          - type: custom:mushroom-template-card
+            primary: >-
+              Heating — {{ states('sensor.hph_thermal_monthly_split_heating') | float(0) | round(1) }} kWh thermal / {{ states('sensor.hph_electrical_monthly_split_heating') | float(0) | round(1) }} kWh electrical
+            secondary: >-
+              {% set tot = states('sensor.hph_thermal_monthly') | float(1) %}
+              {% set h = states('sensor.hph_thermal_monthly_split_heating') | float(0) %}
+              {{ (h / tot * 100) | round(0) }}% of thermal energy
+            icon: mdi:radiator
+            icon_color: deep-orange
+            fill_container: true
+            card_mod:
+              style: >-
+                ha-card {
+                  background: linear-gradient(to right,
+                    rgba(255,112,67,0.18) {{ [(states('sensor.hph_thermal_monthly_split_heating') | float(0) / [states('sensor.hph_thermal_monthly') | float(1), 0.001] | max * 100) | round(0), 100] | min }}%,
+                    transparent {{ [(states('sensor.hph_thermal_monthly_split_heating') | float(0) / [states('sensor.hph_thermal_monthly') | float(1), 0.001] | max * 100) | round(0), 100] | min }}%);
+                }
+          - type: custom:mushroom-template-card
+            primary: >-
+              Hot Water — {{ states('sensor.hph_thermal_monthly_split_dhw') | float(0) | round(1) }} kWh thermal / {{ states('sensor.hph_electrical_monthly_split_dhw') | float(0) | round(1) }} kWh electrical
+            secondary: >-
+              {% set tot = states('sensor.hph_thermal_monthly') | float(1) %}
+              {% set d = states('sensor.hph_thermal_monthly_split_dhw') | float(0) %}
+              {{ (d / tot * 100) | round(0) }}% of thermal energy
+            icon: mdi:water-boiler
+            icon_color: light-blue
+            fill_container: true
+            card_mod:
+              style: >-
+                ha-card {
+                  background: linear-gradient(to right,
+                    rgba(66,165,245,0.18) {{ [(states('sensor.hph_thermal_monthly_split_dhw') | float(0) / [states('sensor.hph_thermal_monthly') | float(1), 0.001] | max * 100) | round(0), 100] | min }}%,
+                    transparent {{ [(states('sensor.hph_thermal_monthly_split_dhw') | float(0) / [states('sensor.hph_thermal_monthly') | float(1), 0.001] | max * 100) | round(0), 100] | min }}%);
+                }
+          - type: custom:mushroom-template-card
+            primary: >-
+              Cooling — {{ states('sensor.hph_thermal_monthly_split_cooling') | float(0) | round(1) }} kWh thermal / {{ states('sensor.hph_electrical_monthly_split_cooling') | float(0) | round(1) }} kWh electrical
+            secondary: >-
+              {% set tot = states('sensor.hph_thermal_monthly') | float(1) %}
+              {% set c = states('sensor.hph_thermal_monthly_split_cooling') | float(0) %}
+              {{ (c / tot * 100) | round(0) }}% of thermal energy
+            icon: mdi:snowflake
+            icon_color: cyan
+            fill_container: true
+            card_mod:
+              style: >-
+                ha-card {
+                  background: linear-gradient(to right,
+                    rgba(100,181,246,0.18) {{ [(states('sensor.hph_thermal_monthly_split_cooling') | float(0) / [states('sensor.hph_thermal_monthly') | float(1), 0.001] | max * 100) | round(0), 100] | min }}%,
+                    transparent {{ [(states('sensor.hph_thermal_monthly_split_cooling') | float(0) / [states('sensor.hph_thermal_monthly') | float(1), 0.001] | max * 100) | round(0), 100] | min }}%);
+                }
 
       # ── 30-day bar chart ──
       - type: custom:apexcharts-card
