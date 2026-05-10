@@ -363,7 +363,7 @@ views:
                     color: "#66bb6a"
                     stroke_width: 2
                     statistics:
-                      type: state
+                      type: mean
                       period: day
                 apex_config:
                   chart:
