@@ -3,364 +3,135 @@
 All notable changes to HeatPump Hero. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] — Heat-pump view + recompute trigger
-
-### Added
-
-- **New "Heat pump" dashboard view** consolidating all direct vendor
-  controls into one place: operation hero + quick-actions, comfort
-  chips, DHW grid (conditional on hph_has_native_dhw), heating curve
-  Z1 (and Z2 conditional on hph_has_hk2), and advanced settings (with
-  per-section conditional rendering for cooling / zones / bivalent).
-  Tab order: Overview / Schematic / Analysis / Efficiency /
-  Optimization / **Heat pump** / Programs / Configuration. Native
-  controls are no longer mixed into Optimization (which now stays
-  focused on HPH advisors + own control strategies).
-
-- **`hph.recompute` service** — forces immediate re-evaluation of
-  the derived sensors (energy_active / power_active / COP live /
-  daily / monthly / SCOP / source_health / efficiency_trend) even
-  when no upstream state has changed. Useful after swapping a
-  source-helper entity-ID when the heat pump is currently off.
-
-- **Auto-recompute on source helper change**. The efficiency
-  coordinator now listens to state changes on the eleven source
-  selectors and helpers (text.hph_src_*, select.hph_*_source) and
-  fires `hph.recompute` automatically. Net effect: when a user
-  changes the configured external thermal-energy meter, the COP
-  numbers refresh within seconds, not "next time the pump runs".
-
-## [Unreleased] — Setup-flow polish + Overview compaction
+## [0.9.0-rc5] — 2026-05-10
 
 ### Fixed
 
-- **OptionsFlow showed "Entity is neither a valid entity ID nor a valid
-  UUID" errors** for blank optional fields (electricity price, forecast,
-  PV surplus, etc.). Root cause: `EntitySelector` validates the
-  `default=` argument against existing entities, and an empty-string
-  default is treated as invalid input. Fixed by building the schema
-  dynamically — only attaching `default=…` when the user has a
-  non-empty stored value.
+- **`binary_sensor.hph_compressor_running` did not exist**. Every
+  `is_state('binary_sensor.hph_compressor_running','on')` check returned
+  False, silently breaking cycle counting, CCC/SoftStart, the spread gate,
+  and DHW fire tracking. Promoted to a real `binary_sensor` with
+  `device_class: running`.
+
+- **COP daily / monthly / SCOP too low (e.g. 1.36 with COP live = 8)**.
+  `_active` energy integrals included ~1 kWh/day standby load. Fixed with
+  runtime-gated integrals (new `_runtime` sensors + utility_meters): COP
+  denominators now use compressor-on-only energy. `_active` totals remain
+  for billing / cost calculations.
+
+- **Dashboard charts stuck on "Loading…"**: Added `apex_config.noData`
+  text to all ApexCharts cards so a fresh install shows a "Sammele Daten"
+  message instead of an indefinite spinner.
+
+- **Cycling 7-day chart never populated**: `number.*` entities have no
+  LTS. Replaced statistics block with `group_by: { func: max, duration: 1d }`
+  over raw history (daily peak = day total after midnight reset).
+
+- **"Heating limit — Entität nicht gefunden"**: Wrapped in conditional
+  pair — entities-card shows when the sensor is ready, markdown card
+  explains what to expect until then.
+
+- **Energy totals showed 5 decimal places**: Replaced entities-cards
+  on Efficiency view with markdown tables that apply `| round(2)`.
+
+- **OptionsFlow blank entity fields caused validation errors**: EntitySelector
+  rejects empty-string defaults. Schema is now built dynamically — `default=`
+  only attached when the user has a stored value.
+
+- **Entity-ID naming drift**: Six `platform:statistics` sensors were slugified
+  to `sensor.heatpump_hero_*` instead of `sensor.hph_*`. Renamed in the
+  deployed package; existing installs auto-migrated via `_migrate_entity_ids()`
+  in `__init__.py`.
+
+- **Double electricity-price helper**: Removed duplicate `text.hph_ctrl_price_entity`;
+  price-DHW coordinator now reads from the unified
+  `text.hph_electricity_price_entity`.
+
+- **COP-by-mode card removed**: The per-mode COP split used `_active` energy
+  (standby-poisoned by tariff routing) and produced misleading values. Removed
+  from the dashboard; a clean implementation requires mode-gated energy per
+  mode, deferred to v1.0.
+
+### Added
+
+- **`sensor.hph_thermal_power_runtime` / `_electrical_power_runtime`** —
+  power sensors gated on `binary_sensor.hph_compressor_running`. Six new
+  `utility_meter` entries (`_runtime_daily/monthly/yearly`) accumulate
+  only compressor-on energy; `hph_standby_electrical_daily` = total − runtime.
+
+- **Mode-gated power sensors** (`sensor.hph_electrical_power_heating_runtime`,
+  `_dhw_runtime`, `_cooling_runtime`): gated on both compressor running and
+  the current operating mode. Six corresponding utility_meters
+  (`_heating/dhw/cooling_runtime_monthly/yearly`) enable per-mode runtime
+  energy accounting. Foundation for future per-mode SCOP.
+
+- **`sensor.hph_source_health`** + **`sensor.hph_advisor_source_health`** —
+  detects when a configured external meter goes silent (unavailable or no
+  new value while compressor runs for > 60 min). Aggregated into
+  `hph_advisor_summary`; conditional chip on the Overview status bar.
+
+- **New thermal-source mode `heat_pump_internal`** — reads Heishamon's
+  factory-calibrated `heat_power_production` sensor instead of computing
+  from ΔT × flow × cp.
+
+- **"Heat pump" dashboard view (8th tab)** — all native Panasonic / Heishamon
+  controls in one place: mode, quick-actions, DHW grid, heating curves Z1
+  (+ conditional Z2), advanced settings. Optimization view now stays focused
+  on HPH advisors.
+
+- **`hph.recompute` service** — forces re-evaluation of all derived sensors
+  without waiting for an upstream state change. Auto-triggered when any
+  `text.hph_src_*` or `select.hph_*_source` helper changes.
+
+- **Panasonic Service Cloud–inspired dashboard redesign** — Hero card with
+  mode-color left border (card-mod), 5-column KPI strip, 2-column
+  status-panel + charts layout, COP color-coding (green ≥ 3.5 / amber ≥ 2.5 /
+  red < 2.5), energy-by-mode progress bars with inline gradient.
+
+- **Legionella program migrated to Python integration** (previously required
+  YAML). Four helpers (`number.hph_prog_legionella_target_c`,
+  `_hold_min`, `_hour`; `select.hph_prog_legionella_weekday`), one switch,
+  one datetime for last-run stamp — all now registered via `const.py`.
+  `hph.run_legionella_now` service registered in `__init__.py`. Weekly
+  schedule in `coordinators/programs.py` (hourly tick checks weekday +
+  hour). Programs OptionsFlow step for the config wizard.
+
+- **COP live transparency** — Hero card primary line appends "(×0 defrost)"
+  during defrost cycles; Analysis COP live card secondary shows
+  `thermal W / electrical W` inputs + defrost flag.
+
+- **`scripts/hph_import_legacy_stats.py`** — backfills long-term statistics
+  from existing `wp_waerme_kwh_monat` / `wp_strom_kwh_monat` utility_meter
+  sensors. Computes monthly COP and SCOP per heating season (Jul–Jun) and
+  imports via `recorder/import_statistics`. `--dry-run` flag prints a table
+  without writing. Fills the "COP last 13 months" and "SCOP per season"
+  charts for installations that pre-date HPH.
+
+- **Smoke test: bundled dashboard entity-reference check** — scans
+  `hph.yaml` for every `<domain>.hph_*` reference and verifies it resolves
+  against const.py / sensor_templates / hph_efficiency.yaml. Catches
+  "Entität nicht gefunden" before deploy.
 
 ### Changed
 
-- **Vendor preset restricted to Panasonic** for the v0.9 release. Other
-  vendor recipes (`daikin_altherma`, `vaillant_arotherm`, etc.) remain
-  visible in the dropdown labelled "*Coming soon (v1.0)*" so the
-  multi-vendor scope is communicated, but selecting one returns a
-  validation error in the config flow. Recipes are still in the
-  codebase awaiting field validation by users on real hardware.
-
-- **Overview KPI rows compressed**. The 3-column COP grid + 2-column
-  Cost grid + 2-column Schema/Advisor row consumed 3 vertical bands.
-  Merged COP and Cost into a single 5-column row (COP today / COP
-  month / SCOP / Cost today / Cost month) — wraps responsively on
-  narrow screens. Schema + Advisor row stays 2-column. Saves one
-  vertical band before the charts.
-
-### Added
-
-- **Forecast-sensor explanation card** on Optimization view. Tells the
-  user what `text.hph_ctrl_forecast_entity` expects (tomorrow's
-  minimum outdoor temperature in °C) and lists the four most common
-  sources (Met.no template, DWD Weather Warnings, OpenWeatherMap,
-  custom template). Renamed the field to make the unit explicit.
-
-## [Unreleased] — Naming consistency + price-helper consolidation
-
-### Fixed
-
-- **Entity-ID naming drift**: Six `platform:statistics` sensors in the
-  deployed `hph_efficiency.yaml` had names starting with "HeatPump
-  Hero …", which HA slugified into entity IDs `sensor.heatpump_hero_*`.
-  All other HPH sensors are `sensor.hph_*`. Renamed to "HPH …" so
-  fresh installs get consistent entity IDs. Existing installs are
-  auto-migrated on integration setup via a new
-  `_migrate_entity_ids()` hook in `__init__.py` that calls
-  `entity_registry.async_update_entity` to rename:
-  - `sensor.heatpump_hero_heating_limit_smoothed` → `sensor.hph_heating_limit_smoothed`
-  - `sensor.heatpump_hero_spread_7_day_mean` → `sensor.hph_spread_7d_mean`
-  - `sensor.heatpump_hero_spread_7_day_stdev` → `sensor.hph_spread_7d_stdev`
-  - `sensor.heatpump_hero_dhw_fires_7_day_mean` → `sensor.hph_dhw_fires_7d_mean`
-  - `sensor.heatpump_hero_pressure_7_day_mean` → `sensor.hph_pressure_7d_mean`
-  - `sensor.heatpump_hero_indoor_deviation_smoothed` → `sensor.hph_indoor_deviation_smoothed`
-  Recorder history is preserved (entity_registry rename keeps
-  unique_id → state mapping).
-
-- **Double electricity-price helper consolidated**. The setup wizard
-  showed two fields for the same concept:
-  - "Electricity price sensor" → cost calculation (`text.hph_electricity_price_entity`)
-  - "Current electricity price sensor (for price-driven DHW)" → control automation (`text.hph_ctrl_price_entity`)
-  Both expected the same Tibber/aWATTar/Awattar entity. Removed the
-  duplicate `text.hph_ctrl_price_entity` from `TEXT_HELPERS`, the
-  config-flow Step 3 schema, and the dashboard. The price-DHW
-  coordinator now reads from `text.hph_electricity_price_entity`.
-  Bootstrap copies the legacy `text.hph_ctrl_price_entity` value into
-  the unified helper if the latter is empty, then leaves the legacy
-  entity orphaned (HA will surface it as removable in the entity
-  registry).
-
-## [Unreleased] — Heishamon-native thermal source + control passthrough
-
-### Added
-
-- **New thermal-source mode `heat_pump_internal`** (selectable in
-  Configuration → Source modes). Reads thermal output directly from the
-  heat pump's own production sensor instead of computing it from
-  ΔT × flow × cp. For Panasonic Heishamon installs this is
-  `sensor.panasonic_heat_pump_main_heat_power_production` — factory-
-  calibrated, refrigerant-side measurement, more accurate than the
-  hydraulic-side calculation. New Panasonic source helper
-  `text.hph_src_internal_thermal_power` carries the entity-ID; default
-  matches the Heishamon naming. New Panasonic-vendor preset default for
-  `select.hph_thermal_source` is now `heat_pump_internal` (existing
-  installs are unaffected — config-entry state is preserved across
-  upgrades).
-
-- **"Heat pump — native controls" card on the Optimization view** —
-  direct passthrough to the heat pump's own controls (Heishamon-
-  specific). Five sections:
-  - Operation: mode select, heatpump state, holiday / force-DHW /
-    force-heater / sterilization / schedule
-  - Quiet mode: level, priority, schedule, powerful-mode time
-  - DHW: target temp, heat delta, sensor selection, smart DHW
-  - Heating control: heating control mode, zones state, heat/cool
-    delta, heating-off outdoor temp
-  - Bivalent / aux heater: mode, start temp, delay, start/stop deltas
-
-- **"Heating curves (Z1)" card + conditional Z2 card** — climate
-  entity for the zone plus the four curve-defining numbers (outside
-  low/high, target low/high) and the live water-target / actual
-  values for verification.
-
-These cards write straight to the heat pump (no HPH gating, no master
-switch). Non-Panasonic vendors will see "unavailable" rows here — the
-conditional Z2 card hides automatically when `binary_sensor.hph_has_hk2`
-is off; a similar conditional for the whole "native controls" block
-based on the vendor preset is a v1.0 polish task.
-
-## [Unreleased] — Source-health advisor
-
-### Added
-
-- **`sensor.hph_source_health`** — diagnostic with state `ok` /
-  `thermal_stale` / `electrical_stale` / `both_stale` / `internal`.
-  Detects when a configured external heat meter or external electrical
-  meter goes silent. Stale = the source entity is `unavailable`, OR
-  it hasn't reported a new value in > 60 min while the compressor is
-  running (a `total_increasing` source should tick at least every cycle
-  during runtime). Attributes carry both source entity-IDs and their
-  age in minutes. The user just hit this exactly: a Sensostar M-Bus
-  heat meter went offline 6 days ago, and the dashboard kept silently
-  showing frozen values from the meter's last reading. There was no
-  signal that the data was stale.
-
-- **`sensor.hph_advisor_source_health`** — follows the standard advisor
-  schema (`ok` / `warn` / `critical` / `info`), aggregated into
-  `hph_advisor_summary`. Critical when both sources are stale, warn
-  when one is, info when running on internal calculation, ok when
-  fresh. Plain-language `attributes.message` names the failing source
-  and points at WLAN / battery / M-Bus gateway as common causes.
-
-- **Conditional source-stale chip on the Overview status bar**
-  (`mdi:database-alert`, red) — visible only when at least one source
-  is stale. Tap navigates to Optimization for full details.
-
-- **Source-health row in the Optimization → Advisor recommendations**
-  card so the verdict is also reachable from the advisor list.
-
-## [Unreleased] — Dashboard remediation Stage 3
-
-### Changed
-
-- **Overview view (View 1) merged with the former Mobile view (View 7)**.
-  The 8 dashboard tabs are now 7. The new Overview combines:
-  - View 1's status-bar chips (operating mode / outdoor / supply+return
-    / Hz / pressure / defrost-conditional)
-  - View 7's hero card with the efficiency-trend headline
-  - A 3-column period-COP grid (Today / Month / SCOP year-to-date)
-    replacing View 1's 6-tile KPI grid
-  - View 1's Cost-today / Cost-month mushroom cards (2-column)
-  - View 1's Schema + Advisor mini-cards
-  - View 7's conditional active-fault and conditional-Screed-running
-    cards (only render when relevant)
-  - View 1's Energy 7-day, COP 13-month, and Cycling 7-day charts
-  Default Lovelace masonry handles responsive layout on phones — no
-  separate Mobile tab needed.
-
-- **Cost cards de-duplicated**. The Efficiency view's "Electricity costs"
-  card now shows values only (Cost today / monthly / seasonal +
-  effective-price readout). Price configuration (manual fallback,
-  live-price entity-ID) lives exclusively in Configuration → Electricity
-  cost. The user previously saw the same set of editable price helpers
-  on both views.
-
-- **Programs view (View 6) reduced**. Most modern A2W heat pumps handle
-  legionella and screed dry-out in their own controller; HPH duplicating
-  those programs leads to two competing schedules. The view now exposes
-  only:
-  - A one-off "Run legionella program now" button calling the
-    `hph.run_legionella_now` service (for installations whose controller
-    has no manual-boost option)
-  - A 24h DHW temperature footer graph
-  - Markdown guidance pointing to the Panasonic *Installer Settings →
-    Floor Heater* screed program for users who want screed dry-out
-  The screed-dry-out status / arm / profile-selection / 28-day-table
-  cards are gone. The underlying `coordinators/programs.py` and the
-  associated entities (`switch.hph_prog_screed`, etc.) remain so the
-  bridge / advisor logic that references them still works; they're just
-  no longer surfaced on the dashboard.
+- **Overview merged with Mobile tab** — 8 tabs → 7. Masonry layout handles
+  phones; separate Mobile tab removed.
+- **Cost cards de-duplicated** — price configuration lives only in
+  Configuration view; Efficiency view shows values only.
+- **Programs view reduced** — one-off legionella service button +
+  24h DHW graph + screed guidance. The screed entities remain in the
+  coordinator but are no longer surfaced on the dashboard.
+- **Chart heights** bumped 160-220 → 260-360 px for readability.
+- **Vendor preset restricted to Panasonic** for v0.9 — other presets
+  labelled "*Coming soon (v1.0)*" in the dropdown.
 
 ### Deferred
 
-- **3.1 — Year-over-year comparison sensors** ("vs same calendar month
-  last year" instead of "vs previous calendar month"). The
-  utility_meter `last_period` attribute can't reach 12 months back, and
-  HA's `statistics` template filter doesn't support arbitrary historical
-  windows. Proper implementation needs a Python coordinator hitting the
-  `recorder/statistics_during_period` WebSocket API. Will land alongside
-  Stage 4 (Demo mode) so the new sensors can be exercised with seeded
-  history.
-
-## [Unreleased] — Runtime-based COP + compressor-running bug fix
-
-### Fixed
-
-- **`binary_sensor.hph_compressor_running` did not exist**. The entity
-  was registered as `sensor.hph_compressor_running` (text state
-  "true"/"false"), but the entire codebase referenced it as a
-  `binary_sensor.*`: 4 coordinators (advisor / bridge / control /
-  cycles), 3 dashboard cards, and 2 sensor templates. Every
-  `is_state('binary_sensor.hph_compressor_running','on')` check
-  returned False, which silently broke:
-  - cycle-start / cycle-stop event detection (counters never
-    incremented from compressor activity)
-  - CCC and SoftStart control automations (never triggered)
-  - the spread-meaningfulness gate in `hph_water_spread`
-  - DHW fire tracking in the advisor
-  Promoted to `binary_sensor.hph_compressor_running` with
-  `device_class: running`. All existing references now resolve.
-
-- **COP daily / monthly / SCOP showed values like 1.36 even with
-  COP live = 8**. Root cause: `_active` energy integrals included
-  ~1 kWh/day of standby load (circulator pump + electronics + idle
-  fan), but thermal output was 0 during standby. So a single 30-min
-  efficient run produced ~2 kWh thermal / ~0.25 kWh compressor +
-  ~1.2 kWh standby = 1.36 COP. The COP-live formula uses instantaneous
-  power and was unaffected, hence the 8x discrepancy. Fixed by
-  introducing runtime-gated energy integrals — only accumulate kWh
-  while the compressor is running. COP daily / monthly / SCOP now
-  divide compressor-runtime thermal by compressor-runtime electrical.
-
-### Added
-
-- **`sensor.hph_thermal_power_runtime`** and
-  **`sensor.hph_electrical_power_runtime`** — power sensors gated on
-  `binary_sensor.hph_compressor_running`. Emit `_active` value when
-  compressor running, 0 otherwise.
-
-- **`sensor.hph_thermal_energy_runtime`** and
-  **`sensor.hph_electrical_energy_runtime`** — Riemann integrations of
-  the runtime power sensors (kWh, total_increasing).
-
-- **6 new utility_meters** in the deployed `hph_efficiency.yaml`:
-  `hph_thermal_runtime_daily`, `hph_electrical_runtime_daily`,
-  `hph_thermal_runtime_monthly`, `hph_electrical_runtime_monthly`,
-  `hph_thermal_runtime_yearly`, `hph_electrical_runtime_yearly`.
-  Daily/monthly cycles, yearly via `cron: "0 0 1 7 *"` (Jul 1 reset
-  matches the existing JAZ/SCOP convention).
-
-- **`sensor.hph_standby_electrical_daily`** — diagnostic showing
-  electrical_daily − electrical_runtime_daily. Typical value for a
-  Panasonic Aquarea is ~1 kWh/day; substantially higher suggests an
-  oversized circulator or a sticky frost-protection cycle.
-
-- **"Runtime vs. standby (today)"** markdown card on the Efficiency
-  view, showing the compressor-runtime kWh, the standby kWh, and the
-  total (which still feeds the HA Energy Dashboard and cost calc).
-
-### Changed
-
-- `sensor.hph_cop_daily`, `sensor.hph_cop_monthly`, `sensor.hph_scop`
-  divisor switched from `_active` (full-period) to `_runtime`
-  (compressor-on-only) energy. Existing `_active` utility_meters and
-  cost calculations unchanged — those still represent total
-  consumption for billing accuracy.
-
-- COP-by-mode (heating / DHW / cooling) splits remain on `_active`
-  energy for now — the tariff-switch automation routes standby kWh
-  into whichever mode is currently selected, so those numbers are
-  still standby-poisoned. Will be addressed in a follow-up if the
-  user data shows it matters.
-
-## [Unreleased] — Dashboard remediation Stage 2
-
-### Fixed
-
-- **Energy totals showing 5 decimal places** ("0,33745 kWh"). The
-  `_active` template sensors round to 2 decimals, but the downstream
-  `utility_meter` accumulates internally with float precision and has
-  no `round` option. Rather than wrapping every utility_meter in a
-  template sensor, replaced the *Energy totals* and *Energy by mode —
-  this month* entities-cards on View 4 with markdown tables that
-  apply `| round(2)` at display time. Side benefit: more compact
-  layout (3 rows × 3 columns instead of 6 rows).
-- **Mushroom KPI cards on View 4 rounded to 1 decimal** ("2.0 kWh"
-  for what's actually 2.07 kWh). Bumped to 2 decimals to match the
-  totals tables.
-
-### Changed
-
-- **Chart heights bumped for readability**. ApexCharts cards in
-  views 1, 3, 4, 5 had heights of 160-220 px which made them appear
-  cramped on wide screens (charts were narrow because of masonry
-  layout, and short on top of that). Bumped to 260-360 px:
-  - Energy 7d / Cycling 7d / COP 13mo (View 1): 260 px each
-  - Temperatures & compressor (View 3): 360 px
-  - COP trend 24h (View 3): 280 px
-  - Daily energy 30d (View 4): 300 px
-  - COP trend 30d / SCOP heating-season (View 4): 280 px each
-  - Cycling 7d (View 5): 260 px
-
-A proper width fix (sections-view conversion) is deferred — height
-gives most of the readability win in masonry layout already.
-
-## [Unreleased] — Dashboard remediation Stage 1
-
-### Fixed
-
-- **Dashboard charts stuck on "Loading…" forever**: ApexCharts shows the
-  "Loading…" placeholder when statistics queries return empty (fresh
-  install without history). Added `apex_config.noData` text on Energy 7-day,
-  Cycling 7-day (both views), COP 13-months, COP 24h, and COP 30-day charts
-  so users see "Sammele Daten — …" instead of an indefinite spinner.
-- **Cycling 7-day chart never populates**: The chart referenced
-  `number.hph_cycles_today` / `hph_short_cycles_today` with a `statistics:`
-  block, but the `number` domain doesn't produce HA long-term statistics
-  (no `state_class` on number entities). Replaced with `group_by: { func: max,
-  duration: 1d }` over raw history. Counters reset at 00:00, so the daily
-  peak == the day's total. Fixes both views (Overview row F and Optimization).
-- **"Heating limit — observed: Entität nicht gefunden"**: The
-  `sensor.hph_heating_limit_smoothed` (platform:statistics, 7-day rolling
-  avg) is `unavailable` until the source has at least one sample within
-  the window. Replaced the static entities-card with a conditional pair:
-  the entities card shows when the sensor is ready, otherwise a markdown
-  card explains what's expected and shows the configured target.
-- **COP trend rendered as bars due to sparse data**: View 3 24h trend
-  and View 4 30-day trend now explicitly set `type: line`, `stroke_width: 2`,
-  and `markers.size` so individual data points are visible as both line
-  and dots, not just isolated bar-like spikes.
-
-### Added
-
-- **Smoke test: bundled dashboard entity-reference check**
-  (`tests/smoke.py:test_bundled_dashboard_entities`). Scans
-  `custom_components/hph/data/dashboards/hph.yaml` for every
-  `<owned_domain>.hph_*` reference and verifies it's defined in
-  `sensor_templates.yaml`, `binary_sensor_templates.yaml`, the deployed
-  `hph_efficiency.yaml` package, or one of the const.py helper dicts.
-  Catches "Entität nicht gefunden" before deploy. Currently resolves all
-  182 references.
+- **Year-over-year comparison sensors** ("vs same calendar month last
+  year"): needs a Python coordinator hitting `recorder/statistics_during_period`.
+  Will land with Stage 4 (Demo mode) so the new sensors can be exercised.
+- **Stage 4 (Demo mode)**: synthetic 13-month history injection
+  (`switch.hph_demo_mode` + `hph.demo_seed_history`).
 
 ## [0.9.0-rc4] — 2026-05-10
 
