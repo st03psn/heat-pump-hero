@@ -3,6 +3,33 @@
 All notable changes to HeatPump Hero. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Heat-pump view + recompute trigger
+
+### Added
+
+- **New "Heat pump" dashboard view** consolidating all direct vendor
+  controls into one place: operation hero + quick-actions, comfort
+  chips, DHW grid (conditional on hph_has_native_dhw), heating curve
+  Z1 (and Z2 conditional on hph_has_hk2), and advanced settings (with
+  per-section conditional rendering for cooling / zones / bivalent).
+  Tab order: Overview / Schematic / Analysis / Efficiency /
+  Optimization / **Heat pump** / Programs / Configuration. Native
+  controls are no longer mixed into Optimization (which now stays
+  focused on HPH advisors + own control strategies).
+
+- **`hph.recompute` service** — forces immediate re-evaluation of
+  the derived sensors (energy_active / power_active / COP live /
+  daily / monthly / SCOP / source_health / efficiency_trend) even
+  when no upstream state has changed. Useful after swapping a
+  source-helper entity-ID when the heat pump is currently off.
+
+- **Auto-recompute on source helper change**. The efficiency
+  coordinator now listens to state changes on the eleven source
+  selectors and helpers (text.hph_src_*, select.hph_*_source) and
+  fires `hph.recompute` automatically. Net effect: when a user
+  changes the configured external thermal-energy meter, the COP
+  numbers refresh within seconds, not "next time the pump runs".
+
 ## [Unreleased] — Setup-flow polish + Overview compaction
 
 ### Fixed

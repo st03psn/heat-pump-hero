@@ -29,6 +29,16 @@ restore_config:
       selector:
         text:
 
+recompute:
+  name: Recompute (force re-evaluation)
+  description: >-
+    Force the HPH-derived sensors (energy_active, power_active, COP
+    live/daily/monthly, SCOP, source_health) to re-evaluate immediately.
+    Useful after changing a source helper (e.g. swapping the external
+    energy meter entity) when the heat pump is currently off — without
+    this, the active sensors only re-evaluate on the next source state
+    change, which may be hours away.
+
 run_legionella_now:
   name: Run legionella program now
   description: >-

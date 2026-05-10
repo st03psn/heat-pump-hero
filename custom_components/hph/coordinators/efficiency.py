@@ -65,5 +65,41 @@ async def async_setup(hass: HomeAssistant, entry: ConfigEntry) -> list[Callable]
         )
     )
 
+    # Auto-recompute when a source helper changes — without this, the
+    # _active sensors only re-evaluate on the next state change of the
+    # newly-pointed-at entity, which may be hours away if the heat pump
+    # is off. Debounced lightly so a burst of helper edits during setup
+    # doesn't fire 17 service calls.
+    _RECOMPUTE_TARGETS = [
+        "text.hph_src_outlet_temp",
+        "text.hph_src_inlet_temp",
+        "text.hph_src_flow_rate",
+        "text.hph_src_internal_power",
+        "text.hph_src_internal_thermal_power",
+        "text.hph_src_external_thermal_power",
+        "text.hph_src_external_thermal_energy",
+        "text.hph_src_external_electrical_power",
+        "text.hph_src_external_electrical_energy",
+        "select.hph_thermal_source",
+        "select.hph_electrical_source",
+    ]
+
+    @callback
+    def _on_source_helper_change(_event: Event) -> None:
+        async def _fire() -> None:
+            try:
+                await hass.services.async_call(
+                    "hph", "recompute", {}, blocking=False,
+                )
+            except Exception as exc:  # noqa: BLE001
+                _LOGGER.debug("hph.recompute auto-fire failed: %s", exc)
+        hass.async_create_task(_fire())
+
+    unsubs.append(
+        async_track_state_change_event(
+            hass, _RECOMPUTE_TARGETS, _on_source_helper_change
+        )
+    )
+
     _LOGGER.debug("HPH efficiency coordinator started")
     return unsubs

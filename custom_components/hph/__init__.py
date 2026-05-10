@@ -159,6 +159,39 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
     hass.services.async_register(DOMAIN, "backup_config", _backup_config)
     hass.services.async_register(DOMAIN, "restore_config", _restore_config)
 
+    # Recompute service — force HPH derived sensors to re-evaluate now,
+    # without waiting for an upstream state change. Useful after source-
+    # helper swap when heat pump is off.
+    async def _recompute(_call: Any) -> None:
+        targets = [
+            "sensor.hph_thermal_power_active",
+            "sensor.hph_electrical_power_active",
+            "sensor.hph_thermal_power_runtime",
+            "sensor.hph_electrical_power_runtime",
+            "sensor.hph_thermal_energy_active",
+            "sensor.hph_electrical_energy_active",
+            "sensor.hph_cop_live",
+            "sensor.hph_cop_daily",
+            "sensor.hph_cop_monthly",
+            "sensor.hph_scop",
+            "sensor.hph_source_health",
+            "sensor.hph_advisor_source_health",
+            "sensor.hph_efficiency_trend",
+        ]
+        # update_entity service forces immediate re-evaluation of the
+        # template sensor's state expression even when its tracked
+        # entities haven't changed.
+        try:
+            await hass.services.async_call(
+                "homeassistant", "update_entity",
+                {"entity_id": targets},
+                blocking=False,
+            )
+        except Exception as exc:  # noqa: BLE001
+            _LOGGER.warning("hph.recompute failed: %s", exc)
+
+    hass.services.async_register(DOMAIN, "recompute", _recompute)
+
     return True
 
 

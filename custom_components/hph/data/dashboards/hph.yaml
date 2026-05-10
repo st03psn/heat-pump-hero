@@ -1403,6 +1403,18 @@ views:
           ### DHW timing (v0.8)
           {{ state_attr('sensor.hph_advisor_dhw_timing','message') }}
 
+
+  # ════════════════════════════════════════════════════════════════════════
+  # 5b) HEAT PUMP — native vendor controls (Heishamon passthrough)
+  # All direct heat-pump controls in one place: operation mode + quick
+  # actions, comfort, DHW, heating curves, and advanced settings.
+  # Conditional rendering hides anything the user disabled in the
+  # kamaradclimber integration (heat-only / no-DHW / no-bivalent).
+  # ════════════════════════════════════════════════════════════════════════
+  - title: Heat pump
+    path: heatpump
+    icon: mdi:heat-pump
+    cards:
       # ── Heat-pump native controls (Heishamon) ─────────────────────────
       # Mushroom-styled quick-action layout for the controls users touch
       # most. Power-user controls (bivalent, optional PCB, sterilization
@@ -1957,7 +1969,7 @@ views:
           - number.hph_advisor_pump_spread_min_samples
 
   # ════════════════════════════════════════════════════════════════════════
-  # 5b) PROGRAMS — multi-day / scheduled service programs (v0.8)
+  # 5c) PROGRAMS — service programs (legionella one-shot, etc.)
   # ════════════════════════════════════════════════════════════════════════
   - title: Programs
     path: programs
