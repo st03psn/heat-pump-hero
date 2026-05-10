@@ -87,6 +87,7 @@ views:
               {% elif mode == 'cooling' %}Cooling
               {% else %}Standby{% endif %}
               — COP live {{ states('sensor.hph_cop_live') | float(0) | round(2) }}
+              {%- if is_state('binary_sensor.hph_defrost_active','on') %} (×0 defrost){% endif %}
             secondary: >-
               Supply {{ states('sensor.hph_source_outlet_temp') }}°C → Return {{ states('sensor.hph_source_inlet_temp') }}°C
               · Δ {{ states('sensor.hph_water_spread') | float(0) | round(1) }} K
@@ -885,11 +886,15 @@ views:
                 fill_container: true
               - type: custom:mushroom-template-card
                 primary: "{{ states('sensor.hph_cop_live') | float(0) | round(2) }}"
-                secondary: COP live
+                secondary: >-
+                  COP live · {{ states('sensor.hph_thermal_power_active') | float(0) | round(0) | int }} W
+                  / {{ states('sensor.hph_electrical_power_active') | float(0) | round(0) | int }} W
+                  {%- if is_state('binary_sensor.hph_defrost_active','on') %} · ×0 defrost{% endif %}
                 icon: mdi:speedometer
                 icon_color: >-
                   {% set cop = states('sensor.hph_cop_live') | float(0) %}
                   {% if cop >= 3.5 %}green{% elif cop >= 2.5 %}amber{% elif cop > 0 %}red{% else %}grey{% endif %}
+                multiline_secondary: false
                 fill_container: true
               - type: custom:mushroom-template-card
                 primary: "{{ states('sensor.hph_source_compressor_freq') }} Hz"
