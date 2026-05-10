@@ -214,6 +214,22 @@ class HphOptionsFlow(config_entries.OptionsFlow):
     def __init__(self) -> None:
         self._data: dict[str, Any] = {}
 
+    def _live_default(self, key: str) -> str | None:
+        """Return stored value for key only if that entity still exists in HA.
+
+        EntitySelector validates defaults against the entity registry. Returning
+        a stale entity ID (e.g. after a device rename) causes "Unbekannte Entität
+        ausgewählt" and blocks form submission. Return None instead so the field
+        renders empty and the user can fill in the new entity ID.
+        """
+        val = self._data.get(key, "")
+        if not val:
+            return None
+        if self.hass.states.get(val) is not None:
+            return val
+        _LOGGER.debug("config_flow: stale entity %r for key %r — rendering empty", val, key)
+        return None
+
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> Any:
         # config_entry is injected by HA after construction.
         # Merge options over data so re-opens see the user's latest values,
@@ -271,10 +287,10 @@ class HphOptionsFlow(config_entries.OptionsFlow):
             return await self.async_step_programs()
 
         # Build schema dynamically — only set default for fields where the
-        # user has a non-empty stored value. EntitySelector validates the
-        # default against existing entities; an empty-string default
-        # surfaces as "neither valid entity ID nor UUID" in the UI even
-        # though Optional() permits missing keys.
+        # stored entity ID still exists in HA. EntitySelector validates the
+        # default against the entity registry; a stale ID (renamed/removed device)
+        # would block form submission with "Unbekannte Entität ausgewählt".
+        # _live_default() returns None for missing entities → field renders empty.
         fields = [
             ("indoor_temp_entity", _temp_selector()),
             ("outdoor_temp_entity", _temp_selector()),
@@ -288,9 +304,9 @@ class HphOptionsFlow(config_entries.OptionsFlow):
         ]
         schema_dict: dict[Any, Any] = {}
         for key, sel in fields:
-            stored = self._data.get(key, "")
-            if stored:
-                schema_dict[vol.Optional(key, default=stored)] = sel
+            live = self._live_default(key)
+            if live is not None:
+                schema_dict[vol.Optional(key, default=live)] = sel
             else:
                 schema_dict[vol.Optional(key)] = sel
         return self.async_show_form(step_id="sensors", data_schema=vol.Schema(schema_dict))
