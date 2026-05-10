@@ -216,8 +216,15 @@ class HphOptionsFlow(config_entries.OptionsFlow):
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> Any:
         # config_entry is injected by HA after construction.
+        # Merge options over data so re-opens see the user's latest values,
+        # not the original setup values. The OptionsFlow writes to
+        # config_entry.options on submit; reading only `data` would
+        # silently surface stale values on every re-open.
         if not self._data:
-            self._data = dict(self.config_entry.data)
+            self._data = {
+                **dict(self.config_entry.data or {}),
+                **dict(self.config_entry.options or {}),
+            }
 
         if user_input is not None:
             self._data.update(user_input)

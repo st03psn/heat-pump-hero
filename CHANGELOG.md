@@ -7,6 +7,16 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
 
 ### Fixed
 
+- **OptionsFlow showed stale entity values on every re-open.**
+  `HphOptionsFlow.async_step_init` initialised `self._data` from
+  `entry.data` only, ignoring `entry.options`. The OptionsFlow writes
+  on submit go to `entry.options`, so any user change made after the
+  first setup was invisible the next time they opened "Configure" —
+  the dialog kept resurrecting the original values, even though the
+  bootstrap-deployed `text.hph_src_*` helpers (which are what the
+  sensors actually read) were already correct. Fix: merge
+  `entry.options` over `entry.data` when seeding the form.
+
 - **Hero card and KPI cards mis-labelled live power as kW.**
   `sensor.hph_thermal_power_active` and `sensor.hph_electrical_power_active`
   are in W (per `unit_of_measurement: W`), but the Overview Hero card and
