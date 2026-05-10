@@ -1233,18 +1233,23 @@ views:
           - entity: sensor.hph_cop_live
             name: COP live
 
-      # ── Mode-split COP ──
-      - type: entities
-        title: COP by mode
-        entities:
-          - entity: sensor.hph_cop_yearly_heating
-            name: SCOP heating (year)
-          - entity: sensor.hph_cop_monthly_heating
-            name: COP heating (month)
-          - entity: sensor.hph_cop_yearly_dhw
-            name: SCOP DHW (year)
-          - entity: sensor.hph_cop_monthly_dhw
-            name: COP DHW (month)
+      # ── Mode-split COP removed — architecture note ─────────────────────
+      # The tariff-split utility meters (hph_thermal/electrical_monthly_split_*)
+      # include standby power (~50–200 W · hours) in the electrical denominator
+      # because standby is billed to the active tariff (usually "heating").
+      # This pulls per-mode COP toward 1 while the runtime-gated overall COP
+      # stays accurate. Showing both side-by-side is confusing rather than
+      # informative. Mode-energy percentages are shown in the progress bars
+      # below; per-mode COP requires runtime-gated per-mode meters (not yet
+      # implemented — roadmap v1.0).
+      - type: markdown
+        content: >
+          **COP by mode** is not shown here. Standby power is always attributed
+          to the active tariff (usually Heating), which makes per-mode electrical
+          totals higher than actual compressor consumption. This would show a
+          misleadingly low per-mode COP (e.g. 1.0) while the runtime-gated
+          overall COP (above) is correct. The energy breakdown by mode is shown
+          in the progress bars below.
 
       # ── Energy totals (markdown for 2-decimal display — utility_meter
       # accumulates with float precision, has no round option, and the
