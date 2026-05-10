@@ -232,13 +232,68 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
     return True
 
 
-async def _do_export(hass: HomeAssistant) -> None:
-    """Write a CSV snapshot of key HPH sensors to the configured path."""
-    import csv
-    import io
-    from pathlib import Path
+_EXPORT_PREFIXES = ("sensor.hph_", "binary_sensor.hph_", "number.hph_")
+_EXPORT_FORMATS = ("csv", "json", "xlsx")
 
+
+def _discover_export_entities(hass: HomeAssistant) -> list[str]:
+    """Discover all HPH state entities worth exporting.
+
+    Excludes pure config helpers (text/select/switch/datetime/button — those
+    are configuration, not telemetry) and the source-facade entities
+    (`*hph_source_*`) which mirror upstream sensors already exported.
+    """
+    ids: list[str] = []
+    for state in hass.states.async_all():
+        eid = state.entity_id
+        if not eid.startswith(_EXPORT_PREFIXES):
+            continue
+        if "hph_source_" in eid:
+            continue
+        ids.append(eid)
+    return sorted(ids)
+
+
+def _write_csv(path, rows: list[list[str]]) -> None:
+    import csv
+    with open(path, "w", encoding="utf-8", newline="") as fh:
+        csv.writer(fh).writerows(rows)
+
+
+def _write_json(path, rows: list[list[str]]) -> None:
+    import json
+    header, *data = rows
+    payload = [dict(zip(header, r)) for r in data]
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(payload, fh, ensure_ascii=False, indent=2)
+
+
+def _write_xlsx(path, rows: list[list[str]]) -> None:
+    try:
+        from openpyxl import Workbook
+    except ImportError as exc:
+        raise RuntimeError(
+            "xlsx export requires openpyxl — install it in HA Core "
+            "(pip install openpyxl) or pick csv/json"
+        ) from exc
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "HeatPump Hero"
+    for r in rows:
+        ws.append(r)
+    wb.save(path)
+
+
+async def _do_export(hass: HomeAssistant) -> None:
+    """Write a snapshot of all HPH telemetry sensors to the configured path.
+
+    Each scheduled run appends a new timestamped file, so the export
+    directory accumulates a long-term archive over time.
+    """
+    from pathlib import Path
+    from homeassistant.exceptions import HomeAssistantError
     from homeassistant.util import dt as dt_util
+
     now = dt_util.now()
 
     target_path_st = hass.states.get("text.hph_export_target_path")
@@ -252,67 +307,69 @@ async def _do_export(hass: HomeAssistant) -> None:
         export_format_st.state
         if export_format_st and export_format_st.state not in ("unknown", "unavailable", "")
         else "csv"
-    )
+    ).lower()
+    if fmt not in _EXPORT_FORMATS:
+        _LOGGER.warning("HPH export: unknown format %r, falling back to csv", fmt)
+        fmt = "csv"
 
-    # If the path looks like a directory (no file extension), treat it as such
-    # and append a timestamped filename.
+    # Treat target as a directory unless it already has a file extension.
+    # Each run produces a new timestamped file (long-term archive pattern).
     p = Path(target_path)
-    if not p.suffix or p.is_dir():
-        p.mkdir(parents=True, exist_ok=True)
+    if not p.suffix:
         ts_str = now.strftime("%Y-%m-%d_%H-%M-%S")
         p = p / f"hph_export_{ts_str}.{fmt}"
-        target_path = str(p)
+    target_path = str(p)
 
-    sensor_ids = [
-        "sensor.hph_cop_live",
-        "sensor.hph_cop_daily",
-        "sensor.hph_cop_monthly",
-        "sensor.hph_scop",
-        "sensor.hph_thermal_power",
-        "sensor.hph_thermal_daily",
-        "sensor.hph_thermal_monthly",
-        "sensor.hph_thermal_yearly",
-        "sensor.hph_electrical_daily",
-        "sensor.hph_electrical_monthly",
-        "sensor.hph_electrical_yearly",
-        "sensor.hph_operating_mode",
-        "sensor.hph_cycles_today",
-        "sensor.hph_short_cycles_today",
-        "sensor.hph_advisor_summary",
-    ]
-
-    rows = [["timestamp", "entity_id", "state", "unit"]]
+    entity_ids = _discover_export_entities(hass)
+    rows: list[list[str]] = [["timestamp", "entity_id", "state", "unit", "friendly_name"]]
     ts = now.isoformat()
-    for eid in sensor_ids:
+    for eid in entity_ids:
         st = hass.states.get(eid)
-        if st:
-            unit = st.attributes.get("unit_of_measurement", "")
-            rows.append([ts, eid, st.state, unit])
+        if not st:
+            continue
+        unit = st.attributes.get("unit_of_measurement", "") or ""
+        name = st.attributes.get("friendly_name", "") or ""
+        rows.append([ts, eid, st.state, str(unit), str(name)])
+
+    writer = {"csv": _write_csv, "json": _write_json, "xlsx": _write_xlsx}[fmt]
+
+    def _do_write() -> None:
+        p.parent.mkdir(parents=True, exist_ok=True)
+        writer(p, rows)
 
     try:
-        out = io.StringIO()
-        writer = csv.writer(out)
-        writer.writerows(rows)
-        await hass.async_add_executor_job(
-            Path(target_path).write_text, out.getvalue(), "utf-8"
-        )
-        await hass.services.async_call(
-            "datetime", "set_value",
-            {"entity_id": "datetime.hph_export_last_run", "datetime": now.isoformat()},
-            blocking=True,
-        )
+        await hass.async_add_executor_job(_do_write)
+    except Exception as exc:  # noqa: BLE001
+        _LOGGER.exception("HPH export failed: %s", exc)
         await hass.services.async_call(
             "persistent_notification", "create",
             {
                 "notification_id": "hph_export_done",
-                "title": "HeatPump Hero export",
-                "message": f"Export written to {target_path} ({fmt}).",
+                "title": "HeatPump Hero export — failed",
+                "message": f"Export to {target_path} ({fmt}) failed: {exc}",
             },
             blocking=True,
         )
-        _LOGGER.info("HPH export written to %s", target_path)
-    except Exception as exc:  # noqa: BLE001
-        _LOGGER.warning("HPH export failed: %s", exc)
+        raise HomeAssistantError(f"HPH export failed: {exc}") from exc
+
+    await hass.services.async_call(
+        "datetime", "set_value",
+        {"entity_id": "datetime.hph_export_last_run", "datetime": now.isoformat()},
+        blocking=True,
+    )
+    await hass.services.async_call(
+        "persistent_notification", "create",
+        {
+            "notification_id": "hph_export_done",
+            "title": "HeatPump Hero export",
+            "message": f"Export written to {target_path} ({fmt}, {len(rows) - 1} entities).",
+        },
+        blocking=True,
+    )
+    _LOGGER.info(
+        "HPH export written to %s (%s, %d entities)",
+        target_path, fmt, len(rows) - 1,
+    )
 
 
 # ─── Backup / Restore ─────────────────────────────────────────────────────────
