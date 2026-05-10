@@ -379,6 +379,7 @@ def build_monthly_stats(
     """
     stats: list[dict] = []
     cumulative = 0.0
+    now_utc = datetime.now(timezone.utc).replace(tzinfo=None, minute=0, second=0, microsecond=0)
 
     for yr, mo in MONTHS:
         val = totals.get((yr, mo), {}).get(channel)
@@ -386,7 +387,7 @@ def build_monthly_stats(
             continue
 
         ts_start = _month_start_utc(yr, mo)
-        ts_end = _month_end_utc(yr, mo) - timedelta(hours=1)
+        ts_end = min(_month_end_utc(yr, mo) - timedelta(hours=1), now_utc)
 
         stats.append({"start": _iso(ts_start), "state": 0.0,           "sum": cumulative,           "last_reset": _iso(ts_start)})
         cumulative += val
