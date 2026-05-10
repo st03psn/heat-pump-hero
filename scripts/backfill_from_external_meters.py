@@ -473,7 +473,9 @@ def build_daily_cop_stats(
         t = daily_totals.get((yr, mo, day), {})
         th = t.get("thermal")
         el = t.get("electrical")
-        if th is None or el is None or el < 0.01:
+        # Skip days where the heat pump clearly wasn't running: standby-only
+        # days have el > 0 (control electronics) but th ≈ 0, giving COP ≈ 0.
+        if th is None or el is None or el < 0.05 or th < 0.3:
             continue
 
         cop = round(th / el, 3)
