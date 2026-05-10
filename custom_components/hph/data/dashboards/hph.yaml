@@ -89,11 +89,13 @@ views:
               — COP live {{ states('sensor.hph_cop_live') | float(0) | round(2) }}
               {%- if is_state('binary_sensor.hph_defrost_active','on') %} (×0 defrost){% endif %}
             secondary: >-
+              {% set t = states('sensor.hph_thermal_power_active') | float(0) %}
+              {% set e = states('sensor.hph_electrical_power_active') | float(0) %}
               Supply {{ states('sensor.hph_source_outlet_temp') }}°C → Return {{ states('sensor.hph_source_inlet_temp') }}°C
               · Δ {{ states('sensor.hph_water_spread') | float(0) | round(1) }} K
               · {{ states('sensor.hph_source_flow_rate') }} L/min
-              · Thermal {{ states('sensor.hph_thermal_power_active') | float(0) | round(2) }} kW
-              · Electrical {{ states('sensor.hph_electrical_power_active') | float(0) | round(2) }} kW
+              · Thermal {% if t >= 1000 %}{{ (t / 1000) | round(2) }} kW{% else %}{{ t | round(0) | int }} W{% endif %}
+              · Electrical {% if e >= 1000 %}{{ (e / 1000) | round(2) }} kW{% else %}{{ e | round(0) | int }} W{% endif %}
             icon: >-
               {% set mode = states('sensor.hph_source_operating_mode') %}
               {% if mode == 'heating' %}mdi:radiator
@@ -873,13 +875,17 @@ views:
           - type: vertical-stack
             cards:
               - type: custom:mushroom-template-card
-                primary: "{{ states('sensor.hph_thermal_power_active') | float(0) | round(2) }} kW"
+                primary: >-
+                  {% set w = states('sensor.hph_thermal_power_active') | float(0) %}
+                  {% if w >= 1000 %}{{ (w / 1000) | round(2) }} kW{% else %}{{ w | round(0) | int }} W{% endif %}
                 secondary: Thermal power
                 icon: mdi:fire
                 icon_color: red
                 fill_container: true
               - type: custom:mushroom-template-card
-                primary: "{{ states('sensor.hph_electrical_power_active') | float(0) | round(2) }} kW"
+                primary: >-
+                  {% set w = states('sensor.hph_electrical_power_active') | float(0) %}
+                  {% if w >= 1000 %}{{ (w / 1000) | round(2) }} kW{% else %}{{ w | round(0) | int }} W{% endif %}
                 secondary: Electrical power
                 icon: mdi:flash
                 icon_color: yellow
@@ -1140,23 +1146,23 @@ views:
       - type: horizontal-stack
         cards:
           - type: custom:mushroom-template-card
-            primary: vs last month
+            primary: vs same month last year
             secondary: |-
-              {% set p = states('sensor.hph_cop_change_month_pct') | float(0) %}
+              {% set p = states('sensor.hph_cop_change_yoy_pct') | float(0) %}
               {% set cur = states('sensor.hph_cop_monthly') %}
-              {% set prev = states('sensor.hph_cop_last_month') %}
+              {% set prev = states('sensor.hph_cop_same_month_last_year') %}
               {% if prev | float(0) <= 0.1 %}
                 no data yet
               {% else %}
                 COP {{ cur }} vs {{ prev }} ({{ '+' if p > 0 else '' }}{{ p }}%)
               {% endif %}
             icon: |-
-              {% set p = states('sensor.hph_cop_change_month_pct') | float(0) %}
+              {% set p = states('sensor.hph_cop_change_yoy_pct') | float(0) %}
               {% if p > 1 %}mdi:arrow-up-bold
               {% elif p < -1 %}mdi:arrow-down-bold
               {% else %}mdi:equal{% endif %}
             icon_color: |-
-              {% set p = states('sensor.hph_cop_change_month_pct') | float(0) %}
+              {% set p = states('sensor.hph_cop_change_yoy_pct') | float(0) %}
               {% if p > 1 %}green
               {% elif p < -1 %}red
               {% else %}grey{% endif %}
@@ -1194,9 +1200,9 @@ views:
             primary: Thermal energy this month
             secondary: |-
               {% set cur = states('sensor.hph_thermal_monthly') | float(0) %}
-              {% set prev = states('sensor.hph_thermal_last_month') | float(0) %}
-              {% set p = states('sensor.hph_thermal_change_month_pct') | float(0) %}
-              {{ cur | round(2) }} kWh{% if prev > 0.1 %} ({{ '+' if p > 0 else '' }}{{ p }}% vs {{ prev | round(2) }} kWh){% endif %}
+              {% set prev = states('sensor.hph_thermal_same_month_last_year') | float(0) %}
+              {% set p = states('sensor.hph_thermal_change_yoy_pct') | float(0) %}
+              {{ cur | round(2) }} kWh{% if prev > 0.1 %} ({{ '+' if p > 0 else '' }}{{ p }}% vs {{ prev | round(2) }} kWh same month last year){% endif %}
             icon: mdi:fire
             icon_color: red
             multiline_secondary: true
@@ -1206,9 +1212,9 @@ views:
             primary: Electrical energy this month
             secondary: |-
               {% set cur = states('sensor.hph_electrical_monthly') | float(0) %}
-              {% set prev = states('sensor.hph_electrical_last_month') | float(0) %}
-              {% set p = states('sensor.hph_electrical_change_month_pct') | float(0) %}
-              {{ cur | round(2) }} kWh{% if prev > 0.1 %} ({{ '+' if p > 0 else '' }}{{ p }}% vs {{ prev | round(2) }} kWh){% endif %}
+              {% set prev = states('sensor.hph_electrical_same_month_last_year') | float(0) %}
+              {% set p = states('sensor.hph_electrical_change_yoy_pct') | float(0) %}
+              {{ cur | round(2) }} kWh{% if prev > 0.1 %} ({{ '+' if p > 0 else '' }}{{ p }}% vs {{ prev | round(2) }} kWh same month last year){% endif %}
             icon: mdi:flash
             icon_color: yellow
             multiline_secondary: true
@@ -1220,10 +1226,10 @@ views:
         entities:
           - entity: sensor.hph_cop_monthly
             name: COP this month
-          - entity: sensor.hph_cop_last_month
-            name: COP last month
-          - entity: sensor.hph_cop_change_month_pct
-            name: Change vs last month
+          - entity: sensor.hph_cop_same_month_last_year
+            name: COP same month last year
+          - entity: sensor.hph_cop_change_yoy_pct
+            name: Change vs same month last year
           - type: divider
           - entity: sensor.hph_scop
             name: SCOP year to date

@@ -130,7 +130,12 @@ script:
         - sensor.hph_electrical_last_month
         - sensor.hph_electrical_last_year
         # efficiency — change-pct
-        - sensor.hph_cop_change_month_pct
+        - sensor.hph_cop_same_month_last_year
+        - sensor.hph_thermal_same_month_last_year
+        - sensor.hph_electrical_same_month_last_year
+        - sensor.hph_cop_change_yoy_pct
+        - sensor.hph_thermal_change_yoy_pct
+        - sensor.hph_electrical_change_yoy_pct
         - sensor.hph_scop_change_year_pct
         # cycles
         - sensor.hph_avg_cycle_duration_24h
@@ -213,7 +218,12 @@ automation:
           - sensor.hph_electrical_last_month
           - sensor.hph_electrical_last_year
           # efficiency — change-pct
-          - sensor.hph_cop_change_month_pct
+          - sensor.hph_cop_same_month_last_year
+          - sensor.hph_thermal_same_month_last_year
+          - sensor.hph_electrical_same_month_last_year
+          - sensor.hph_cop_change_yoy_pct
+          - sensor.hph_thermal_change_yoy_pct
+          - sensor.hph_electrical_change_yoy_pct
           - sensor.hph_scop_change_year_pct
           # cycles
           - sensor.hph_avg_cycle_duration_24h

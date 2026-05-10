@@ -714,27 +714,69 @@ sensors:
   state: '{{ state_attr(''sensor.hph_electrical_yearly'',''last_period'') | float(0)
     | round(2) }}'
   _source_package: hph_efficiency.yaml
-- name: HeatPump Hero COP Change Month %
-  unique_id: hph_cop_change_month_pct
+- name: HeatPump Hero Thermal Same Month Last Year
+  unique_id: hph_thermal_same_month_last_year
+  unit_of_measurement: kWh
+  state_class: measurement
+  state: >-
+    {% set n = now() %}
+    {% set start = n.replace(year=n.year-1, day=1, hour=0, minute=0, second=0, microsecond=0) %}
+    {% set end = (start + timedelta(days=32)).replace(day=1) %}
+    {{ statistic_during_period('sensor.hph_thermal_energy', start, end, 'change') | float(0) | round(2) }}
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero Electrical Same Month Last Year
+  unique_id: hph_electrical_same_month_last_year
+  unit_of_measurement: kWh
+  state_class: measurement
+  state: >-
+    {% set n = now() %}
+    {% set start = n.replace(year=n.year-1, day=1, hour=0, minute=0, second=0, microsecond=0) %}
+    {% set end = (start + timedelta(days=32)).replace(day=1) %}
+    {{ statistic_during_period('sensor.hph_electrical_energy', start, end, 'change') | float(0) | round(2) }}
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero COP Same Month Last Year
+  unique_id: hph_cop_same_month_last_year
+  unit_of_measurement: x
+  state: >-
+    {% set t = states('sensor.hph_thermal_same_month_last_year') | float(0) %}
+    {% set e = states('sensor.hph_electrical_same_month_last_year') | float(0) %}
+    {{ (t / e) | round(2) if e > 0.1 else 0 }}
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero COP Change YoY %
+  unique_id: hph_cop_change_yoy_pct
   unit_of_measurement: '%'
   state_class: measurement
-  icon: '{% set v = states(''sensor.hph_cop_change_month_pct'') | float(0) %} {% if
-    v > 1 %}mdi:trending-up {% elif v < -1 %}mdi:trending-down {% else %}mdi:trending-neutral{%
-    endif %}'
-  state: "{% set cur = states('sensor.hph_cop_monthly') | float(0) %} {% set prev\
-    \ = states('sensor.hph_cop_last_month') | float(0) %} {% if prev > 0.1 %}\n  {{\
-    \ ((cur - prev) / prev * 100) | round(1) }}\n{% else %}\n  0\n{% endif %}"
+  icon: >-
+    {% set v = states('sensor.hph_cop_change_yoy_pct') | float(0) %}
+    {% if v > 1 %}mdi:trending-up
+    {% elif v < -1 %}mdi:trending-down
+    {% else %}mdi:trending-neutral{% endif %}
+  state: >-
+    {% set cur = states('sensor.hph_cop_monthly') | float(0) %}
+    {% set prev = states('sensor.hph_cop_same_month_last_year') | float(0) %}
+    {% if prev > 0.1 %}
+      {{ ((cur - prev) / prev * 100) | round(1) }}
+    {% else %}
+      0
+    {% endif %}
   attributes:
-    current: '{{ states(''sensor.hph_cop_monthly'') }}'
-    previous: '{{ states(''sensor.hph_cop_last_month'') }}'
-    message: "{% set cur = states('sensor.hph_cop_monthly') | float(0) %} {% set prev\
-      \ = states('sensor.hph_cop_last_month') | float(0) %} {% if prev <= 0.1 %}\n\
-      \  No data for previous month yet.\n{% else %}\n  {% set pct = ((cur - prev)\
-      \ / prev * 100) | round(1) %}\n  {% if pct > 0 %}\n    {{ pct }}% better than\
-      \ last month (COP {{ cur }} vs {{ prev }}).\n  {% elif pct < 0 %}\n    {{ pct\
-      \ | abs }}% worse than last month (COP {{ cur }} vs {{ prev }}).\n  {% else\
-      \ %}\n    Unchanged from last month (COP {{ cur }}).\n  {% endif %}\n{% endif\
-      \ %}"
+    current: "{{ states('sensor.hph_cop_monthly') }}"
+    previous: "{{ states('sensor.hph_cop_same_month_last_year') }}"
+    message: >-
+      {% set cur = states('sensor.hph_cop_monthly') | float(0) %}
+      {% set prev = states('sensor.hph_cop_same_month_last_year') | float(0) %}
+      {% if prev <= 0.1 %}
+        No data for same month last year yet — populates after one full year.
+      {% else %}
+        {% set pct = ((cur - prev) / prev * 100) | round(1) %}
+        {% if pct > 0 %}
+          {{ pct }}% better than same month last year (COP {{ cur }} vs {{ prev }}).
+        {% elif pct < 0 %}
+          {{ pct | abs }}% worse than same month last year (COP {{ cur }} vs {{ prev }}).
+        {% else %}
+          Unchanged from same month last year (COP {{ cur }}).
+        {% endif %}
+      {% endif %}
   _source_package: hph_efficiency.yaml
 - name: HeatPump Hero SCOP Change Year %
   unique_id: hph_scop_change_year_pct
@@ -758,23 +800,31 @@ sensors:
       \ {% else %}\n    Same as previous year (SCOP {{ cur }}).\n  {% endif %}\n{%\
       \ endif %}"
   _source_package: hph_efficiency.yaml
-- name: HeatPump Hero Thermal Change Month %
-  unique_id: hph_thermal_change_month_pct
+- name: HeatPump Hero Thermal Change YoY %
+  unique_id: hph_thermal_change_yoy_pct
   unit_of_measurement: '%'
   state_class: measurement
-  state: "{% set cur = states('sensor.hph_thermal_monthly') | float(0) %} {% set prev\
-    \ = state_attr('sensor.hph_thermal_monthly','last_period') | float(0) %} {% if\
-    \ prev > 0.1 %}\n  {{ ((cur - prev) / prev * 100) | round(1) }}\n{% else %}\n\
-    \  0\n{% endif %}"
+  state: >-
+    {% set cur = states('sensor.hph_thermal_monthly') | float(0) %}
+    {% set prev = states('sensor.hph_thermal_same_month_last_year') | float(0) %}
+    {% if prev > 0.1 %}
+      {{ ((cur - prev) / prev * 100) | round(1) }}
+    {% else %}
+      0
+    {% endif %}
   _source_package: hph_efficiency.yaml
-- name: HeatPump Hero Electrical Change Month %
-  unique_id: hph_electrical_change_month_pct
+- name: HeatPump Hero Electrical Change YoY %
+  unique_id: hph_electrical_change_yoy_pct
   unit_of_measurement: '%'
   state_class: measurement
-  state: "{% set cur = states('sensor.hph_electrical_monthly') | float(0) %} {% set\
-    \ prev = state_attr('sensor.hph_electrical_monthly','last_period') | float(0)\
-    \ %} {% if prev > 0.1 %}\n  {{ ((cur - prev) / prev * 100) | round(1) }}\n{% else\
-    \ %}\n  0\n{% endif %}"
+  state: >-
+    {% set cur = states('sensor.hph_electrical_monthly') | float(0) %}
+    {% set prev = states('sensor.hph_electrical_same_month_last_year') | float(0) %}
+    {% if prev > 0.1 %}
+      {{ ((cur - prev) / prev * 100) | round(1) }}
+    {% else %}
+      0
+    {% endif %}
   _source_package: hph_efficiency.yaml
 - name: HeatPump Hero Model Refrigerant
   unique_id: hph_model_refrigerant
@@ -1232,10 +1282,10 @@ sensors:
   _source_package: hph_efficiency.yaml
 - name: HeatPump Hero Efficiency Trend
   unique_id: hph_efficiency_trend
-  icon: "{% set v = states('sensor.hph_cop_change_month_pct') | float(0) %} {% if v > 5 %}mdi:rocket-launch {% elif v > 1 %}mdi:trending-up {% elif v < -5 %}mdi:alert {% elif v < -1 %}mdi:trending-down {% else %}mdi:trending-neutral{% endif %}"
-  state: "{% set v = states('sensor.hph_cop_change_month_pct') | float(0) %} {% if v > 5 %}great {% elif v > 1 %}better {% elif v < -5 %}critical {% elif v < -1 %}worse {% else %}stable{% endif %}"
+  icon: "{% set v = states('sensor.hph_cop_change_yoy_pct') | float(0) %} {% if v > 5 %}mdi:rocket-launch {% elif v > 1 %}mdi:trending-up {% elif v < -5 %}mdi:alert {% elif v < -1 %}mdi:trending-down {% else %}mdi:trending-neutral{% endif %}"
+  state: "{% set v = states('sensor.hph_cop_change_yoy_pct') | float(0) %} {% if v > 5 %}great {% elif v > 1 %}better {% elif v < -5 %}critical {% elif v < -1 %}worse {% else %}stable{% endif %}"
   attributes:
-    month_pct: "{{ states('sensor.hph_cop_change_month_pct') }}"
+    yoy_pct: "{{ states('sensor.hph_cop_change_yoy_pct') }}"
     year_pct: "{{ states('sensor.hph_scop_change_year_pct') }}"
-    headline: "{% set m = states('sensor.hph_cop_change_month_pct') | float(0) %} {% set y = states('sensor.hph_scop_change_year_pct') | float(0) %} {% set m_prev = states('sensor.hph_cop_last_month') | float(0) %} {% set y_prev = states('sensor.hph_cop_last_year') | float(0) %} {% set parts = [] %} {% if m_prev > 0.1 %} {% if m > 0 %}{% set parts = parts + ['+ ' ~ m ~ '% vs last month'] %}{% elif m < 0 %}{% set parts = parts + [m ~ '% vs last month'] %}{% endif %} {% endif %} {% if y_prev > 0.1 %} {% if y > 0 %}{% set parts = parts + ['+ ' ~ y ~ '% vs last year'] %}{% elif y < 0 %}{% set parts = parts + [y ~ '% vs last year'] %}{% endif %} {% endif %} {% if parts | length == 0 %}Trend stable — not enough data yet.{% else %}{{ parts | join(' · ') }}{% endif %}"
+    headline: "{% set m = states('sensor.hph_cop_change_yoy_pct') | float(0) %} {% set y = states('sensor.hph_scop_change_year_pct') | float(0) %} {% set m_prev = states('sensor.hph_cop_same_month_last_year') | float(0) %} {% set y_prev = states('sensor.hph_cop_last_year') | float(0) %} {% set parts = [] %} {% if m_prev > 0.1 %} {% if m > 0 %}{% set parts = parts + ['+ ' ~ m ~ '% vs same month last year'] %}{% elif m < 0 %}{% set parts = parts + [m ~ '% vs same month last year'] %}{% endif %} {% endif %} {% if y_prev > 0.1 %} {% if y > 0 %}{% set parts = parts + ['+ ' ~ y ~ '% SCOP vs last year'] %}{% elif y < 0 %}{% set parts = parts + [y ~ '% SCOP vs last year'] %}{% endif %} {% endif %} {% if parts | length == 0 %}Trend stable — not enough data yet.{% else %}{{ parts | join(' · ') }}{% endif %}"
   _source_package: hph_efficiency.yaml
