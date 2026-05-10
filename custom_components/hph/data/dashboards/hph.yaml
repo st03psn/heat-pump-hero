@@ -1327,16 +1327,18 @@ views:
           noData:
             text: "Sammele Daten — der 30-Tage-Trend füllt sich nach mehreren Tagen Betrieb."
 
-      # ── SCOP per heating season (Jul 1 – Jun 30, last 10 seasons) ──
-      # One LTS entry per season → one bar per season. graph_span covers 10 years
-      # so future seasons appear automatically without config change.
+      # ── SCOP per heating season (Jul 1 – Jun 30) ──
+      # One LTS entry per season → one bar per season.
+      # span.start.fixed anchors the left edge at the first-ever season start;
+      # graph_span extends 10 years forward so future seasons appear automatically.
       - type: custom:apexcharts-card
         header:
           show: true
           title: SCOP per heating season (Jul – Jun)
         graph_span: 3650d
         span:
-          end: day
+          start:
+            fixed: "2025-07-01"
         series:
           - entity: sensor.hph_scop
             name: SCOP
