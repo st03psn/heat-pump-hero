@@ -54,38 +54,73 @@ views:
                 entity: binary_sensor.hph_defrost_active
                 state: "on"
 
-      # ── Row B: KPI grid (COP + costs) — 3 columns ──────────────────────
+      # ── Row B: Hero — efficiency trend headline (from former Mobile view) ─
+      - type: custom:mushroom-template-card
+        primary: HeatPump Hero
+        secondary: |-
+          {% set s = states('sensor.hph_efficiency_trend') %}
+          {% if s == 'great' %}🚀 great
+          {% elif s == 'better' %}📈 trending up
+          {% elif s == 'critical' %}⚠️ check advisor
+          {% elif s == 'worse' %}📉 trending down
+          {% else %}— stable —{% endif %}
+          · COP live {{ states('sensor.hph_cop_live') }}
+        icon: mdi:heat-pump
+        icon_color: |-
+          {% set s = states('sensor.hph_efficiency_trend') %}
+          {% if s == 'great' %}green
+          {% elif s == 'better' %}light-green
+          {% elif s == 'critical' %}red
+          {% elif s == 'worse' %}orange
+          {% else %}grey{% endif %}
+        multiline_secondary: true
+        fill_container: true
+
+      # ── Row C: Conditional active fault (only when present) ─────────────
+      - type: conditional
+        conditions:
+          - entity: sensor.hph_diagnostics_current_error
+            state_not: ok
+        card:
+          type: custom:mushroom-template-card
+          primary: |-
+            Fault: {{ states('sensor.hph_diagnostics_current_error') }}
+          secondary: >-
+            {{ state_attr('sensor.hph_diagnostics_current_error','message') }}
+          icon: mdi:alert-octagon
+          icon_color: red
+          multiline_secondary: true
+          fill_container: true
+          tap_action:
+            action: navigate
+            navigation_path: /hph/optimization
+
+      # ── Row D: Period-COP grid (Today / Month / Year) ───────────────────
       - type: grid
         columns: 3
         square: false
         cards:
           - type: custom:mushroom-template-card
-            primary: COP live
-            secondary: "{{ states('sensor.hph_cop_live') | round(2, default=0) }}"
-            icon: mdi:lightning-bolt-circle
-            icon_color: >-
-              {% set v = states('sensor.hph_cop_live') | float(0) %}
-              {% if v >= 4 %}green{% elif v >= 3 %}yellow{% elif v > 0 %}orange{% else %}grey{% endif %}
-            fill_container: true
-
-          - type: custom:mushroom-template-card
             primary: COP today
             secondary: "{{ states('sensor.hph_cop_daily') | round(2, default=0) }}"
             icon: mdi:calendar-today
             fill_container: true
-
           - type: custom:mushroom-template-card
             primary: COP month
             secondary: "{{ states('sensor.hph_cop_monthly') | round(2, default=0) }}"
             icon: mdi:calendar-month
             fill_container: true
-
           - type: custom:mushroom-template-card
             primary: SCOP
             secondary: "{{ states('sensor.hph_scop') | round(2, default=0) }}"
             icon: mdi:calendar-star
             fill_container: true
 
+      # ── Row E: Cost row (today / this month) ────────────────────────────
+      - type: grid
+        columns: 2
+        square: false
+        cards:
           - type: custom:mushroom-template-card
             primary: Cost today
             secondary: "{{ states('sensor.hph_cost_today') | float(0) | round(2) }} €"
@@ -94,7 +129,6 @@ views:
               {% set v = states('sensor.hph_cost_today') | float(0) %}
               {% if v > 5 %}red{% elif v > 2 %}orange{% else %}green{% endif %}
             fill_container: true
-
           - type: custom:mushroom-template-card
             primary: Cost month
             secondary: "{{ states('sensor.hph_cost_monthly') | float(0) | round(2) }} €"
@@ -104,7 +138,7 @@ views:
               action: navigate
               navigation_path: /hph/efficiency
 
-      # ── Row C: Schema & Advisor ──────────────────────────────────────────
+      # ── Row F: Schema & Advisor ──────────────────────────────────────────
       - type: horizontal-stack
         cards:
           - type: custom:mushroom-template-card
@@ -150,7 +184,25 @@ views:
               action: navigate
               navigation_path: /hph/optimization
 
-      # ── Row D: 7-day energy chart ────────────────────────────────────────
+      # ── Row G: Conditional Screed running (only during program) ─────────
+      - type: conditional
+        conditions:
+          - entity: sensor.hph_prog_screed_status
+            state: running
+        card:
+          type: custom:mushroom-template-card
+          primary: Screed running
+          secondary: >-
+            Day {{ states('number.hph_prog_screed_day') }} —
+            target {{ states('sensor.hph_prog_screed_target') }} °C
+          icon: mdi:home-floor-a
+          icon_color: orange
+          fill_container: true
+          tap_action:
+            action: navigate
+            navigation_path: /hph/programs
+
+      # ── Row H: 7-day energy chart ────────────────────────────────────────
       - type: custom:apexcharts-card
         header:
           show: true
@@ -942,7 +994,8 @@ views:
           | **Month** | {{ states('sensor.hph_thermal_monthly') | float(0) | round(2) }} kWh | {{ states('sensor.hph_electrical_monthly') | float(0) | round(2) }} kWh |
           | **Today** | {{ states('sensor.hph_thermal_daily') | float(0) | round(2) }} kWh | {{ states('sensor.hph_electrical_daily') | float(0) | round(2) }} kWh |
 
-      # ── Cost overview ──
+      # ── Cost overview (values only — price settings live in
+      # Configuration → Electricity cost) ──
       - type: entities
         title: Electricity costs
         entities:
@@ -955,10 +1008,7 @@ views:
           - type: divider
           - entity: sensor.hph_electricity_price_effective
             name: Effective price (ct/kWh)
-          - entity: number.hph_electricity_price_ct_per_kwh
-            name: Manual price fallback (ct/kWh)
-          - entity: text.hph_electricity_price_entity
-            name: Live price sensor (entity-ID, optional)
+            secondary_info: last-changed
 
       # ── Runtime vs. standby breakdown ──
       # COP daily/monthly/SCOP now use compressor-runtime kWh only, so
@@ -1395,279 +1445,53 @@ views:
       - type: markdown
         content: |
           ## Service programs
-          Multi-day and scheduled service programs. All gated by the
-          master switch `Control master` — you must enable both the master
-          and the per-program switch for anything to actually run. The
-          status cards below show the current state at a glance.
 
-          Programs write directly to the heat pump via the configured
-          control write-helpers (see Configuration → Control write
-          targets). If a program does nothing when triggered, double-check
-          those helpers point at existing entities.
+          Most modern A2W heat pumps (including all Panasonic Aquarea
+          generations) handle **legionella protection** and **screed
+          dry-out** in their own controller — set those programs there,
+          not here. HeatPump Hero only exposes a one-off legionella
+          trigger for installations where the controller doesn't have
+          a manual-boost option, plus a service that automation flows
+          can call.
 
-      # ── Status cards ──
-      - type: custom:mushroom-template-card
-        primary: Screed dry-out
-        secondary: |-
-          {% set s = states('sensor.hph_prog_screed_status') %}
-          {% set d = states('number.hph_prog_screed_day') | int(0) %}
-          {% set t = states('sensor.hph_prog_screed_target') %}
-          {% if s == 'disabled' %}Disabled
-          {% elif s == 'armed' %}Armed — not yet running
-          {% elif s == 'running' %}Day {{ d }} — target {{ t }} °C
-          {% else %}{{ s }}{% endif %}
-        icon: mdi:home-floor-a
-        icon_color: |-
-          {% set s = states('sensor.hph_prog_screed_status') %}
-          {% if s == 'running' %}orange
-          {% elif s == 'armed' %}blue
-          {% else %}grey{% endif %}
-        multiline_secondary: true
-        fill_container: true
-
-      # ── Master-switch reminder ──
+      # ── One-off legionella trigger ──
       - type: entities
-        title: Master switch (required for all control + programs)
+        title: Legionella — one-off boost
         entities:
-          - entity: switch.hph_ctrl_master
-            name: Control master switch
+          - type: call-service
+            name: Run legionella program now
+            icon: mdi:water-boiler
+            action_name: Trigger
+            service: hph.run_legionella_now
+        footer:
+          type: graph
+          entity: sensor.hph_source_dhw_temp
+          hours_to_show: 24
+          detail: 1
 
-      # ── Legionella ──
       - type: markdown
         content: |
-          ### Legionella protection
-          Configure the weekly anti-legionella DHW boost directly on
-          your heat pump controller or via the vendor app. Trigger a
-          one-off cycle using the **Run legionella program now** button
-          from **Settings → Devices & Services → HeatPump Hero**.
+          The **Run legionella program now** button calls the service
+          `hph.run_legionella_now`. It uses the target temperature and
+          hold duration configured in *Settings → Devices & Services →
+          HeatPump Hero → Configure → Programs*.
 
-      # ── Screed dry-out controls ──
-      - type: entities
-        title: Screed dry-out program
-        entities:
-          - type: section
-            label: Profile selection (pick BEFORE arming)
-          - entity: select.hph_prog_screed_profile
-            name: Profile
-          - type: section
-            label: Arm / disarm
-          - entity: switch.hph_prog_screed
-            name: Enable program (arming triggers Day 1)
-          - entity: switch.hph_prog_screed_active
-            name: Currently running (status flag)
-          - type: section
-            label: Status
-          - entity: datetime.hph_prog_screed_start
-            name: Program start
-          - entity: number.hph_prog_screed_day
-            name: Current day index
-          - entity: sensor.hph_prog_screed_target
-            name: Today's supply target (°C)
-          - entity: sensor.hph_prog_screed_status
-            name: Status
+          For weekly recurrence: configure it on your heat pump's
+          built-in legionella schedule. HeatPump Hero deliberately
+          does not duplicate that.
 
-      # ── Profile reference ──
-      - type: markdown
-        title: Profile reference
-        content: |
-          | Day | functional_3d | combined_10d | din_18560_28d |
-          |---:|---:|---:|---:|
-          | 1 | 25 °C | 25 °C | 25 °C |
-          | 2 | 45 °C | 45 °C | 25 °C |
-          | 3 | 25 °C | 25 °C | 25 °C |
-          | 4 | end | 40 °C | 30 °C |
-          | 5 |  | 40 °C | 35 °C |
-          | 6 |  | 40 °C | 45 °C |
-          | 7-24 |  | 40 / 35 / 30 / 25 then end | 50 °C |
-          | 25-28 |  |  | 45 / 35 / 30 / 25 |
-
-          **functional_3d** — ISO EN 1264-4 §4.4.2 functional heating,
-          minimum proof of operation.
-
-          **combined_10d** — common compromise: 3 d functional + 7 d
-          curing taper.
-
-          **din_18560_28d** — full 28-day cement-screed protocol per
-          DIN 18560-1.
-
-          The current day's target is pushed to the configured Z1
-          heat-curve target_high entity at 00:01 daily. Curve is NOT
-          restored on program end — note your pre-program values from
-          Configuration → Heating curve.
+          **Screed dry-out:** Panasonic Aquarea has a dedicated screed
+          program in *Installer Settings → Floor Heater* (consult the
+          installation manual). Use that instead — it integrates with
+          the heat pump's safety interlocks and is honoured across
+          power cycles.
 
   # ════════════════════════════════════════════════════════════════════════
-  # 6) MOBILE — slim, single-column layout for phones
-  # ════════════════════════════════════════════════════════════════════════
-  - title: Mobile
-    path: mobile
-    icon: mdi:cellphone
-    type: panel
-    badges: []
-    cards:
-      - type: vertical-stack
-        cards:
-          # ── Hero card ──
-          - type: custom:mushroom-template-card
-            primary: HeatPump Hero
-            secondary: |-
-              {% set s = states('sensor.hph_efficiency_trend') %}
-              {% if s == 'great' %}🚀 great
-              {% elif s == 'better' %}📈 trending up
-              {% elif s == 'critical' %}⚠️ check advisor
-              {% elif s == 'worse' %}📉 trending down
-              {% else %}— stable —{% endif %}
-              · COP live {{ states('sensor.hph_cop_live') }}
-            icon: mdi:heat-pump
-            icon_color: |-
-              {% set s = states('sensor.hph_efficiency_trend') %}
-              {% if s == 'great' %}green
-              {% elif s == 'better' %}light-green
-              {% elif s == 'critical' %}red
-              {% elif s == 'worse' %}orange
-              {% else %}grey{% endif %}
-            multiline_secondary: true
-            fill_container: true
-
-          # ── Compact KPI strip ──
-          - type: custom:mushroom-chips-card
-            chips:
-              - type: template
-                icon: mdi:thermometer
-                icon_color: blue
-                content: "{{ states('sensor.hph_source_outdoor_temp') }}°"
-              - type: template
-                icon: mdi:water-thermometer
-                icon_color: red
-                content: "{{ states('sensor.hph_source_outlet_temp') }}°"
-              - type: template
-                icon: mdi:water-pump
-                icon_color: blue
-                content: "{{ states('sensor.hph_source_flow_rate') }}"
-              - type: template
-                icon: mdi:sine-wave
-                icon_color: |-
-                  {{ 'green' if is_state('binary_sensor.hph_compressor_running','on') else 'disabled' }}
-                content: "{{ states('sensor.hph_source_compressor_freq') }}Hz"
-              - type: template
-                icon: mdi:gauge
-                icon_color: |-
-                  {% set v = states('sensor.hph_cop_live') | float(0) %}
-                  {% if v >= 4 %}green{% elif v >= 3 %}yellow{% elif v > 0 %}orange{% else %}disabled{% endif %}
-                content: "{{ states('sensor.hph_cop_live') }}"
-              - type: template
-                icon: mdi:snowflake-melt
-                icon_color: |-
-                  {{ 'cyan' if is_state('binary_sensor.hph_defrost_active','on') else 'disabled' }}
-                content: ""
-
-          # ── Compact period-COP grid ──
-          - type: grid
-            columns: 3
-            square: false
-            cards:
-              - type: custom:mushroom-template-card
-                primary: Today
-                secondary: "COP {{ states('sensor.hph_cop_daily') }}"
-                icon: mdi:calendar-today
-                fill_container: true
-              - type: custom:mushroom-template-card
-                primary: Month
-                secondary: "COP {{ states('sensor.hph_cop_monthly') }}"
-                icon: mdi:calendar-month
-                fill_container: true
-              - type: custom:mushroom-template-card
-                primary: Year
-                secondary: "SCOP {{ states('sensor.hph_scop') }}"
-                icon: mdi:calendar
-                fill_container: true
-
-          # ── Live trend ──
-          - type: custom:apexcharts-card
-            header:
-              show: true
-              title: Last 6h
-            graph_span: 6h
-            apex_config:
-              chart: { height: 200 }
-              legend: { show: false }
-            yaxis:
-              - id: temp
-                decimals: 1
-              - id: hz
-                opposite: true
-                decimals: 0
-            series:
-              - entity: sensor.hph_source_outlet_temp
-                name: Supply
-                yaxis_id: temp
-                color: "#d62728"
-                stroke_width: 2
-              - entity: sensor.hph_source_inlet_temp
-                name: Return
-                yaxis_id: temp
-                color: "#7ec1ff"
-                stroke_width: 2
-              - entity: sensor.hph_source_compressor_freq
-                name: Hz
-                yaxis_id: hz
-                color: "#bcbd22"
-                stroke_width: 1.5
-
-          # ── Active fault (only shown when present) ──
-          - type: conditional
-            conditions:
-              - entity: sensor.hph_diagnostics_current_error
-                state_not: ok
-            card:
-              type: custom:mushroom-template-card
-              primary: |-
-                Fault: {{ states('sensor.hph_diagnostics_current_error') }}
-              secondary: >-
-                {{ state_attr('sensor.hph_diagnostics_current_error','message') }}
-              icon: mdi:alert-octagon
-              icon_color: red
-              multiline_secondary: true
-              fill_container: true
-              tap_action:
-                action: navigate
-                navigation_path: /hph/optimization
-
-          # ── Advisor verdict ──
-          - type: custom:mushroom-template-card
-            primary: Advisor
-            secondary: >-
-              {% set s = states('sensor.hph_advisor_summary') %}
-              {% if s == 'critical' %}🔴 action required
-              {% elif s == 'warn' %}🟡 {{ state_attr('sensor.hph_advisor_summary','warn_count') }} warning(s)
-              {% else %}🟢 all clear{% endif %}
-            icon: mdi:lightbulb-on
-            icon_color: |-
-              {% set s = states('sensor.hph_advisor_summary') %}
-              {% if s == 'critical' %}red{% elif s == 'warn' %}yellow{% else %}green{% endif %}
-            tap_action:
-              action: navigate
-              navigation_path: /hph/optimization
-
-          # ── Programs status ──
-          - type: conditional
-            conditions:
-              - entity: sensor.hph_prog_screed_status
-                state: running
-            card:
-              type: custom:mushroom-template-card
-              primary: Screed running
-              secondary: >-
-                Day {{ states('number.hph_prog_screed_day') }} —
-                target {{ states('sensor.hph_prog_screed_target') }} °C
-              icon: mdi:home-floor-a
-              icon_color: orange
-              tap_action:
-                action: navigate
-                navigation_path: /hph/programs
-            fill_container: true
-
-  # ════════════════════════════════════════════════════════════════════════
-  # 7) CONFIGURATION
+  # 6) CONFIGURATION
+  # (Mobile view removed in v0.9 dashboard remediation Stage 3.2 — its
+  # hero card, period-COP grid, and conditional fault/screed cards were
+  # merged into the Overview view. Default Lovelace masonry handles
+  # responsive layout on phones automatically.)
   # ════════════════════════════════════════════════════════════════════════
   - title: Configuration
     path: config

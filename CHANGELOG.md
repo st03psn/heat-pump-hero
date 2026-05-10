@@ -3,6 +3,59 @@
 All notable changes to HeatPump Hero. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Dashboard remediation Stage 3
+
+### Changed
+
+- **Overview view (View 1) merged with the former Mobile view (View 7)**.
+  The 8 dashboard tabs are now 7. The new Overview combines:
+  - View 1's status-bar chips (operating mode / outdoor / supply+return
+    / Hz / pressure / defrost-conditional)
+  - View 7's hero card with the efficiency-trend headline
+  - A 3-column period-COP grid (Today / Month / SCOP year-to-date)
+    replacing View 1's 6-tile KPI grid
+  - View 1's Cost-today / Cost-month mushroom cards (2-column)
+  - View 1's Schema + Advisor mini-cards
+  - View 7's conditional active-fault and conditional-Screed-running
+    cards (only render when relevant)
+  - View 1's Energy 7-day, COP 13-month, and Cycling 7-day charts
+  Default Lovelace masonry handles responsive layout on phones — no
+  separate Mobile tab needed.
+
+- **Cost cards de-duplicated**. The Efficiency view's "Electricity costs"
+  card now shows values only (Cost today / monthly / seasonal +
+  effective-price readout). Price configuration (manual fallback,
+  live-price entity-ID) lives exclusively in Configuration → Electricity
+  cost. The user previously saw the same set of editable price helpers
+  on both views.
+
+- **Programs view (View 6) reduced**. Most modern A2W heat pumps handle
+  legionella and screed dry-out in their own controller; HPH duplicating
+  those programs leads to two competing schedules. The view now exposes
+  only:
+  - A one-off "Run legionella program now" button calling the
+    `hph.run_legionella_now` service (for installations whose controller
+    has no manual-boost option)
+  - A 24h DHW temperature footer graph
+  - Markdown guidance pointing to the Panasonic *Installer Settings →
+    Floor Heater* screed program for users who want screed dry-out
+  The screed-dry-out status / arm / profile-selection / 28-day-table
+  cards are gone. The underlying `coordinators/programs.py` and the
+  associated entities (`switch.hph_prog_screed`, etc.) remain so the
+  bridge / advisor logic that references them still works; they're just
+  no longer surfaced on the dashboard.
+
+### Deferred
+
+- **3.1 — Year-over-year comparison sensors** ("vs same calendar month
+  last year" instead of "vs previous calendar month"). The
+  utility_meter `last_period` attribute can't reach 12 months back, and
+  HA's `statistics` template filter doesn't support arbitrary historical
+  windows. Proper implementation needs a Python coordinator hitting the
+  `recorder/statistics_during_period` WebSocket API. Will land alongside
+  Stage 4 (Demo mode) so the new sensors can be exercised with seeded
+  history.
+
 ## [Unreleased] — Runtime-based COP + compressor-running bug fix
 
 ### Fixed
