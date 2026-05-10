@@ -192,6 +192,43 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
 
     hass.services.async_register(DOMAIN, "recompute", _recompute)
 
+    # run_legionella_now service — one-off legionella DHW boost.
+    # 1. Sets DHW target to the configured legionella target temperature.
+    # 2. Presses the force-DHW button (if available).
+    async def _run_legionella_now(_call: Any) -> None:
+        target_c_st = hass.states.get("number.hph_prog_legionella_target_c")
+        target_c = float(target_c_st.state) if target_c_st and target_c_st.state not in (
+            "unknown", "unavailable"
+        ) else 65.0
+
+        dhw_target_holder = hass.states.get("text.hph_ctrl_write_dhw_target")
+        if dhw_target_holder and dhw_target_holder.state not in ("unknown", "unavailable", ""):
+            dhw_eid = dhw_target_holder.state.strip()
+            if dhw_eid:
+                try:
+                    await hass.services.async_call(
+                        "number", "set_value",
+                        {"entity_id": dhw_eid, "value": target_c},
+                        blocking=False,
+                    )
+                    _LOGGER.info("hph.run_legionella_now: set %s → %.0f °C", dhw_eid, target_c)
+                except Exception as exc:  # noqa: BLE001
+                    _LOGGER.warning("hph.run_legionella_now: set DHW target failed: %s", exc)
+
+        force_dhw_holder = hass.states.get("text.hph_ctrl_write_force_dhw")
+        if force_dhw_holder and force_dhw_holder.state not in ("unknown", "unavailable", ""):
+            force_eid = force_dhw_holder.state.strip()
+            if force_eid:
+                try:
+                    await hass.services.async_call(
+                        "button", "press", {"entity_id": force_eid}, blocking=False,
+                    )
+                    _LOGGER.info("hph.run_legionella_now: pressed %s", force_eid)
+                except Exception as exc:  # noqa: BLE001
+                    _LOGGER.warning("hph.run_legionella_now: press force-DHW failed: %s", exc)
+
+    hass.services.async_register(DOMAIN, "run_legionella_now", _run_legionella_now)
+
     return True
 
 
