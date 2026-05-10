@@ -1406,6 +1406,84 @@ views:
           ### DHW timing (v0.8)
           {{ state_attr('sensor.hph_advisor_dhw_timing','message') }}
 
+      # ── Heat-pump native controls (Heishamon) ─────────────────────────
+      # Direct passthrough to the heat pump's own controls. These write
+      # straight to the unit via Heishamon — no HPH gating, no master-
+      # switch needed. For Heishamon-derived entities only; non-Panasonic
+      # vendors will see "unavailable" rows and can hide the card.
+      - type: entities
+        title: Heat pump — native controls
+        show_header_toggle: false
+        entities:
+          - type: section
+            label: Operation
+          - select.panasonic_heat_pump_main_operating_mode_state
+          - binary_sensor.panasonic_heat_pump_main_heatpump_state
+          - binary_sensor.panasonic_heat_pump_main_holiday_mode_state
+          - binary_sensor.panasonic_heat_pump_main_force_dhw_state
+          - binary_sensor.panasonic_heat_pump_main_force_heater_state
+          - binary_sensor.panasonic_heat_pump_main_sterilization_state
+          - binary_sensor.panasonic_heat_pump_main_main_schedule_state
+          - type: section
+            label: Quiet mode
+          - select.panasonic_heat_pump_main_quiet_mode_level
+          - select.panasonic_heat_pump_main_quiet_mode_priority
+          - binary_sensor.panasonic_heat_pump_main_quiet_mode_schedule
+          - select.panasonic_heat_pump_main_powerful_mode_time
+          - type: section
+            label: DHW
+          - number.panasonic_heat_pump_main_dhw_target_temp
+          - number.panasonic_heat_pump_main_dhw_heat_delta
+          - select.panasonic_heat_pump_main_dhw_sensor_selection
+          - select.panasonic_heat_pump_main_smart_dhw
+          - type: section
+            label: Heating control
+          - select.panasonic_heat_pump_main_heating_control
+          - select.panasonic_heat_pump_main_zones_state
+          - number.panasonic_heat_pump_main_heat_delta
+          - number.panasonic_heat_pump_main_cool_delta
+          - number.panasonic_heat_pump_main_heating_off_outdoor_temp
+          - type: section
+            label: Bivalent / aux heater
+          - select.panasonic_heat_pump_main_bivalent_mode
+          - number.panasonic_heat_pump_main_bivalent_start_temp
+          - number.panasonic_heat_pump_main_heater_delay_time
+          - number.panasonic_heat_pump_main_heater_start_delta
+          - number.panasonic_heat_pump_main_heater_stop_delta
+
+      # ── Heat curves (Z1 + Z2 if installed) ────────────────────────────
+      - type: entities
+        title: Heating curves (Z1)
+        show_header_toggle: false
+        entities:
+          - climate.panasonic_heat_pump_main_z1_temp
+          - type: section
+            label: Z1 heating curve
+          - number.panasonic_heat_pump_main_z1_heat_curve_outside_low_temp
+          - number.panasonic_heat_pump_main_z1_heat_curve_outside_high_temp
+          - number.panasonic_heat_pump_main_z1_heat_curve_target_low_temp
+          - number.panasonic_heat_pump_main_z1_heat_curve_target_high_temp
+          - sensor.panasonic_heat_pump_main_z1_water_temp
+          - sensor.panasonic_heat_pump_main_z1_water_target_temp
+      - type: conditional
+        conditions:
+          - entity: binary_sensor.hph_has_hk2
+            state: "on"
+        card:
+          type: entities
+          title: Heating curves (Z2)
+          show_header_toggle: false
+          entities:
+            - climate.panasonic_heat_pump_main_z2_temp
+            - type: section
+              label: Z2 heating curve
+            - number.panasonic_heat_pump_main_z2_heat_curve_outside_low_temp
+            - number.panasonic_heat_pump_main_z2_heat_curve_outside_high_temp
+            - number.panasonic_heat_pump_main_z2_heat_curve_target_low_temp
+            - number.panasonic_heat_pump_main_z2_heat_curve_target_high_temp
+            - sensor.panasonic_heat_pump_main_z2_water_temp
+            - sensor.panasonic_heat_pump_main_z2_water_target_temp
+
       - type: entities
         title: Control strategies (HeishaMoNR parity)
         entities:

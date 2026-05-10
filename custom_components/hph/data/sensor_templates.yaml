@@ -981,10 +981,14 @@ sensors:
   state: '{{ states(states(''text.hph_src_buffer_temp'')) | float(0) }}'
   _source_package: hph_sources.yaml
 # hph_thermal_power_active: live thermal power for COP live calculation.
+# heat_pump_internal: read the heat pump's own thermal-output sensor
+#   (e.g. Panasonic publishes heat_power_production directly via Heishamon).
+#   More accurate than ΔT×flow because the manufacturer's sensor is
+#   factory-calibrated and accounts for refrigerant-side measurement.
 # external_power: use external power sensor directly.
 # external_energy: external energy meter has no live power → fall back to
 #   internal ΔT×flow calculation (still accurate for live COP).
-# else (calculated): always use internal calculation.
+# else (calculated): always use internal ΔT×flow calculation.
 - name: HeatPump Hero Thermal Power Active
   unique_id: hph_thermal_power_active
   unit_of_measurement: W
@@ -997,6 +1001,13 @@ sensors:
       {% if ent and states(ent) not in ['unknown','unavailable','none',''] %}
         {{ states(ent) | float(0) }}
       {% else %}0{% endif %}
+    {% elif src == 'heat_pump_internal' %}
+      {% set ent = states('text.hph_src_internal_thermal_power') %}
+      {% if ent and states(ent) not in ['unknown','unavailable','none',''] %}
+        {{ states(ent) | float(0) }}
+      {% else %}
+        {{ states('sensor.hph_thermal_power') | float(0) }}
+      {% endif %}
     {% else %}
       {{ states('sensor.hph_thermal_power') | float(0) }}
     {% endif %}

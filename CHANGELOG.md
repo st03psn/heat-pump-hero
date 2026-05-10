@@ -3,6 +3,45 @@
 All notable changes to HeatPump Hero. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Heishamon-native thermal source + control passthrough
+
+### Added
+
+- **New thermal-source mode `heat_pump_internal`** (selectable in
+  Configuration → Source modes). Reads thermal output directly from the
+  heat pump's own production sensor instead of computing it from
+  ΔT × flow × cp. For Panasonic Heishamon installs this is
+  `sensor.panasonic_heat_pump_main_heat_power_production` — factory-
+  calibrated, refrigerant-side measurement, more accurate than the
+  hydraulic-side calculation. New Panasonic source helper
+  `text.hph_src_internal_thermal_power` carries the entity-ID; default
+  matches the Heishamon naming. New Panasonic-vendor preset default for
+  `select.hph_thermal_source` is now `heat_pump_internal` (existing
+  installs are unaffected — config-entry state is preserved across
+  upgrades).
+
+- **"Heat pump — native controls" card on the Optimization view** —
+  direct passthrough to the heat pump's own controls (Heishamon-
+  specific). Five sections:
+  - Operation: mode select, heatpump state, holiday / force-DHW /
+    force-heater / sterilization / schedule
+  - Quiet mode: level, priority, schedule, powerful-mode time
+  - DHW: target temp, heat delta, sensor selection, smart DHW
+  - Heating control: heating control mode, zones state, heat/cool
+    delta, heating-off outdoor temp
+  - Bivalent / aux heater: mode, start temp, delay, start/stop deltas
+
+- **"Heating curves (Z1)" card + conditional Z2 card** — climate
+  entity for the zone plus the four curve-defining numbers (outside
+  low/high, target low/high) and the live water-target / actual
+  values for verification.
+
+These cards write straight to the heat pump (no HPH gating, no master
+switch). Non-Panasonic vendors will see "unavailable" rows here — the
+conditional Z2 card hides automatically when `binary_sensor.hph_has_hk2`
+is off; a similar conditional for the whole "native controls" block
+based on the vendor preset is a v1.0 polish task.
+
 ## [Unreleased] — Source-health advisor
 
 ### Added
