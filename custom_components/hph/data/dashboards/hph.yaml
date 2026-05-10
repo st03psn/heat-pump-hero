@@ -1486,9 +1486,12 @@ views:
         apex_config:
           chart:
             height: 280
+          plotOptions:
+            bar:
+              columnWidth: "40%"
           yaxis:
             min: 0
-            max: 7
+            max: 8
             decimalsInFloat: 2
             title:
               text: "SCOP"

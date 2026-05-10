@@ -1061,11 +1061,13 @@ sensors:
   state_class: measurement
   state: >-
     {% set src = states('select.hph_thermal_source') %}
-    {% if src == 'external_power' %}
+    {% if src in ['external_power', 'external_energy'] %}
       {% set ent = states('text.hph_src_external_thermal_power') %}
       {% if ent and states(ent) not in ['unknown','unavailable','none',''] %}
         {{ states(ent) | float(0) }}
-      {% else %}0{% endif %}
+      {% else %}
+        {{ states('sensor.hph_thermal_power') | float(0) }}
+      {% endif %}
     {% elif src == 'heat_pump_internal' %}
       {% set ent = states('text.hph_src_internal_thermal_power') %}
       {% if ent and states(ent) not in ['unknown','unavailable','none',''] %}

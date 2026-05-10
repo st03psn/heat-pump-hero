@@ -102,6 +102,10 @@ HPH_COP_DAILY        = "sensor.hph_cop_daily"
 HPH_THERMAL_ENERGY_ACTIVE    = "sensor.hph_thermal_energy_active"
 HPH_ELECTRICAL_ENERGY_ACTIVE = "sensor.hph_electrical_energy_active"
 
+# HPH COP/SCOP LTS targets (mean-only, for charts)
+HPH_COP_MONTHLY = "sensor.hph_cop_monthly"
+HPH_SCOP        = "sensor.hph_scop"
+
 # Heating season start (matching cron "0 0 1 7 *")
 SEASON_START = datetime(2025, 7, 1, 0, 0, 0)  # local CET/CEST
 
@@ -487,6 +491,56 @@ def build_daily_cop_stats(
     return stats
 
 
+def build_monthly_cop_stats(
+    totals: dict[tuple[int, int], dict[str, float | None]],
+) -> list[dict]:
+    """Build mean-value statistics for sensor.hph_cop_monthly (one entry per month).
+
+    Used by the monthly COP display and by hph_cop_monthly LTS so the
+    per-month COP is based on reliable Sensostar/Shelly data.
+    """
+    stats: list[dict] = []
+    now_utc = datetime.now(timezone.utc).replace(tzinfo=None, minute=0, second=0, microsecond=0)
+    for yr, mo in MONTHS:
+        t = totals.get((yr, mo), {})
+        th = t.get("thermal")
+        el = t.get("electrical")
+        if th is None or el is None or el < 0.05 or th < 0.3:
+            continue
+        cop = round(th / el, 3)
+        ts_end = min(_month_end_utc(yr, mo) - timedelta(hours=1), now_utc)
+        stats.append({"start": _iso(ts_end), "mean": cop, "min": cop, "max": cop})
+    return stats
+
+
+def build_scop_stats(
+    totals: dict[tuple[int, int], dict[str, float | None]],
+) -> list[dict]:
+    """Build mean-value statistics for sensor.hph_scop (one entry per month,
+    showing the cumulative seasonal SCOP up to that month).
+
+    The SCOP chart reads type:mean,period:month so each bar shows the
+    running SCOP for the heating season Jul-Jun.
+    """
+    stats: list[dict] = []
+    now_utc = datetime.now(timezone.utc).replace(tzinfo=None, minute=0, second=0, microsecond=0)
+    th_acc = el_acc = 0.0
+    for yr, mo in MONTHS:
+        t = totals.get((yr, mo), {})
+        th = t.get("thermal")
+        el = t.get("electrical")
+        if th is None or el is None:
+            continue
+        th_acc += th
+        el_acc += el
+        if el_acc < 0.05:
+            continue
+        scop = round(th_acc / el_acc, 3)
+        ts_end = min(_month_end_utc(yr, mo) - timedelta(hours=1), now_utc)
+        stats.append({"start": _iso(ts_end), "mean": scop, "min": scop, "max": scop})
+    return stats
+
+
 # ---------------------------------------------------------------------------
 # Statistics entry builder — hourly cumulative (energy_active)
 # ---------------------------------------------------------------------------
@@ -701,10 +755,12 @@ def main() -> int:
     # Build monthly/yearly stat sets
     # (entity_id, stats, label, has_sum, has_mean, unit)
     targets: list[tuple[str, list[dict], str, bool, bool, str]] = [
-        (HPH_THERMAL_MONTHLY,    build_monthly_stats(totals, "thermal"),    "monthly",     True,  False, "kWh"),
-        (HPH_ELECTRICAL_MONTHLY, build_monthly_stats(totals, "electrical"), "monthly",     True,  False, "kWh"),
-        (HPH_THERMAL_YEARLY,     build_yearly_stats(totals,  "thermal"),    "yearly",      True,  False, "kWh"),
-        (HPH_ELECTRICAL_YEARLY,  build_yearly_stats(totals,  "electrical"), "yearly",      True,  False, "kWh"),
+        (HPH_THERMAL_MONTHLY,    build_monthly_stats(totals, "thermal"),    "monthly",          True,  False, "kWh"),
+        (HPH_ELECTRICAL_MONTHLY, build_monthly_stats(totals, "electrical"), "monthly",          True,  False, "kWh"),
+        (HPH_THERMAL_YEARLY,     build_yearly_stats(totals,  "thermal"),    "yearly",           True,  False, "kWh"),
+        (HPH_ELECTRICAL_YEARLY,  build_yearly_stats(totals,  "electrical"), "yearly",           True,  False, "kWh"),
+        (HPH_COP_MONTHLY,        build_monthly_cop_stats(totals),           "monthly COP",      False, True,  "x"),
+        (HPH_SCOP,               build_scop_stats(totals),                  "seasonal SCOP",    False, True,  "x"),
     ]
 
     # -- Daily totals (--full) --------------------------------------------
@@ -738,10 +794,19 @@ def main() -> int:
             (HPH_ELECTRICAL_ENERGY_ACTIVE, el_hourly, "hourly cumulative", True, False, "kWh"),
         ]
 
-    # -- Clear existing LTS for daily/hourly targets before re-import --------
+    # -- Clear existing LTS before re-import ---------------------------------
     # HA's recorder/import_statistics silently rejects historical entries when
     # existing LTS rows have a higher sum than the imported historical rows
     # (backwards-sum conflict). Clearing first lets the import write cleanly.
+    if args.confirm:
+        # COP/SCOP are mean-only (no sum), but clear anyway so stale rows don't
+        # show up in charts after a re-run with different thresholds.
+        cop_ids = [HPH_COP_MONTHLY, HPH_SCOP]
+        print("-- Clearing existing monthly COP/SCOP LTS ---------------------------")
+        ok = ws_clear(cop_ids)
+        print(f"  clear: {'OK' if ok else 'FAILED'}")
+        print()
+
     if args.confirm and args.full:
         clear_ids = [
             HPH_THERMAL_DAILY, HPH_ELECTRICAL_DAILY, HPH_COP_DAILY,
