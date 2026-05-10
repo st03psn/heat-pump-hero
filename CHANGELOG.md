@@ -7,6 +7,47 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
 
 ### Fixed
 
+- **Standby breakdown was structurally wrong on the day of integration
+  install/reload — and quietly off by tens of percent every time the
+  HPH integration restarted.**
+
+  Root cause was twofold:
+
+  *Stage A — utility_meter daily/monthly/yearly totals were sourced
+  from the template-sensor wrapper `sensor.hph_*_energy_active`. Every
+  HPH integration reload made that wrapper briefly `unavailable`, and
+  utility_meter does not accumulate kWh while its source is
+  unavailable. On a heavy reload day this leaked 30–50 % of true
+  consumption — a Shelly that measured 3.46 kWh real today showed
+  1.93 kWh in `hph_electrical_daily`. Fix: when the user has set an
+  `external_*_energy` entity, `bootstrap.py` now rewrites the
+  utility_meter `source:` lines to point at that entity directly.
+  Reloads of HPH no longer interrupt accumulation, since the source
+  is now an upstream sensor that lives outside the integration.
+
+  *Stage B — `hph_electrical_runtime_daily` (a utility_meter on the
+  Riemann-integrated runtime power) only started accumulating from the
+  moment HPH was loaded. On install day, every minute of compressor
+  runtime that occurred *before* the first HPH boot was missed,
+  inflating the standby figure (`total − runtime`) by exactly that
+  amount. New coordinator `coordinators/runtime_kwh.py` samples the
+  external energy meter at each compressor on/off transition and
+  accumulates the delta into two new RestoreEntity-backed numbers
+  (`number.hph_{thermal,electrical}_runtime_today_kwh`). These
+  survive HPH reloads because the meter samples are point-in-time
+  reads of an upstream sensor, not an integrator. Resets at midnight;
+  rebaselines mid-interval if the compressor is on at midnight.
+
+  Standby template (`hph_standby_electrical_daily`) now reads from
+  the new robust runtime number and gates its availability on both
+  inputs being valid, so a freshly-installed integration shows "—"
+  in the dashboard rather than a misleading number on day 1.
+
+  Concrete example from the user's install day: HPH said
+  `0.26 kWh runtime / 1.67 kWh standby`; reality reconstructed from
+  the Shelly + compressor frequency was `3.32 kWh runtime / 0.14 kWh
+  standby` (M-series circulator is genuinely near-zero idle).
+
 - **OptionsFlow showed stale entity values on every re-open.**
   `HphOptionsFlow.async_step_init` initialised `self._data` from
   `entry.data` only, ignoring `entry.options`. The OptionsFlow writes

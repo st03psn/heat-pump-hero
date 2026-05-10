@@ -194,6 +194,45 @@ these) plus dashboard + assets. Migration removes old automation packages.
 - [ ] Remove deprecated `scripts/install.sh` / `scripts/update.ps1`
       (legacy YAML-package installer paths)
 
+## Backlog (post-v1.0 ideas)
+
+User-suggested features that don't yet have a target version. Capture
+the *what* and *why*; sequence and design get decided when scheduled.
+
+- [ ] **Per-mode long-term statistics with multi-year overlay views.**
+      What: persistent LTS for thermal and electrical kWh **and** COP
+      split by mode (heating / DHW / cooling), browseable across years
+      from the dashboard — click a metric, step through years, overlay
+      two or more years on the same chart. Year-on-year comparisons
+      already exist as point values (`hph_*_change_yoy_pct`); this is
+      the visual / drill-down layer on top.
+      Why: the user wants to answer "did we use more hot-water energy
+      this year than last, and what did it cost?" without leaving HA
+      for Grafana. Same for "is this winter's heating SCOP trending up
+      or down vs the previous two winters?"
+      Existing primitives: `hph_thermal_*_split_{heating,dhw,cooling}`
+      and matching electrical splits already exist (utility_meter with
+      tariffs, switched by `coordinators/efficiency.py` from
+      `sensor.hph_operating_mode`). `hph_cop_monthly_heating`,
+      `hph_cop_yearly_heating`, `hph_cop_monthly_dhw`,
+      `hph_cop_yearly_dhw` already exist. Missing: a multi-year UI
+      (apexcharts `graph_span: 3y` with explicit per-year series
+      overlay), and a reliability story for the mode-split sum vs.
+      the external Shelly total (the two should agree to within
+      measurement error).
+      Optional input: a separate DHW heat meter. Most installs put the
+      WMZ in the heating return and so cannot directly measure DHW
+      thermal output; if a second `text.hph_src_external_dhw_thermal_energy`
+      is provided, use it directly for DHW kWh and subtract from total
+      for heating kWh — more accurate than tariff-split inference.
+      Acceptance criteria when scheduled: (1) `Σ split_{heat,dhw,cool}
+      ≈ external total` to within 2 % over a calendar month;
+      (2) dashboard view shows COP / kWh per mode for the active
+      year and an overlay of N previous years (N configurable);
+      (3) Grafana board imports the same series via InfluxDB.
+      Effort estimate: ~6–10 h once scheduled (depends on whether
+      the optional DHW WMZ branch is in scope for v1).
+
 ## Out of scope
 
 - Cloud features (HeatPump Hero stays 100 % local)
