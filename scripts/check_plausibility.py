@@ -22,12 +22,16 @@ What it checks
 
 from __future__ import annotations
 
+import io
 import json
 import os
 import sys
 import urllib.request
 from datetime import date, datetime, timezone
 from typing import Any
+
+# Force UTF-8 output on Windows consoles that default to cp1252
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 HA_BASE = os.environ.get("HA_BASE_URL", "http://192.168.111.73:8123").rstrip("/")
 HA_TOKEN = os.environ.get("HA_TOKEN", "")
@@ -124,11 +128,11 @@ def main() -> None:
         print("ERROR: set HA_TOKEN environment variable (long-lived access token)")
         sys.exit(1)
 
-    print(f"\nHeatPump Hero — Plausibility Check  [{datetime.now().strftime('%Y-%m-%d %H:%M')}]")
+    print(f"\nHeatPump Hero - Plausibility Check  [{datetime.now().strftime('%Y-%m-%d %H:%M')}]")
     print(f"HA: {HA_BASE}\n")
 
-    # ── 0. Source modes ─────────────────────────────────────────────────────
-    print("── Source modes ─────────────────────────────────────────────────")
+    # -- 0. Source modes -----------------------------------------------------
+    print("-- Source modes -------------------------------------------------")
     el_src = state(HPH_ELECTRICAL_SOURCE)
     th_src = state(HPH_THERMAL_SOURCE)
     el_ok = el_src == "external_energy"
@@ -137,8 +141,8 @@ def main() -> None:
     print(f"  Thermal source    : {th_src:30s}  {'OK' if th_ok else 'WARN — expected external_energy'}")
     print()
 
-    # ── 1. Live power ────────────────────────────────────────────────────────
-    print("── Live power [W] ───────────────────────────────────────────────")
+    # -- 1. Live power --------------------------------------------------------
+    print("-- Live power [W] -----------------------------------------------")
     comp = state(HPH_COMPRESSOR)
     print(f"  Compressor        : {comp}")
 
@@ -164,8 +168,8 @@ def main() -> None:
         print(f"    Deviation       : {diff_pct}  → {ok_warn(rel, 0.10)}")
     print()
 
-    # ── 2. Today's energy totals ─────────────────────────────────────────────
-    print("── Daily energy [kWh] ───────────────────────────────────────────")
+    # -- 2. Today's energy totals --------------------------------------------
+    print("-- Daily energy [kWh] -------------------------------------------")
     print("  (fetching today's delta from HA history — may take a moment…)")
     gt_el_day = today_delta(GT_ELECTRICAL_ENERGY)
     gt_th_day = today_delta(GT_THERMAL_ENERGY)
@@ -191,8 +195,8 @@ def main() -> None:
         print(f"    Deviation       : {diff:+.3f} kWh  {diff_pct}  → {ok_warn(rel)}")
     print()
 
-    # ── 3. COP ───────────────────────────────────────────────────────────────
-    print("── COP ──────────────────────────────────────────────────────────")
+    # -- 3. COP --------------------------------------------------------------
+    print("-- COP ----------------------------------------------------------")
     hph_cop_live = flt(state(HPH_COP_LIVE))
     hph_cop_day = flt(state(HPH_COP_DAILY))
 
@@ -213,8 +217,8 @@ def main() -> None:
             print(f"  Deviation               : {pct_diff(float(hph_cop_day), gt_cop_day)}")
     print()
 
-    # ── 4. Standby breakdown ─────────────────────────────────────────────────
-    print("── Standby breakdown ────────────────────────────────────────────")
+    # -- 4. Standby breakdown ------------------------------------------------
+    print("-- Standby breakdown --------------------------------------------")
     hph_el_runtime = flt(state(HPH_ELECTRICAL_RUNTIME))
     hph_th_runtime = flt(state(HPH_THERMAL_RUNTIME))
     hph_standby = flt(state(HPH_STANDBY_ELECTRICAL))
@@ -233,8 +237,8 @@ def main() -> None:
         print(f"  GT standby (Shelly-runtime): {gt_standby:.3f} kWh")
     print()
 
-    # ── 5. Summary ───────────────────────────────────────────────────────────
-    print("── Summary ──────────────────────────────────────────────────────")
+    # -- 5. Summary ----------------------------------------------------------
+    print("-- Summary ------------------------------------------------------")
     checks = []
     if gt_el_day is not None and hph_el_day is not None and gt_el_day > 0.01:
         checks.append(("Electrical daily", abs(hph_el_day - gt_el_day) / gt_el_day, 0.05))
