@@ -81,7 +81,7 @@ views:
             fill_container: true
 
           - type: custom:mushroom-template-card
-            primary: SCOP season
+            primary: SCOP
             secondary: "{{ states('sensor.hph_scop') | round(2, default=0) }}"
             icon: mdi:calendar-star
             fill_container: true
