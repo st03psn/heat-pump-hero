@@ -40,7 +40,7 @@ def _load_definitions() -> list[dict[str, Any]]:
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    defs = _load_definitions()
+    defs = await hass.async_add_executor_job(_load_definitions)
     if not defs:
         _LOGGER.error("No binary-sensor definitions loaded")
         return

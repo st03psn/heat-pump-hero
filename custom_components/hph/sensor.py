@@ -74,7 +74,7 @@ _STATE_CLASS_MAP = {
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    defs = _load_definitions()
+    defs = await hass.async_add_executor_job(_load_definitions)
     if not defs:
         _LOGGER.error("No sensor definitions loaded from %s", _DATA_FILE)
         return
