@@ -177,7 +177,7 @@ views:
               align: start
         apex_config:
           chart:
-            height: 200
+            height: 260
           yaxis:
             title:
               text: "kWh"
@@ -203,7 +203,7 @@ views:
               align: start
         apex_config:
           chart:
-            height: 180
+            height: 260
           yaxis:
             min: 0
             max: 7
@@ -244,7 +244,7 @@ views:
               start_with_last: false
         apex_config:
           chart:
-            height: 160px
+            height: 260
           noData:
             text: "Sammele Daten — Tageswerte erscheinen, sobald der Kompressor läuft."
 
@@ -648,6 +648,9 @@ views:
             decimals: 0
             apex_config:
               title: { text: "Hz / rpm / L-min" }
+        apex_config:
+          chart:
+            height: 360
         series:
           - entity: sensor.hph_source_outdoor_temp
             name: Outdoor
@@ -691,6 +694,8 @@ views:
             stroke_width: 2
             extend_to: now
         apex_config:
+          chart:
+            height: 280
           markers:
             size: 3
           stroke:
@@ -851,7 +856,7 @@ views:
               {% set cur = states('sensor.hph_thermal_monthly') | float(0) %}
               {% set prev = states('sensor.hph_thermal_last_month') | float(0) %}
               {% set p = states('sensor.hph_thermal_change_month_pct') | float(0) %}
-              {{ cur | round(1) }} kWh{% if prev > 0.1 %} ({{ '+' if p > 0 else '' }}{{ p }}% vs {{ prev | round(1) }} kWh){% endif %}
+              {{ cur | round(2) }} kWh{% if prev > 0.1 %} ({{ '+' if p > 0 else '' }}{{ p }}% vs {{ prev | round(2) }} kWh){% endif %}
             icon: mdi:fire
             icon_color: red
             multiline_secondary: true
@@ -863,7 +868,7 @@ views:
               {% set cur = states('sensor.hph_electrical_monthly') | float(0) %}
               {% set prev = states('sensor.hph_electrical_last_month') | float(0) %}
               {% set p = states('sensor.hph_electrical_change_month_pct') | float(0) %}
-              {{ cur | round(1) }} kWh{% if prev > 0.1 %} ({{ '+' if p > 0 else '' }}{{ p }}% vs {{ prev | round(1) }} kWh){% endif %}
+              {{ cur | round(2) }} kWh{% if prev > 0.1 %} ({{ '+' if p > 0 else '' }}{{ p }}% vs {{ prev | round(2) }} kWh){% endif %}
             icon: mdi:flash
             icon_color: yellow
             multiline_secondary: true
@@ -922,22 +927,17 @@ views:
           - entity: sensor.hph_cop_monthly_dhw
             name: COP DHW (month)
 
-      # ── Energy totals ──
-      - type: entities
+      # ── Energy totals (markdown for 2-decimal display — utility_meter
+      # accumulates with float precision, has no round option, and the
+      # entity-registry display_precision can't be set from YAML) ──
+      - type: markdown
         title: Energy totals
-        entities:
-          - entity: sensor.hph_thermal_yearly
-            name: Thermal (year)
-          - entity: sensor.hph_electrical_yearly
-            name: Electrical (year)
-          - entity: sensor.hph_thermal_monthly
-            name: Thermal (month)
-          - entity: sensor.hph_electrical_monthly
-            name: Electrical (month)
-          - entity: sensor.hph_thermal_daily
-            name: Thermal (today)
-          - entity: sensor.hph_electrical_daily
-            name: Electrical (today)
+        content: |
+          | | Thermal | Electrical |
+          |---|---:|---:|
+          | **Year** | {{ states('sensor.hph_thermal_yearly') \| float(0) \| round(2) }} kWh | {{ states('sensor.hph_electrical_yearly') \| float(0) \| round(2) }} kWh |
+          | **Month** | {{ states('sensor.hph_thermal_monthly') \| float(0) \| round(2) }} kWh | {{ states('sensor.hph_electrical_monthly') \| float(0) \| round(2) }} kWh |
+          | **Today** | {{ states('sensor.hph_thermal_daily') \| float(0) \| round(2) }} kWh | {{ states('sensor.hph_electrical_daily') \| float(0) \| round(2) }} kWh |
 
       # ── Cost overview ──
       - type: entities
@@ -958,21 +958,14 @@ views:
             name: Live price sensor (entity-ID, optional)
 
       # ── Energy split by mode (this month) ──
-      - type: entities
+      - type: markdown
         title: Energy by mode — this month
-        entities:
-          - entity: sensor.hph_thermal_monthly_split_heating
-            name: Thermal — heating
-          - entity: sensor.hph_electrical_monthly_split_heating
-            name: Electrical — heating
-          - entity: sensor.hph_thermal_monthly_split_dhw
-            name: Thermal — DHW
-          - entity: sensor.hph_electrical_monthly_split_dhw
-            name: Electrical — DHW
-          - entity: sensor.hph_thermal_monthly_split_cooling
-            name: Thermal — cooling
-          - entity: sensor.hph_electrical_monthly_split_cooling
-            name: Electrical — cooling
+        content: |
+          | Mode | Thermal | Electrical |
+          |---|---:|---:|
+          | Heating | {{ states('sensor.hph_thermal_monthly_split_heating') \| float(0) \| round(2) }} kWh | {{ states('sensor.hph_electrical_monthly_split_heating') \| float(0) \| round(2) }} kWh |
+          | DHW | {{ states('sensor.hph_thermal_monthly_split_dhw') \| float(0) \| round(2) }} kWh | {{ states('sensor.hph_electrical_monthly_split_dhw') \| float(0) \| round(2) }} kWh |
+          | Cooling | {{ states('sensor.hph_thermal_monthly_split_cooling') \| float(0) \| round(2) }} kWh | {{ states('sensor.hph_electrical_monthly_split_cooling') \| float(0) \| round(2) }} kWh |
 
       # ── 30-day bar chart ──
       - type: custom:apexcharts-card
@@ -1006,7 +999,7 @@ views:
               align: start
         apex_config:
           chart:
-            height: 220
+            height: 300
           yaxis:
             title:
               text: "kWh"
@@ -1033,6 +1026,8 @@ views:
               type: state
               period: day
         apex_config:
+          chart:
+            height: 280
           markers:
             size: 4
           noData:
@@ -1059,7 +1054,7 @@ views:
               align: start
         apex_config:
           chart:
-            height: 200
+            height: 280
           yaxis:
             min: 0
             max: 7
@@ -1149,6 +1144,8 @@ views:
               duration: 1d
               start_with_last: false
         apex_config:
+          chart:
+            height: 260
           noData:
             text: "Sammele Daten — Tageswerte erscheinen, sobald der Kompressor läuft."
 

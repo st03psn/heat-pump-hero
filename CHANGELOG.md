@@ -3,6 +3,38 @@
 All notable changes to HeatPump Hero. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Dashboard remediation Stage 2
+
+### Fixed
+
+- **Energy totals showing 5 decimal places** ("0,33745 kWh"). The
+  `_active` template sensors round to 2 decimals, but the downstream
+  `utility_meter` accumulates internally with float precision and has
+  no `round` option. Rather than wrapping every utility_meter in a
+  template sensor, replaced the *Energy totals* and *Energy by mode —
+  this month* entities-cards on View 4 with markdown tables that
+  apply `| round(2)` at display time. Side benefit: more compact
+  layout (3 rows × 3 columns instead of 6 rows).
+- **Mushroom KPI cards on View 4 rounded to 1 decimal** ("2.0 kWh"
+  for what's actually 2.07 kWh). Bumped to 2 decimals to match the
+  totals tables.
+
+### Changed
+
+- **Chart heights bumped for readability**. ApexCharts cards in
+  views 1, 3, 4, 5 had heights of 160-220 px which made them appear
+  cramped on wide screens (charts were narrow because of masonry
+  layout, and short on top of that). Bumped to 260-360 px:
+  - Energy 7d / Cycling 7d / COP 13mo (View 1): 260 px each
+  - Temperatures & compressor (View 3): 360 px
+  - COP trend 24h (View 3): 280 px
+  - Daily energy 30d (View 4): 300 px
+  - COP trend 30d / SCOP heating-season (View 4): 280 px each
+  - Cycling 7d (View 5): 260 px
+
+A proper width fix (sections-view conversion) is deferred — height
+gives most of the readability win in masonry layout already.
+
 ## [Unreleased] — Dashboard remediation Stage 1
 
 ### Fixed
