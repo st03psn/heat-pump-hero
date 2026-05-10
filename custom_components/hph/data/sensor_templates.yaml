@@ -600,28 +600,27 @@ sensors:
   unique_id: hph_cop_daily
   unit_of_measurement: x
   state_class: measurement
-  # Uses runtime-gated kWh so 24h-of-standby doesn't drag the integral
-  # COP down to ~1. Standby losses tracked separately via
-  # hph_standby_electrical_daily.
-  state: '{% set t = states(''sensor.hph_thermal_runtime_daily'') | float(0) %} {%
-    set e = states(''sensor.hph_electrical_runtime_daily'') | float(0) %} {{ (t / e)
+  # Uses total daily meters (matches physical Sensostar/Shelly). Survives
+  # HPH integration reloads because utility_meter state is persisted by HA.
+  state: '{% set t = states(''sensor.hph_thermal_daily'') | float(0) %} {%
+    set e = states(''sensor.hph_electrical_daily'') | float(0) %} {{ (t / e)
     | round(2) if e > 0.1 else 0 }}'
   _source_package: hph_efficiency.yaml
 - name: HeatPump Hero COP Monthly
   unique_id: hph_cop_monthly
   unit_of_measurement: x
   state_class: measurement
-  state: '{% set t = states(''sensor.hph_thermal_runtime_monthly'') | float(0) %} {%
-    set e = states(''sensor.hph_electrical_runtime_monthly'') | float(0) %} {{ (t /
-    e) | round(2) if e > 0.1 else 0 }}'
+  state: '{% set t = states(''sensor.hph_thermal_monthly'') | float(0) %} {%
+    set e = states(''sensor.hph_electrical_monthly'') | float(0) %} {{ (t /
+    e) | round(2) if e > 0.5 else 0 }}'
   _source_package: hph_efficiency.yaml
 - name: HeatPump Hero SCOP
   unique_id: hph_scop
   unit_of_measurement: x
   state_class: measurement
-  state: '{% set t = states(''sensor.hph_thermal_runtime_yearly'') | float(0) %} {%
-    set e = states(''sensor.hph_electrical_runtime_yearly'') | float(0) %} {{ (t /
-    e) | round(2) if e > 0.1 else 0 }}'
+  state: '{% set t = states(''sensor.hph_thermal_yearly'') | float(0) %} {%
+    set e = states(''sensor.hph_electrical_yearly'') | float(0) %} {{ (t /
+    e) | round(2) if e > 1.0 else 0 }}'
   _source_package: hph_efficiency.yaml
 # Standby-Diagnose: elektrische kWh, die nicht während Kompressor-Lauf
 # verbraucht wurden (= Umwälzpumpe + Steuerelektronik + Frostschutz).

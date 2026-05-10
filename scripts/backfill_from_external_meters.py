@@ -50,6 +50,9 @@ Usage
   # Full import, live:
   HA_TOKEN=eyJh... python scripts/backfill_from_external_meters.py --full --confirm
 
+  # Full import + calibrate (fixes utility_meter totals after HPH reload):
+  HA_TOKEN=eyJh... python scripts/backfill_from_external_meters.py --full --confirm --calibrate
+
   # Non-default paths / URLs:
   HA_DB=P:/home-assistant_v2.db HA_BASE_URL=http://192.168.111.73:8123 \\
     HA_TOKEN=eyJh... python scripts/backfill_from_external_meters.py --full --confirm
@@ -628,6 +631,29 @@ def build_hourly_energy_stats(
 
 
 # ---------------------------------------------------------------------------
+# REST helpers (calibrate)
+# ---------------------------------------------------------------------------
+
+def rest_calibrate(entity_id: str, value: float) -> bool:
+    """Call utility_meter/calibrate via HA REST API to set a meter's current total."""
+    import urllib.request
+    url = f"{HA_BASE}/api/services/utility_meter/calibrate"
+    payload = json.dumps({"entity_id": entity_id, "value": round(value, 3)}).encode()
+    req = urllib.request.Request(
+        url,
+        data=payload,
+        headers={"Authorization": f"Bearer {HA_TOKEN}", "Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            return resp.status in (200, 201, 204)
+    except Exception as exc:
+        print(f"  calibrate error ({entity_id}): {exc}", file=sys.stderr)
+        return False
+
+
+# ---------------------------------------------------------------------------
 # WebSocket import
 # ---------------------------------------------------------------------------
 
@@ -726,6 +752,9 @@ def main() -> int:
                     help="Actually write to HA (default: dry-run preview only)")
     ap.add_argument("--full", action="store_true",
                     help="Also import daily totals and hourly cumulative energy (fills 30-day charts)")
+    ap.add_argument("--calibrate", action="store_true",
+                    help="After import, call utility_meter/calibrate for total energy meters so "
+                         "template COP sensors reflect correct values immediately (requires --confirm)")
     args = ap.parse_args()
 
     if args.confirm and not HA_TOKEN:
@@ -850,6 +879,52 @@ def main() -> int:
             print("  - COP trend chart now has 8 months of daily COP history")
             print("  - Statistics-graph chart now has hourly cumulative data")
         print("Reload the HPH integration or restart HA if entity states look stale.")
+
+    # -- Calibrate utility_meters to physical meter values -------------------
+    # After LTS import the utility_meter accumulators may still show reset-values
+    # (e.g. after HPH integration reload). calibrate sets them to the correct
+    # current totals so hph_cop_daily/monthly/scop template sensors read correctly.
+    if args.confirm and args.calibrate:
+        today = date.today()
+        cur_yr, cur_mo = today.year, today.month
+
+        cur_month = totals.get((cur_yr, cur_mo), {})
+        th_monthly = cur_month.get("thermal") or 0.0
+        el_monthly = cur_month.get("electrical") or 0.0
+
+        # Season year: Jul = start of new season
+        season_yr = cur_yr if cur_mo >= 7 else cur_yr - 1
+        th_season = sum(
+            (totals.get((yr, mo), {}).get("thermal") or 0.0)
+            for yr, mo in MONTHS
+            if (yr if mo >= 7 else yr - 1) == season_yr
+        )
+        el_season = sum(
+            (totals.get((yr, mo), {}).get("electrical") or 0.0)
+            for yr, mo in MONTHS
+            if (yr if mo >= 7 else yr - 1) == season_yr
+        )
+
+        calibrate_targets = [
+            (HPH_THERMAL_MONTHLY,    th_monthly),
+            (HPH_ELECTRICAL_MONTHLY, el_monthly),
+            (HPH_THERMAL_YEARLY,     th_season),
+            (HPH_ELECTRICAL_YEARLY,  el_season),
+        ]
+
+        if args.full:
+            today_t = daily_totals.get((today.year, today.month, today.day), {})
+            calibrate_targets += [
+                (HPH_THERMAL_DAILY,    today_t.get("thermal") or 0.0),
+                (HPH_ELECTRICAL_DAILY, today_t.get("electrical") or 0.0),
+            ]
+
+        print("\n-- Calibrating utility_meters to current physical meter values --------")
+        for eid, val in calibrate_targets:
+            print(f"  {eid}  =  {val:.3f} kWh")
+            ok = rest_calibrate(eid, val)
+            print(f"    {'OK' if ok else 'FAILED'}")
+        print()
 
     return 0
 
