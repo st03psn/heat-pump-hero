@@ -369,113 +369,147 @@ views:
                 - type: state-label
                   entity: sensor.hph_source_operating_mode
                   style:
-                    top: 5%
-                    left: 44%
+                    top: 9.6%
+                    left: 50.0%
                     color: '#8ca8c0'
-                    font-size: 11px
-                    font-weight: 600
+                    font-size: 10px
                     background: transparent
-                    transform: translate(0,0)
+                    transform: translate(-50%, -50%)
                 - type: state-label
                   entity: sensor.hph_source_outdoor_temp
                   style:
-                    top: 14%
-                    left: 8%
+                    top: 17.3%
+                    left: 12.2%
                     color: '#e0a800'
                     font-size: 14px
                     font-weight: 700
                     background: transparent
-                    transform: translate(0,0)
+                    transform: translate(-50%, -50%)
                 - type: state-label
                   entity: sensor.hph_source_outlet_temp
                   style:
-                    top: 22%
-                    left: 41%
+                    top: 29.6%
+                    left: 44.4%
                     color: '#e74c3c'
                     font-size: 11px
-                    font-weight: 700
-                    background: '#1a252f'
-                    border: 1px solid '#e74c3c'
-                    border-radius: 6px
-                    padding: 2px 5px
-                    transform: translate(0,0)
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                - type: state-label
+                  entity: sensor.hph_source_discharge_temp
+                  style:
+                    top: 33.7%
+                    left: 26.7%
+                    color: '#e74c3c'
+                    font-size: 11px
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
                 - type: state-label
                   entity: sensor.hph_source_inlet_temp
                   style:
-                    top: 70%
-                    left: 41%
+                    top: 68.3%
+                    left: 44.4%
                     color: '#2980b9'
                     font-size: 11px
-                    font-weight: 700
-                    background: '#1a252f'
-                    border: 1px solid '#2980b9'
-                    border-radius: 6px
-                    padding: 2px 5px
-                    transform: translate(0,0)
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
                 - type: state-label
                   entity: sensor.hph_source_flow_rate
                   style:
-                    top: 65%
-                    left: 24%
+                    top: 68.1%
+                    left: 28.9%
                     color: '#4a9aca'
-                    font-size: 10px
-                    background: '#1a252f'
-                    border: 1px solid '#2980b9'
-                    border-radius: 6px
-                    padding: 2px 4px
-                    transform: translate(0,0)
+                    font-size: 11px
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                - type: state-label
+                  entity: sensor.hph_source_pump_pressure
+                  style:
+                    top: 83.8%
+                    left: 7.2%
+                    color: '#5a7a96'
+                    font-size: 11px
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                - type: state-label
+                  entity: sensor.hph_source_flow_rate
+                  style:
+                    top: 83.8%
+                    left: 15.6%
+                    color: '#4a9aca'
+                    font-size: 11px
+                    background: transparent
+                    transform: translate(-50%, -50%)
                 - type: state-label
                   entity: sensor.hph_source_compressor_freq
                   style:
-                    top: 71%
-                    left: 84%
+                    top: 74.8%
+                    left: 90.2%
                     color: '#bcbd22'
                     font-size: 11px
                     font-weight: 700
-                    background: '#0f1923'
-                    border: 1px solid '#3d5166'
-                    border-radius: 6px
-                    padding: 2px 5px
-                    transform: translate(0,0)
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                - type: state-label
+                  entity: sensor.hph_source_compressor_hours
+                  style:
+                    top: 82.3%
+                    left: 86.7%
+                    color: '#5a7a96'
+                    font-size: 11px
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                - type: state-label
+                  entity: sensor.hph_source_compressor_starts
+                  style:
+                    top: 82.3%
+                    left: 93.6%
+                    color: '#5a7a96'
+                    font-size: 11px
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                - type: state-label
+                  entity: binary_sensor.hph_defrost_active
+                  style:
+                    top: 88.8%
+                    left: 90.2%
+                    color: '#17a2b8'
+                    font-size: 11px
+                    background: transparent
+                    transform: translate(-50%, -50%)
                 - type: state-label
                   entity: sensor.hph_cop_live
                   style:
-                    top: 88%
-                    left: 37%
+                    top: 91.9%
+                    left: 43.3%
                     color: '#17a2b8'
                     font-size: 12px
                     font-weight: 700
-                    background: '#0f1923'
-                    border: 1px solid '#3d5166'
-                    border-radius: 4px
-                    padding: 2px 5px
-                    transform: translate(0,0)
+                    background: transparent
+                    transform: translate(-50%, -50%)
                 - type: state-label
                   entity: sensor.hph_cop_daily
                   style:
-                    top: 88%
-                    left: 46%
+                    top: 91.9%
+                    left: 50.0%
                     color: '#17a2b8'
                     font-size: 12px
                     font-weight: 700
-                    background: '#0f1923'
-                    border: 1px solid '#3d5166'
-                    border-radius: 4px
-                    padding: 2px 5px
-                    transform: translate(0,0)
+                    background: transparent
+                    transform: translate(-50%, -50%)
                 - type: state-label
                   entity: sensor.hph_scop
                   style:
-                    top: 88%
-                    left: 54%
+                    top: 91.9%
+                    left: 57.2%
                     color: '#17a2b8'
                     font-size: 12px
                     font-weight: 700
-                    background: '#0f1923'
-                    border: 1px solid '#3d5166'
-                    border-radius: 4px
-                    padding: 2px 5px
-                    transform: translate(0,0)
+                    background: transparent
+                    transform: translate(-50%, -50%)
 
           # ── Variant a2w_hk1_dhw ──────────────────────────────────────────────
           - type: conditional
@@ -491,101 +525,110 @@ views:
                 - type: state-label
                   entity: sensor.hph_source_operating_mode
                   style:
-                    top: 8%
-                    left: 28%
+                    top: 8.8%
+                    left: 33.3%
                     color: '#8ca8c0'
-                    font-size: 11px
-                    font-weight: 600
+                    font-size: 10px
                     background: transparent
-                    transform: translate(0,0)
+                    transform: translate(-50%, -50%)
                 - type: state-label
                   entity: sensor.hph_source_outdoor_temp
                   style:
-                    top: 17%
-                    left: 9%
+                    top: 16.9%
+                    left: 11.1%
                     color: '#e0a800'
                     font-size: 14px
                     font-weight: 700
                     background: transparent
-                    transform: translate(0,0)
+                    transform: translate(-50%, -50%)
                 - type: state-label
                   entity: sensor.hph_source_outlet_temp
                   style:
-                    top: 25%
-                    left: 35%
+                    top: 28.3%
+                    left: 37.8%
                     color: '#e74c3c'
                     font-size: 11px
-                    font-weight: 700
-                    background: '#1a252f'
-                    border: 1px solid '#e74c3c'
-                    border-radius: 6px
-                    padding: 2px 5px
-                    transform: translate(0,0)
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
                 - type: state-label
                   entity: sensor.hph_source_inlet_temp
                   style:
-                    top: 60%
-                    left: 35%
+                    top: 64.8%
+                    left: 37.8%
                     color: '#2980b9'
                     font-size: 11px
-                    font-weight: 700
-                    background: '#1a252f'
-                    border: 1px solid '#2980b9'
-                    border-radius: 6px
-                    padding: 2px 5px
-                    transform: translate(0,0)
-                - type: state-label
-                  entity: sensor.hph_source_compressor_freq
-                  style:
-                    top: 82%
-                    left: 6%
-                    color: '#bcbd22'
-                    font-size: 11px
-                    font-weight: 700
-                    background: '#0f1923'
-                    border: 1px solid '#3d5166'
-                    border-radius: 6px
-                    padding: 2px 5px
-                    transform: translate(0,0)
-                - type: state-label
-                  entity: sensor.hph_cop_live
-                  style:
-                    top: 91%
-                    left: 22%
-                    color: '#17a2b8'
-                    font-size: 12px
-                    font-weight: 700
-                    background: '#0f1923'
-                    border: 1px solid '#3d5166'
-                    border-radius: 4px
-                    padding: 2px 5px
-                    transform: translate(0,0)
-                - type: state-label
-                  entity: sensor.hph_scop
-                  style:
-                    top: 91%
-                    left: 38%
-                    color: '#17a2b8'
-                    font-size: 12px
-                    font-weight: 700
-                    background: '#0f1923'
-                    border: 1px solid '#3d5166'
-                    border-radius: 4px
-                    padding: 2px 5px
-                    transform: translate(0,0)
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
                 - type: state-label
                   entity: sensor.hph_source_dhw_temp
                   style:
-                    top: 47%
-                    left: 90%
+                    top: 48.1%
+                    left: 91.7%
                     color: '#e74c3c'
                     font-size: 11px
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                - type: state-label
+                  entity: sensor.hph_source_compressor_freq
+                  style:
+                    top: 83.5%
+                    left: 9.7%
+                    color: '#bcbd22'
+                    font-size: 11px
                     font-weight: 700
-                    background: '#1a252f'
-                    border: 1px solid '#e74c3c'
-                    border-radius: 6px
-                    padding: 2px 5px
-                    transform: translate(0,0)
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                - type: state-label
+                  entity: sensor.hph_source_compressor_hours
+                  style:
+                    top: 90.0%
+                    left: 6.0%
+                    color: '#5a7a96'
+                    font-size: 11px
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                - type: state-label
+                  entity: sensor.hph_source_compressor_starts
+                  style:
+                    top: 90.0%
+                    left: 13.1%
+                    color: '#5a7a96'
+                    font-size: 11px
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                - type: state-label
+                  entity: sensor.hph_cop_live
+                  style:
+                    top: 92.9%
+                    left: 23.9%
+                    color: '#17a2b8'
+                    font-size: 12px
+                    font-weight: 700
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                - type: state-label
+                  entity: sensor.hph_cop_daily
+                  style:
+                    top: 92.9%
+                    left: 31.1%
+                    color: '#17a2b8'
+                    font-size: 12px
+                    font-weight: 700
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                - type: state-label
+                  entity: sensor.hph_scop
+                  style:
+                    top: 92.9%
+                    left: 38.3%
+                    color: '#17a2b8'
+                    font-size: 12px
+                    font-weight: 700
+                    background: transparent
+                    transform: translate(-50%, -50%)
 
           # ── Variant a2w_hk1_hk2_dhw ─────────────────────────────────────────
           - type: conditional
@@ -601,125 +644,130 @@ views:
                 - type: state-label
                   entity: sensor.hph_source_operating_mode
                   style:
-                    top: 7%
-                    left: 30%
+                    top: 7.9%
+                    left: 33.3%
                     color: '#8ca8c0'
-                    font-size: 11px
-                    font-weight: 600
+                    font-size: 10px
                     background: transparent
-                    transform: translate(0,0)
+                    transform: translate(-50%, -50%)
                 - type: state-label
                   entity: sensor.hph_source_outdoor_temp
                   style:
-                    top: 16%
-                    left: 9%
+                    top: 17.2%
+                    left: 11.1%
                     color: '#e0a800'
                     font-size: 14px
                     font-weight: 700
                     background: transparent
-                    transform: translate(0,0)
+                    transform: translate(-50%, -50%)
                 - type: state-label
                   entity: sensor.hph_source_outlet_temp
                   style:
-                    top: 23%
-                    left: 32%
+                    top: 25.3%
+                    left: 35.6%
                     color: '#e74c3c'
                     font-size: 11px
-                    font-weight: 700
-                    background: '#1a252f'
-                    border: 1px solid '#e74c3c'
-                    border-radius: 6px
-                    padding: 2px 5px
-                    transform: translate(0,0)
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
                 - type: state-label
                   entity: sensor.hph_source_inlet_temp
                   style:
-                    top: 55%
-                    left: 32%
+                    top: 57.2%
+                    left: 35.6%
                     color: '#2980b9'
                     font-size: 11px
-                    font-weight: 700
-                    background: '#1a252f'
-                    border: 1px solid '#2980b9'
-                    border-radius: 6px
-                    padding: 2px 5px
-                    transform: translate(0,0)
-                - type: state-label
-                  entity: sensor.hph_source_compressor_freq
-                  style:
-                    top: 81%
-                    left: 84%
-                    color: '#bcbd22'
-                    font-size: 11px
-                    font-weight: 700
-                    background: '#0f1923'
-                    border: 1px solid '#3d5166'
-                    border-radius: 6px
-                    padding: 2px 5px
-                    transform: translate(0,0)
-                - type: state-label
-                  entity: sensor.hph_cop_live
-                  style:
-                    top: 74%
-                    left: 3%
-                    color: '#17a2b8'
-                    font-size: 12px
-                    font-weight: 700
-                    background: '#0f1923'
-                    border: 1px solid '#3d5166'
-                    border-radius: 4px
-                    padding: 2px 5px
-                    transform: translate(0,0)
-                - type: state-label
-                  entity: sensor.hph_scop
-                  style:
-                    top: 74%
-                    left: 14%
-                    color: '#17a2b8'
-                    font-size: 12px
-                    font-weight: 700
-                    background: '#0f1923'
-                    border: 1px solid '#3d5166'
-                    border-radius: 4px
-                    padding: 2px 5px
-                    transform: translate(0,0)
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
                 - type: state-label
                   entity: sensor.hph_source_dhw_temp
                   style:
-                    top: 44%
-                    left: 91%
+                    top: 45.7%
+                    left: 93.3%
                     color: '#e74c3c'
                     font-size: 11px
-                    font-weight: 700
-                    background: '#1a252f'
-                    border: 1px solid '#e74c3c'
-                    border-radius: 6px
-                    padding: 2px 5px
-                    transform: translate(0,0)
-                - type: state-label
-                  entity: sensor.hph_source_zone1_temp
-                  style:
-                    top: 84%
-                    left: 56%
-                    color: '#e74c3c'
-                    font-size: 10px
-                    background: '#1a252f'
-                    border: 1px solid '#e74c3c'
-                    border-radius: 4px
-                    padding: 1px 3px
-                    transform: translate(0,0)
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
                 - type: state-label
                   entity: sensor.hph_source_zone2_temp
                   style:
-                    top: 84%
-                    left: 33%
+                    top: 85.3%
+                    left: 37.2%
                     color: '#a78bfa'
-                    font-size: 10px
-                    background: '#1a252f'
-                    border: 1px solid '#a78bfa'
-                    border-radius: 4px
-                    padding: 1px 3px
-                    transform: translate(0,0)
+                    font-size: 11px
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                - type: state-label
+                  entity: sensor.hph_source_zone1_temp
+                  style:
+                    top: 85.3%
+                    left: 60.0%
+                    color: '#e74c3c'
+                    font-size: 11px
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                - type: state-label
+                  entity: sensor.hph_source_compressor_freq
+                  style:
+                    top: 83.4%
+                    left: 86.7%
+                    color: '#bcbd22'
+                    font-size: 11px
+                    font-weight: 700
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                - type: state-label
+                  entity: sensor.hph_source_compressor_hours
+                  style:
+                    top: 89.8%
+                    left: 82.4%
+                    color: '#5a7a96'
+                    font-size: 11px
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                - type: state-label
+                  entity: sensor.hph_source_compressor_starts
+                  style:
+                    top: 89.8%
+                    left: 90.6%
+                    color: '#5a7a96'
+                    font-size: 11px
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                - type: state-label
+                  entity: sensor.hph_cop_live
+                  style:
+                    top: 76.2%
+                    left: 5.4%
+                    color: '#17a2b8'
+                    font-size: 12px
+                    font-weight: 700
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                - type: state-label
+                  entity: sensor.hph_cop_daily
+                  style:
+                    top: 76.2%
+                    left: 11.0%
+                    color: '#17a2b8'
+                    font-size: 12px
+                    font-weight: 700
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                - type: state-label
+                  entity: sensor.hph_scop
+                  style:
+                    top: 76.2%
+                    left: 15.7%
+                    color: '#17a2b8'
+                    font-size: 12px
+                    font-weight: 700
+                    background: transparent
+                    transform: translate(-50%, -50%)
 
           # ── Variant a2w_hk1_hk2_dhw_buffer ──────────────────────────────────
           - type: conditional
@@ -735,151 +783,122 @@ views:
                 - type: state-label
                   entity: sensor.hph_source_operating_mode
                   style:
-                    top: 7%
-                    left: 32%
+                    top: 7.4%
+                    left: 35.6%
                     color: '#8ca8c0'
-                    font-size: 11px
-                    font-weight: 600
+                    font-size: 10px
                     background: transparent
-                    transform: translate(0,0)
+                    transform: translate(-50%, -50%)
                 - type: state-label
                   entity: sensor.hph_source_outdoor_temp
                   style:
-                    top: 15%
-                    left: 9%
+                    top: 16.1%
+                    left: 11.1%
                     color: '#e0a800'
                     font-size: 14px
                     font-weight: 700
                     background: transparent
-                    transform: translate(0,0)
+                    transform: translate(-50%, -50%)
                 - type: state-label
                   entity: sensor.hph_source_outlet_temp
                   style:
-                    top: 22%
-                    left: 16%
+                    top: 23.7%
+                    left: 20.0%
                     color: '#e74c3c'
-                    font-size: 10px
-                    font-weight: 700
-                    background: '#1a252f'
-                    border: 1px solid '#e74c3c'
-                    border-radius: 6px
-                    padding: 2px 4px
-                    transform: translate(0,0)
+                    font-size: 11px
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
                 - type: state-label
                   entity: sensor.hph_source_inlet_temp
                   style:
-                    top: 53%
-                    left: 16%
+                    top: 56.5%
+                    left: 20.0%
                     color: '#2980b9'
-                    font-size: 10px
-                    font-weight: 700
-                    background: '#1a252f'
-                    border: 1px solid '#2980b9'
-                    border-radius: 6px
-                    padding: 2px 4px
-                    transform: translate(0,0)
-                - type: state-label
-                  entity: sensor.hph_source_compressor_freq
-                  style:
-                    top: 22%
-                    left: 84%
-                    color: '#bcbd22'
                     font-size: 11px
-                    font-weight: 700
-                    background: '#0f1923'
-                    border: 1px solid '#3d5166'
-                    border-radius: 4px
-                    padding: 2px 4px
-                    transform: translate(0,0)
-                - type: state-label
-                  entity: sensor.hph_cop_live
-                  style:
-                    top: 17%
-                    left: 78%
-                    color: '#17a2b8'
-                    font-size: 10px
-                    font-weight: 700
-                    background: '#0f1923'
-                    border: 1px solid '#3d5166'
-                    border-radius: 4px
-                    padding: 1px 4px
-                    transform: translate(0,0)
-                - type: state-label
-                  entity: sensor.hph_cop_daily
-                  style:
-                    top: 17%
-                    left: 84%
-                    color: '#17a2b8'
-                    font-size: 10px
-                    font-weight: 700
-                    background: '#0f1923'
-                    border: 1px solid '#3d5166'
-                    border-radius: 4px
-                    padding: 1px 4px
-                    transform: translate(0,0)
-                - type: state-label
-                  entity: sensor.hph_scop
-                  style:
-                    top: 17%
-                    left: 91%
-                    color: '#17a2b8'
-                    font-size: 10px
-                    font-weight: 700
-                    background: '#0f1923'
-                    border: 1px solid '#3d5166'
-                    border-radius: 4px
-                    padding: 1px 4px
-                    transform: translate(0,0)
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
                 - type: state-label
                   entity: sensor.hph_source_dhw_temp
                   style:
-                    top: 42%
-                    left: 91%
+                    top: 43.5%
+                    left: 93.1%
                     color: '#e74c3c'
-                    font-size: 10px
-                    font-weight: 700
-                    background: '#1a252f'
-                    border: 1px solid '#e74c3c'
-                    border-radius: 6px
-                    padding: 2px 4px
-                    transform: translate(0,0)
+                    font-size: 11px
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
                 - type: state-label
                   entity: sensor.hph_source_buffer_temp
                   style:
-                    top: 35%
-                    left: 46%
+                    top: 36.3%
+                    left: 48.3%
                     color: '#e8a87c'
-                    font-size: 10px
-                    font-weight: 700
-                    background: '#1a252f'
-                    border: 1px solid '#e8a87c'
-                    border-radius: 6px
-                    padding: 2px 4px
-                    transform: translate(0,0)
+                    font-size: 11px
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
                 - type: state-label
                   entity: sensor.hph_source_zone1_temp
                   style:
-                    top: 89%
-                    left: 33%
+                    top: 90.3%
+                    left: 35.6%
                     color: '#e74c3c'
-                    font-size: 10px
-                    background: '#1a252f'
-                    border: 1px solid '#e74c3c'
-                    border-radius: 4px
-                    padding: 1px 3px
-                    transform: translate(0,0)
+                    font-size: 11px
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
                 - type: state-label
                   entity: sensor.hph_source_zone2_temp
                   style:
-                    top: 89%
-                    left: 67%
+                    top: 90.3%
+                    left: 68.3%
                     color: '#a78bfa'
-                    font-size: 10px
-                    background: '#1a252f'
-                    border: 1px solid '#a78bfa'
-                    border-radius: 4px
-                    padding: 1px 3px
-                    transform: translate(0,0)
+                    font-size: 11px
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                - type: state-label
+                  entity: sensor.hph_cop_live
+                  style:
+                    top: 18.7%
+                    left: 81.7%
+                    color: '#17a2b8'
+                    font-size: 12px
+                    font-weight: 700
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                - type: state-label
+                  entity: sensor.hph_cop_daily
+                  style:
+                    top: 18.7%
+                    left: 87.8%
+                    color: '#17a2b8'
+                    font-size: 12px
+                    font-weight: 700
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                - type: state-label
+                  entity: sensor.hph_scop
+                  style:
+                    top: 18.7%
+                    left: 93.9%
+                    color: '#17a2b8'
+                    font-size: 12px
+                    font-weight: 700
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                - type: state-label
+                  entity: sensor.hph_source_compressor_freq
+                  style:
+                    top: 23.2%
+                    left: 87.8%
+                    color: '#bcbd22'
+                    font-size: 11px
+                    font-weight: 700
+                    background: transparent
+                    transform: translate(-50%, -50%)
 
   # ════════════════════════════════════════════════════════════════════════
   # 2) ANALYSIS — ApexCharts (Service-Cloud-style)
