@@ -117,9 +117,12 @@ views:
                 action: navigate
                 navigation_path: /hph/optimization
 
-          # ── Row D: Period-COP grid (Today / Month / Year) ───────────────────
+          # ── Row D: Combined KPI grid (COP + Costs) — 5 cards per row ──────
+          # Wraps responsively on narrow screens. Replaces the previously
+          # split 3-up COP grid and 2-up Cost grid (visually too stretched
+          # in panel-mode single-column layout).
           - type: grid
-            columns: 3
+            columns: 5
             square: false
             cards:
               - type: custom:mushroom-template-card
@@ -137,12 +140,6 @@ views:
                 secondary: "{{ states('sensor.hph_scop') | round(2, default=0) }}"
                 icon: mdi:calendar-star
                 fill_container: true
-
-          # ── Row E: Cost row (today / this month) ────────────────────────────
-          - type: grid
-            columns: 2
-            square: false
-            cards:
               - type: custom:mushroom-template-card
                 primary: Cost today
                 secondary: "{{ states('sensor.hph_cost_today') | float(0) | round(2) }} €"
@@ -1519,10 +1516,25 @@ views:
           - type: section
             label: Weather-forecast pre-heating
           - switch.hph_ctrl_forecast_preheat
-          - text.hph_ctrl_forecast_entity
+          - entity: text.hph_ctrl_forecast_entity
+            name: Forecast sensor (tomorrow's minimum outdoor T° in °C)
           - number.hph_ctrl_forecast_drop_threshold_k
           - number.hph_ctrl_forecast_boost_k
           - switch.hph_ctrl_forecast_preheat_active
+      - type: markdown
+        content: |
+          **Forecast sensor:** an HA sensor that publishes tomorrow's
+          **minimum** outdoor temperature in °C. If tomorrow's low is
+          more than `drop_threshold_k` below today's value, the
+          adaptive curve target is bumped by `boost_k` for the night
+          to pre-heat the building thermal mass. Common sources:
+          - **Met.no** → template sensor extracting `weather.home`
+            forecast attributes
+          - **DWD Weather Warnings** add-on → `sensor.dwd_weather_*_temperature_min_d_1`
+          - **OpenWeatherMap** → `sensor.openweathermap_forecast_temperature_low`
+          - any custom template sensor mapping `state_attr('weather.x','forecast')[0].templow`
+
+          Leave blank to disable forecast pre-heating.
 
       - type: entities
         title: Advisor thresholds (power-user tweaks)

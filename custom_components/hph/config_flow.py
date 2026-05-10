@@ -27,10 +27,22 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def _vendor_options() -> list[selector.SelectOptionDict]:
-    return [
-        selector.SelectOptionDict(value=v, label=v.replace("_", " ").title())
-        for v in list(VENDOR_PRESETS.keys()) + ["keep_current"]
-    ]
+    """Vendor preset options. v0.9: only Panasonic is fully validated;
+    other vendor recipes exist but haven't been tested by users on
+    real hardware. Show them as teaser-only so the integration's
+    multi-vendor scope is visible, but mark them clearly."""
+    selectable = {"panasonic_heishamon", "panasonic_heishamon_mqtt", "keep_current"}
+    options: list[selector.SelectOptionDict] = []
+    for v in list(VENDOR_PRESETS.keys()) + ["keep_current"]:
+        label = v.replace("_", " ").title()
+        if v not in selectable:
+            label = f"{label} — Coming soon (v1.0)"
+        options.append(selector.SelectOptionDict(value=v, label=label))
+    return options
+
+
+def _selectable_vendor_keys() -> set[str]:
+    return {"panasonic_heishamon", "panasonic_heishamon_mqtt", "keep_current"}
 
 
 def _model_options() -> list[selector.SelectOptionDict]:
@@ -88,16 +100,8 @@ class HphConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         self._data: dict[str, Any] = {}
 
-    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> Any:
-        """Step 1 — pick a vendor preset."""
-        if self._async_current_entries():
-            return self.async_abort(reason="single_instance_allowed")
-
-        if user_input is not None:
-            self._data["vendor_preset"] = user_input["vendor_preset"]
-            return await self.async_step_model()
-
-        schema = vol.Schema(
+    def _user_schema(self) -> vol.Schema:
+        return vol.Schema(
             {
                 vol.Required("vendor_preset", default="panasonic_heishamon"): selector.SelectSelector(
                     selector.SelectSelectorConfig(
@@ -107,9 +111,27 @@ class HphConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 ),
             }
         )
+
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> Any:
+        """Step 1 — pick a vendor preset."""
+        if self._async_current_entries():
+            return self.async_abort(reason="single_instance_allowed")
+
+        if user_input is not None:
+            picked = user_input["vendor_preset"]
+            if picked not in _selectable_vendor_keys():
+                return self.async_show_form(
+                    step_id="user",
+                    data_schema=self._user_schema(),
+                    errors={"vendor_preset": "vendor_not_yet_available"},
+                    description_placeholders={"vendor": picked},
+                )
+            self._data["vendor_preset"] = picked
+            return await self.async_step_model()
+
         return self.async_show_form(
             step_id="user",
-            data_schema=schema,
+            data_schema=self._user_schema(),
             description_placeholders={"name": INTEGRATION_NAME},
         )
 
@@ -241,44 +263,27 @@ class HphOptionsFlow(config_entries.OptionsFlow):
             )
             return self.async_create_entry(title="", data=self._data)
 
-        schema = vol.Schema(
-            {
-                vol.Optional(
-                    "indoor_temp_entity",
-                    default=self._data.get("indoor_temp_entity", ""),
-                ): _temp_selector(),
-                vol.Optional(
-                    "outdoor_temp_entity",
-                    default=self._data.get("outdoor_temp_entity", ""),
-                ): _temp_selector(),
-                vol.Optional(
-                    "external_thermal_power",
-                    default=self._data.get("external_thermal_power", ""),
-                ): _power_selector(),
-                vol.Optional(
-                    "external_electrical_power",
-                    default=self._data.get("external_electrical_power", ""),
-                ): _power_selector(),
-                vol.Optional(
-                    "external_thermal_energy",
-                    default=self._data.get("external_thermal_energy", ""),
-                ): _energy_selector(),
-                vol.Optional(
-                    "external_electrical_energy",
-                    default=self._data.get("external_electrical_energy", ""),
-                ): _energy_selector(),
-                vol.Optional(
-                    "electricity_price_entity",
-                    default=self._data.get("electricity_price_entity", ""),
-                ): _any_sensor_selector(),
-                vol.Optional(
-                    "ctrl_pv_surplus_entity",
-                    default=self._data.get("ctrl_pv_surplus_entity", ""),
-                ): _power_selector(),
-                vol.Optional(
-                    "ctrl_forecast_entity",
-                    default=self._data.get("ctrl_forecast_entity", ""),
-                ): _temp_selector(),
-            }
-        )
-        return self.async_show_form(step_id="sensors", data_schema=schema)
+        # Build schema dynamically — only set default for fields where the
+        # user has a non-empty stored value. EntitySelector validates the
+        # default against existing entities; an empty-string default
+        # surfaces as "neither valid entity ID nor UUID" in the UI even
+        # though Optional() permits missing keys.
+        fields = [
+            ("indoor_temp_entity", _temp_selector()),
+            ("outdoor_temp_entity", _temp_selector()),
+            ("external_thermal_power", _power_selector()),
+            ("external_electrical_power", _power_selector()),
+            ("external_thermal_energy", _energy_selector()),
+            ("external_electrical_energy", _energy_selector()),
+            ("electricity_price_entity", _any_sensor_selector()),
+            ("ctrl_pv_surplus_entity", _power_selector()),
+            ("ctrl_forecast_entity", _temp_selector()),
+        ]
+        schema_dict: dict[Any, Any] = {}
+        for key, sel in fields:
+            stored = self._data.get(key, "")
+            if stored:
+                schema_dict[vol.Optional(key, default=stored)] = sel
+            else:
+                schema_dict[vol.Optional(key)] = sel
+        return self.async_show_form(step_id="sensors", data_schema=vol.Schema(schema_dict))

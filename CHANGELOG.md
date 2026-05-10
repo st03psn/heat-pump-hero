@@ -3,6 +3,42 @@
 All notable changes to HeatPump Hero. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Setup-flow polish + Overview compaction
+
+### Fixed
+
+- **OptionsFlow showed "Entity is neither a valid entity ID nor a valid
+  UUID" errors** for blank optional fields (electricity price, forecast,
+  PV surplus, etc.). Root cause: `EntitySelector` validates the
+  `default=` argument against existing entities, and an empty-string
+  default is treated as invalid input. Fixed by building the schema
+  dynamically — only attaching `default=…` when the user has a
+  non-empty stored value.
+
+### Changed
+
+- **Vendor preset restricted to Panasonic** for the v0.9 release. Other
+  vendor recipes (`daikin_altherma`, `vaillant_arotherm`, etc.) remain
+  visible in the dropdown labelled "*Coming soon (v1.0)*" so the
+  multi-vendor scope is communicated, but selecting one returns a
+  validation error in the config flow. Recipes are still in the
+  codebase awaiting field validation by users on real hardware.
+
+- **Overview KPI rows compressed**. The 3-column COP grid + 2-column
+  Cost grid + 2-column Schema/Advisor row consumed 3 vertical bands.
+  Merged COP and Cost into a single 5-column row (COP today / COP
+  month / SCOP / Cost today / Cost month) — wraps responsively on
+  narrow screens. Schema + Advisor row stays 2-column. Saves one
+  vertical band before the charts.
+
+### Added
+
+- **Forecast-sensor explanation card** on Optimization view. Tells the
+  user what `text.hph_ctrl_forecast_entity` expects (tomorrow's
+  minimum outdoor temperature in °C) and lists the four most common
+  sources (Met.no template, DWD Weather Warnings, OpenWeatherMap,
+  custom template). Renamed the field to make the unit explicit.
+
 ## [Unreleased] — Naming consistency + price-helper consolidation
 
 ### Fixed
