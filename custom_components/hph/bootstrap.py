@@ -27,6 +27,7 @@ from .const import (
     DASHBOARD_ICON,
     DASHBOARD_TITLE,
     DASHBOARD_URL_PATH,
+    DOMAIN,
 )
 
 _LOGGER = logging.getLogger(__name__)
