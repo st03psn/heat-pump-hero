@@ -2314,6 +2314,11 @@ views:
             icon: mdi:water-boiler
             action_name: Trigger
             service: hph.run_legionella_now
+          - type: divider
+          - entity: number.hph_prog_legionella_target_c
+            name: Target temperature (°C)
+          - entity: number.hph_prog_legionella_hold_min
+            name: Hold duration (min)
         footer:
           type: graph
           entity: sensor.hph_source_dhw_temp
@@ -2322,20 +2327,17 @@ views:
 
       - type: markdown
         content: |
-          The **Run legionella program now** button calls the service
-          `hph.run_legionella_now`. It uses the target temperature and
-          hold duration configured in *Settings → Devices & Services →
-          HeatPump Hero → Configure → Programs*.
+          **Run legionella now** raises DHW to the target temperature and holds
+          it for the configured duration. Change target/hold via
+          *Settings → Devices & Services → HeatPump Hero → Configure → Programs*.
 
-          For weekly recurrence: configure it on your heat pump's
-          built-in legionella schedule. HeatPump Hero deliberately
-          does not duplicate that.
+          For weekly recurrence: use your heat pump controller's built-in
+          legionella schedule — it integrates with safety interlocks and
+          survives power cycles.
 
-          **Screed dry-out:** Panasonic Aquarea has a dedicated screed
-          program in *Installer Settings → Floor Heater* (consult the
-          installation manual). Use that instead — it integrates with
-          the heat pump's safety interlocks and is honoured across
-          power cycles.
+          **Screed dry-out:** use *Installer Settings → Floor Heater* on a
+          Panasonic controller. HeatPump Hero does not expose a screed
+          program — the controller's own screed mode is safer.
 
   # ════════════════════════════════════════════════════════════════════════
   # 6) CONFIGURATION
