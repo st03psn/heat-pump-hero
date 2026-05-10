@@ -154,28 +154,88 @@ MONTHS = [
 
 
 def compute_monthly_totals() -> dict[tuple[int, int], dict[str, float | None]]:
-    """Return {(year, month): {"thermal": kWh|None, "electrical": kWh}} using
-    physical meter state column with gap interpolation at month boundaries."""
+    """Return {(year, month): {"thermal": kWh, "electrical": kWh}} using
+    physical meter state column with:
+      - gap interpolation at month boundaries (Jan/Feb HA-offline period)
+      - pre-HA back-interpolation for Sep/Oct/early-Nov before Sensostar
+        was tracked in HA.
+
+    Pre-HA reconstruction
+    ---------------------
+    Both Shelly and Sensostar were commissioned at 0 kWh in Sep 2025.
+    The Sensostar only appeared in HA on Nov 10 at state=2891 kWh.
+    Shelly has been tracked since Sep 25 and its physical state at Nov 10
+    gives us total electrical since commissioning (476.23 kWh).
+
+    Implied average COP for commissioning → Nov 10 = 2891 / 476.23 = 6.07.
+    Monthly thermal for Sep, Oct and Nov 1-9 is derived proportionally:
+        thermal_month = electrical_month × cop_preha
+
+    This ensures the reconstructed totals close exactly on the Sensostar
+    reading of 2891 kWh at the first HA entry (Nov 10).
+    """
     con = _open_db()
     sh_id = _meta_id(con, SHELLY_ENTITY)
     se_id = _meta_id(con, SENSOSTAR_ENTITY)
 
+    # ── Pre-HA constants (both meters commissioned at 0 in Sep 2025) ──────
+    # Shelly state at Sensostar first-entry timestamp = total electrical since
+    # commissioning; Sensostar state = total thermal since commissioning.
+    # Nov 10 13:00 UTC is the first Sensostar LTS row (verified from DB).
+    ts_sensostar_first = datetime(2025, 11, 10, 13, 0, 0)
+    sh_at_nov10 = _state_at(con, sh_id, ts_sensostar_first) or 476.23
+    se_at_nov10 = _state_at(con, se_id, ts_sensostar_first) or 2891.0
+    cop_preha = se_at_nov10 / sh_at_nov10  # ≈ 6.07
+
+    now_utc = datetime.now(timezone.utc).replace(tzinfo=None, minute=0, second=0, microsecond=0)
     result: dict[tuple[int, int], dict[str, float | None]] = {}
 
     for yr, mo in MONTHS:
         ts_start = _month_start_utc(yr, mo)
-        ts_end = _month_end_utc(yr, mo)
-        now_utc = datetime.now(timezone.utc).replace(tzinfo=None, minute=0, second=0, microsecond=0)
-        if ts_end > now_utc:
-            ts_end = now_utc  # partial month
+        ts_end = min(_month_end_utc(yr, mo), now_utc)
 
         sh_start = _state_at(con, sh_id, ts_start) if sh_id else None
-        sh_end = _state_at(con, sh_id, ts_end) if sh_id else None
+        sh_end   = _state_at(con, sh_id, ts_end)   if sh_id else None
         se_start = _state_at(con, se_id, ts_start) if se_id else None
-        se_end = _state_at(con, se_id, ts_end) if se_id else None
+        se_end   = _state_at(con, se_id, ts_end)   if se_id else None
 
-        el = round(sh_end - sh_start, 2) if (sh_start is not None and sh_end is not None) else None
-        th = round(se_end - se_start, 1) if (se_start is not None and se_end is not None) else None
+        # Electrical: Shelly has data from Sep 25 onward.
+        # For Sep/Oct the state-based delta underestimates by the pre-Sep-25
+        # offset (50.8 kWh). Correct by using 0 as the commissioning baseline:
+        #   Sep: state at Oct 1 − 0  (not state at Sep 1, which extrapolates to 50.8)
+        #   Oct: state at Nov 1 − state at Oct 1  (correct, Shelly fully tracked)
+        if (yr, mo) == (2025, 9):
+            # Full Sep from commissioning (Shelly was 0 at commissioning, 79.43 at Oct 1)
+            sh_start_corr = 0.0
+            el = round((sh_end or 0.0) - sh_start_corr, 2)
+        elif sh_start is not None and sh_end is not None:
+            el = round(sh_end - sh_start, 2)
+        else:
+            el = None
+
+        # Thermal: Sensostar tracked from Nov 10 only.
+        # Sep, Oct and Nov 1-9 are back-interpolated using cop_preha.
+        if (yr, mo) in ((2025, 9), (2025, 10)):
+            # No Sensostar data at all for these months — derive from electrical
+            th = round(el * cop_preha, 1) if el is not None else None
+        elif (yr, mo) == (2025, 11):
+            # Nov 1-9 is missing from Sensostar; add back-interpolated offset.
+            # ts_nov10 is the Sensostar first entry; compute electrical Nov 1–Nov 10
+            ts_nov1  = _month_start_utc(2025, 11)
+            sh_nov1  = _state_at(con, sh_id, ts_nov1)  or 0.0
+            sh_nov10 = sh_at_nov10
+            el_preha_nov = max(sh_nov10 - sh_nov1, 0.0)
+            th_preha_nov = round(el_preha_nov * cop_preha, 1)
+            # Sensostar delta Nov 10 → Dec 1
+            th_tracked = round(se_end - se_at_nov10, 1) if se_end is not None else 0.0
+            th = round(th_preha_nov + th_tracked, 1)
+            # Also correct electrical: include Nov 1-9 in Nov total
+            el_tracked = round(sh_end - sh_nov10, 2) if sh_end is not None else 0.0
+            el = round(el_preha_nov + el_tracked, 2)
+        elif se_start is not None and se_end is not None:
+            th = round(se_end - se_start, 1)
+        else:
+            th = None
 
         result[(yr, mo)] = {"thermal": th, "electrical": el}
 
