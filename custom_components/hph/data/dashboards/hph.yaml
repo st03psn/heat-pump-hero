@@ -1404,35 +1404,280 @@ views:
           {{ state_attr('sensor.hph_advisor_dhw_timing','message') }}
 
       # ── Heat-pump native controls (Heishamon) ─────────────────────────
-      # Direct passthrough to the heat pump's own controls. These write
-      # straight to the unit via Heishamon — no HPH gating, no master-
-      # switch needed. For Heishamon-derived entities only; non-Panasonic
-      # vendors will see "unavailable" rows and can hide the card.
+      # Mushroom-styled quick-action layout for the controls users touch
+      # most. Power-user controls (bivalent, optional PCB, sterilization
+      # detail, etc.) stay accessible via the collapsed entities card at
+      # the bottom of this section.
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: |
+              ## Heat pump — native controls
+              Tap any tile to change directly on the heat pump.
+
+          # ── Operation: mode + state chip strip ────────────────────────
+          - type: custom:mushroom-template-card
+            primary: Operation mode
+            secondary: "{{ states('select.panasonic_heat_pump_main_operating_mode_state') }}"
+            icon: |-
+              {% set m = states('select.panasonic_heat_pump_main_operating_mode_state') | lower %}
+              {% if 'heat' in m %}mdi:radiator
+              {% elif 'cool' in m %}mdi:snowflake
+              {% elif 'dhw' in m or 'tank' in m %}mdi:water-boiler
+              {% else %}mdi:heat-pump{% endif %}
+            icon_color: |-
+              {% if is_state('binary_sensor.hph_compressor_running','on') %}green{% else %}grey{% endif %}
+            multiline_secondary: true
+            fill_container: true
+            tap_action:
+              action: more-info
+              entity: select.panasonic_heat_pump_main_operating_mode_state
+
+          # ── Quick actions: 4-up toggle grid ───────────────────────────
+          - type: grid
+            columns: 4
+            square: false
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Holiday
+                secondary: "{{ 'on' if is_state('binary_sensor.panasonic_heat_pump_main_holiday_mode_state','on') else 'off' }}"
+                icon: mdi:airplane-takeoff
+                icon_color: >-
+                  {{ 'orange' if is_state('binary_sensor.panasonic_heat_pump_main_holiday_mode_state','on') else 'grey' }}
+                fill_container: true
+                tap_action:
+                  action: more-info
+                  entity: binary_sensor.panasonic_heat_pump_main_holiday_mode_state
+              - type: custom:mushroom-template-card
+                primary: Force DHW
+                secondary: "{{ 'running' if is_state('binary_sensor.panasonic_heat_pump_main_force_dhw_state','on') else 'idle' }}"
+                icon: mdi:water-boiler-alert
+                icon_color: >-
+                  {{ 'red' if is_state('binary_sensor.panasonic_heat_pump_main_force_dhw_state','on') else 'blue' }}
+                fill_container: true
+                tap_action:
+                  action: more-info
+                  entity: binary_sensor.panasonic_heat_pump_main_force_dhw_state
+              - type: custom:mushroom-template-card
+                primary: Force heater
+                secondary: "{{ 'on' if is_state('binary_sensor.panasonic_heat_pump_main_force_heater_state','on') else 'off' }}"
+                icon: mdi:radiator-disabled
+                icon_color: >-
+                  {{ 'red' if is_state('binary_sensor.panasonic_heat_pump_main_force_heater_state','on') else 'grey' }}
+                fill_container: true
+                tap_action:
+                  action: more-info
+                  entity: binary_sensor.panasonic_heat_pump_main_force_heater_state
+              - type: custom:mushroom-template-card
+                primary: Steril.
+                secondary: "{{ 'running' if is_state('binary_sensor.panasonic_heat_pump_main_sterilization_state','on') else 'off' }}"
+                icon: mdi:bacteria-outline
+                icon_color: >-
+                  {{ 'red' if is_state('binary_sensor.panasonic_heat_pump_main_sterilization_state','on') else 'grey' }}
+                fill_container: true
+                tap_action:
+                  action: more-info
+                  entity: binary_sensor.panasonic_heat_pump_main_sterilization_state
+
+          # ── Comfort: quiet + powerful in chip strip ───────────────────
+          - type: custom:mushroom-chips-card
+            chips:
+              - type: template
+                icon: mdi:volume-low
+                content: "Quiet {{ states('select.panasonic_heat_pump_main_quiet_mode_level') }}"
+                icon_color: >-
+                  {% set v = states('select.panasonic_heat_pump_main_quiet_mode_level') %}
+                  {% if v in ['1','2','3'] %}blue{% else %}grey{% endif %}
+                tap_action:
+                  action: more-info
+                  entity: select.panasonic_heat_pump_main_quiet_mode_level
+              - type: template
+                icon: mdi:priority-high
+                content: "{{ states('select.panasonic_heat_pump_main_quiet_mode_priority') }}"
+                tap_action:
+                  action: more-info
+                  entity: select.panasonic_heat_pump_main_quiet_mode_priority
+              - type: template
+                icon: mdi:rocket-launch-outline
+                content: "{{ states('select.panasonic_heat_pump_main_powerful_mode_time') }}"
+                icon_color: >-
+                  {% set v = states('select.panasonic_heat_pump_main_powerful_mode_time') %}
+                  {% if v not in ['off','0','unknown','unavailable',''] %}orange{% else %}grey{% endif %}
+                tap_action:
+                  action: more-info
+                  entity: select.panasonic_heat_pump_main_powerful_mode_time
+              - type: template
+                icon: mdi:calendar-clock
+                content: "Schedule"
+                icon_color: >-
+                  {{ 'green' if is_state('binary_sensor.panasonic_heat_pump_main_main_schedule_state','on') else 'grey' }}
+                tap_action:
+                  action: more-info
+                  entity: binary_sensor.panasonic_heat_pump_main_main_schedule_state
+
+          # ── DHW: target / delta / smart in 3-up ──────────────────────
+          - type: grid
+            columns: 3
+            square: false
+            cards:
+              - type: custom:mushroom-template-card
+                primary: DHW target
+                secondary: "{{ states('number.panasonic_heat_pump_main_dhw_target_temp') }} °C"
+                icon: mdi:thermometer-water
+                icon_color: red
+                fill_container: true
+                tap_action:
+                  action: more-info
+                  entity: number.panasonic_heat_pump_main_dhw_target_temp
+              - type: custom:mushroom-template-card
+                primary: DHW heat Δ
+                secondary: "{{ states('number.panasonic_heat_pump_main_dhw_heat_delta') }} K"
+                icon: mdi:delta
+                fill_container: true
+                tap_action:
+                  action: more-info
+                  entity: number.panasonic_heat_pump_main_dhw_heat_delta
+              - type: custom:mushroom-template-card
+                primary: Smart DHW
+                secondary: "{{ states('select.panasonic_heat_pump_main_smart_dhw') }}"
+                icon: mdi:auto-fix
+                fill_container: true
+                tap_action:
+                  action: more-info
+                  entity: select.panasonic_heat_pump_main_smart_dhw
+
+      # ── Heating curve Z1: hero + 4 curve points ──────────────────────
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: |
+              ## Heating curve — Zone 1
+              Outside-temp axis vs. supply-target axis. Tap any point
+              to adjust; the heat pump recalculates the supply target
+              live.
+
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Z1 supply (live)
+                secondary: >-
+                  {{ states('sensor.panasonic_heat_pump_main_z1_water_temp') }} °C
+                  → {{ states('sensor.panasonic_heat_pump_main_z1_water_target_temp') }} °C target
+                icon: mdi:thermometer-lines
+                icon_color: red
+                multiline_secondary: true
+                fill_container: true
+              - type: custom:mushroom-template-card
+                primary: Z1 room
+                secondary: >-
+                  {{ states('sensor.panasonic_heat_pump_main_z1_temp') }} °C
+                icon: mdi:home-thermometer
+                icon_color: orange
+                fill_container: true
+                tap_action:
+                  action: more-info
+                  entity: climate.panasonic_heat_pump_main_z1_temp
+
+          # 4 curve points: outside_low/high × target_low/high
+          - type: grid
+            columns: 4
+            square: false
+            cards:
+              - type: custom:mushroom-template-card
+                primary: Outside low
+                secondary: "{{ states('number.panasonic_heat_pump_main_z1_heat_curve_outside_low_temp') }} °C"
+                icon: mdi:snowflake
+                icon_color: blue
+                fill_container: true
+                tap_action:
+                  action: more-info
+                  entity: number.panasonic_heat_pump_main_z1_heat_curve_outside_low_temp
+              - type: custom:mushroom-template-card
+                primary: Outside high
+                secondary: "{{ states('number.panasonic_heat_pump_main_z1_heat_curve_outside_high_temp') }} °C"
+                icon: mdi:white-balance-sunny
+                icon_color: yellow
+                fill_container: true
+                tap_action:
+                  action: more-info
+                  entity: number.panasonic_heat_pump_main_z1_heat_curve_outside_high_temp
+              - type: custom:mushroom-template-card
+                primary: Target low
+                secondary: "{{ states('number.panasonic_heat_pump_main_z1_heat_curve_target_low_temp') }} °C"
+                icon: mdi:water-thermometer
+                icon_color: orange
+                fill_container: true
+                tap_action:
+                  action: more-info
+                  entity: number.panasonic_heat_pump_main_z1_heat_curve_target_low_temp
+              - type: custom:mushroom-template-card
+                primary: Target high
+                secondary: "{{ states('number.panasonic_heat_pump_main_z1_heat_curve_target_high_temp') }} °C"
+                icon: mdi:fire
+                icon_color: red
+                fill_container: true
+                tap_action:
+                  action: more-info
+                  entity: number.panasonic_heat_pump_main_z1_heat_curve_target_high_temp
+
+      # ── Heating curve Z2 (conditional) ─────────────────────────────
+      - type: conditional
+        conditions:
+          - entity: binary_sensor.hph_has_hk2
+            state: "on"
+        card:
+          type: vertical-stack
+          cards:
+            - type: markdown
+              content: "## Heating curve — Zone 2"
+            - type: grid
+              columns: 4
+              square: false
+              cards:
+                - type: custom:mushroom-template-card
+                  primary: Z2 outside low
+                  secondary: "{{ states('number.panasonic_heat_pump_main_z2_heat_curve_outside_low_temp') }} °C"
+                  icon: mdi:snowflake
+                  icon_color: blue
+                  fill_container: true
+                  tap_action:
+                    action: more-info
+                    entity: number.panasonic_heat_pump_main_z2_heat_curve_outside_low_temp
+                - type: custom:mushroom-template-card
+                  primary: Z2 outside high
+                  secondary: "{{ states('number.panasonic_heat_pump_main_z2_heat_curve_outside_high_temp') }} °C"
+                  icon: mdi:white-balance-sunny
+                  icon_color: yellow
+                  fill_container: true
+                  tap_action:
+                    action: more-info
+                    entity: number.panasonic_heat_pump_main_z2_heat_curve_outside_high_temp
+                - type: custom:mushroom-template-card
+                  primary: Z2 target low
+                  secondary: "{{ states('number.panasonic_heat_pump_main_z2_heat_curve_target_low_temp') }} °C"
+                  icon: mdi:water-thermometer
+                  icon_color: orange
+                  fill_container: true
+                  tap_action:
+                    action: more-info
+                    entity: number.panasonic_heat_pump_main_z2_heat_curve_target_low_temp
+                - type: custom:mushroom-template-card
+                  primary: Z2 target high
+                  secondary: "{{ states('number.panasonic_heat_pump_main_z2_heat_curve_target_high_temp') }} °C"
+                  icon: mdi:fire
+                  icon_color: red
+                  fill_container: true
+                  tap_action:
+                    action: more-info
+                    entity: number.panasonic_heat_pump_main_z2_heat_curve_target_high_temp
+
+      # ── Power-user: collapsed entities card with the rest ─────────
       - type: entities
-        title: Heat pump — native controls
+        title: All native settings (advanced)
         show_header_toggle: false
         entities:
-          - type: section
-            label: Operation
-          - select.panasonic_heat_pump_main_operating_mode_state
-          - binary_sensor.panasonic_heat_pump_main_heatpump_state
-          - binary_sensor.panasonic_heat_pump_main_holiday_mode_state
-          - binary_sensor.panasonic_heat_pump_main_force_dhw_state
-          - binary_sensor.panasonic_heat_pump_main_force_heater_state
-          - binary_sensor.panasonic_heat_pump_main_sterilization_state
-          - binary_sensor.panasonic_heat_pump_main_main_schedule_state
-          - type: section
-            label: Quiet mode
-          - select.panasonic_heat_pump_main_quiet_mode_level
-          - select.panasonic_heat_pump_main_quiet_mode_priority
-          - binary_sensor.panasonic_heat_pump_main_quiet_mode_schedule
-          - select.panasonic_heat_pump_main_powerful_mode_time
-          - type: section
-            label: DHW
-          - number.panasonic_heat_pump_main_dhw_target_temp
-          - number.panasonic_heat_pump_main_dhw_heat_delta
-          - select.panasonic_heat_pump_main_dhw_sensor_selection
-          - select.panasonic_heat_pump_main_smart_dhw
           - type: section
             label: Heating control
           - select.panasonic_heat_pump_main_heating_control
@@ -1447,39 +1692,13 @@ views:
           - number.panasonic_heat_pump_main_heater_delay_time
           - number.panasonic_heat_pump_main_heater_start_delta
           - number.panasonic_heat_pump_main_heater_stop_delta
-
-      # ── Heat curves (Z1 + Z2 if installed) ────────────────────────────
-      - type: entities
-        title: Heating curves (Z1)
-        show_header_toggle: false
-        entities:
-          - climate.panasonic_heat_pump_main_z1_temp
           - type: section
-            label: Z1 heating curve
-          - number.panasonic_heat_pump_main_z1_heat_curve_outside_low_temp
-          - number.panasonic_heat_pump_main_z1_heat_curve_outside_high_temp
-          - number.panasonic_heat_pump_main_z1_heat_curve_target_low_temp
-          - number.panasonic_heat_pump_main_z1_heat_curve_target_high_temp
-          - sensor.panasonic_heat_pump_main_z1_water_temp
-          - sensor.panasonic_heat_pump_main_z1_water_target_temp
-      - type: conditional
-        conditions:
-          - entity: binary_sensor.hph_has_hk2
-            state: "on"
-        card:
-          type: entities
-          title: Heating curves (Z2)
-          show_header_toggle: false
-          entities:
-            - climate.panasonic_heat_pump_main_z2_temp
-            - type: section
-              label: Z2 heating curve
-            - number.panasonic_heat_pump_main_z2_heat_curve_outside_low_temp
-            - number.panasonic_heat_pump_main_z2_heat_curve_outside_high_temp
-            - number.panasonic_heat_pump_main_z2_heat_curve_target_low_temp
-            - number.panasonic_heat_pump_main_z2_heat_curve_target_high_temp
-            - sensor.panasonic_heat_pump_main_z2_water_temp
-            - sensor.panasonic_heat_pump_main_z2_water_target_temp
+            label: DHW (advanced)
+          - select.panasonic_heat_pump_main_dhw_sensor_selection
+          - type: section
+            label: Schedules
+          - binary_sensor.panasonic_heat_pump_main_quiet_mode_schedule
+          - binary_sensor.panasonic_heat_pump_main_main_schedule_state
 
       - type: entities
         title: Control strategies (HeishaMoNR parity)
