@@ -222,160 +222,71 @@ views:
                 action: navigate
                 navigation_path: /hph/programs
 
-          # ── 2-col: Live Status Panel (left) + Energy 7d chart (right) ───────
-          # Service-Cloud pattern: current value on the left, trend on the right.
+          # ── Live status panel (full width, 4-col grid) ───────────────────────
           - type: grid
-            columns: 2
+            columns: 4
             square: false
             cards:
-              # Left 1/2: Compact live status panel + standby overview
-              - type: vertical-stack
-                cards:
-                  - type: custom:mushroom-template-card
-                    primary: >-
-                      {{ states('sensor.hph_source_outlet_temp') }}°C -> {{ states('sensor.hph_source_inlet_temp') }}°C
-                    secondary: Supply / Return
-                    icon: mdi:water-thermometer
-                    icon_color: orange
-                    fill_container: true
-                  - type: custom:mushroom-template-card
-                    primary: >-
-                      Delta {{ states('sensor.hph_water_spread') | float(0) | round(1) }} K  |  {{ states('sensor.hph_source_flow_rate') }} L/min
-                    secondary: Spread  |  Flow
-                    icon: mdi:waves-arrow-right
-                    icon_color: blue
-                    fill_container: true
-                  - type: custom:mushroom-template-card
-                    primary: "{{ states('sensor.hph_source_outdoor_temp') }}°C"
-                    secondary: Outdoor temperature
-                    icon: mdi:thermometer
-                    icon_color: yellow
-                    fill_container: true
-                  - type: custom:mushroom-template-card
-                    primary: "{{ states('sensor.hph_source_compressor_freq') }} Hz"
-                    secondary: Compressor frequency
-                    icon: mdi:sine-wave
-                    icon_color: >-
-                      {{ 'green' if is_state('binary_sensor.hph_compressor_running','on') else 'grey' }}
-                    fill_container: true
-                  - type: custom:mushroom-template-card
-                    primary: >-
-                      {% set s = states('sensor.hph_advisor_summary') %}
-                      {% if s == 'critical' %}Action required
-                      {% elif s == 'warn' %}Warnings present
-                      {% else %}All clear{% endif %}
-                    secondary: Advisor
-                    icon: mdi:lightbulb-on
-                    icon_color: >-
-                      {% set s = states('sensor.hph_advisor_summary') %}
-                      {% if s == 'critical' %}red{% elif s == 'warn' %}amber{% else %}green{% endif %}
-                    fill_container: true
-                    tap_action:
-                      action: navigate
-                      navigation_path: /hph/optimization
-                  - type: custom:mushroom-template-card
-                    primary: >-
-                      {{ states('sensor.hph_schema_variant_active') | replace('_',' ') | upper }}
-                    secondary: Installation variant
-                    icon: mdi:graph-outline
-                    icon_color: blue
-                    fill_container: true
-                    tap_action:
-                      action: navigate
-                      navigation_path: /hph/schema
-                  # Standby overview — shows today's breakdown at a glance
-                  - type: custom:mushroom-template-card
-                    primary: >-
-                      {{ states('sensor.hph_standby_electrical_daily') | float(0) | round(2) }} kWh standby today
-                    secondary: >-
-                      Runtime {{ states('sensor.hph_electrical_runtime_daily') | float(0) | round(2) }} kWh
-                      / Total {{ states('sensor.hph_electrical_daily') | float(0) | round(2) }} kWh
-                    icon: mdi:power-sleep
-                    icon_color: >-
-                      {% set ratio = states('sensor.hph_standby_electrical_daily') | float(0)
-                                   / [states('sensor.hph_electrical_daily') | float(0.001), 0.001] | max %}
-                      {% if ratio > 0.5 %}amber{% elif ratio > 0.3 %}yellow{% else %}grey{% endif %}
-                    fill_container: true
-                    tap_action:
-                      action: navigate
-                      navigation_path: /hph/efficiency
-
-              # Right 1/2: Energy 7d chart
-              - type: custom:apexcharts-card
-                header:
-                  show: true
-                  title: Energy — last 7 days (kWh)
-                graph_span: 7d
-                span:
-                  end: day
-                series:
-                  - entity: sensor.hph_thermal_daily
-                    name: Thermal kWh
-                    type: column
-                    color: "#ff7043"
-                    statistics:
-                      type: change
-                      period: day
-                      align: start
-                  - entity: sensor.hph_electrical_daily
-                    name: Electrical kWh
-                    type: column
-                    color: "#42a5f5"
-                    statistics:
-                      type: change
-                      period: day
-                      align: start
-                apex_config:
-                  chart:
-                    height: 380
-                    background: transparent
-                    foreColor: var(--primary-text-color)
-                  grid:
-                    borderColor: var(--divider-color)
-                  yaxis:
-                    title:
-                      text: "kWh"
-                  noData:
-                    text: "Sammele Daten — Werte erscheinen nach dem ersten vollen Tag."
-
-          # ── Cycling 7d (full width) ───────────────────────────────────────────
-          # number.* entities don't produce HA long-term statistics (no
-          # state_class on the number domain). Use group_by/func: max over
-          # raw history instead — counters reset at 00:00, so the daily
-          # peak == the day's total.
-          - type: custom:apexcharts-card
-            header:
-              show: true
-              title: Cycling — last 7 days
-            graph_span: 7d
-            span:
-              end: day
-            series:
-              - entity: number.hph_cycles_today
-                name: Cycles/day
-                type: column
-                color: "#66bb6a"
-                group_by:
-                  func: max
-                  duration: 1d
-                  start_with_last: false
-              - entity: number.hph_short_cycles_today
-                name: Short cycles/day
-                type: column
-                color: "#d62728"
-                group_by:
-                  func: max
-                  duration: 1d
-                  start_with_last: false
-            apex_config:
-              chart:
-                height: 260
-                background: transparent
-                foreColor: var(--primary-text-color)
-              grid:
-                borderColor: var(--divider-color)
-              noData:
-                text: "Sammele Daten — Tageswerte erscheinen, sobald der Kompressor läuft."
+              - type: custom:mushroom-template-card
+                primary: >-
+                  {{ states('sensor.hph_source_outlet_temp') }}°C → {{ states('sensor.hph_source_inlet_temp') }}°C
+                secondary: Supply / Return
+                icon: mdi:water-thermometer
+                icon_color: orange
+              - type: custom:mushroom-template-card
+                primary: >-
+                  Delta {{ states('sensor.hph_water_spread') | float(0) | round(1) }} K  |  {{ states('sensor.hph_source_flow_rate') }} L/min
+                secondary: Spread  |  Flow
+                icon: mdi:waves-arrow-right
+                icon_color: blue
+              - type: custom:mushroom-template-card
+                primary: "{{ states('sensor.hph_source_outdoor_temp') }}°C"
+                secondary: Outdoor temperature
+                icon: mdi:thermometer
+                icon_color: yellow
+              - type: custom:mushroom-template-card
+                primary: "{{ states('sensor.hph_source_compressor_freq') }} Hz"
+                secondary: Compressor frequency
+                icon: mdi:sine-wave
+                icon_color: >-
+                  {{ 'green' if is_state('binary_sensor.hph_compressor_running','on') else 'grey' }}
+              - type: custom:mushroom-template-card
+                primary: >-
+                  {% set s = states('sensor.hph_advisor_summary') %}
+                  {% if s == 'critical' %}Action required
+                  {% elif s == 'warn' %}Warnings present
+                  {% else %}All clear{% endif %}
+                secondary: Advisor
+                icon: mdi:lightbulb-on
+                icon_color: >-
+                  {% set s = states('sensor.hph_advisor_summary') %}
+                  {% if s == 'critical' %}red{% elif s == 'warn' %}amber{% else %}green{% endif %}
+                tap_action:
+                  action: navigate
+                  navigation_path: /hph/optimization
+              - type: custom:mushroom-template-card
+                primary: >-
+                  {{ states('sensor.hph_schema_variant_active') | replace('_',' ') | upper }}
+                secondary: Installation variant
+                icon: mdi:graph-outline
+                icon_color: blue
+                tap_action:
+                  action: navigate
+                  navigation_path: /hph/schema
+              - type: custom:mushroom-template-card
+                primary: >-
+                  {{ states('sensor.hph_standby_electrical_daily') | float(0) | round(2) }} kWh standby today
+                secondary: >-
+                  Runtime {{ states('sensor.hph_electrical_runtime_daily') | float(0) | round(2) }} kWh
+                  / Total {{ states('sensor.hph_electrical_daily') | float(0) | round(2) }} kWh
+                icon: mdi:power-sleep
+                icon_color: >-
+                  {% set ratio = states('sensor.hph_standby_electrical_daily') | float(0)
+                               / [states('sensor.hph_electrical_daily') | float(0.001), 0.001] | max %}
+                  {% if ratio > 0.5 %}amber{% elif ratio > 0.3 %}yellow{% else %}grey{% endif %}
+                tap_action:
+                  action: navigate
+                  navigation_path: /hph/efficiency
 
   # ════════════════════════════════════════════════════════════════════════
   # 2) SCHEMATIC — auto-detected variant + Bubble-Card SVG with hotspots
@@ -1314,6 +1225,82 @@ views:
                     rgba(100,181,246,0.18) {{ [(states('sensor.hph_thermal_monthly_split_cooling') | float(0) / [states('sensor.hph_thermal_monthly') | float(1), 0.001] | max * 100) | round(0), 100] | min }}%,
                     transparent {{ [(states('sensor.hph_thermal_monthly_split_cooling') | float(0) / [states('sensor.hph_thermal_monthly') | float(1), 0.001] | max * 100) | round(0), 100] | min }}%);
                 }
+
+      # ── 7-day charts ─────────────────────────────────────────────────────────
+      - type: grid
+        columns: 2
+        square: false
+        cards:
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: Energy — last 7 days (kWh)
+            graph_span: 7d
+            span:
+              end: day
+            series:
+              - entity: sensor.hph_thermal_daily
+                name: Thermal kWh
+                type: column
+                color: "#ff7043"
+                statistics:
+                  type: change
+                  period: day
+                  align: start
+              - entity: sensor.hph_electrical_daily
+                name: Electrical kWh
+                type: column
+                color: "#42a5f5"
+                statistics:
+                  type: change
+                  period: day
+                  align: start
+            apex_config:
+              chart:
+                height: 280
+                background: transparent
+                foreColor: var(--primary-text-color)
+              grid:
+                borderColor: var(--divider-color)
+              yaxis:
+                title:
+                  text: "kWh"
+              noData:
+                text: "Sammele Daten — Werte erscheinen nach dem ersten vollen Tag."
+
+          - type: custom:apexcharts-card
+            header:
+              show: true
+              title: Cycling — last 7 days
+            graph_span: 7d
+            span:
+              end: day
+            series:
+              - entity: number.hph_cycles_today
+                name: Cycles/day
+                type: column
+                color: "#66bb6a"
+                group_by:
+                  func: max
+                  duration: 1d
+                  start_with_last: false
+              - entity: number.hph_short_cycles_today
+                name: Short cycles/day
+                type: column
+                color: "#d62728"
+                group_by:
+                  func: max
+                  duration: 1d
+                  start_with_last: false
+            apex_config:
+              chart:
+                height: 280
+                background: transparent
+                foreColor: var(--primary-text-color)
+              grid:
+                borderColor: var(--divider-color)
+              noData:
+                text: "Sammele Daten — Tageswerte erscheinen, sobald der Kompressor läuft."
 
       # ── 30-day bar chart ──
       - type: custom:apexcharts-card
