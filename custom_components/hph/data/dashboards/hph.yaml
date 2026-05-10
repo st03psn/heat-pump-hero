@@ -1356,8 +1356,9 @@ views:
             title:
               text: "SCOP"
           xaxis:
+            min: 1751328000000
             labels:
-              format: "MMM yyyy"
+              format: "yyyy"
           noData:
             text: "Sammele Daten — SCOP-Trend füllt sich nach der ersten kompletten Heizsaison."
 
