@@ -1,37 +1,58 @@
 #!/usr/bin/env python3
 """HeatPump Hero -- backfill historical statistics from Shelly 3EM and Sensostar WMZ.
 
-Reads monthly energy totals from the physical meter state-column in the HA SQLite
-database (read-only), then imports them into the HPH utility_meter statistics via
-HA's WebSocket recorder/import_statistics API.
+Reads energy data from the physical meter state-column in the HA SQLite database
+(read-only), then imports it into HPH statistics via HA's WebSocket
+recorder/import_statistics API.
 
 What gets imported
 ------------------
-  sensor.hph_thermal_monthly   -- calendar-month totals (Sensostar, from Nov 2025)
+Default (monthly resolution):
+  sensor.hph_thermal_monthly    -- calendar-month totals (Sensostar, from Nov 2025)
   sensor.hph_electrical_monthly -- calendar-month totals (Shelly, from Sep 2025)
-  sensor.hph_thermal_yearly    -- heating-season Jul-Jun accumulator (Sensostar)
-  sensor.hph_electrical_yearly -- heating-season Jul-Jun accumulator (Shelly)
+  sensor.hph_thermal_yearly     -- heating-season Jul-Jun accumulator (Sensostar)
+  sensor.hph_electrical_yearly  -- heating-season Jul-Jun accumulator (Shelly)
 
-The HA-level LTS sum-reset that happened 2026-01-28 -> 2026-02-13 (HA offline,
-not a physical meter reset) is corrected via linear interpolation of the state
-column at each month boundary.
+With --full (adds daily + hourly resolution):
+  sensor.hph_thermal_daily      -- daily totals (fills 30-day bar charts)
+  sensor.hph_electrical_daily   -- daily totals
+  sensor.hph_cop_daily          -- daily COP (fills COP trend chart)
+  sensor.hph_thermal_energy_active    -- hourly cumulative (fills statistics-graph)
+  sensor.hph_electrical_energy_active -- hourly cumulative
+
+The HA-level LTS sum-reset (2026-01-28 to 2026-02-13, HA offline, not a physical
+meter reset) is corrected via linear interpolation of the state column at each
+boundary.
+
+Pre-HA reconstruction
+---------------------
+Both Shelly and Sensostar were commissioned at 0 kWh in Sep 2025. The Sensostar
+only appeared in HA on Nov 10, 2025 at 2891 kWh. Shelly has been tracked since
+Sep 25. Implied average COP (2891 / 476.23 = 6.07) is used to back-interpolate
+thermal values for Sep, Oct and Nov 1-9.
 
 Safety
 ------
-Run without --confirm first: the script prints a dry-run table showing what
-would be imported. Add --confirm to actually write to HA.
+Run without --confirm first: the script prints a dry-run table. Add --confirm to
+actually write to HA.
 
 Usage
 -----
-  # Dry-run (default):
+  # Dry-run monthly (default):
   HA_TOKEN=eyJh... python scripts/backfill_from_external_meters.py
 
-  # Live import:
+  # Live import monthly:
   HA_TOKEN=eyJh... python scripts/backfill_from_external_meters.py --confirm
 
+  # Full import (monthly + daily + hourly), dry-run:
+  HA_TOKEN=eyJh... python scripts/backfill_from_external_meters.py --full
+
+  # Full import, live:
+  HA_TOKEN=eyJh... python scripts/backfill_from_external_meters.py --full --confirm
+
   # Non-default paths / URLs:
-  HA_DB=P:/home-assistant_v2.db HA_BASE_URL=http://192.168.111.73:8123 \
-    HA_TOKEN=eyJh... python scripts/backfill_from_external_meters.py --confirm
+  HA_DB=P:/home-assistant_v2.db HA_BASE_URL=http://192.168.111.73:8123 \\
+    HA_TOKEN=eyJh... python scripts/backfill_from_external_meters.py --full --confirm
 
 Dependencies
 ------------
@@ -46,7 +67,7 @@ import json
 import os
 import sqlite3
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
@@ -66,14 +87,26 @@ HA_TOKEN = os.environ.get("HA_TOKEN", "")
 SHELLY_ENTITY = "sensor.3em_wpaussen_total_active_energy"
 SENSOSTAR_ENTITY = "sensor.sensostar_9ce898_sensostar_energy"
 
-# HPH target entities (utility_meter cycle=monthly / cron Jul 1 yearly)
-HPH_THERMAL_MONTHLY = "sensor.hph_thermal_monthly"
+# HPH target entities — monthly / yearly (utility_meter)
+HPH_THERMAL_MONTHLY    = "sensor.hph_thermal_monthly"
 HPH_ELECTRICAL_MONTHLY = "sensor.hph_electrical_monthly"
-HPH_THERMAL_YEARLY = "sensor.hph_thermal_yearly"
-HPH_ELECTRICAL_YEARLY = "sensor.hph_electrical_yearly"
+HPH_THERMAL_YEARLY     = "sensor.hph_thermal_yearly"
+HPH_ELECTRICAL_YEARLY  = "sensor.hph_electrical_yearly"
+
+# HPH target entities — daily (utility_meter cycle=daily)
+HPH_THERMAL_DAILY    = "sensor.hph_thermal_daily"
+HPH_ELECTRICAL_DAILY = "sensor.hph_electrical_daily"
+HPH_COP_DAILY        = "sensor.hph_cop_daily"
+
+# HPH target entities — cumulative energy (total_increasing, feeds utility_meters)
+HPH_THERMAL_ENERGY_ACTIVE    = "sensor.hph_thermal_energy_active"
+HPH_ELECTRICAL_ENERGY_ACTIVE = "sensor.hph_electrical_energy_active"
 
 # Heating season start (matching cron "0 0 1 7 *")
 SEASON_START = datetime(2025, 7, 1, 0, 0, 0)  # local CET/CEST
+
+# First Sensostar LTS row (verified from DB)
+TS_SENSOSTAR_FIRST = datetime(2025, 11, 10, 13, 0, 0)  # UTC
 
 # ---------------------------------------------------------------------------
 # DB helpers
@@ -110,9 +143,9 @@ def _state_at(con: sqlite3.Connection, meta_id: int, ts: datetime) -> float | No
     after = cur.fetchone()
 
     if before and not after:
-        return before[1]
+        return float(before[1])
     if after and not before:
-        return after[1]
+        return float(after[1])
     if not before and not after:
         return None
 
@@ -124,23 +157,54 @@ def _state_at(con: sqlite3.Connection, meta_id: int, ts: datetime) -> float | No
     return float(v_b) + frac * (float(v_a) - float(v_b))
 
 
+def _load_all_rows(con: sqlite3.Connection, meta_id: int, ts_from: datetime) -> list[tuple[int, float]]:
+    """Load all LTS rows from ts_from onward as (start_ts_epoch, state)."""
+    t_from = int(ts_from.replace(tzinfo=timezone.utc).timestamp())
+    cur = con.execute(
+        "SELECT start_ts, state FROM statistics "
+        "WHERE metadata_id=? AND state IS NOT NULL AND start_ts >= ? "
+        "ORDER BY start_ts",
+        (meta_id, t_from),
+    )
+    return [(int(r[0]), float(r[1])) for r in cur.fetchall()]
+
+
 def _cet_offset(month: int) -> int:
     """UTC offset in hours for Germany: CEST(+2) Apr-Oct, CET(+1) Nov-Mar."""
     return 2 if 4 <= month <= 10 else 1
 
 
 def _month_start_utc(year: int, month: int) -> datetime:
-    """First instant of a calendar month in local time, expressed as UTC datetime."""
     offset_h = _cet_offset(month)
-    local_midnight = datetime(year, month, 1, 0, 0, 0)
-    return local_midnight - timedelta(hours=offset_h)
+    return datetime(year, month, 1, 0, 0, 0) - timedelta(hours=offset_h)
 
 
 def _month_end_utc(year: int, month: int) -> datetime:
-    """Last full hour of a calendar month (= start of next month) in UTC."""
     if month == 12:
         return _month_start_utc(year + 1, 1)
     return _month_start_utc(year, month + 1)
+
+
+def _day_start_utc(year: int, month: int, day: int) -> datetime:
+    offset_h = _cet_offset(month)
+    return datetime(year, month, day, 0, 0, 0) - timedelta(hours=offset_h)
+
+
+def _next_day_start_utc(year: int, month: int, day: int) -> datetime:
+    d = date(year, month, day) + timedelta(days=1)
+    return _day_start_utc(d.year, d.month, d.day)
+
+
+def _all_days() -> list[tuple[int, int, int]]:
+    """All calendar days from Sep 1 2025 to today (inclusive)."""
+    today = date.today()
+    start = date(2025, 9, 1)
+    days = []
+    d = start
+    while d <= today:
+        days.append((d.year, d.month, d.day))
+        d += timedelta(days=1)
+    return days
 
 
 # ---------------------------------------------------------------------------
@@ -167,9 +231,9 @@ def compute_monthly_totals() -> dict[tuple[int, int], dict[str, float | None]]:
     Shelly has been tracked since Sep 25 and its physical state at Nov 10
     gives us total electrical since commissioning (476.23 kWh).
 
-    Implied average COP for commissioning → Nov 10 = 2891 / 476.23 = 6.07.
+    Implied average COP for commissioning -> Nov 10 = 2891 / 476.23 = 6.07.
     Monthly thermal for Sep, Oct and Nov 1-9 is derived proportionally:
-        thermal_month = electrical_month × cop_preha
+        thermal_month = electrical_month * cop_preha
 
     This ensures the reconstructed totals close exactly on the Sensostar
     reading of 2891 kWh at the first HA entry (Nov 10).
@@ -178,14 +242,9 @@ def compute_monthly_totals() -> dict[tuple[int, int], dict[str, float | None]]:
     sh_id = _meta_id(con, SHELLY_ENTITY)
     se_id = _meta_id(con, SENSOSTAR_ENTITY)
 
-    # ── Pre-HA constants (both meters commissioned at 0 in Sep 2025) ──────
-    # Shelly state at Sensostar first-entry timestamp = total electrical since
-    # commissioning; Sensostar state = total thermal since commissioning.
-    # Nov 10 13:00 UTC is the first Sensostar LTS row (verified from DB).
-    ts_sensostar_first = datetime(2025, 11, 10, 13, 0, 0)
-    sh_at_nov10 = _state_at(con, sh_id, ts_sensostar_first) or 476.23
-    se_at_nov10 = _state_at(con, se_id, ts_sensostar_first) or 2891.0
-    cop_preha = se_at_nov10 / sh_at_nov10  # ≈ 6.07
+    sh_at_nov10 = _state_at(con, sh_id, TS_SENSOSTAR_FIRST) or 476.23
+    se_at_nov10 = _state_at(con, se_id, TS_SENSOSTAR_FIRST) or 2891.0
+    cop_preha = se_at_nov10 / sh_at_nov10
 
     now_utc = datetime.now(timezone.utc).replace(tzinfo=None, minute=0, second=0, microsecond=0)
     result: dict[tuple[int, int], dict[str, float | None]] = {}
@@ -199,13 +258,7 @@ def compute_monthly_totals() -> dict[tuple[int, int], dict[str, float | None]]:
         se_start = _state_at(con, se_id, ts_start) if se_id else None
         se_end   = _state_at(con, se_id, ts_end)   if se_id else None
 
-        # Electrical: Shelly has data from Sep 25 onward.
-        # For Sep/Oct the state-based delta underestimates by the pre-Sep-25
-        # offset (50.8 kWh). Correct by using 0 as the commissioning baseline:
-        #   Sep: state at Oct 1 − 0  (not state at Sep 1, which extrapolates to 50.8)
-        #   Oct: state at Nov 1 − state at Oct 1  (correct, Shelly fully tracked)
         if (yr, mo) == (2025, 9):
-            # Full Sep from commissioning (Shelly was 0 at commissioning, 79.43 at Oct 1)
             sh_start_corr = 0.0
             el = round((sh_end or 0.0) - sh_start_corr, 2)
         elif sh_start is not None and sh_end is not None:
@@ -213,23 +266,16 @@ def compute_monthly_totals() -> dict[tuple[int, int], dict[str, float | None]]:
         else:
             el = None
 
-        # Thermal: Sensostar tracked from Nov 10 only.
-        # Sep, Oct and Nov 1-9 are back-interpolated using cop_preha.
         if (yr, mo) in ((2025, 9), (2025, 10)):
-            # No Sensostar data at all for these months — derive from electrical
             th = round(el * cop_preha, 1) if el is not None else None
         elif (yr, mo) == (2025, 11):
-            # Nov 1-9 is missing from Sensostar; add back-interpolated offset.
-            # ts_nov10 is the Sensostar first entry; compute electrical Nov 1–Nov 10
             ts_nov1  = _month_start_utc(2025, 11)
-            sh_nov1  = _state_at(con, sh_id, ts_nov1)  or 0.0
+            sh_nov1  = _state_at(con, sh_id, ts_nov1) or 0.0
             sh_nov10 = sh_at_nov10
             el_preha_nov = max(sh_nov10 - sh_nov1, 0.0)
             th_preha_nov = round(el_preha_nov * cop_preha, 1)
-            # Sensostar delta Nov 10 → Dec 1
             th_tracked = round(se_end - se_at_nov10, 1) if se_end is not None else 0.0
             th = round(th_preha_nov + th_tracked, 1)
-            # Also correct electrical: include Nov 1-9 in Nov total
             el_tracked = round(sh_end - sh_nov10, 2) if sh_end is not None else 0.0
             el = round(el_preha_nov + el_tracked, 2)
         elif se_start is not None and se_end is not None:
@@ -244,7 +290,79 @@ def compute_monthly_totals() -> dict[tuple[int, int], dict[str, float | None]]:
 
 
 # ---------------------------------------------------------------------------
-# Statistics entry builders
+# Daily delta computation
+# ---------------------------------------------------------------------------
+
+def compute_daily_totals() -> dict[tuple[int, int, int], dict[str, float | None]]:
+    """Return {(year, month, day): {"thermal": kWh, "electrical": kWh}} for all
+    days from Sep 1 2025 to today.
+
+    Uses the same pre-HA back-interpolation as compute_monthly_totals():
+    - Sep 1 - Nov 9: thermal back-interpolated from electrical * cop_preha
+    - Nov 10 (partial): split at first Sensostar HA entry (13:00 UTC)
+    - Nov 11 onward: Sensostar state-column delta
+    """
+    con = _open_db()
+    sh_id = _meta_id(con, SHELLY_ENTITY)
+    se_id = _meta_id(con, SENSOSTAR_ENTITY)
+
+    sh_at_nov10 = _state_at(con, sh_id, TS_SENSOSTAR_FIRST) or 476.23
+    se_at_nov10 = _state_at(con, se_id, TS_SENSOSTAR_FIRST) or 2891.0
+    cop_preha = se_at_nov10 / sh_at_nov10
+
+    now_utc = datetime.now(timezone.utc).replace(tzinfo=None, minute=0, second=0, microsecond=0)
+    result: dict[tuple[int, int, int], dict[str, float | None]] = {}
+
+    for yr, mo, day in _all_days():
+        ts_start = _day_start_utc(yr, mo, day)
+        ts_end_full = _next_day_start_utc(yr, mo, day)
+        ts_end = min(ts_end_full, now_utc)
+
+        if ts_end <= ts_start:
+            continue
+
+        sh_start = _state_at(con, sh_id, ts_start) if sh_id else None
+        sh_end   = _state_at(con, sh_id, ts_end)   if sh_id else None
+
+        # Electrical delta
+        if (yr, mo, day) == (2025, 9, 1):
+            el = 0.0
+        elif sh_start is not None and sh_end is not None:
+            el = max(round(sh_end - sh_start, 3), 0.0)
+        else:
+            el = None
+
+        # Thermal delta
+        if ts_end_full <= TS_SENSOSTAR_FIRST:
+            # Entire day before first Sensostar HA entry
+            th = round(el * cop_preha, 2) if el is not None else None
+        elif ts_start < TS_SENSOSTAR_FIRST:
+            # Nov 10: partial day — pre-HA portion + tracked portion
+            sh_at_split = _state_at(con, sh_id, TS_SENSOSTAR_FIRST) or sh_at_nov10
+            sh_day_start_v = sh_start or sh_at_split
+            el_preha = max(sh_at_split - sh_day_start_v, 0.0)
+            th_preha = el_preha * cop_preha
+            se_end_v = _state_at(con, se_id, ts_end) or se_at_nov10
+            th_tracked = max(se_end_v - se_at_nov10, 0.0)
+            th = round(th_preha + th_tracked, 3)
+            el_tracked = max((sh_end or sh_at_split) - sh_at_split, 0.0)
+            el = round(el_preha + el_tracked, 3)
+        else:
+            se_start = _state_at(con, se_id, ts_start) if se_id else None
+            se_end   = _state_at(con, se_id, ts_end)   if se_id else None
+            if se_start is not None and se_end is not None:
+                th = max(round(se_end - se_start, 3), 0.0)
+            else:
+                th = None
+
+        result[(yr, mo, day)] = {"thermal": th, "electrical": el}
+
+    con.close()
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Statistics entry builders — monthly / yearly
 # ---------------------------------------------------------------------------
 
 def _iso(dt_utc: datetime) -> str:
@@ -253,13 +371,11 @@ def _iso(dt_utc: datetime) -> str:
 
 def build_monthly_stats(
     totals: dict[tuple[int, int], dict[str, float | None]],
-    channel: str,  # "thermal" | "electrical"
+    channel: str,
 ) -> list[dict]:
     """Build statistics entries for sensor.hph_{channel}_monthly.
 
-    Each month contributes:
-      - entry at month-start:  state=0,     sum=prev_cumulative, last_reset=month-start
-      - entry at month-end-1h: state=total, sum=cumulative,       last_reset=month-start
+    Each month: entry at month-start (state=0, last_reset) + month-end-1h (state=total).
     """
     stats: list[dict] = []
     cumulative = 0.0
@@ -267,26 +383,14 @@ def build_monthly_stats(
     for yr, mo in MONTHS:
         val = totals.get((yr, mo), {}).get(channel)
         if val is None:
-            continue  # no data for this month/channel -- skip
+            continue
 
         ts_start = _month_start_utc(yr, mo)
         ts_end = _month_end_utc(yr, mo) - timedelta(hours=1)
 
-        # Start of month: state resets to 0, cumulative sum continues
-        stats.append({
-            "start": _iso(ts_start),
-            "state": 0.0,
-            "sum": cumulative,
-            "last_reset": _iso(ts_start),
-        })
+        stats.append({"start": _iso(ts_start), "state": 0.0,           "sum": cumulative,           "last_reset": _iso(ts_start)})
         cumulative += val
-        # End of month: state = total accumulated, sum = cumulative
-        stats.append({
-            "start": _iso(ts_end),
-            "state": round(val, 3),
-            "sum": round(cumulative, 3),
-            "last_reset": _iso(ts_start),
-        })
+        stats.append({"start": _iso(ts_end),   "state": round(val, 3), "sum": round(cumulative, 3), "last_reset": _iso(ts_start)})
 
     return stats
 
@@ -295,16 +399,13 @@ def build_yearly_stats(
     totals: dict[tuple[int, int], dict[str, float | None]],
     channel: str,
 ) -> list[dict]:
-    """Build statistics entries for sensor.hph_{channel}_yearly.
-
-    The heating season starts Jul 1 (cron "0 0 1 7 *").
-    We provide one entry at each month-end showing the running accumulator.
-    """
-    season_start_utc = SEASON_START - timedelta(hours=_cet_offset(7))  # Jul = CEST
+    """Build statistics entries for sensor.hph_{channel}_yearly."""
+    season_start_utc = SEASON_START - timedelta(hours=_cet_offset(7))
     last_reset_iso = _iso(season_start_utc)
 
     stats: list[dict] = []
     accumulated = 0.0
+    now_utc = datetime.now(timezone.utc).replace(tzinfo=None, minute=0, second=0, microsecond=0)
 
     for yr, mo in MONTHS:
         val = totals.get((yr, mo), {}).get(channel)
@@ -312,10 +413,7 @@ def build_yearly_stats(
             continue
 
         accumulated += val
-        ts_end = _month_end_utc(yr, mo) - timedelta(hours=1)
-        now_utc = datetime.now(timezone.utc).replace(tzinfo=None, minute=0, second=0, microsecond=0)
-        if ts_end > now_utc:
-            ts_end = now_utc
+        ts_end = min(_month_end_utc(yr, mo) - timedelta(hours=1), now_utc)
 
         stats.append({
             "start": _iso(ts_end),
@@ -328,10 +426,149 @@ def build_yearly_stats(
 
 
 # ---------------------------------------------------------------------------
+# Statistics entry builders — daily
+# ---------------------------------------------------------------------------
+
+def build_daily_meter_stats(
+    daily_totals: dict[tuple[int, int, int], dict[str, float | None]],
+    channel: str,
+) -> list[dict]:
+    """Build statistics entries for sensor.hph_{channel}_daily.
+
+    Each day: entry at day-start (state=0, last_reset) + day-end-1h (state=total).
+    """
+    stats: list[dict] = []
+    cumulative = 0.0
+    now_utc = datetime.now(timezone.utc).replace(tzinfo=None, minute=0, second=0, microsecond=0)
+
+    for yr, mo, day in _all_days():
+        val = daily_totals.get((yr, mo, day), {}).get(channel)
+        if val is None:
+            continue
+
+        ts_start = _day_start_utc(yr, mo, day)
+        ts_end_raw = _next_day_start_utc(yr, mo, day) - timedelta(hours=1)
+        ts_end = min(ts_end_raw, now_utc)
+
+        stats.append({"start": _iso(ts_start), "state": 0.0,           "sum": cumulative,           "last_reset": _iso(ts_start)})
+        cumulative += val
+        stats.append({"start": _iso(ts_end),   "state": round(val, 3), "sum": round(cumulative, 3), "last_reset": _iso(ts_start)})
+
+    return stats
+
+
+def build_daily_cop_stats(
+    daily_totals: dict[tuple[int, int, int], dict[str, float | None]],
+) -> list[dict]:
+    """Build mean-value statistics entries for sensor.hph_cop_daily.
+
+    Imported with has_mean=True so the 'type: state, period: day' apexcharts query
+    can read the daily COP value.
+    """
+    stats: list[dict] = []
+    now_utc = datetime.now(timezone.utc).replace(tzinfo=None, minute=0, second=0, microsecond=0)
+
+    for yr, mo, day in _all_days():
+        t = daily_totals.get((yr, mo, day), {})
+        th = t.get("thermal")
+        el = t.get("electrical")
+        if th is None or el is None or el < 0.01:
+            continue
+
+        cop = round(th / el, 3)
+        ts_end_raw = _next_day_start_utc(yr, mo, day) - timedelta(hours=1)
+        ts_end = min(ts_end_raw, now_utc)
+
+        stats.append({"start": _iso(ts_end), "mean": cop, "min": cop, "max": cop})
+
+    return stats
+
+
+# ---------------------------------------------------------------------------
+# Statistics entry builder — hourly cumulative (energy_active)
+# ---------------------------------------------------------------------------
+
+def build_hourly_energy_stats(
+    con: sqlite3.Connection,
+    meta_id: int,
+    channel: str,  # "thermal" | "electrical"
+    sh_at_nov10: float,
+    se_at_nov10: float,
+    cop_preha: float,
+    sh_id: int | None,
+) -> list[dict]:
+    """Build hourly LTS entries for sensor.hph_{channel}_energy_active.
+
+    For thermal (Sensostar):
+      - Nov 10 13:00 UTC onward: raw DB state values (physical meter reading)
+      - Before Nov 10: prepend reconstructed hourly values using Shelly * cop_preha
+
+    For electrical (Shelly):
+      - All available DB rows from Sep 25 onward
+    """
+    now_utc = datetime.now(timezone.utc).replace(tzinfo=None, minute=0, second=0, microsecond=0)
+
+    if channel == "thermal":
+        rows = _load_all_rows(con, meta_id, TS_SENSOSTAR_FIRST)
+        # Prepend pre-HA reconstructed hourly values (Sep 25 - Nov 10)
+        # Use Shelly hourly rows to drive the timeline, scale by cop_preha
+        pre_entries: list[dict] = []
+        if sh_id is not None:
+            ts_shelly_start = datetime(2025, 9, 25, 0, 0, 0)  # Shelly first HA entry approx
+            sh_rows = _load_all_rows(con, sh_id, ts_shelly_start)
+            # sh_rows contains absolute meter readings; first entry is ~50 kWh
+            # commissioning was at 0 kWh, so offset = first_shelly_state
+            sh_offset = sh_rows[0][1] if sh_rows else 0.0  # meter reading at first HA entry
+            # Derive pre-HA thermal: thermal_cumulative = (sh_state - sh_offset) * cop_preha
+            for ts_epoch, sh_state in sh_rows:
+                ts_dt = datetime.utcfromtimestamp(ts_epoch)
+                if ts_dt >= TS_SENSOSTAR_FIRST:
+                    break
+                thermal_val = round((sh_state - sh_offset) * cop_preha, 3)
+                pre_entries.append({
+                    "start": _iso(ts_dt),
+                    "state": thermal_val,
+                    "sum": thermal_val,
+                })
+        # Append actual Sensostar rows
+        for ts_epoch, se_state in rows:
+            ts_dt = datetime.utcfromtimestamp(ts_epoch)
+            if ts_dt > now_utc:
+                break
+            pre_entries.append({
+                "start": _iso(ts_dt),
+                "state": round(se_state, 3),
+                "sum": round(se_state, 3),
+            })
+        return pre_entries
+
+    else:  # electrical
+        ts_shelly_start = datetime(2025, 9, 25, 0, 0, 0)
+        rows = _load_all_rows(con, meta_id, ts_shelly_start)
+        entries: list[dict] = []
+        for ts_epoch, sh_state in rows:
+            ts_dt = datetime.utcfromtimestamp(ts_epoch)
+            if ts_dt > now_utc:
+                break
+            entries.append({
+                "start": _iso(ts_dt),
+                "state": round(sh_state, 3),
+                "sum": round(sh_state, 3),
+            })
+        return entries
+
+
+# ---------------------------------------------------------------------------
 # WebSocket import
 # ---------------------------------------------------------------------------
 
-def ws_import(entity_id: str, stats: list[dict], unit: str = "kWh") -> bool:
+def ws_import(
+    entity_id: str,
+    stats: list[dict],
+    unit: str = "kWh",
+    has_sum: bool = True,
+    has_mean: bool = False,
+) -> bool:
     import urllib.parse
 
     parsed = urllib.parse.urlparse(HA_BASE)
@@ -353,8 +590,8 @@ def ws_import(entity_id: str, stats: list[dict], unit: str = "kWh") -> bool:
         "id": 1,
         "type": "recorder/import_statistics",
         "metadata": {
-            "has_mean": False,
-            "has_sum": True,
+            "has_mean": has_mean,
+            "has_sum": has_sum,
             "name": entity_id,
             "source": "recorder",
             "statistic_id": entity_id,
@@ -380,19 +617,23 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="Backfill HPH LTS from Shelly+Sensostar DB")
     ap.add_argument("--confirm", action="store_true",
                     help="Actually write to HA (default: dry-run preview only)")
+    ap.add_argument("--full", action="store_true",
+                    help="Also import daily totals and hourly cumulative energy (fills 30-day charts)")
     args = ap.parse_args()
 
     if args.confirm and not HA_TOKEN:
         print("ERROR: HA_TOKEN required for --confirm mode", file=sys.stderr)
         return 1
 
-    print(f"\nHPH Backfill -- {'LIVE IMPORT' if args.confirm else 'DRY RUN (add --confirm to write)'}")
+    mode = "LIVE IMPORT" if args.confirm else "DRY RUN (add --confirm to write)"
+    resolution = " + DAILY + HOURLY" if args.full else " (monthly only)"
+    print(f"\nHPH Backfill -- {mode}{resolution}")
     print(f"DB: {HA_DB}")
     print(f"HA: {HA_BASE}\n")
 
+    # -- Monthly totals (always) -------------------------------------------
     totals = compute_monthly_totals()
 
-    # Print monthly table
     print(f"{'Month':<10} {'Thermal':>10} {'Electrical':>12} {'COP':>6}")
     print("-" * 44)
     th_total = el_total = 0.0
@@ -405,31 +646,64 @@ def main() -> int:
         cop_str = f"{th/el:6.2f}" if (th and el and el > 0) else "   n/a"
         partial = ""
         now_utc = datetime.now(timezone.utc).replace(tzinfo=None)
-        end = _month_end_utc(yr, mo)
-        if end > now_utc:
+        if _month_end_utc(yr, mo) > now_utc:
             partial = " (partial)"
         print(f"{yr}-{mo:02d}    {th_str}  {el_str}  {cop_str}{partial}")
-        if th: th_total += th
-        if el: el_total += el
+        if th:
+            th_total += th
+        if el:
+            el_total += el
     print("-" * 44)
     scop = th_total / el_total if el_total > 0 else 0
-    print(f"{'TOTAL':<10}  {th_total:10.0f}  {el_total:10.1f}  {scop:6.2f}  (SCOP Nov->today)\n")
+    print(f"{'TOTAL':<10}  {th_total:10.0f}  {el_total:10.1f}  {scop:6.2f}  (SCOP)\n")
 
-    # Build all 4 stat sets
-    targets = [
-        (HPH_THERMAL_MONTHLY,   build_monthly_stats(totals, "thermal"),   "monthly"),
-        (HPH_ELECTRICAL_MONTHLY, build_monthly_stats(totals, "electrical"), "monthly"),
-        (HPH_THERMAL_YEARLY,    build_yearly_stats(totals,  "thermal"),   "yearly"),
-        (HPH_ELECTRICAL_YEARLY,  build_yearly_stats(totals,  "electrical"), "yearly"),
+    # Build monthly/yearly stat sets
+    targets: list[tuple[str, list[dict], str, bool, bool]] = [
+        (HPH_THERMAL_MONTHLY,    build_monthly_stats(totals, "thermal"),   "monthly", True,  False),
+        (HPH_ELECTRICAL_MONTHLY, build_monthly_stats(totals, "electrical"), "monthly", True, False),
+        (HPH_THERMAL_YEARLY,     build_yearly_stats(totals,  "thermal"),   "yearly",  True,  False),
+        (HPH_ELECTRICAL_YEARLY,  build_yearly_stats(totals,  "electrical"), "yearly",  True, False),
     ]
 
-    for entity_id, stats, meter_type in targets:
+    # -- Daily totals (--full) --------------------------------------------
+    if args.full:
+        print("Computing daily totals (this may take ~10 seconds)...")
+        daily_totals = compute_daily_totals()
+        day_count = len([v for v in daily_totals.values() if v["thermal"] is not None])
+        print(f"  {day_count} days with data\n")
+
+        targets += [
+            (HPH_THERMAL_DAILY,    build_daily_meter_stats(daily_totals, "thermal"),   "daily",     True,  False),
+            (HPH_ELECTRICAL_DAILY, build_daily_meter_stats(daily_totals, "electrical"), "daily",    True,  False),
+            (HPH_COP_DAILY,        build_daily_cop_stats(daily_totals),                 "daily COP", False, True),
+        ]
+
+    # -- Hourly cumulative (--full) ----------------------------------------
+    if args.full:
+        con = _open_db()
+        sh_id = _meta_id(con, SHELLY_ENTITY)
+        se_id = _meta_id(con, SENSOSTAR_ENTITY)
+        sh_at_nov10 = _state_at(con, sh_id, TS_SENSOSTAR_FIRST) or 476.23
+        se_at_nov10 = _state_at(con, se_id, TS_SENSOSTAR_FIRST) or 2891.0
+        cop_preha = se_at_nov10 / sh_at_nov10
+
+        th_hourly = build_hourly_energy_stats(con, se_id, "thermal",    sh_at_nov10, se_at_nov10, cop_preha, sh_id)
+        el_hourly = build_hourly_energy_stats(con, sh_id, "electrical", sh_at_nov10, se_at_nov10, cop_preha, sh_id)
+        con.close()
+
+        targets += [
+            (HPH_THERMAL_ENERGY_ACTIVE,    th_hourly, "hourly cumulative", True, False),
+            (HPH_ELECTRICAL_ENERGY_ACTIVE, el_hourly, "hourly cumulative", True, False),
+        ]
+
+    # -- Print + import all targets ----------------------------------------
+    print("-- Import targets ---------------------------------------------------")
+    for entity_id, stats, meter_type, has_sum, has_mean in targets:
         print(f"  {entity_id}  ({meter_type})  --> {len(stats)} entries")
         if args.confirm:
-            ok = ws_import(entity_id, stats)
+            ok = ws_import(entity_id, stats, has_sum=has_sum, has_mean=has_mean)
             print(f"    {'OK' if ok else 'FAILED'}")
         else:
-            # Show first and last entry
             if stats:
                 print(f"    first: {stats[0]}")
                 print(f"    last:  {stats[-1]}")
@@ -437,8 +711,12 @@ def main() -> int:
     if not args.confirm:
         print("\nDry-run complete. Run with --confirm to write to HA.")
     else:
-        print("\nImport complete. Reload the HPH integration or restart HA.")
-        print("The SCOP trend chart and monthly COP comparisons now have historical data.")
+        print("\nImport complete.")
+        if args.full:
+            print("  - 30-day bar charts (thermal/electrical) now have historical daily data")
+            print("  - COP trend chart now has 8 months of daily COP history")
+            print("  - Statistics-graph chart now has hourly cumulative data")
+        print("Reload the HPH integration or restart HA if entity states look stale.")
 
     return 0
 
