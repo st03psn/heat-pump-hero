@@ -3,6 +3,50 @@
 All notable changes to HeatPump Hero. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **Hero card and KPI cards mis-labelled live power as kW.**
+  `sensor.hph_thermal_power_active` and `sensor.hph_electrical_power_active`
+  are in W (per `unit_of_measurement: W`), but the Overview Hero card and
+  the two power KPI cards on the Mobile view appended `kW` to the raw
+  W value — so 2 W standby showed as "2.0 kW". Energy integrals
+  (`hph_*_daily/_runtime/standby`) were always correct because the
+  integration platform converts W → kWh via `unit_prefix: k`. Display
+  now auto-formats: `<1000 W` shown in W, `≥1000 W` shown in kW with 2
+  decimals.
+
+- **`hph.export_now` ignored the format selector and missed many sensors.**
+  The integration export wrote CSV regardless of `select.hph_export_format`
+  and only covered a hardcoded 15-entity subset (no `_active`, no per-mode
+  splits, no advisor/diagnostics). Replaced with dynamic discovery of all
+  `sensor.hph_*` / `binary_sensor.hph_*` / `number.hph_*` (excluding
+  source-facade mirrors), proper `csv` / `json` / `xlsx` writers (xlsx via
+  openpyxl), and error propagation: failures now raise
+  `HomeAssistantError` to the caller and surface a notification, instead
+  of being silently logged. Each row also carries `friendly_name`.
+
+### Changed
+
+- **Comparison sensors now compare year-over-year, not month-over-month.**
+  `sensor.hph_cop_change_month_pct` (current vs previous calendar month)
+  was near-useless — heating load swings between adjacent months for
+  weather reasons, not efficiency reasons. Replaced with
+  `sensor.hph_cop_change_yoy_pct` (current vs same calendar month last
+  year). Same change for `hph_thermal_change_yoy_pct` and
+  `hph_electrical_change_yoy_pct`. New baseline sensors
+  `hph_*_same_month_last_year` use HA's `statistic_during_period`
+  template function over the monotonic `hph_thermal_energy` /
+  `hph_electrical_energy` integrations (HA 2024.4+). The
+  `hph_efficiency_trend` aggregator and the Efficiency dashboard view
+  now read from the YoY sensors. Bridge whitelist updated.
+
+  *Migration:* the old `*_change_month_pct` entity IDs are gone.
+  Recorder history for those specific entities resets; if a Lovelace
+  YAML override outside the bundle references them, replace with
+  `*_change_yoy_pct`.
+
 ## [0.9.0-rc5] — 2026-05-10
 
 ### Fixed

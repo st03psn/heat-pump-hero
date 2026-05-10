@@ -153,16 +153,23 @@ these) plus dashboard + assets. Migration removes old automation packages.
 - [ ] **Demo mode** — `switch.hph_demo_mode` + `hph.demo_seed_history`
       service that injects 13 months of synthetic statistics so all
       views can be reviewed without waiting for real data
-- [ ] **Vs-same-month-last-year comparison** — replace
+- [x] **Vs-same-month-last-year comparison** — replaced
       `hph_cop_change_month_pct` (vs. previous calendar month, near-useless)
       with `hph_cop_change_yoy_pct` (vs. same calendar month last year)
+      via `statistic_during_period` over `hph_thermal_energy` /
+      `hph_electrical_energy`. Thermal + electrical change-pct sensors
+      and the dashboard Efficiency view follow suit.
 - [ ] **OptionsFlow entity-pickers** — replace `text.hph_src_*` text-box
       configuration with HA-native entity selectors
 - [ ] **View consolidation** — collapse Mobile (View 7) into Overview
       (View 1) responsively; reduce 8 tabs → 7
 - [ ] **View 6 (Programs) reduction** — strip status/schedule cards; keep
       only `hph.run_legionella_now` button + markdown hint
-- [ ] **Long-term export bugfix** — token handling, dynamic entity discovery
+- [x] **Long-term export bugfix** — `hph.export_now` now honours
+      csv/json/xlsx selector, discovers all `sensor.hph_*` /
+      `binary_sensor.hph_*` / `number.hph_*` dynamically (skipping
+      source-facade mirrors), and raises `HomeAssistantError` on
+      failure instead of swallowing it.
 - [ ] **COP-live transparency** — show `thermal_w / electrical_w` inputs
       next to the COP value
 - [ ] GitHub Release tag (v0.9.0) so HACS can show update notifications
