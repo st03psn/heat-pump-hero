@@ -144,8 +144,27 @@ Bootstrap now deploys only `hph_efficiency.yaml` (utility_meter +
 integration sensor platform config — HA limitation, no Python API for
 these) plus dashboard + assets. Migration removes old automation packages.
 
-### ⏳ Phase 4 — polish (after user testing)
+### ⏳ Phase 4 — polish (active, post-rc4 user testing)
 
+- [ ] **Dashboard remediation** (active, see `.claude/plans/folgende-fehler-probleme-...`):
+      cycling-chart `group_by` fix, "Sammele Daten" no-data placeholders,
+      heating-limit conditional fallback, COP-trend explicit line+markers
+      — Stage 1 landed; Stages 2-7 in progress
+- [ ] **Demo mode** — `switch.hph_demo_mode` + `hph.demo_seed_history`
+      service that injects 13 months of synthetic statistics so all
+      views can be reviewed without waiting for real data
+- [ ] **Vs-same-month-last-year comparison** — replace
+      `hph_cop_change_month_pct` (vs. previous calendar month, near-useless)
+      with `hph_cop_change_yoy_pct` (vs. same calendar month last year)
+- [ ] **OptionsFlow entity-pickers** — replace `text.hph_src_*` text-box
+      configuration with HA-native entity selectors
+- [ ] **View consolidation** — collapse Mobile (View 7) into Overview
+      (View 1) responsively; reduce 8 tabs → 7
+- [ ] **View 6 (Programs) reduction** — strip status/schedule cards; keep
+      only `hph.run_legionella_now` button + markdown hint
+- [ ] **Long-term export bugfix** — token handling, dynamic entity discovery
+- [ ] **COP-live transparency** — show `thermal_w / electrical_w` inputs
+      next to the COP value
 - [ ] GitHub Release tag (v0.9.0) so HACS can show update notifications
 - [ ] Per-platform translations `translations/{en,de,nl}.json`
 - [ ] Repairs panel for missing frontend cards (apexcharts, mushroom, …)
@@ -163,6 +182,10 @@ these) plus dashboard + assets. Migration removes old automation packages.
 - [ ] Per-locale dashboard strings via integration translations
 - [ ] Translations of repo docs (README / docs / info) into DE and NL
 - [ ] Logo & brand: SVG + PNG assets for README, HACS listing, dashboard header
+- [ ] **Drop-in advisor extension API** — `<config>/hph/advisors/*.py`
+      auto-discovered on startup
+- [ ] Remove deprecated `scripts/install.sh` / `scripts/update.ps1`
+      (legacy YAML-package installer paths)
 
 ## Out of scope
 

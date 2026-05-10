@@ -9,8 +9,8 @@ opt-in; L3 is roadmap.
 
 ## Layer 1 — Statistical observation (always on)
 
-Implemented in `packages/hph_analysis.yaml`. Pure HA template + statistics
-platform. No external dependency.
+Implemented in `custom_components/hph/coordinators/analysis.py` (since v0.9;
+formerly `packages/hph_analysis.yaml`). No external dependency.
 
 **What it observes**
 
@@ -32,11 +32,11 @@ Set in dashboard *Configuration → Analysis*:
 
 | Helper | Purpose |
 |---|---|
-| `input_text.hph_indoor_temp_entity` | reference room sensor entity-ID (required) |
-| `input_text.hph_indoor_target_entity` | target sensor (optional; falls back to default) |
-| `input_number.hph_indoor_target_default` | fallback target in °C (default 21) |
-| `input_number.hph_analysis_window_days` | rolling window length (3-30 days) |
-| `input_number.hph_analysis_dead_band_k` | recommendations suppressed ≤ this delta |
+| `text.hph_indoor_temp_entity` | reference room sensor entity-ID (required) |
+| `text.hph_indoor_target_entity` | target sensor (optional; falls back to default) |
+| `number.hph_indoor_target_default` | fallback target in °C (default 21) |
+| `number.hph_analysis_window_days` | rolling window length (3-30 days) |
+| `number.hph_analysis_dead_band_k` | recommendations suppressed ≤ this delta |
 
 The advisor surfaces in the Optimization view with a coloured tile;
 the deviation feeds the aggregate traffic-light.
@@ -56,30 +56,20 @@ HA_TOKEN=<long-lived-token> \
 python3 /config/scripts/analyze_heating_curve.py --days 14
 ```
 
-**Schedule nightly** in `configuration.yaml`:
-
-```yaml
-shell_command:
-  hph_analyze_curve: >-
-    HA_BASE_URL=http://localhost:8123
-    HA_TOKEN=!secret hph_export_token
-    python3 /config/scripts/analyze_heating_curve.py --days 14
-
-automation:
-  - alias: HPH — analyze heating curve nightly
-    trigger:
-      - platform: time
-        at: "03:30:00"
-    action:
-      - service: shell_command.hph_analyze_curve
-```
+**Schedule nightly** via the integration's built-in scheduler (in
+*Settings → Devices & Services → HeatPump Hero → Configure → Analysis*),
+or as a Home Assistant automation calling the script via
+`shell_command:` in your own `configuration.yaml`.
 
 **Output format** (one line, ≤ 255 chars):
 ```
 moderate — typical for mixed underfloor / radiators. slope -0.65 K/K, intercept 35.4 °C, R²=0.78, n=412.
 ```
 
-## Layer 3 — LLM-based (roadmap, v0.7+)
+The result is written to `text.hph_heating_curve_recommendation` and
+displayed by the L1 advisor.
+
+## Layer 3 — LLM-based (roadmap, v1.0+)
 
 A future custom integration could expose HeatPump Hero's structured
 data to an LLM via HA's `conversation` integration, enabling questions

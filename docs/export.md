@@ -9,45 +9,33 @@ Three ways to get HeatPump Hero data out for external analysis.
 Settings → Developer Tools → Statistics → pick entity → ⋯ → Download.
 Good for one-off Excel checks. No setup.
 
-## 2. Scheduled CSV / JSON / XLSX (HeatPump Hero export module)
+## 2. Scheduled CSV / JSON / XLSX (HeatPump Hero export service)
 
-Helpers added by `packages/hph_export.yaml`:
+Since v0.9 the export is a Python service registered by the integration
+— no `shell_command:` setup, no long-lived token to wire up.
 
-| Helper | Purpose |
+**Configuration entities** (set via the dashboard's *Configuration → Export*
+section, or directly):
+
+| Entity | Purpose |
 |---|---|
-| `input_text.hph_export_target_path` | output directory (default `/config/hph_exports`) |
-| `input_select.hph_export_format` | csv / json / xlsx |
-| `input_select.hph_export_period` | last_day / last_week / last_month / last_year / all_time |
-| `input_select.hph_export_schedule` | manual_only / daily_0300 / weekly_monday_0300 / monthly_1st_0300 |
-| `script.hph_export_now` | manual trigger button |
+| `text.hph_export_target_path` | output directory (default `/config/hph/exports`) |
+| `select.hph_export_format` | csv / json / xlsx |
+| `select.hph_export_period` | last_day / last_week / last_month / last_year / all_time |
+| `select.hph_export_schedule` | manual_only / daily_0300 / weekly_monday_0300 / monthly_1st_0300 |
+| `button.hph_export_now` | manual trigger |
 
-**One-time setup** in `configuration.yaml`:
+**Service:** `hph.export_now` — runnable from *Developer Tools → Services*
+or from any HA automation. Honours the configured format / period /
+target. Posts a persistent notification on completion.
 
-```yaml
-shell_command:
-  hph_export: >-
-    HA_BASE_URL=http://localhost:8123
-    HA_TOKEN=!secret hph_export_token
-    HEISHAHUB_TARGET={{ states('input_text.hph_export_target_path') }}
-    HEISHAHUB_FORMAT={{ states('input_select.hph_export_format') }}
-    HEISHAHUB_PERIOD={{ states('input_select.hph_export_period') }}
-    python3 /config/scripts/export_hph.py
-```
-
-Then in `secrets.yaml`:
-```yaml
-hph_export_token: <your long-lived access token>
-```
-
-Long-lived token: HA → user profile (bottom-left) → Security → Long-lived
-access tokens → Create.
-
-Runs the script at `scripts/export_hph.py` (installed by
-`scripts/install.sh`). One file per entity, named
-`hph_<entity>_<period>_<timestamp>.<ext>`.
+**Scheduled runs:** select a non-manual schedule in
+`select.hph_export_schedule`; the integration's coordinator fires the
+export at the configured time without any external scheduler.
 
 For XLSX: `pip install openpyxl` in the HA Python environment, or stay
-on CSV/JSON.
+on CSV/JSON. The service falls back to CSV automatically if `openpyxl`
+isn't available.
 
 ## 3. InfluxDB → CSV
 
@@ -61,15 +49,28 @@ CSV columns: `entity_id, last_changed, state, unit_of_measurement`.
 JSON: array of HA history records as returned by `/api/history/period`.
 XLSX: same columns as CSV, one sheet per entity.
 
+Files are named `hph_<entity>_<period>_<timestamp>.<ext>`. If the
+configured `target_path` already exists as a directory or has no
+extension, the integration writes
+`hph_export_<timestamp>.<fmt>` inside it (preventing the
+"export creates a directory instead of a file" bug from v0.8).
+
 ## Common destinations
 
-The export module writes to a local directory. To ship files elsewhere:
+The export service writes to a local directory. To ship files elsewhere:
 
 - **Network share** — set `target_path` to e.g. `/share/hph_exports`
   (the HA `share` add-on directory) and let your NAS pull from it.
-- **Cloud storage** — chain a second automation that calls
-  `notify.dropbox` / `rclone` / a `shell_command` after the export.
-- **Email** — automation with `notify.smtp` after export,
-  attach the latest file from the target directory.
+- **Cloud storage** — chain a second automation triggered after the
+  export's persistent notification, calling `notify.dropbox` / `rclone` /
+  a `shell_command`.
+- **Email** — automation with `notify.smtp` after export, attaching the
+  latest file from the target directory.
 
-See `tests/example_export_destinations.yaml` for working snippets _(planned in v0.5.1)_.
+## Legacy: shell-command export (pre-v0.9)
+
+Earlier versions wired up `shell_command.hph_export` calling
+`scripts/export_heishahub.py`. This still works if you've kept the
+script and `configuration.yaml` snippet around, but the integration's
+`hph.export_now` service supersedes it. Plan to remove the legacy path
+in v1.0.

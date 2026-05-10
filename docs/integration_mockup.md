@@ -1,18 +1,24 @@
-# HeatPump Hero — integration UI mockup (v1.0 design preview)
+# HeatPump Hero — integration UI mockup (HISTORICAL)
 
-This document shows what HeatPump Hero's UI will look like once it becomes a
-proper Python custom integration (planned for v0.6 → v1.0). The current
-v0.4 release ships YAML-based equivalents of every screen below.
+> **Historical design document.** This was the pre-implementation mockup
+> that drove the v0.6 → v0.9 integration refactor. Implementation
+> completed in v0.9.0-rc4 — what's described below is now the actual
+> shipped integration. Kept as design context; reads like a spec, not
+> a feature plan.
 
-## Why mockup first?
+This document shows what HeatPump Hero's UI looks like as a Python
+custom integration. As of v0.9.0-rc4 the integration is shipped and
+every screen below is implemented.
 
-Building a custom integration is a 6-8 day refactor (see
-[hacs_path.md](hacs_path.md)). The mockup serves three purposes:
+## Why this mockup existed
+
+Building a custom integration was a 6-8 day refactor. The mockup served
+three purposes:
 
 1. **Spec the UX** before writing Python — what config flow steps,
    what main panel shape, what settings are needed.
-2. **Sanity-check feature parity** — every YAML feature in v0.4 must have
-   a counterpart in the integration, or we lose function in the move.
+2. **Sanity-check feature parity** — every YAML feature in v0.4-v0.8 had
+   to have a counterpart in the integration to avoid losing function.
 3. **Communicate to contributors** what we're building toward.
 
 ## Setup wizard (config flow)

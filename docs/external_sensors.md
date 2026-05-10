@@ -6,20 +6,21 @@ trustworthy SCOP / monthly figures you need a real electricity meter and
 optionally a heat meter.
 
 HeatPump Hero abstracts ALL sources behind a configurable adapter layer
-(`packages/hph_sources.yaml`). You can:
+(in v0.9 implemented inside the Python integration; formerly
+`packages/hph_sources.yaml`). You can:
 
-- swap individual entity-IDs (e.g. point `hph_src_inlet_temp` at a
-  different temperature sensor) without YAML edits
+- swap individual entity-IDs (e.g. point `text.hph_src_inlet_temp` at a
+  different temperature sensor) without restarting HA
 - switch source modes per metric (calculated / external power /
   external energy meter)
 - swap the entire heat pump (Heishamon → Vaillant Modbus → Daikin Altherma
-  → …) by adjusting the `input_text.hph_src_*` helpers
+  → …) by adjusting the `text.hph_src_*` helpers
 
 ## Source modes
 
-Two `input_select` helpers control which counter feeds SCOP / utility_meter:
+Two `select` helpers control which counter feeds SCOP / utility_meter:
 
-### `input_select.hph_thermal_source`
+### `select.hph_thermal_source`
 
 | Mode | Effect | When to use |
 |---|---|---|
@@ -27,7 +28,7 @@ Two `input_select` helpers control which counter feeds SCOP / utility_meter:
 | `external_power` | integrate a user-provided thermal-power sensor (W) → kWh | rare, mostly for legacy heat-meter outputs |
 | `external_energy` | read a user-provided heat-meter (kWh `total_increasing`) **directly** — no integration | most accurate; bypasses every error in the calculation chain |
 
-### `input_select.hph_electrical_source`
+### `select.hph_electrical_source`
 
 | Mode | Effect |
 |---|---|
@@ -44,13 +45,13 @@ Two `input_select` helpers control which counter feeds SCOP / utility_meter:
    `sensor.shellypro3em_<id>_total_active_power` (W) and
    `sensor.shellypro3em_<id>_total_energy` (kWh, total_increasing).
 3. **Mode `external_power`** (integrate from W):
-   - *Settings → Devices & Services → Helpers* →
-     edit `hph_src_external_electrical_power` and enter
-     `sensor.shellypro3em_xxx_total_active_power`
+   - Open *Settings → Devices & Services → HeatPump Hero → Configure*
+   - In *Source sensors*, set `text.hph_src_external_electrical_power`
+     to `sensor.shellypro3em_xxx_total_active_power`
    - Dashboard → *Configuration → Source modes* → `Electrical source mode`
      = `external_power`
 4. **Mode `external_energy`** (recommended — read kWh directly):
-   - Edit `hph_src_external_electrical_energy` and enter
+   - Set `text.hph_src_external_electrical_energy` to
      `sensor.shellypro3em_xxx_total_energy`
    - Set source mode to `external_energy`. The integrator is bypassed.
 
@@ -87,9 +88,10 @@ mqtt:
       state_class: measurement
 ```
 
-Then in the *Configuration* dashboard view:
-- `hph_src_external_thermal_energy` → `sensor.wmz_energy`
-- `hph_src_external_thermal_power`  → `sensor.wmz_power` (optional)
+Then in the *Configuration* dashboard view (or via *Settings → Devices &
+Services → HeatPump Hero → Configure*):
+- `text.hph_src_external_thermal_energy` → `sensor.wmz_energy`
+- `text.hph_src_external_thermal_power`  → `sensor.wmz_power` (optional)
 
 Set `Thermal source mode` = `external_energy` (or `external_power` if you
 only have W and prefer integration).
@@ -100,7 +102,10 @@ Variant 2: **direct pulse counter** on a Shelly input or ESPHome.
 
 If you replace Heishamon with another integration (Vaillant Modbus, Daikin
 Altherma, …), open *Configuration → Heat pump entities (configurable)* and
-set each `hph_src_*` helper to the new entity-ID. Example for
+set each `text.hph_src_*` helper to the new entity-ID. Or, easier: pick
+the matching vendor preset in *Settings → Devices & Services → HeatPump
+Hero → Configure → Vendor preset* — it auto-fills all 17 helpers in one
+click. Example for
 a hypothetical Vaillant install:
 
 | Helper | Old (Heishamon) | New (Vaillant) |
@@ -114,9 +119,10 @@ All HeatPump Hero sensors keep working because they read from
 `sensor.hph_source_*` (the resolved facade), never from the raw
 heat-pump entities directly.
 
-The control automations in `hph_control.yaml` are still
-heat-pump-specific (write paths) — see the comment in that file for
-adapting them.
+The control coordinators (`coordinators/control.py`) are still
+heat-pump-specific (write paths). Configure write targets via
+`text.hph_ctrl_write_*` helpers in *Configuration → Control write
+targets*; the vendor preset auto-fills these too.
 
 ## Source switch and history
 

@@ -15,7 +15,7 @@ installation schematic with live hotspots, and proper efficiency metrics
 
 ## Status
 
-🟢 **v0.9.0-rc3 — install via HACS, configure via UI**
+🟢 **v0.9.0-rc4 — install via HACS, configure via UI**
 
 Since v0.9, HeatPump Hero ships as a proper HACS **Integration** (not a YAML
 package). Add it via Settings → Devices & Services — no YAML editing required.
@@ -136,12 +136,12 @@ To remove HeatPump Hero, delete the integration in **Settings → Devices &
 Services**: every deployed file is cleaned up automatically. Recorder history
 of `sensor.hph_*` is preserved.
 
-### Manual / script-based install (legacy, pre-v0.9)
+### Legacy script-based install (deprecated)
 
-Script-based deployments are still supported via `scripts/install.sh` (Linux)
-or `scripts/update.ps1` (Windows). See
-[docs/installation.md](docs/installation.md) and
-[docs/installation_windows.md](docs/installation_windows.md).
+`scripts/install.sh` (Linux) and `scripts/update.ps1` (Windows) — the
+v0.7/v0.8 manual-copy approach — are kept for backwards compatibility
+only and will be removed in v1.0. Do not use them for new installs.
+See the migration notes in [installation.md](docs/installation.md).
 
 ## Architecture
 

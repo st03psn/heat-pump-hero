@@ -9,21 +9,28 @@ HeatPump Hero provides three tools to get there:
 1. **Cycle analysis** — measures cycles, run times, pauses.
 2. **Advisor** — interprets that data and produces plain-language hints.
 3. **Control** — optional automations that port typical optimization
-   strategies from HeishaMoNR (CCC, SoftStart, Solar-DHW) to HA automations.
+   strategies from HeishaMoNR (CCC, SoftStart, Solar-DHW) to the integration.
+
+Since v0.9 all three are implemented as **Python coordinators** inside
+the `hph` integration. There are no YAML packages to edit; everything
+is configured via the dashboard's Optimization view or via Settings →
+Devices & Services → HeatPump Hero → Configure.
 
 ## Cycle analysis
 
-Sensors in `packages/hph_cycles.yaml`:
+Coordinator: `custom_components/hph/coordinators/cycles.py`. Surfaced
+entities:
 
-| Sensor | Meaning |
+| Entity | Meaning |
 |---|---|
-| `counter.hph_cycles_today` | Compressor starts today |
-| `counter.hph_short_cycles_today` | Of those, shorter than threshold (default 10 min) |
+| `number.hph_cycles_today` | Compressor starts today (resets at 00:00) |
+| `number.hph_short_cycles_today` | Of those, shorter than threshold (default 10 min) |
 | `sensor.hph_short_cycle_ratio` | Share of short cycles (%) |
 | `sensor.hph_cycles_per_hour` | Starts per hour (rolling) |
 | `sensor.hph_avg_cycle_duration_24h` | Average runtime |
-| `input_number.hph_cycle_last_duration_min` | Last run duration |
-| `input_number.hph_cycle_last_pause_min` | Last pause duration |
+| `number.hph_cycle_last_duration_min` | Last run duration |
+| `number.hph_cycle_last_pause_min` | Last pause duration |
+| `number.hph_cycle_short_threshold_min` | Threshold below which a cycle counts as "short" (tunable) |
 
 **What's "normal"?**
 
@@ -37,35 +44,46 @@ issues.
 
 ## Advisor
 
-`packages/hph_advisor.yaml`. Each advisor sensor exposes:
+Coordinator: `custom_components/hph/coordinators/advisor.py`. Each advisor
+sensor exposes:
 
 - `state ∈ { ok, warn, critical, info }`
 - `attributes.message` — explanation in plain language
 - `attributes.metric` — the diagnostic value
 
-**Current rules (v0.1):**
+**Current rules:**
 
 | Sensor | Checks | Suggests |
 |---|---|---|
-| `advisor_short_cycle` | short-cycle ratio vs. threshold | heating curve, hysteresis, buffer |
-| `advisor_spread` | supply/return spread vs. target K | pump speed |
-| `advisor_defrost` | defrost while outdoor > 7 °C | inspect evaporator |
-| `advisor_heat_curve` | aux heater on while outdoor > -7 °C | raise heating curve at the cold end |
-| `advisor_dhw_runtime` | DHW run < 20 min | hysteresis / legionella program |
-| `advisor_summary` | aggregate traffic-light | overall status |
+| `hph_advisor_short_cycle` | short-cycle ratio vs. threshold | heating curve, hysteresis, buffer |
+| `hph_advisor_spread` | supply/return spread vs. target K | pump speed |
+| `hph_advisor_defrost` | defrost while outdoor > 7 °C | inspect evaporator |
+| `hph_advisor_heat_curve` | aux heater on while outdoor > -7 °C | raise heating curve at the cold end |
+| `hph_advisor_dhw_runtime` | DHW run < 20 min | hysteresis / legionella program |
+| `hph_advisor_heating_limit` | observed limit vs. target | raise / lower heating limit |
+| `hph_advisor_pressure_trend` | 7-day pressure delta | leak / refill |
+| `hph_advisor_diagnostics` | active fault / recurrence | follow fault-code message |
+| `hph_advisor_analysis` | indoor-temp deviation | heating-curve correction |
+| `hph_advisor_pump_curve` | 7-day spread mean / stdev | pump-speed correction |
+| `hph_advisor_efficiency_drift` | year-over-year SCOP | servicing / hardware check |
+| `hph_advisor_dhw_timing` | DHW fires per day | schedule consolidation |
+| `hph_advisor_summary` | aggregate traffic-light | overall status |
 
-**Tunable thresholds** in *Optimization → Advisor thresholds*:
-- `advisor_short_cycle_warn_pct` (default 25 %)
-- `advisor_short_cycle_crit_pct` (default 50 %)
-- `advisor_dt_target_k` (default 5 K)
-- `advisor_dhw_min_runtime_min` (default 20 min)
+**Tunable thresholds** in *Optimization → Advisor thresholds* (or via
+`number.hph_advisor_*` entities):
+
+- `number.hph_advisor_short_cycle_warn_pct` (default 25 %)
+- `number.hph_advisor_short_cycle_crit_pct` (default 50 %)
+- `number.hph_advisor_dt_target_k` (default 5 K)
+- `number.hph_advisor_dhw_min_runtime_min` (default 20 min)
+- `number.hph_advisor_heating_limit_target_c` (default 16 °C)
 
 ## Control — optimization strategies
 
-`packages/hph_control.yaml`. **Default: everything off.** Two switches
-are needed to enable any strategy:
+Coordinator: `custom_components/hph/coordinators/control.py`. **Default:
+everything off.** Two switches are needed to enable any strategy:
 
-1. `input_boolean.hph_ctrl_master` — global gate
+1. `switch.hph_ctrl_master` — global gate
 2. The individual strategy switch — see below
 
 ### Compressor Cycle Control (CCC)
@@ -74,12 +92,13 @@ are needed to enable any strategy:
 high wear, poor COP.
 
 **HeatPump Hero solution**: if the previous pause was shorter than
-`ctrl_ccc_min_pause_min` (default 15 min), Quiet-Mode 3 is engaged for 5
-minutes after the restart — this caps the maximum frequency and gives the
-unit a chance to modulate down rather than ramping up and shutting off again.
+`number.hph_ctrl_ccc_min_pause_min` (default 15 min), Quiet-Mode 3 is
+engaged for 5 minutes after the restart — this caps the maximum frequency
+and gives the unit a chance to modulate down rather than ramping up and
+shutting off again.
 
-**Enable**: `ctrl_master = on`, `ctrl_ccc = on`, adjust pause threshold if
-needed.
+**Enable**: `switch.hph_ctrl_master` on, `switch.hph_ctrl_ccc` on, adjust
+pause threshold if needed.
 
 ### SoftStart
 
@@ -95,8 +114,9 @@ minutes → gentle frequency ramp.
 the grid.
 
 **HeatPump Hero solution**: when the surplus sensor (entity-ID in
-`ctrl_pv_surplus_entity`) stays above `ctrl_solar_pv_threshold_w` (default
-1500 W) for 5 minutes **and** the tank is not full, fire `force_dhw`.
+`text.hph_ctrl_pv_surplus_entity`) stays above
+`number.hph_ctrl_solar_pv_threshold_w` (default 1500 W) for 5 minutes
+**and** the tank is not full, fire `force_dhw`.
 
 **Requires**:
 - a surplus sensor (own consumption − grid import, in W)
@@ -107,6 +127,17 @@ the grid.
 22:00–06:00 automatic Quiet-Mode 3 — quiet operation, with a comfort
 penalty in deep cold. Only enable if the unit is near a bedroom and you
 don't expect heat-load problems.
+
+### Adaptive heating curve, price-driven DHW, forecast pre-heating (v0.7+)
+
+Three additional strategies are gated behind `switch.hph_ctrl_master`:
+
+- `switch.hph_ctrl_adaptive_curve` — self-learning weekly curve correction
+- `switch.hph_ctrl_price_dhw` — DHW only when electricity is cheap
+- `switch.hph_ctrl_forecast_preheat` — pre-heat before forecast cold spell
+
+See the Optimization view's "Control extensions" section for the
+per-strategy tunables.
 
 ## Workflow for clean optimization
 
@@ -122,10 +153,13 @@ don't expect heat-load problems.
 
 ## Adding your own advisor rule
 
-Power users: add a new `template.sensor` block to
-`packages/hph_advisor.yaml` following the same schema (`state`,
-`attributes.message`, `attributes.metric`). Add it to
-`hph_advisor_summary` so the aggregate traffic-light considers it.
+In v0.9 the advisor logic is Python-internal — there is no YAML extension
+point. To propose a new rule, open an issue or a PR against
+`custom_components/hph/coordinators/advisor.py` following the existing
+patterns (`state`, `attributes.message`, `attributes.metric`) and add the
+new sensor to `hph_advisor_summary` aggregation.
+
+A user-facing extension API (drop-in advisor scripts) is planned for v1.0.
 
 PRs with generally useful rules are welcome — see [CLAUDE.md](../CLAUDE.md)
 for design principles.
