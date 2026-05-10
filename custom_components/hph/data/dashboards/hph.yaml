@@ -225,20 +225,20 @@ views:
             columns: 2
             square: false
             cards:
-              # Left 1/2: Compact live status panel
+              # Left 1/2: Compact live status panel + standby overview
               - type: vertical-stack
                 cards:
                   - type: custom:mushroom-template-card
                     primary: >-
-                      {{ states('sensor.hph_source_outlet_temp') }}°C → {{ states('sensor.hph_source_inlet_temp') }}°C
+                      {{ states('sensor.hph_source_outlet_temp') }}°C -> {{ states('sensor.hph_source_inlet_temp') }}°C
                     secondary: Supply / Return
                     icon: mdi:water-thermometer
                     icon_color: orange
                     fill_container: true
                   - type: custom:mushroom-template-card
                     primary: >-
-                      Δ {{ states('sensor.hph_water_spread') | float(0) | round(1) }} K · {{ states('sensor.hph_source_flow_rate') }} L/min
-                    secondary: Spread · Flow
+                      Delta {{ states('sensor.hph_water_spread') | float(0) | round(1) }} K  |  {{ states('sensor.hph_source_flow_rate') }} L/min
+                    secondary: Spread  |  Flow
                     icon: mdi:waves-arrow-right
                     icon_color: blue
                     fill_container: true
@@ -280,6 +280,22 @@ views:
                     tap_action:
                       action: navigate
                       navigation_path: /hph/schema
+                  # Standby overview — shows today's breakdown at a glance
+                  - type: custom:mushroom-template-card
+                    primary: >-
+                      {{ states('sensor.hph_standby_electrical_daily') | float(0) | round(2) }} kWh standby today
+                    secondary: >-
+                      Runtime {{ states('sensor.hph_electrical_runtime_daily') | float(0) | round(2) }} kWh
+                      / Total {{ states('sensor.hph_electrical_daily') | float(0) | round(2) }} kWh
+                    icon: mdi:power-sleep
+                    icon_color: >-
+                      {% set ratio = states('sensor.hph_standby_electrical_daily') | float(0)
+                                   / [states('sensor.hph_electrical_daily') | float(0.001), 0.001] | max %}
+                      {% if ratio > 0.5 %}amber{% elif ratio > 0.3 %}yellow{% else %}grey{% endif %}
+                    fill_container: true
+                    tap_action:
+                      action: navigate
+                      navigation_path: /hph/efficiency
 
               # Right 1/2: Energy 7d chart
               - type: custom:apexcharts-card
