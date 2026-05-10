@@ -1,4 +1,11 @@
 binary_sensors:
+- name: HeatPump Hero Compressor Running
+  unique_id: hph_compressor_running
+  device_class: running
+  availability: "{{ states('sensor.hph_source_compressor_freq')\n   not in ['unknown','unavailable','none']\
+    \ }}"
+  state: "{{ states('sensor.hph_source_compressor_freq') | float(0) > 0 }}"
+  _source_package: hph_core.yaml
 - name: HeatPump Hero Defrost Active
   unique_id: hph_defrost_active
   availability: "{{ states('binary_sensor.hph_source_defrost')\n   not in ['unknown','unavailable','none']\

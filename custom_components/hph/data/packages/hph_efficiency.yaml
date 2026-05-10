@@ -117,6 +117,27 @@ sensor:
   method: left
   round: 2
 
+# Runtime-gated energy integrals — only accumulate while the compressor
+# is running. These feed COP daily/monthly/SCOP so that standby
+# electrical consumption (~1 kWh/day from circulator + electronics)
+# doesn't poison the integral COP.
+- platform: integration
+  source: sensor.hph_thermal_power_runtime
+  name: HPH Thermal Energy Runtime
+  unique_id: hph_thermal_energy_runtime
+  unit_prefix: k
+  unit_time: h
+  method: left
+  round: 2
+- platform: integration
+  source: sensor.hph_electrical_power_runtime
+  name: HPH Electrical Energy Runtime
+  unique_id: hph_electrical_energy_runtime
+  unit_prefix: k
+  unit_time: h
+  method: left
+  round: 2
+
 utility_meter:
   # ── Daily ───────────────────────────────────────────────────────────────
   hph_thermal_daily:
@@ -124,6 +145,13 @@ utility_meter:
     cycle: daily
   hph_electrical_daily:
     source: sensor.hph_electrical_energy_active
+    cycle: daily
+  # Runtime-gated daily totals — used by hph_cop_daily.
+  hph_thermal_runtime_daily:
+    source: sensor.hph_thermal_energy_runtime
+    cycle: daily
+  hph_electrical_runtime_daily:
+    source: sensor.hph_electrical_energy_runtime
     cycle: daily
   hph_thermal_daily_split:
     source: sensor.hph_thermal_energy_active
@@ -140,6 +168,13 @@ utility_meter:
     cycle: monthly
   hph_electrical_monthly:
     source: sensor.hph_electrical_energy_active
+    cycle: monthly
+  # Runtime-gated monthly totals — used by hph_cop_monthly.
+  hph_thermal_runtime_monthly:
+    source: sensor.hph_thermal_energy_runtime
+    cycle: monthly
+  hph_electrical_runtime_monthly:
+    source: sensor.hph_electrical_energy_runtime
     cycle: monthly
   hph_thermal_monthly_split:
     source: sensor.hph_thermal_energy_active
@@ -161,6 +196,13 @@ utility_meter:
     cron: "0 0 1 7 *"
   hph_electrical_yearly:
     source: sensor.hph_electrical_energy_active
+    cron: "0 0 1 7 *"
+  # Runtime-gated yearly totals — used by hph_scop.
+  hph_thermal_runtime_yearly:
+    source: sensor.hph_thermal_energy_runtime
+    cron: "0 0 1 7 *"
+  hph_electrical_runtime_yearly:
+    source: sensor.hph_electrical_energy_runtime
     cron: "0 0 1 7 *"
   hph_thermal_yearly_split:
     source: sensor.hph_thermal_energy_active

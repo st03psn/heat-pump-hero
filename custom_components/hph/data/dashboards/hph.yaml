@@ -960,6 +960,22 @@ views:
           - entity: text.hph_electricity_price_entity
             name: Live price sensor (entity-ID, optional)
 
+      # ── Runtime vs. standby breakdown ──
+      # COP daily/monthly/SCOP now use compressor-runtime kWh only, so
+      # 24h-of-standby doesn't pull the integral COP down to ~1.
+      # This card shows where the standby kWh actually went.
+      - type: markdown
+        title: Runtime vs. standby (today)
+        content: |
+          | | Thermal | Electrical |
+          |---|---:|---:|
+          | **Compressor runtime** | {{ states('sensor.hph_thermal_runtime_daily') | float(0) | round(2) }} kWh | {{ states('sensor.hph_electrical_runtime_daily') | float(0) | round(2) }} kWh |
+          | **Standby losses** | — | {{ states('sensor.hph_standby_electrical_daily') | float(0) | round(2) }} kWh |
+          | **Total (Energy Dashboard)** | {{ states('sensor.hph_thermal_daily') | float(0) | round(2) }} kWh | {{ states('sensor.hph_electrical_daily') | float(0) | round(2) }} kWh |
+
+          *COP today uses runtime values only. Total values feed the HA
+          Energy Dashboard and cost calculation.*
+
       # ── Energy split by mode (this month) ──
       - type: markdown
         title: Energy by mode — this month

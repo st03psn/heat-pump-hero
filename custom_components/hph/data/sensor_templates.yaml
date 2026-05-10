@@ -366,10 +366,6 @@ sensors:
     | float(0) %} {% set power = (tout - tin) * flow * 4180 / 60 %} {{ [power, 0]
     | max | round(0) }}'
   _source_package: hph_core.yaml
-- name: HeatPump Hero Compressor Running
-  unique_id: hph_compressor_running
-  state: "{{ states('sensor.hph_source_compressor_freq')\n   | float(0) > 0 }}"
-  _source_package: hph_core.yaml
 - name: HeatPump Hero Operating Mode
   unique_id: hph_operating_mode
   availability: "{{ states('sensor.hph_source_operating_mode')\n   not in ['unknown','unavailable','none']\
@@ -504,25 +500,42 @@ sensors:
   unique_id: hph_cop_daily
   unit_of_measurement: x
   state_class: measurement
-  state: '{% set t = states(''sensor.hph_thermal_daily'') | float(0) %} {% set e =
-    states(''sensor.hph_electrical_daily'') | float(0) %} {{ (t / e) | round(2) if
-    e > 0.1 else 0 }}'
+  # Uses runtime-gated kWh so 24h-of-standby doesn't drag the integral
+  # COP down to ~1. Standby losses tracked separately via
+  # hph_standby_electrical_daily.
+  state: '{% set t = states(''sensor.hph_thermal_runtime_daily'') | float(0) %} {%
+    set e = states(''sensor.hph_electrical_runtime_daily'') | float(0) %} {{ (t / e)
+    | round(2) if e > 0.1 else 0 }}'
   _source_package: hph_efficiency.yaml
 - name: HeatPump Hero COP Monthly
   unique_id: hph_cop_monthly
   unit_of_measurement: x
   state_class: measurement
-  state: '{% set t = states(''sensor.hph_thermal_monthly'') | float(0) %} {% set e
-    = states(''sensor.hph_electrical_monthly'') | float(0) %} {{ (t / e) | round(2)
-    if e > 0.1 else 0 }}'
+  state: '{% set t = states(''sensor.hph_thermal_runtime_monthly'') | float(0) %} {%
+    set e = states(''sensor.hph_electrical_runtime_monthly'') | float(0) %} {{ (t /
+    e) | round(2) if e > 0.1 else 0 }}'
   _source_package: hph_efficiency.yaml
 - name: HeatPump Hero SCOP
   unique_id: hph_scop
   unit_of_measurement: x
   state_class: measurement
-  state: '{% set t = states(''sensor.hph_thermal_yearly'') | float(0) %} {% set e
-    = states(''sensor.hph_electrical_yearly'') | float(0) %} {{ (t / e) | round(2)
-    if e > 0.1 else 0 }}'
+  state: '{% set t = states(''sensor.hph_thermal_runtime_yearly'') | float(0) %} {%
+    set e = states(''sensor.hph_electrical_runtime_yearly'') | float(0) %} {{ (t /
+    e) | round(2) if e > 0.1 else 0 }}'
+  _source_package: hph_efficiency.yaml
+# Standby-Diagnose: elektrische kWh, die nicht während Kompressor-Lauf
+# verbraucht wurden (= Umwälzpumpe + Steuerelektronik + Frostschutz).
+# Typisch ~1 kWh/Tag bei einer Aquarea — wenn deutlich höher: Hydraulik
+# / interne Pumpe prüfen.
+- name: HeatPump Hero Standby Electrical Daily
+  unique_id: hph_standby_electrical_daily
+  unit_of_measurement: kWh
+  device_class: energy
+  state_class: total_increasing
+  state: >-
+    {% set total = states('sensor.hph_electrical_daily') | float(0) %}
+    {% set runtime = states('sensor.hph_electrical_runtime_daily') | float(0) %}
+    {{ [total - runtime, 0] | max | round(2) }}
   _source_package: hph_efficiency.yaml
 - name: HeatPump Hero COP Monthly Heating
   unique_id: hph_cop_monthly_heating
@@ -916,6 +929,30 @@ sensors:
       {% else %}0{% endif %}
     {% endif %}
   _source_package: hph_sources.yaml
+# Runtime-gated power sensors — emit the active power only while the
+# compressor is running. Used for COP daily/monthly/SCOP so that
+# 24h-of-standby does not drag the integral COP down to ~1. Standby
+# losses are tracked separately via hph_standby_electrical_daily.
+- name: HeatPump Hero Thermal Power Runtime
+  unique_id: hph_thermal_power_runtime
+  unit_of_measurement: W
+  device_class: power
+  state_class: measurement
+  state: >-
+    {% if is_state('binary_sensor.hph_compressor_running','on') %}
+      {{ states('sensor.hph_thermal_power_active') | float(0) }}
+    {% else %}0{% endif %}
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero Electrical Power Runtime
+  unique_id: hph_electrical_power_runtime
+  unit_of_measurement: W
+  device_class: power
+  state_class: measurement
+  state: >-
+    {% if is_state('binary_sensor.hph_compressor_running','on') %}
+      {{ states('sensor.hph_electrical_power_active') | float(0) }}
+    {% else %}0{% endif %}
+  _source_package: hph_efficiency.yaml
 - name: HeatPump Hero Thermal Energy Active
   unique_id: hph_thermal_energy_active
   unit_of_measurement: kWh

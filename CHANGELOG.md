@@ -3,6 +3,77 @@
 All notable changes to HeatPump Hero. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — Runtime-based COP + compressor-running bug fix
+
+### Fixed
+
+- **`binary_sensor.hph_compressor_running` did not exist**. The entity
+  was registered as `sensor.hph_compressor_running` (text state
+  "true"/"false"), but the entire codebase referenced it as a
+  `binary_sensor.*`: 4 coordinators (advisor / bridge / control /
+  cycles), 3 dashboard cards, and 2 sensor templates. Every
+  `is_state('binary_sensor.hph_compressor_running','on')` check
+  returned False, which silently broke:
+  - cycle-start / cycle-stop event detection (counters never
+    incremented from compressor activity)
+  - CCC and SoftStart control automations (never triggered)
+  - the spread-meaningfulness gate in `hph_water_spread`
+  - DHW fire tracking in the advisor
+  Promoted to `binary_sensor.hph_compressor_running` with
+  `device_class: running`. All existing references now resolve.
+
+- **COP daily / monthly / SCOP showed values like 1.36 even with
+  COP live = 8**. Root cause: `_active` energy integrals included
+  ~1 kWh/day of standby load (circulator pump + electronics + idle
+  fan), but thermal output was 0 during standby. So a single 30-min
+  efficient run produced ~2 kWh thermal / ~0.25 kWh compressor +
+  ~1.2 kWh standby = 1.36 COP. The COP-live formula uses instantaneous
+  power and was unaffected, hence the 8x discrepancy. Fixed by
+  introducing runtime-gated energy integrals — only accumulate kWh
+  while the compressor is running. COP daily / monthly / SCOP now
+  divide compressor-runtime thermal by compressor-runtime electrical.
+
+### Added
+
+- **`sensor.hph_thermal_power_runtime`** and
+  **`sensor.hph_electrical_power_runtime`** — power sensors gated on
+  `binary_sensor.hph_compressor_running`. Emit `_active` value when
+  compressor running, 0 otherwise.
+
+- **`sensor.hph_thermal_energy_runtime`** and
+  **`sensor.hph_electrical_energy_runtime`** — Riemann integrations of
+  the runtime power sensors (kWh, total_increasing).
+
+- **6 new utility_meters** in the deployed `hph_efficiency.yaml`:
+  `hph_thermal_runtime_daily`, `hph_electrical_runtime_daily`,
+  `hph_thermal_runtime_monthly`, `hph_electrical_runtime_monthly`,
+  `hph_thermal_runtime_yearly`, `hph_electrical_runtime_yearly`.
+  Daily/monthly cycles, yearly via `cron: "0 0 1 7 *"` (Jul 1 reset
+  matches the existing JAZ/SCOP convention).
+
+- **`sensor.hph_standby_electrical_daily`** — diagnostic showing
+  electrical_daily − electrical_runtime_daily. Typical value for a
+  Panasonic Aquarea is ~1 kWh/day; substantially higher suggests an
+  oversized circulator or a sticky frost-protection cycle.
+
+- **"Runtime vs. standby (today)"** markdown card on the Efficiency
+  view, showing the compressor-runtime kWh, the standby kWh, and the
+  total (which still feeds the HA Energy Dashboard and cost calc).
+
+### Changed
+
+- `sensor.hph_cop_daily`, `sensor.hph_cop_monthly`, `sensor.hph_scop`
+  divisor switched from `_active` (full-period) to `_runtime`
+  (compressor-on-only) energy. Existing `_active` utility_meters and
+  cost calculations unchanged — those still represent total
+  consumption for billing accuracy.
+
+- COP-by-mode (heating / DHW / cooling) splits remain on `_active`
+  energy for now — the tariff-switch automation routes standby kWh
+  into whichever mode is currently selected, so those numbers are
+  still standby-poisoned. Will be addressed in a follow-up if the
+  user data shows it matters.
+
 ## [Unreleased] — Dashboard remediation Stage 2
 
 ### Fixed
