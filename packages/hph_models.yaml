@@ -18,8 +18,8 @@ input_select:
     name: HeatPump Hero — vendor preset (auto-fills source helpers)
     icon: mdi:factory
     options:
-      - panasonic_heishamon          # HeishaMon firmware MQTT prefix panasonic_heat_pump/ (legacy default)
-      - panasonic_heishamon_aquarea  # HeishaMon firmware MQTT prefix aquarea/ (current default since ~2023)
+      - panasonic_heishamon          # HeishaMon default MQTT prefix panasonic_heat_pump/ → entity IDs panasonic_heat_pump_main_*
+      - panasonic_heishamon_aquarea  # HeishaMon custom MQTT prefix aquarea/ → entity IDs aquarea_main_* (user-configured)
       - panasonic_smartcloud_mqtt    # Aquarea Smart Cloud via MQTT bridge
       - daikin_altherma_core         # HA core daikin_altherma integration
       - mitsubishi_melcloud_core     # HA core melcloud integration
@@ -482,10 +482,11 @@ automation:
                 target: { entity_id: input_text.hph_src_internal_thermal_power }
                 data: { value: "sensor.panasonic_heat_pump_main_heat_power_production" }
 
-          # ── kamaradclimber/heishamon-homeassistant — MQTT prefix aquarea/main/ ──
-          # Same integration as panasonic_heishamon but with the newer HeishaMon
-          # firmware default MQTT prefix "aquarea" instead of "panasonic_heat_pump".
-          # Entity IDs: sensor.aquarea_main_* (slug of "aquarea/main/TopicName")
+          # ── kamaradclimber/heishamon-homeassistant — custom MQTT prefix aquarea/ ──
+          # Same integration as panasonic_heishamon. The HeishaMon firmware default
+          # MQTT prefix is "panasonic_heat_pump" and has not changed. This preset
+          # is for users who changed their HeishaMon MQTT prefix to "aquarea" via
+          # the HeishaMon web interface. Entity IDs: sensor.aquarea_main_*
           # Select this if your HeishaMon MQTT topics start with "aquarea/main/".
           - conditions:
               - condition: template
