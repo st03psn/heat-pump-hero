@@ -689,16 +689,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Register the HPH assets static path so dashboard SVGs are served
     # directly from the integration data directory (no copy to <config>/www/hph/).
+    # HA 2024.x+ uses async_register_static_paths(list[StaticPathConfig]).
     try:
-        hass.http.register_static_path(
-            ASSETS_URL_PATH,
-            ASSETS_DIR_ABS,
-            cache_headers=True,
-        )
+        from homeassistant.components.http import StaticPathConfig as _SPC
+        await hass.http.async_register_static_paths([
+            _SPC(ASSETS_URL_PATH, ASSETS_DIR_ABS, cache_headers=True)
+        ])
         _LOGGER.debug("HPH assets registered at %s from %s", ASSETS_URL_PATH, ASSETS_DIR_ABS)
-    except RuntimeError:
-        # Already registered on a previous setup call (e.g. reload) — safe to ignore.
-        _LOGGER.debug("HPH assets path %s already registered", ASSETS_URL_PATH)
+    except Exception as _exc:  # noqa: BLE001
+        # ValueError if already registered (reload), or API mismatch on old HA.
+        _LOGGER.debug("HPH assets path registration skipped: %s", _exc)
 
     # Deploy efficiency package; migrate old automation packages.
     # Dashboard is no longer copied to <config>/hph/ — served from integration dir.
