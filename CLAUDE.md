@@ -64,29 +64,24 @@ release notes come from `CHANGELOG.md`.
 
 | Path | Purpose |
 |---|---|
-| `packages/hph_sources.yaml` | **Source adapter layer.** Defines `input_text` helpers for every underlying entity-ID (heat pump and external meters), plus active-source dispatcher template sensors. The only file that names heat-pump-specific entities. |
-| `packages/hph_models.yaml` | **Vendor & model selectors** with auto-fill automations. Vendor preset sets all 17 source helpers + 5 control write-target helpers on selection; model selector sets compressor / flow / supply-T° thresholds for the chosen Panasonic generation (J/K/L/T-CAP/M) or other vendor. |
-| `packages/hph_diagnostics.yaml` | **Panasonic fault-code analysis** — 30+ H/F codes mapped to plain-language descriptions, severity, model-specific commentary; ring buffer of last 5 events; recurrence detection; persistent-notification flow. |
-| `packages/hph_analysis.yaml` | **Analysis module** (L1 statistical observation). Indoor-temp deviation tracker + heating-curve recommendation surface (`recommendation_k` attribute on `sensor.hph_advisor_analysis`). |
-| `packages/hph_export.yaml` | Manual + scheduled export of long-term values to CSV/JSON/XLSX. Triggers `scripts/export_heishahub.py` via `shell_command`. |
-| `packages/hph_core.yaml` | Live sensors (thermal power, mode mapping, defrost, compressor running) — reads exclusively from `sensor.hph_source_*`. |
-| `packages/hph_efficiency.yaml` | Energy integrals, utility_meter (with tariff splits), COP / daily / monthly / SCOP, period comparisons. |
-| `packages/hph_cycles.yaml` | Cycle analysis: start/stop events, runtime/pause, counters, short-cycle detection. |
-| `packages/hph_advisor.yaml` | Data-driven optimization recommendations with plain-language messages and an aggregate traffic-light. |
-| `packages/hph_control.yaml` | Optional control automations (CCC, SoftStart, Solar-DHW, night Quiet-Mode) — master switch off by default. |
-| `packages/hph_control_extensions.yaml` | v0.7 control extensions: adaptive heating curve (self-learning), price-driven DHW, weather-forecast pre-heating. All gated behind `input_boolean.hph_ctrl_master`. |
-| `packages/hph_programs.yaml` | v0.8 multi-day / scheduled service programs: configurable legionella schedule (weekday/hour/target/hold) and screed dry-out (3 profiles per ISO EN 1264-4 / DIN 18560-1). Same master-switch gating as control automations, default off. |
-| `dashboards/hph.yaml` | Lovelace dashboard YAML (storage or YAML mode). |
-| `dashboards/assets/*.svg` | Installation-schematic templates (Bubble-Card backgrounds). |
+| `custom_components/hph/const.py` | **Single source of truth for all helper entities.** Defines `TEXT_HELPERS`, `SELECT_HELPERS`, `SWITCH_HELPERS`, `NUMBER_HELPERS`, `DATETIME_HELPERS`, `COUNTER_HELPERS`, `BUTTON_DEFS`, `VENDOR_PRESETS`, `PUMP_MODELS`. The Python platforms (`text.py`, `select.py`, …) instantiate one HA entity per entry. Also the only place vendor preset payloads live. |
+| `custom_components/hph/data/sensor_templates.yaml` | **Compiled template sensors.** Loaded at integration setup by `sensor.py` via `Path(__file__).parent`. Contains all facade sensors (`hph_source_*`) plus analytical sensors (COP, thermal power, advisor, cycles, …). NOT a YAML package — HA never sees it directly. |
+| `custom_components/hph/data/binary_sensor_templates.yaml` | Same pattern for binary sensors (compressor running, defrost active, has-HK2, …). |
+| `custom_components/hph/data/dashboards/hph.yaml` | **Lovelace dashboard source.** Deployed by `bootstrap.py` to `<config>/hph/dashboard.yaml` on every integration setup/reload. Edit here; bootstrap propagates automatically. |
+| `custom_components/hph/data/packages/hph_efficiency.yaml` | **The only YAML package.** Contains `utility_meter:` platform config (not expressible in Python). Deployed by `bootstrap.py` to `<config>/packages/hph_efficiency.yaml`. |
+| `custom_components/hph/data/dashboards/assets/*.svg` | SVG schematics deployed by bootstrap to `<config>/www/hph/`. |
+| `packages/` (repo root) | **Legacy / reference only.** Used by `scripts/install.sh` for non-HACS installs. `bootstrap.py` removes all `hph_*.yaml` except `hph_efficiency.yaml` from `<config>/packages/` on first run (migration from v0.8 YAML-only install). Do not add new platform logic here — use Python platforms instead. |
+| `dashboards/hph.yaml` | **Canonical source for smoke tests and CI.** Symlinked/identical to `custom_components/hph/data/dashboards/hph.yaml`. `tests/smoke.py` reads from `dashboards/`. |
+| `dashboards/assets/*.svg` | Same files as `custom_components/hph/data/dashboards/assets/`. |
 | `blueprints/hph_setup.yaml` | Script blueprint to seed helpers and verify install. |
-| `scripts/install.sh` and `scripts/*.py` | Optional bash installer + Python helpers for export, import, and heating-curve regression. |
+| `scripts/install.sh` and `scripts/*.py` | Non-HACS bash installer + Python helpers for export, import, heating-curve regression. |
 | `grafana/*.json` | Grafana dashboards (import-ready). |
 | `grafana/telegraf_mqtt.conf` | Telegraf config for MQTT → InfluxDB. |
-| `docs/` | Installation, tweaking, vendor recipes, diagnostics, export/import, database, naming, integration mockups. |
+| `docs/` | Installation, tweaking, vendor recipes, diagnostics, export/import, database, naming. |
 | `tests/` | Local smoke tests + HA Docker check_config harness. |
 | `.github/workflows/` | YAML / JSON validation, smoke, Docker check_config. |
 
-*(Source of truth: `ls packages/ scripts/ docs/` — this table drifts; PRs welcome.)*
+*(Source of truth: `ls custom_components/hph/ custom_components/hph/data/` — this table drifts; PRs welcome.)*
 
 ## Naming conventions
 
@@ -96,20 +91,22 @@ release notes come from `CHANGELOG.md`.
   prefix `hph_source_*` (e.g. `sensor.hph_source_inlet_temp`).
   These are what every other package reads from.
 - **Source helpers** (UI-configurable entity-ID strings, READ paths):
-  prefix `input_text.hph_src_*`.
+  prefix `text.hph_src_*` (v0.9: `text` platform, not `input_text`).
+  Defined in `const.py::TEXT_HELPERS`.
 - **Control write helpers** (UI-configurable entity-ID strings, WRITE
   paths used by control automations and programs):
-  prefix `input_text.hph_ctrl_write_*`. Defined in `hph_models.yaml`.
+  prefix `text.hph_ctrl_write_*`. Defined in `const.py::TEXT_HELPERS`.
+  Vendor preset payloads live in `const.py::VENDOR_PRESETS`.
 - **External meter helpers**:
-  prefix `input_text.hph_src_external_*`.
+  prefix `text.hph_src_external_*`.
 - **Active-source dispatchers** (what utility_meter / COP read):
   `sensor.hph_thermal_power_active`, `_thermal_energy_active`,
   `_electrical_power_active`, `_electrical_energy_active`.
 - **Heat-pump native entities** (`panasonic_heat_pump_*`) are allowed in
-  two places only: defaults in `hph_sources.yaml` and vendor-preset
-  auto-fill payloads in `hph_models.yaml`. As of v0.8 control
+  two places only: `initial:` defaults in `const.py::TEXT_HELPERS` and
+  vendor-preset payloads in `const.py::VENDOR_PRESETS`. Control
   automations and programs resolve write targets via
-  `input_text.hph_ctrl_write_*` helpers, so `hph_control*.yaml` and
+  `text.hph_ctrl_write_*` helpers, so `hph_control*.yaml` and
   `hph_programs.yaml` MUST stay free of hard-coded vendor entity-IDs.
   The whitelist is enforced by `tests/smoke.py:ALLOWED_HARDCODE` —
   adding any other location requires updating the whitelist with a
@@ -117,15 +114,88 @@ release notes come from `CHANGELOG.md`.
 - **Dashboard views**: `overview`, `schema`, `control`, `analysis`,
   `efficiency`, `optimization`, `config`.
 
-## Source-adapter architecture
+## Deployment chain (v0.9 Python integration)
 
-Everything HeatPump Hero reads is funneled through `packages/hph_sources.yaml`:
+Understanding exactly what deploys what prevents deploying to wrong paths.
+
+### What the Python integration owns (loaded at runtime from its own directory)
+
+| File | How loaded | Must deploy to |
+|---|---|---|
+| `custom_components/hph/const.py` | Python import | `<custom_components>/hph/const.py` |
+| `custom_components/hph/data/sensor_templates.yaml` | `sensor.py` via `Path(__file__).parent / "data" / …` | `<custom_components>/hph/data/sensor_templates.yaml` |
+| `custom_components/hph/data/binary_sensor_templates.yaml` | `binary_sensor.py` same pattern | `<custom_components>/hph/data/binary_sensor_templates.yaml` |
+| `custom_components/hph/data/dashboards/hph.yaml` | bootstrap (copies on reload) | Edit here; bootstrap auto-deploys to `<config>/hph/dashboard.yaml` |
+| `custom_components/hph/data/packages/hph_efficiency.yaml` | bootstrap (copies on reload) | Edit here; bootstrap auto-deploys to `<config>/packages/hph_efficiency.yaml` |
+| `custom_components/hph/data/dashboards/assets/*.svg` | bootstrap (copies on reload) | Edit here; bootstrap auto-deploys to `<config>/www/hph/` |
+
+**Key rule:** Every file the Python integration reads is loaded via `Path(__file__).parent` — i.e., from inside `custom_components/hph/`. The `<config>/hph/` folder only contains the dashboard copy that bootstrap writes. Never manually write `hph_sources.yaml`, `hph_models.yaml`, or `sensor_templates.yaml` into `<config>/hph/` — they are not loaded from there.
+
+### What HA's packages system owns (YAML, loaded by HA core)
+
+Only `<config>/packages/hph_efficiency.yaml` — deployed by bootstrap. Contains `utility_meter:` which must remain YAML. Everything else previously in `packages/` was replaced by Python platforms in v0.9.
+
+### Dev deploy workflow (editing on dev machine, testing on live HA)
 
 ```
-input_text.hph_src_inlet_temp           ← user-configurable entity-ID
-   │  default: sensor.panasonic_heat_pump_main_inlet_temperature
+# After editing const.py:
+cp custom_components/hph/const.py          P:/custom_components/hph/const.py
+
+# After editing sensor_templates.yaml:
+cp custom_components/hph/data/sensor_templates.yaml \
+   P:/custom_components/hph/data/sensor_templates.yaml
+
+# After editing dashboards/hph.yaml:
+cp custom_components/hph/data/dashboards/hph.yaml \
+   P:/custom_components/hph/data/dashboards/hph.yaml
+# (bootstrap then auto-copies to P:/hph/dashboard.yaml on integration reload)
+
+# Then always: reload HPH integration in HA Developer Tools
+```
+
+`dashboards/hph.yaml` (repo root) is a reference copy for CI/smoke tests — keep it in sync with `custom_components/hph/data/dashboards/hph.yaml` on every commit.
+
+### Stale files — do not deploy, do not edit
+
+The following files in `<config>/hph/` are **not loaded by any HA mechanism** and are artifacts from the v0.8 YAML-packages era or from incorrect manual deploys:
+
+| Stale file | Why it exists | Action |
+|---|---|---|
+| `<config>/hph/hph_sources.yaml` | Copied there by error | Ignore / delete |
+| `<config>/hph/hph_models.yaml` | Copied there by error | Ignore / delete |
+| `<config>/hph/sensor_templates.yaml` | Copied there by error | Ignore / delete |
+| `<config>/hph/hph.yaml` | Wrong filename for dashboard | Ignore; real file is `dashboard.yaml` |
+
+`packages/hph_*.yaml` (repo root) are kept as documentation and for `install.sh`-based installs, but `bootstrap.py` removes them from a live HA config on first integration load.
+
+### Adding a new entity (decision tree)
+
+```
+New helper (text/select/switch/number/datetime/button)?
+  → Add to const.py in the appropriate *_HELPERS dict
+  → If it needs a vendor preset default: add to const.py::VENDOR_PRESETS
+
+New template sensor or binary sensor?
+  → Add to custom_components/hph/data/sensor_templates.yaml
+  → If it's a facade: also add unique_id to TEXT_HELPERS (const.py)
+
+New utility_meter or integration sensor (platform-based)?
+  → Add to custom_components/hph/data/packages/hph_efficiency.yaml
+
+New dashboard card?
+  → Edit custom_components/hph/data/dashboards/hph.yaml
+  → Also update dashboards/hph.yaml (repo root) to keep CI in sync
+```
+
+## Source-adapter architecture
+
+Everything HeatPump Hero reads is funneled through `text.hph_src_*` helpers (defined in `const.py::TEXT_HELPERS`):
+
+```
+text.hph_src_inlet_temp                 ← user-configurable entity-ID
+   │  defined in const.py::TEXT_HELPERS, initial: panasonic_heat_pump_main_…
    ▼
-sensor.hph_source_inlet_temp            ← facade (resolved)
+sensor.hph_source_inlet_temp            ← facade (resolved, in sensor_templates.yaml)
    │
    ▼
 sensor.hph_thermal_power                ← uses facade
@@ -152,11 +222,12 @@ utility_meter.hph_thermal_*             ← daily/monthly/yearly + tariff splits
 | `external_power` | Integrates a user-provided power sensor (W) → kWh. Use for Shelly/IoTaWatt. |
 | `external_energy` | Reads a user-provided kWh meter (`total_increasing`) directly — bypasses the integrator. Most accurate when you have a hardware heat meter or utility meter. |
 
-**Swapping the heat pump:** change the relevant `input_text.hph_src_*`
-helpers in the UI (Settings → Devices → Helpers). All read paths follow.
-Write paths for the *control automations* (`hph_control.yaml`) are managed
-through `input_text.hph_ctrl_write_*` helpers — see the Control surface
-universality section below.
+**Swapping the heat pump:** change the relevant `text.hph_src_*`
+helpers in the UI (Settings → Devices → HPH → Configure), or apply a
+vendor preset (`text.hph_vendor_preset`). All read paths follow.
+Write paths for the *control automations* are managed through
+`text.hph_ctrl_write_*` helpers — see the Control surface universality
+section below.
 
 ## Control surface universality
 
@@ -210,6 +281,57 @@ Adding model-specific commentary: extend the `model_note` template
 similarly — it reads `input_select.hph_pump_model` so per-model
 guidance is keyed off the same selector that drives compressor / flow
 thresholds.
+
+## HeishaMon sensor availability by model
+
+Based on kamaradclimber/heishamon-homeassistant `definitions.py` (verified 2026-05):
+
+### Universal — enabled by default on ALL Panasonic Aquarea models
+
+All facade sensors in `hph_src_*` that map to `main/` topics are available on every
+model **except** the four K/L-series sensors listed below. This includes:
+fan speeds (TOP62/63), IPM temperature (TOP55), high/low refrigerant pressure
+(TOP64/66), compressor current (TOP67), pump duty (TOP93), discharge temp (TOP50),
+outside pipe temp (TOP21), 3-way valve state (TOP20), zone temps (TOP36/37/42/43),
+DHW temp (TOP10).
+
+### K/L-series only (TOP115–118)
+
+| HPH helper | Entity | Notes |
+|---|---|---|
+| `hph_src_pump_pressure` | `*_water_pressure` (TOP115) | K/L All-In-One only. J/T-CAP/M → `unavailable`. |
+| — | `*_second_inlet_temp` (TOP116) | Not yet mapped in HPH |
+| — | `*_economizer_outlet_temp` (TOP117) | Not yet mapped in HPH |
+
+`hph_src_pump_pressure` is pre-filled to the K/L entity in all heishamon presets.
+Non-K/L users will see this facade as `unavailable` — which is correct; they should
+blank the helper in Settings to hide the card.
+
+### Optional hardware — disabled by default in kamaradclimber
+
+Topics for cooling, buffer tank, solar, pool, and optional PCB have
+`entity_registry_enabled_default=False` in the upstream integration. They exist in HA
+but are hidden until the user enables them. HPH gates on the helper being empty
+(same mechanism as zone 2 / DHW), so no special handling is needed.
+
+### No dynamic capability detection
+
+kamaradclimber registers all entities statically at startup — there is no
+"has_zone2 / has_DHW / has_buffer" API. Missing hardware = entity stays `unavailable`.
+HPH correctly gates on the user-configured `text.hph_src_*` helpers, not on the
+upstream entity's registration state.
+
+### Adding model-conditional dashboard cards
+
+Since all Machine Room monitoring sensors are universal (all models), model-conditional
+dashboard cards are **not** needed for those. Use the standard pattern instead:
+
+- Universal sensor with blank default → shows "unavailable" tile → user fills helper
+- K/L-only sensor (`pump_pressure`) → blank helper on non-K/L → card hidden via
+  `condition: state / state_not: ""`
+
+Model-conditional cards (gating on `select.hph_pump_model`) are only warranted for
+sensors that differ in unit/range by model generation — e.g. refrigerant type labels.
 
 ## Vendor presets and model selector
 

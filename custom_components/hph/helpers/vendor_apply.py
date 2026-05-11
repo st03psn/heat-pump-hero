@@ -12,28 +12,58 @@ import logging
 
 from homeassistant.core import HomeAssistant
 
-from ..const import PUMP_MODELS, VENDOR_PRESETS
+from ..const import MODEL_CAPABILITIES, PUMP_MODELS, VENDOR_PRESETS
 
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_apply_vendor_preset(hass: HomeAssistant, preset: str) -> None:
-    """Set every source / write helper to the entity-IDs for `preset`."""
+async def async_apply_vendor_preset(
+    hass: HomeAssistant, preset: str, model: str = ""
+) -> None:
+    """Set every source / write helper to the entity-IDs for *preset*.
+
+    When *model* is provided and has an entry in MODEL_CAPABILITIES, every
+    ``hph_src_*`` helper whose suffix is NOT in the capability set is written
+    as ``""`` (empty) — preventing phantom entity references for sensors the
+    physical hardware does not expose (e.g. Fan 2 on a single-fan J/L-series).
+
+    ``hph_ctrl_write_*`` helpers are never capability-gated because control
+    surfaces are vendor-gated (empty default in VENDOR_PRESETS) rather than
+    model-gated.
+    """
     payload = VENDOR_PRESETS.get(preset)
     if payload is None:
         _LOGGER.warning("Unknown vendor preset %s — skipping auto-fill", preset)
         return
 
+    caps = MODEL_CAPABILITIES.get(model) if model else None
+    gated: list[str] = []
+
     for unique_id, value in payload.items():
-        # Helpers expose a service `set_value` via Text/Select platforms.
         entity_id = f"text.{unique_id}"
+        if caps is not None and unique_id.startswith("hph_src_"):
+            suffix = unique_id.removeprefix("hph_src_")
+            if suffix not in caps:
+                value = ""  # sensor not present on this model
+                gated.append(unique_id)
         await hass.services.async_call(
             "text",
             "set_value",
             {"entity_id": entity_id, "value": value},
             blocking=False,
         )
-    _LOGGER.info("Applied vendor preset %s — %d helpers seeded", preset, len(payload))
+
+    if gated:
+        _LOGGER.info(
+            "Applied vendor preset %s (model=%s) — %d helpers seeded, "
+            "%d capability-gated (set empty): %s",
+            preset, model, len(payload), len(gated), ", ".join(gated),
+        )
+    else:
+        _LOGGER.info(
+            "Applied vendor preset %s (model=%s) — %d helpers seeded",
+            preset, model or "unspecified", len(payload),
+        )
 
 
 async def async_apply_pump_model(hass: HomeAssistant, model: str) -> None:

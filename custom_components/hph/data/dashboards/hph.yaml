@@ -345,7 +345,7 @@ views:
                     {{ 'green' if is_state('binary_sensor.hph_compressor_running','on') else 'grey' }}
 
           # ── Row: Installation schematic (auto-detected variant) ──────────────
-          # Requires: Clooos/Bubble-Card >= 3.0; SVGs from /local/hph/schema_*.svg
+          # Requires: Clooos/Bubble-Card >= 3.0; SVGs served from /hph_assets/schema_*.svg
           - type: custom:mushroom-template-card
             primary: |-
               Installation: {{ states('sensor.hph_schema_variant_active') | replace('_',' ') | upper }}
@@ -373,7 +373,7 @@ views:
                 state: a2w_hk1
             card:
               type: picture-elements
-              image: /local/hph/schema_a2w_hk1.svg
+              image: /hph_assets/schema_a2w_hk1.svg
               card_mod:
                 style: "ha-card { background-color: #0f1923; }"
               elements:
@@ -544,7 +544,7 @@ views:
                 state: a2w_hk1_dhw
             card:
               type: picture-elements
-              image: /local/hph/schema_a2w_hk1_dhw.svg
+              image: /hph_assets/schema_a2w_hk1_dhw.svg
               card_mod:
                 style: "ha-card { background-color: #0f1923; }"
               elements:
@@ -726,7 +726,7 @@ views:
                 state: a2w_hk1_hk2_dhw
             card:
               type: picture-elements
-              image: /local/hph/schema_a2w_hk1_hk2_dhw.svg
+              image: /hph_assets/schema_a2w_hk1_hk2_dhw.svg
               card_mod:
                 style: "ha-card { background-color: #0f1923; }"
               elements:
@@ -919,7 +919,7 @@ views:
                 state: a2w_hk1_hk2_dhw_buffer
             card:
               type: picture-elements
-              image: /local/hph/schema_a2w_hk1_hk2_dhw_buffer.svg
+              image: /hph_assets/schema_a2w_hk1_hk2_dhw_buffer.svg
               card_mod:
                 style: "ha-card { background-color: #0f1923; }"
               elements:
@@ -1152,13 +1152,6 @@ views:
               {% set m = states(e) | lower %}
               {{ 'orange' if m == 'heat' else ('blue' if m == 'cool' else ('teal' if 'dhw' in m else 'grey')) }}
             tap_action:
-              action: perform-action
-              perform_action: select.select_next
-              target:
-                entity_id: "{{ states('input_text.hph_ctrl_write_operating_mode') }}"
-              data:
-                cycle: true
-            hold_action:
               action: more-info
               entity: "{{ states('input_text.hph_ctrl_write_operating_mode') }}"
           - type: template
@@ -1170,13 +1163,6 @@ views:
               {% set e = states('input_text.hph_ctrl_write_quiet_mode') %}
               {{ 'teal' if e and states(e) | lower not in ['off','0','level 0'] else 'grey' }}
             tap_action:
-              action: perform-action
-              perform_action: select.select_next
-              target:
-                entity_id: "{{ states('input_text.hph_ctrl_write_quiet_mode') }}"
-              data:
-                cycle: true
-            hold_action:
               action: more-info
               entity: "{{ states('input_text.hph_ctrl_write_quiet_mode') }}"
           - type: template
@@ -1196,10 +1182,8 @@ views:
               {% set e = states('input_text.hph_ctrl_write_power') %}
               {{ 'green' if e and is_state(e,'on') else 'grey' }}
             tap_action:
-              action: perform-action
-              perform_action: homeassistant.toggle
-              target:
-                entity_id: "{{ states('input_text.hph_ctrl_write_power') }}"
+              action: more-info
+              entity: "{{ states('input_text.hph_ctrl_write_power') }}"
 
       # ── Section 2: Zone 1 — Heating ──────────────────────────────────────
       - type: custom:mushroom-title-card
@@ -1239,9 +1223,9 @@ views:
 
       - type: conditional
         conditions:
-          - condition: template
-            value_template: >-
-              {{ states('input_text.hph_ctrl_write_z1_curve_high') not in ['','unknown','unavailable'] }}
+          - condition: state
+            entity: input_text.hph_ctrl_write_z1_curve_high
+            state_not: ""
         card:
           type: grid
           columns: 2
@@ -1435,106 +1419,176 @@ views:
         columns: 4
         square: false
         cards:
-          - type: custom:mushroom-template-card
-            primary: Inverter Temp
-            secondary: "{{ states('sensor.hph_source_inverter_temp') }} °C"
-            icon: mdi:chip
-            icon_color: >-
-              {% set t = states('sensor.hph_source_inverter_temp') | float(0) %}
-              {{ 'red' if t > 80 else ('orange' if t > 60 else 'grey') }}
-            tap_action:
-              action: none
+          # Each tile wraps in conditional: state_not: "" so it hides
+          # when the source helper is blank (sensor absent on this model).
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_src_inverter_temp
+                state_not: ""
+            card:
+              type: custom:mushroom-template-card
+              primary: Inverter Temp
+              secondary: "{{ states('sensor.hph_source_inverter_temp') }} °C"
+              icon: mdi:chip
+              icon_color: >-
+                {% set t = states('sensor.hph_source_inverter_temp') | float(0) %}
+                {{ 'red' if t > 80 else ('orange' if t > 60 else 'grey') }}
+              tap_action:
+                action: none
 
-          - type: custom:mushroom-template-card
-            primary: High Pressure
-            secondary: "{{ states('sensor.hph_source_high_pressure') }} kPa"
-            icon: mdi:gauge-full
-            icon_color: >-
-              {% set p = states('sensor.hph_source_high_pressure') | float(0) %}
-              {{ 'red' if p > 2800 else ('orange' if p > 2400 else 'grey') }}
-            tap_action:
-              action: none
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_src_high_pressure
+                state_not: ""
+            card:
+              type: custom:mushroom-template-card
+              primary: High Pressure
+              secondary: "{{ states('sensor.hph_source_high_pressure') }} kPa"
+              icon: mdi:gauge-full
+              icon_color: >-
+                {% set p = states('sensor.hph_source_high_pressure') | float(0) %}
+                {{ 'red' if p > 2800 else ('orange' if p > 2400 else 'grey') }}
+              tap_action:
+                action: none
 
-          - type: custom:mushroom-template-card
-            primary: Low Pressure
-            secondary: "{{ states('sensor.hph_source_low_pressure') }} kPa"
-            icon: mdi:gauge-low
-            icon_color: >-
-              {% set p = states('sensor.hph_source_low_pressure') | float(0) %}
-              {{ 'red' if p < 200 else ('orange' if p < 400 else 'grey') }}
-            tap_action:
-              action: none
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_src_low_pressure
+                state_not: ""
+            card:
+              type: custom:mushroom-template-card
+              primary: Low Pressure
+              secondary: "{{ states('sensor.hph_source_low_pressure') }} kPa"
+              icon: mdi:gauge-low
+              icon_color: >-
+                {% set p = states('sensor.hph_source_low_pressure') | float(0) %}
+                {{ 'red' if p < 200 else ('orange' if p < 400 else 'grey') }}
+              tap_action:
+                action: none
 
-          - type: custom:mushroom-template-card
-            primary: Compressor A
-            secondary: "{{ states('sensor.hph_source_compressor_current') }} A"
-            icon: mdi:current-ac
-            icon_color: grey
-            tap_action:
-              action: none
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_src_compressor_current
+                state_not: ""
+            card:
+              type: custom:mushroom-template-card
+              primary: Compressor A
+              secondary: "{{ states('sensor.hph_source_compressor_current') }} A"
+              icon: mdi:current-ac
+              icon_color: grey
+              tap_action:
+                action: none
 
-          - type: custom:mushroom-template-card
-            primary: Outdoor Pipe
-            secondary: "{{ states('sensor.hph_source_outdoor_pipe_temp') }} °C"
-            icon: mdi:pipe
-            icon_color: blue
-            tap_action:
-              action: none
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_src_outdoor_pipe_temp
+                state_not: ""
+            card:
+              type: custom:mushroom-template-card
+              primary: Outdoor Pipe
+              secondary: "{{ states('sensor.hph_source_outdoor_pipe_temp') }} °C"
+              icon: mdi:pipe
+              icon_color: blue
+              tap_action:
+                action: none
 
-          - type: custom:mushroom-template-card
-            primary: Fan 1
-            secondary: "{{ states('sensor.hph_source_fan1_speed') }} R/min"
-            icon: mdi:fan
-            icon_color: >-
-              {% set f = states('sensor.hph_source_fan1_speed') | int(0) %}
-              {{ 'green' if f > 100 else 'grey' }}
-            tap_action:
-              action: none
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_src_fan1_speed
+                state_not: ""
+            card:
+              type: custom:mushroom-template-card
+              primary: Fan 1
+              secondary: "{{ states('sensor.hph_source_fan1_speed') }} R/min"
+              icon: mdi:fan
+              icon_color: >-
+                {% set f = states('sensor.hph_source_fan1_speed') | int(0) %}
+                {{ 'green' if f > 100 else 'grey' }}
+              tap_action:
+                action: none
 
-          - type: custom:mushroom-template-card
-            primary: Fan 2
-            secondary: "{{ states('sensor.hph_source_fan2_speed') }} R/min"
-            icon: mdi:fan
-            icon_color: >-
-              {% set f = states('sensor.hph_source_fan2_speed') | int(0) %}
-              {{ 'green' if f > 100 else 'grey' }}
-            tap_action:
-              action: none
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_src_fan2_speed
+                state_not: ""
+            card:
+              type: custom:mushroom-template-card
+              primary: Fan 2
+              secondary: "{{ states('sensor.hph_source_fan2_speed') }} R/min"
+              icon: mdi:fan
+              icon_color: >-
+                {% set f = states('sensor.hph_source_fan2_speed') | int(0) %}
+                {{ 'green' if f > 100 else 'grey' }}
+              tap_action:
+                action: none
 
-          - type: custom:mushroom-template-card
-            primary: 3-Way Valve
-            secondary: "{{ states('sensor.hph_source_3way_valve') | title }}"
-            icon: mdi:valve
-            icon_color: >-
-              {% set v = states('sensor.hph_source_3way_valve') | lower %}
-              {{ 'orange' if 'dhw' in v or 'hot' in v or v == '1' else 'blue' }}
-            tap_action:
-              action: none
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_src_3way_valve
+                state_not: ""
+            card:
+              type: custom:mushroom-template-card
+              primary: 3-Way Valve
+              secondary: "{{ states('sensor.hph_source_3way_valve') | title }}"
+              icon: mdi:valve
+              icon_color: >-
+                {% set v = states('sensor.hph_source_3way_valve') | lower %}
+                {{ 'orange' if 'dhw' in v or 'hot' in v or v == '1' else 'blue' }}
+              tap_action:
+                action: none
 
-          - type: custom:mushroom-template-card
-            primary: Pump Duty
-            secondary: "{{ states('sensor.hph_source_pump_duty') }} %"
-            icon: mdi:pump
-            icon_color: grey
-            tap_action:
-              action: none
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_src_pump_duty
+                state_not: ""
+            card:
+              type: custom:mushroom-template-card
+              primary: Pump Duty
+              secondary: "{{ states('sensor.hph_source_pump_duty') }} %"
+              icon: mdi:pump
+              icon_color: grey
+              tap_action:
+                action: none
 
-          - type: custom:mushroom-template-card
-            primary: HEX Outlet
-            secondary: "{{ states('sensor.hph_source_hex_outlet_temp') }} °C"
-            icon: mdi:heat-exchanger
-            icon_color: red
-            tap_action:
-              action: none
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_src_hex_outlet_temp
+                state_not: ""
+            card:
+              type: custom:mushroom-template-card
+              primary: HEX Outlet
+              secondary: "{{ states('sensor.hph_source_hex_outlet_temp') }} °C"
+              icon: mdi:heat-exchanger
+              icon_color: red
+              tap_action:
+                action: none
 
-          - type: custom:mushroom-template-card
-            primary: Zone 1 Setpoint
-            secondary: "{{ states('sensor.hph_source_zone1_target_temp') }} °C"
-            icon: mdi:thermometer-chevron-up
-            icon_color: orange
-            tap_action:
-              action: none
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_src_zone1_target_temp
+                state_not: ""
+            card:
+              type: custom:mushroom-template-card
+              primary: Zone 1 Setpoint
+              secondary: "{{ states('sensor.hph_source_zone1_target_temp') }} °C"
+              icon: mdi:thermometer-chevron-up
+              icon_color: orange
+              tap_action:
+                action: none
 
+          # Thermal Power always shown — hph_src_internal_thermal_power has
+          # a non-empty default for all Panasonic models.
           - type: custom:mushroom-template-card
             primary: Thermal Power
             secondary: "{{ states('sensor.hph_source_internal_thermal_power') | float(0) | round(0) }} W"

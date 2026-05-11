@@ -23,6 +23,8 @@ from .bootstrap import (
     async_register_dashboard,
 )
 from .const import (
+    ASSETS_DIR_ABS,
+    ASSETS_URL_PATH,
     COUNTER_HELPERS,
     DASHBOARD_URL_PATH,
     DATA_HASS_CONFIG,
@@ -228,6 +230,29 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
                     _LOGGER.warning("hph.run_legionella_now: press force-DHW failed: %s", exc)
 
     hass.services.async_register(DOMAIN, "run_legionella_now", _run_legionella_now)
+
+    # reapply_vendor_preset — re-seeds all source/write helpers using the
+    # vendor + model stored in the config entry. Useful after a HACS update
+    # adds new helpers that weren't present during the original install, so
+    # the user doesn't need to open the reconfigure wizard manually.
+    async def _reapply_vendor_preset(_call: Any) -> None:
+        entries = hass.config_entries.async_entries(DOMAIN)
+        if not entries:
+            _LOGGER.warning("hph.reapply_vendor_preset: no config entry found")
+            return
+        merged_cfg = {**dict(entries[0].data or {}), **dict(entries[0].options or {})}
+        preset = merged_cfg.get("vendor_preset", "")
+        model = merged_cfg.get("pump_model", "")
+        if preset and preset != "keep_current":
+            from .helpers.vendor_apply import async_apply_vendor_preset
+            await async_apply_vendor_preset(hass, preset, model=model)
+            _LOGGER.info(
+                "hph.reapply_vendor_preset: applied preset=%s model=%s", preset, model
+            )
+        else:
+            _LOGGER.info("hph.reapply_vendor_preset: vendor is keep_current — nothing applied")
+
+    hass.services.async_register(DOMAIN, "reapply_vendor_preset", _reapply_vendor_preset)
 
     return True
 
@@ -662,7 +687,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "data": merged,
     }
 
-    # Deploy dashboard + efficiency package; migrate old automation packages.
+    # Register the HPH assets static path so dashboard SVGs are served
+    # directly from the integration data directory (no copy to <config>/www/hph/).
+    try:
+        hass.http.register_static_path(
+            ASSETS_URL_PATH,
+            ASSETS_DIR_ABS,
+            cache_headers=True,
+        )
+        _LOGGER.debug("HPH assets registered at %s from %s", ASSETS_URL_PATH, ASSETS_DIR_ABS)
+    except RuntimeError:
+        # Already registered on a previous setup call (e.g. reload) — safe to ignore.
+        _LOGGER.debug("HPH assets path %s already registered", ASSETS_URL_PATH)
+
+    # Deploy efficiency package; migrate old automation packages.
+    # Dashboard is no longer copied to <config>/hph/ — served from integration dir.
     deployed = await async_deploy_yaml_packages(hass)
     hass.data[DOMAIN][entry.entry_id]["bootstrap"] = deployed
 
@@ -687,9 +726,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Apply chosen vendor preset (one-shot on first install).
     preset = merged.get("vendor_preset")
+    model = merged.get("pump_model", "")
     if preset and preset != "keep_current":
         from .helpers.vendor_apply import async_apply_vendor_preset, async_apply_pump_model
-        await async_apply_vendor_preset(hass, preset)
+        await async_apply_vendor_preset(hass, preset, model=model)
         # Mirror the preset selection in the select entity.
         await hass.services.async_call(
             "select", "select_option",

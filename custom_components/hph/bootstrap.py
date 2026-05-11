@@ -23,7 +23,7 @@ from homeassistant.components import frontend
 from homeassistant.core import HomeAssistant
 
 from .const import (
-    DASHBOARD_FILE_REL,
+    DASHBOARD_FILE_ABS,
     DASHBOARD_ICON,
     DASHBOARD_TITLE,
     DASHBOARD_URL_PATH,
@@ -92,8 +92,7 @@ def _deploy_sync(
 ) -> dict[str, Any]:
     deployed: dict[str, Any] = {
         "migrated_removed": [],
-        "dashboard": [],
-        "assets": [],
+        "stale_cleaned": [],
         "efficiency": False,
         "ext_thermal_redirected": bool(ext_thermal),
         "ext_electrical_redirected": bool(ext_electrical),
@@ -113,6 +112,8 @@ def _deploy_sync(
                     _LOGGER.warning("Could not remove %s: %s", stale, exc)
 
     # 2. Deploy hph_efficiency.yaml (utility_meter + integration sensors).
+    # This MUST stay in <config>/packages/ — HA's YAML loader is required for
+    # utility_meter, platform:statistics, platform:integration, recorder:.
     if _DATA_EFFICIENCY.exists():
         pkg_dst.mkdir(parents=True, exist_ok=True)
         text = _DATA_EFFICIENCY.read_text(encoding="utf-8")
@@ -121,22 +122,10 @@ def _deploy_sync(
         deployed["efficiency"] = True
         _ensure_packages_include(config_dir / "configuration.yaml")
 
-    # 3. Dashboard YAML
-    dash_dst_dir = config_dir / "hph"
-    dash_dst_dir.mkdir(parents=True, exist_ok=True)
-    if _DATA_DASHBOARD.exists():
-        dst = dash_dst_dir / "dashboard.yaml"
-        shutil.copyfile(_DATA_DASHBOARD, dst)
-        deployed["dashboard"].append(str(dst.relative_to(config_dir)))
-
-    # 4. Asset SVGs
-    asset_dst = config_dir / "www" / "hph"
-    asset_dst.mkdir(parents=True, exist_ok=True)
-    if _DATA_ASSETS.exists():
-        for src in sorted(_DATA_ASSETS.glob("*.svg")):
-            dst = asset_dst / src.name
-            shutil.copyfile(src, dst)
-            deployed["assets"].append(src.name)
+    # 3. Stale-path migration: remove old copies of dashboard + SVG assets that
+    #    were deployed by v0.9-rc4 and earlier.  The integration now serves these
+    #    directly from custom_components/hph/data/ so the copies are dead weight.
+    _clean_stale_copies(config_dir, deployed["stale_cleaned"])
 
     if deployed["migrated_removed"]:
         _LOGGER.info(
@@ -145,13 +134,49 @@ def _deploy_sync(
             ", ".join(deployed["migrated_removed"]),
         )
     _LOGGER.info(
-        "HPH bootstrap done: dashboard=%s assets=%d efficiency=%s removed=%d",
-        bool(deployed["dashboard"]),
-        len(deployed["assets"]),
+        "HPH bootstrap done: efficiency=%s removed_pkg=%d stale_cleaned=%d",
         deployed["efficiency"],
         len(deployed["migrated_removed"]),
+        len(deployed["stale_cleaned"]),
     )
     return deployed
+
+
+def _clean_stale_copies(config_dir: Path, cleaned: list[str]) -> None:
+    """Remove dashboard.yaml and SVG copies that are no longer deployed.
+
+    From v0.9-rc5+ both are served from the integration data directory.
+    Safe to call repeatedly — skips files that no longer exist.
+    """
+    # Old dashboard copy
+    old_dash = config_dir / "hph" / "dashboard.yaml"
+    if old_dash.exists():
+        try:
+            old_dash.unlink()
+            cleaned.append(str(old_dash))
+            _LOGGER.info("Stale-copy cleanup: removed %s", old_dash)
+        except OSError as exc:
+            _LOGGER.warning("Could not remove stale dashboard copy %s: %s", old_dash, exc)
+
+    # Old SVG asset directory
+    old_assets = config_dir / "www" / "hph"
+    if old_assets.exists():
+        try:
+            shutil.rmtree(old_assets)
+            cleaned.append(str(old_assets))
+            _LOGGER.info("Stale-copy cleanup: removed %s", old_assets)
+        except OSError as exc:
+            _LOGGER.warning("Could not remove stale assets dir %s: %s", old_assets, exc)
+
+    # Remove the hph/ dir if it is now empty (exports subdir may keep it alive)
+    hph_dir = config_dir / "hph"
+    if hph_dir.exists():
+        try:
+            hph_dir.rmdir()  # only succeeds when empty
+            cleaned.append(str(hph_dir))
+            _LOGGER.info("Stale-copy cleanup: removed empty dir %s", hph_dir)
+        except OSError:
+            pass  # not empty — exports or other user files still there
 
 
 def _ensure_packages_include(config_yaml: Path) -> None:
@@ -199,7 +224,7 @@ async def async_register_dashboard(hass: HomeAssistant) -> None:
         return
 
     # Step 1: Register in the Lovelace dashboard store so the API serves
-    # the YAML file correctly when the frontend loads the dashboard.
+    # the YAML file directly from the integration data directory.
     if DASHBOARD_URL_PATH not in dashboards:
         try:
             from homeassistant.components.lovelace.dashboard import LovelaceYAML
@@ -208,7 +233,7 @@ async def async_register_dashboard(hass: HomeAssistant) -> None:
                 DASHBOARD_URL_PATH,
                 {
                     "mode": "yaml",
-                    "filename": DASHBOARD_FILE_REL,
+                    "filename": DASHBOARD_FILE_ABS,  # absolute — no copy to <config>
                     "title": DASHBOARD_TITLE,
                     "icon": DASHBOARD_ICON,
                     "show_in_sidebar": True,
@@ -232,7 +257,7 @@ async def async_register_dashboard(hass: HomeAssistant) -> None:
             frontend_url_path=DASHBOARD_URL_PATH,
             config={
                 "mode": "yaml",
-                "filename": DASHBOARD_FILE_REL,
+                "filename": DASHBOARD_FILE_ABS,  # absolute path — no copy needed
             },
             require_admin=False,
             update=True,

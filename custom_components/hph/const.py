@@ -8,6 +8,7 @@ existing `unique_id`s are preserved (entity-registry continuity).
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any, Final
 
 DOMAIN: Final = "hph"
@@ -26,7 +27,15 @@ SERVICE_RUN_LEGIONELLA: Final = "run_legionella_now"
 DASHBOARD_URL_PATH: Final = "hph"
 DASHBOARD_TITLE: Final = INTEGRATION_NAME
 DASHBOARD_ICON: Final = "mdi:heat-pump"
-DASHBOARD_FILE_REL: Final = "hph/dashboard.yaml"  # relative to <config>/
+DASHBOARD_FILE_REL: Final = "hph/dashboard.yaml"  # legacy relative path (kept for compat)
+# Absolute paths — integration serves these directly (no copy to <config>/).
+DASHBOARD_FILE_ABS: Final = str(
+    Path(__file__).parent / "data" / "dashboards" / "hph.yaml"
+)
+ASSETS_DIR_ABS: Final = str(
+    Path(__file__).parent / "data" / "dashboards" / "assets"
+)
+ASSETS_URL_PATH: Final = "/hph_assets"
 
 # ───────────────────────────────────────────────────────────────────────────
 # Vendor presets — drives the config flow vendor dropdown and the
@@ -69,8 +78,35 @@ VENDOR_PRESETS: Final[dict[str, dict[str, str]]] = {
         "hph_ctrl_write_z1_curve_high": "number.panasonic_heat_pump_main_z1_heat_curve_target_high_temp",
         "hph_ctrl_write_z1_curve_low": "number.panasonic_heat_pump_main_z1_heat_curve_target_low_temp",
         "hph_ctrl_write_dhw_target": "number.panasonic_heat_pump_main_dhw_target_temp",
+        # Extended control write-path helpers (v0.9)
+        "hph_ctrl_write_operating_mode": "select.panasonic_heat_pump_main_operating_mode_state",
+        "hph_ctrl_write_power": "switch.panasonic_heat_pump_main_heatpump_state",
+        "hph_ctrl_write_holiday": "switch.panasonic_heat_pump_main_holiday_mode",
+        "hph_ctrl_write_force_defrost": "switch.panasonic_heat_pump_main_force_defrost",
+        "hph_ctrl_write_powerful_mode": "select.panasonic_heat_pump_main_powerful_mode",
+        "hph_ctrl_write_active_zones": "select.panasonic_heat_pump_main_zones_state",
+        "hph_ctrl_write_bivalent_mode": "",
+        "hph_ctrl_write_z1_heat_shift": "number.panasonic_heat_pump_main_z1_heat_request_temperature",
+        "hph_ctrl_write_z2_heat_shift": "number.panasonic_heat_pump_main_z2_heat_request_temperature",
+        "hph_ctrl_write_heating_cutoff": "number.panasonic_heat_pump_main_heating_off_outdoor_temperature",
+        "hph_ctrl_write_max_pump_duty": "number.panasonic_heat_pump_main_max_pump_duty",
+        "hph_ctrl_write_room_heat_delta": "number.panasonic_heat_pump_main_floor_heating_delta",
+        "hph_ctrl_write_z1_climate": "climate.panasonic_heat_pump_main_z1_temp",
+        "hph_ctrl_write_z2_climate": "climate.panasonic_heat_pump_main_z2_temp",
+        # Monitoring sensors (v0.9)
+        "hph_src_fan1_speed": "sensor.panasonic_heat_pump_main_fan1_motor_speed",
+        "hph_src_fan2_speed": "sensor.panasonic_heat_pump_main_fan2_motor_speed",
+        "hph_src_inverter_temp": "sensor.panasonic_heat_pump_main_ipm_temp",
+        "hph_src_high_pressure": "sensor.panasonic_heat_pump_main_high_pressure",
+        "hph_src_low_pressure": "sensor.panasonic_heat_pump_main_low_pressure",
+        "hph_src_compressor_current": "sensor.panasonic_heat_pump_main_compressor_current",
+        "hph_src_outdoor_pipe_temp": "sensor.panasonic_heat_pump_main_outside_pipe_temp",
+        "hph_src_3way_valve": "sensor.panasonic_heat_pump_main_threeway_valve_state",
+        "hph_src_zone1_target_temp": "sensor.panasonic_heat_pump_main_z1_water_target_temp",
+        "hph_src_hex_outlet_temp": "sensor.panasonic_heat_pump_main_main_hex_outlet_temp",
+        "hph_src_pump_duty": "sensor.panasonic_heat_pump_main_pump_duty",
     },
-    "panasonic_heishamon_mqtt": {
+    "panasonic_heishamon_aquarea": {
         # Bundled HeishaMon MQTT YAML naming (aquarea_*)
         "hph_src_inlet_temp": "sensor.aquarea_main_inlet_temp",
         "hph_src_outlet_temp": "sensor.aquarea_main_outlet_temp",
@@ -95,6 +131,33 @@ VENDOR_PRESETS: Final[dict[str, dict[str, str]]] = {
         "hph_ctrl_write_z1_curve_high": "number.aquarea_main_z1_heat_curve_target_high_temp",
         "hph_ctrl_write_z1_curve_low": "number.aquarea_main_z1_heat_curve_target_low_temp",
         "hph_ctrl_write_dhw_target": "number.aquarea_main_dhw_target_temp",
+        # Extended control write-path helpers (v0.9)
+        "hph_ctrl_write_operating_mode": "select.aquarea_main_operating_mode_state",
+        "hph_ctrl_write_power": "switch.aquarea_main_heatpump_state",
+        "hph_ctrl_write_holiday": "switch.aquarea_main_holiday_mode",
+        "hph_ctrl_write_force_defrost": "switch.aquarea_main_force_defrost",
+        "hph_ctrl_write_powerful_mode": "select.aquarea_main_powerful_mode",
+        "hph_ctrl_write_active_zones": "select.aquarea_main_zones_state",
+        "hph_ctrl_write_bivalent_mode": "",
+        "hph_ctrl_write_z1_heat_shift": "number.aquarea_main_z1_heat_request_temperature",
+        "hph_ctrl_write_z2_heat_shift": "number.aquarea_main_z2_heat_request_temperature",
+        "hph_ctrl_write_heating_cutoff": "number.aquarea_main_heating_off_outdoor_temperature",
+        "hph_ctrl_write_max_pump_duty": "number.aquarea_main_max_pump_duty",
+        "hph_ctrl_write_room_heat_delta": "number.aquarea_main_floor_heating_delta",
+        "hph_ctrl_write_z1_climate": "climate.aquarea_main_z1_temp",
+        "hph_ctrl_write_z2_climate": "climate.aquarea_main_z2_temp",
+        # Monitoring sensors (v0.9)
+        "hph_src_fan1_speed": "sensor.aquarea_main_fan1_motor_speed",
+        "hph_src_fan2_speed": "sensor.aquarea_main_fan2_motor_speed",
+        "hph_src_inverter_temp": "sensor.aquarea_main_ipm_temp",
+        "hph_src_high_pressure": "sensor.aquarea_main_high_pressure",
+        "hph_src_low_pressure": "sensor.aquarea_main_low_pressure",
+        "hph_src_compressor_current": "sensor.aquarea_main_compressor_current",
+        "hph_src_outdoor_pipe_temp": "sensor.aquarea_main_outside_pipe_temp",
+        "hph_src_3way_valve": "sensor.aquarea_main_threeway_valve_state",
+        "hph_src_zone1_target_temp": "sensor.aquarea_main_z1_water_target_temp",
+        "hph_src_hex_outlet_temp": "sensor.aquarea_main_main_hex_outlet_temp",
+        "hph_src_pump_duty": "sensor.aquarea_main_pump_duty",
     },
     "daikin_altherma_core": {
         "hph_src_inlet_temp": "sensor.altherma_leaving_water_temperature",
@@ -157,6 +220,70 @@ PUMP_MODELS: Final[dict[str, dict[str, Any]]] = {
 }
 
 # ───────────────────────────────────────────────────────────────────────────
+# Model capability map — which hph_src_* sensors physically exist per model.
+#
+# Key   = PUMP_MODELS key.
+# Value = frozenset of helper *suffixes* (strip the "hph_src_" prefix).
+#
+# Rules:
+#   • Only hph_src_* helpers are capability-gated; hph_ctrl_write_* fill
+#     unconditionally (control surfaces are vendor-gated, not model-gated).
+#   • A model NOT present in this dict is treated as "all sensors available"
+#     (non-Panasonic vendors fill manually via Config tab).
+#   • When uncertain, omit the sensor rather than guessing — users can fill
+#     the helper manually in Settings → Devices → HeatPump Hero → Configure.
+#
+# Confirmed sources:
+#   • Fan1 / Fan2: HeishaMon HeishaMon hardware docs + user report (2026-05).
+#     J/K/L-series = WH-MDC*/WH-SDC* = SINGLE outdoor fan → fan2_speed absent.
+#     T-CAP / M-series = WH-MXC* = DUAL outdoor fans → fan2_speed present.
+#   • pump_pressure (TOP115): K/L All-In-One only (noted in const.py comment
+#     predating this map). J-series and split-unit T-CAP/M lack this sensor.
+# ───────────────────────────────────────────────────────────────────────────
+_PANASONIC_COMMON_SENSORS: Final = frozenset({
+    "fan1_speed", "inverter_temp", "high_pressure", "low_pressure",
+    "compressor_current", "outdoor_pipe_temp", "3way_valve",
+    "zone1_target_temp", "hex_outlet_temp", "pump_duty",
+    # internal_thermal_power has a non-empty default so is not capability-gated
+})
+
+MODEL_CAPABILITIES: Final[dict[str, frozenset[str]]] = {
+    # J-series (WH-MDC*, R410A, oldest): single fan, no water pressure
+    "panasonic_j_aqj": _PANASONIC_COMMON_SENSORS,
+    # K-series (R410A improved): single fan, adds water pressure on All-In-One
+    "panasonic_k_aqk": _PANASONIC_COMMON_SENSORS | {"pump_pressure"},
+    # L-series (R32, current mainstream): single fan, confirmed by user
+    "panasonic_l_aql": _PANASONIC_COMMON_SENSORS | {"pump_pressure"},
+    # T-CAP / All-Season (R32): DUAL outdoor fan, no integrated pressure sensor
+    "panasonic_tcap":  _PANASONIC_COMMON_SENSORS | {"fan2_speed"},
+    # M-series (R290): DUAL outdoor fan
+    "panasonic_m_aqm": _PANASONIC_COMMON_SENSORS | {"fan2_speed"},
+}
+
+# ───────────────────────────────────────────────────────────────────────────
+# Vendor → model list: restricts the model dropdown in the config flow to
+# only the models relevant for the chosen vendor.
+# A vendor NOT present here falls back to the full PUMP_MODELS list.
+# ───────────────────────────────────────────────────────────────────────────
+VENDOR_MODELS: Final[dict[str, list[str]]] = {
+    "panasonic_heishamon": [
+        "panasonic_j_aqj", "panasonic_k_aqk", "panasonic_l_aql",
+        "panasonic_tcap", "panasonic_m_aqm",
+    ],
+    "panasonic_heishamon_aquarea": [
+        "panasonic_j_aqj", "panasonic_k_aqk", "panasonic_l_aql",
+        "panasonic_tcap", "panasonic_m_aqm",
+    ],
+    "daikin_altherma_core":        ["daikin_altherma3"],
+    "mitsubishi_melcloud_core":    ["mitsubishi_ecodan"],
+    "vaillant_arotherm_mypyllant": ["vaillant_arotherm"],
+    "stiebel_eltron_isg":          ["stiebel_wpl"],
+    "generic_modbus":              ["generic"],
+    "generic_mqtt":                ["generic"],
+    "keep_current":                list(PUMP_MODELS.keys()),
+}
+
+# ───────────────────────────────────────────────────────────────────────────
 # Helper definitions — one dict per HA platform.
 #
 # Each entry: unique_id -> (kind-specific config). The platform module reads
@@ -186,11 +313,35 @@ TEXT_HELPERS: Final[dict[str, dict[str, Any]]] = {
     "hph_src_discharge_temp": {"name": "HeatPump Hero source — compressor discharge temperature", "icon": "mdi:thermometer-high",
                                 "initial": "sensor.panasonic_heat_pump_main_discharge_temperature"},
     "hph_src_pump_pressure": {"name": "HeatPump Hero source — water pressure", "icon": "mdi:gauge",
-                               "initial": "sensor.panasonic_heat_pump_main_pump_pressure"},
+                               # K/L-series All-In-One only (TOP115). J/T-CAP/M: blank this helper.
+                               "initial": "sensor.panasonic_heat_pump_main_water_pressure"},
     "hph_src_internal_power": {"name": "HeatPump Hero source — heat pump internal power consumption", "icon": "mdi:flash",
                                 "initial": "sensor.panasonic_heat_pump_main_consumed_power"},
     "hph_src_internal_thermal_power": {"name": "HeatPump Hero source — heat pump internal thermal power production", "icon": "mdi:fire",
                                 "initial": "sensor.panasonic_heat_pump_main_heat_power_production"},
+    # Monitoring sensors added in v0.9 (Control tab — Machine Room)
+    "hph_src_fan1_speed": {"name": "HeatPump Hero source — fan 1 speed (R/min)", "icon": "mdi:fan",
+                            "initial": ""},
+    "hph_src_fan2_speed": {"name": "HeatPump Hero source — fan 2 speed (R/min)", "icon": "mdi:fan",
+                            "initial": ""},
+    "hph_src_inverter_temp": {"name": "HeatPump Hero source — inverter / IPM temperature (°C)", "icon": "mdi:thermometer-high",
+                               "initial": ""},
+    "hph_src_high_pressure": {"name": "HeatPump Hero source — refrigerant high-side pressure", "icon": "mdi:gauge-high",
+                               "initial": ""},
+    "hph_src_low_pressure": {"name": "HeatPump Hero source — refrigerant low-side pressure", "icon": "mdi:gauge-low",
+                              "initial": ""},
+    "hph_src_compressor_current": {"name": "HeatPump Hero source — compressor current (A)", "icon": "mdi:current-ac",
+                                    "initial": ""},
+    "hph_src_outdoor_pipe_temp": {"name": "HeatPump Hero source — outdoor pipe temperature (°C)", "icon": "mdi:thermometer",
+                                   "initial": ""},
+    "hph_src_3way_valve": {"name": "HeatPump Hero source — 3-way valve state", "icon": "mdi:valve",
+                            "initial": ""},
+    "hph_src_zone1_target_temp": {"name": "HeatPump Hero source — zone 1 water target temperature (°C)", "icon": "mdi:thermostat",
+                                   "initial": ""},
+    "hph_src_hex_outlet_temp": {"name": "HeatPump Hero source — main heat exchanger outlet temperature (°C)", "icon": "mdi:thermometer-lines",
+                                 "initial": ""},
+    "hph_src_pump_duty": {"name": "HeatPump Hero source — pump duty cycle (%)", "icon": "mdi:pump",
+                           "initial": ""},
     "hph_src_defrost_state": {"name": "HeatPump Hero source — defrost state (binary)", "icon": "mdi:snowflake-melt",
                                "initial": "binary_sensor.panasonic_heat_pump_main_defrost_state"},
     "hph_src_aux_heater_state": {"name": "HeatPump Hero source — auxiliary heater state (binary)", "icon": "mdi:radiator-disabled",
@@ -242,6 +393,35 @@ TEXT_HELPERS: Final[dict[str, dict[str, Any]]] = {
                                      "initial": "number.panasonic_heat_pump_main_z1_heat_curve_target_low_temp"},
     "hph_ctrl_write_dhw_target": {"name": "Control write — DHW target temperature (number)", "icon": "mdi:thermostat-cog",
                                    "initial": "number.panasonic_heat_pump_main_dhw_target_temperature"},
+    # Extended control write-path helpers added in v0.9 (Control tab)
+    "hph_ctrl_write_operating_mode": {"name": "Control write — operating mode select entity", "icon": "mdi:thermostat",
+                                       "initial": ""},
+    "hph_ctrl_write_power": {"name": "Control write — main power switch entity", "icon": "mdi:power",
+                              "initial": ""},
+    "hph_ctrl_write_holiday": {"name": "Control write — holiday mode switch entity", "icon": "mdi:beach",
+                                "initial": ""},
+    "hph_ctrl_write_force_defrost": {"name": "Control write — force defrost switch entity", "icon": "mdi:snowflake-melt",
+                                      "initial": ""},
+    "hph_ctrl_write_powerful_mode": {"name": "Control write — powerful/boost mode select entity (vendor-specific)", "icon": "mdi:rocket-launch",
+                                      "initial": ""},
+    "hph_ctrl_write_active_zones": {"name": "Control write — active zones select entity", "icon": "mdi:home-floor-a",
+                                     "initial": ""},
+    "hph_ctrl_write_bivalent_mode": {"name": "Control write — bivalent mode select entity", "icon": "mdi:fire-circle",
+                                      "initial": ""},
+    "hph_ctrl_write_z1_heat_shift": {"name": "Control write — zone 1 heat request shift (number)", "icon": "mdi:plus-minus",
+                                      "initial": ""},
+    "hph_ctrl_write_z2_heat_shift": {"name": "Control write — zone 2 heat request shift (number)", "icon": "mdi:plus-minus",
+                                      "initial": ""},
+    "hph_ctrl_write_heating_cutoff": {"name": "Control write — heating cutoff outdoor temperature (number)", "icon": "mdi:thermometer-off",
+                                       "initial": ""},
+    "hph_ctrl_write_max_pump_duty": {"name": "Control write — maximum pump duty cycle (number)", "icon": "mdi:pump",
+                                      "initial": ""},
+    "hph_ctrl_write_room_heat_delta": {"name": "Control write — room heating delta / hysteresis (number)", "icon": "mdi:delta",
+                                        "initial": ""},
+    "hph_ctrl_write_z1_climate": {"name": "Control write — zone 1 climate entity", "icon": "mdi:home-thermometer",
+                                   "initial": ""},
+    "hph_ctrl_write_z2_climate": {"name": "Control write — zone 2 climate entity", "icon": "mdi:home-thermometer-outline",
+                                   "initial": ""},
     # Analysis (hph_analysis.yaml)
     "hph_indoor_temp_entity": {"name": "Analysis — indoor reference temperature entity", "icon": "mdi:home-thermometer",
                                 "initial": ""},

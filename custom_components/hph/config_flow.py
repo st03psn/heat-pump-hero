@@ -21,17 +21,16 @@ from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.core import callback
 from homeassistant.helpers import selector
 
-from .const import DOMAIN, INTEGRATION_NAME, PUMP_MODELS, VENDOR_PRESETS
+from .const import DOMAIN, INTEGRATION_NAME, PUMP_MODELS, VENDOR_MODELS, VENDOR_PRESETS
 
 _LOGGER = logging.getLogger(__name__)
 
 
 def _vendor_options() -> list[selector.SelectOptionDict]:
-    """Vendor preset options. v0.9: only Panasonic is fully validated;
-    other vendor recipes exist but haven't been tested by users on
-    real hardware. Show them as teaser-only so the integration's
-    multi-vendor scope is visible, but mark them clearly."""
-    selectable = {"panasonic_heishamon", "panasonic_heishamon_mqtt", "keep_current"}
+    """Vendor preset options. v0.9: Panasonic (heishamon + aquarea) is fully
+    validated; other vendor recipes exist but haven't been tested on real
+    hardware. Show them as teasers so the multi-vendor scope is visible."""
+    selectable = _selectable_vendor_keys()
     options: list[selector.SelectOptionDict] = []
     for v in list(VENDOR_PRESETS.keys()) + ["keep_current"]:
         label = v.replace("_", " ").title()
@@ -42,13 +41,24 @@ def _vendor_options() -> list[selector.SelectOptionDict]:
 
 
 def _selectable_vendor_keys() -> set[str]:
-    return {"panasonic_heishamon", "panasonic_heishamon_mqtt", "keep_current"}
+    return {
+        "panasonic_heishamon",
+        "panasonic_heishamon_aquarea",
+        "keep_current",
+    }
 
 
-def _model_options() -> list[selector.SelectOptionDict]:
+def _model_options(vendor_key: str = "") -> list[selector.SelectOptionDict]:
+    """Return model options restricted to those valid for *vendor_key*.
+
+    Falls back to the full PUMP_MODELS list when vendor_key is absent
+    from VENDOR_MODELS (e.g. non-Panasonic vendors in v0.9 teaser state).
+    """
+    allowed_keys = VENDOR_MODELS.get(vendor_key, list(PUMP_MODELS.keys()))
     return [
         selector.SelectOptionDict(value=k, label=v.get("description", k))
         for k, v in PUMP_MODELS.items()
+        if k in allowed_keys
     ]
 
 
@@ -136,16 +146,17 @@ class HphConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_model(self, user_input: dict[str, Any] | None = None) -> Any:
-        """Step 2 — pick the heat-pump model."""
+        """Step 2 — pick the heat-pump model (filtered to chosen vendor)."""
         if user_input is not None:
             self._data["pump_model"] = user_input["pump_model"]
             return await self.async_step_sensors()
 
+        vendor = self._data.get("vendor_preset", "")
         schema = vol.Schema(
             {
                 vol.Required("pump_model", default="panasonic_l_aql"): selector.SelectSelector(
                     selector.SelectSelectorConfig(
-                        options=_model_options(),
+                        options=_model_options(vendor),
                         mode=selector.SelectSelectorMode.DROPDOWN,
                     )
                 ),
@@ -246,10 +257,15 @@ class HphOptionsFlow(config_entries.OptionsFlow):
             self._data.update(user_input)
             return await self.async_step_sensors()
 
+        # Use stored vendor to pre-filter the model list. The vendor and model
+        # are on the same form, so filtering is based on the *currently stored*
+        # vendor — after changing vendor the user re-opens Configure once more
+        # and the model list refreshes.
+        stored_vendor = self._data.get("vendor_preset", "keep_current")
         schema = vol.Schema(
             {
                 vol.Required(
-                    "vendor_preset", default=self._data.get("vendor_preset", "keep_current")
+                    "vendor_preset", default=stored_vendor
                 ): selector.SelectSelector(
                     selector.SelectSelectorConfig(
                         options=_vendor_options(),
@@ -260,7 +276,7 @@ class HphOptionsFlow(config_entries.OptionsFlow):
                     "pump_model", default=self._data.get("pump_model", "panasonic_l_aql")
                 ): selector.SelectSelector(
                     selector.SelectSelectorConfig(
-                        options=_model_options(),
+                        options=_model_options(stored_vendor),
                         mode=selector.SelectSelectorMode.DROPDOWN,
                     )
                 ),

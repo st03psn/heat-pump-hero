@@ -5,6 +5,51 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
 
 ## [Unreleased]
 
+### Added
+
+- **Model capability map** (`MODEL_CAPABILITIES` in `const.py`): each Panasonic
+  model now declares which sensors physically exist. Applying a vendor preset
+  to a J/K/L-series (single-fan) model no longer fills `text.hph_src_fan2_speed`
+  with a sensor reference — it stays empty and the Fan 2 tile hides itself.
+  T-CAP and M-series (dual-fan) receive both fan helpers as before.
+  J-series also no longer receives `hph_src_pump_pressure` (K/L All-In-One only).
+
+- **Vendor-filtered model dropdown** in the config flow: selecting a Panasonic
+  vendor now shows only Panasonic models, not Daikin/Mitsubishi/etc. entries.
+  The restriction comes from the new `VENDOR_MODELS` map in `const.py`.
+
+- **`hph.reapply_vendor_preset` service**: re-seeds all source/write helpers
+  from the currently stored vendor + model without opening the reconfigure wizard.
+  Useful after HACS updates that add new helpers.
+
+- **pytest test suite**: `tests/test_dashboard.py` and `tests/test_config_flow.py`
+  run without a Home Assistant installation (pure Python + PyYAML). CI gains a
+  `pytest` job in `.github/workflows/validate.yml`. `tests/test_setup.py` runs
+  full integration tests when `pytest-homeassistant-custom-component` is present.
+
+### Fixed
+
+- **`panasonic_heishamon_aquarea` preset unreachable from config flow UI.**
+  `_selectable_vendor_keys()` still had the old key `panasonic_heishamon_mqtt`
+  instead of `panasonic_heishamon_aquarea`, blocking the Aquarea preset selection.
+
+- **Machine Room tiles no longer show "unavail" stubs.** Each tile now wraps in
+  a `conditional: state_not: ""` check on its `text.hph_src_*` helper so it only
+  renders when the helper is non-empty (i.e. the sensor exists on this hardware).
+
+### Changed
+
+- **Data consolidation under `custom_components/hph/`**: the dashboard YAML is
+  now served directly from the integration data directory via `LovelaceYAML`
+  with an absolute path — no longer copied to `<config>/hph/dashboard.yaml`.
+  SVG schematic assets are served via a static-path registration at `/hph_assets/`
+  instead of being copied to `<config>/www/hph/`. On first boot after the update
+  `bootstrap.py` removes the stale copies automatically. `hph_efficiency.yaml`
+  must remain in `<config>/packages/` (HA YAML-loader requirement).
+
+- SVG image URLs in the dashboard changed from `/local/hph/*.svg` to
+  `/hph_assets/*.svg` to match the new static-path registration.
+
 ### Fixed
 
 - **Standby breakdown was structurally wrong on the day of integration
