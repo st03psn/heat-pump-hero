@@ -1093,6 +1093,109 @@ sensors:
     and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
   state: '{{ states(states(''text.hph_src_heater_hours'')) | float(0) }}'
   _source_package: hph_sources.yaml
+# Control-tab monitoring facades — display-only, not used in calculations
+- name: HeatPump Hero Source Fan 1 Speed
+  unique_id: hph_source_fan1_speed
+  unit_of_measurement: R/min
+  state_class: measurement
+  availability: '{% set ent = states(''text.hph_src_fan1_speed'') %} {{ ent and
+    states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_fan1_speed'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Fan 2 Speed
+  unique_id: hph_source_fan2_speed
+  unit_of_measurement: R/min
+  state_class: measurement
+  availability: '{% set ent = states(''text.hph_src_fan2_speed'') %} {{ ent and
+    states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_fan2_speed'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Inverter Temperature
+  unique_id: hph_source_inverter_temp
+  unit_of_measurement: "\xB0C"
+  device_class: temperature
+  state_class: measurement
+  availability: '{% set ent = states(''text.hph_src_inverter_temp'') %} {{ ent
+    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_inverter_temp'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source High Pressure
+  unique_id: hph_source_high_pressure
+  unit_of_measurement: kPa
+  device_class: pressure
+  state_class: measurement
+  availability: '{% set ent = states(''text.hph_src_high_pressure'') %} {{ ent
+    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_high_pressure'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Low Pressure
+  unique_id: hph_source_low_pressure
+  unit_of_measurement: kPa
+  device_class: pressure
+  state_class: measurement
+  availability: '{% set ent = states(''text.hph_src_low_pressure'') %} {{ ent
+    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_low_pressure'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Compressor Current
+  unique_id: hph_source_compressor_current
+  unit_of_measurement: A
+  device_class: current
+  state_class: measurement
+  availability: '{% set ent = states(''text.hph_src_compressor_current'') %} {{ ent
+    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_compressor_current'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Outdoor Pipe Temperature
+  unique_id: hph_source_outdoor_pipe_temp
+  unit_of_measurement: "\xB0C"
+  device_class: temperature
+  state_class: measurement
+  availability: '{% set ent = states(''text.hph_src_outdoor_pipe_temp'') %} {{ ent
+    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_outdoor_pipe_temp'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source 3-Way Valve
+  unique_id: hph_source_3way_valve
+  availability: '{% set ent = states(''text.hph_src_3way_valve'') %} {{ ent and
+    states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_3way_valve'')) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Zone 1 Target Temperature
+  unique_id: hph_source_zone1_target_temp
+  unit_of_measurement: "\xB0C"
+  device_class: temperature
+  state_class: measurement
+  availability: '{% set ent = states(''text.hph_src_zone1_target_temp'') %} {{ ent
+    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_zone1_target_temp'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Heat Exchanger Outlet Temperature
+  unique_id: hph_source_hex_outlet_temp
+  unit_of_measurement: "\xB0C"
+  device_class: temperature
+  state_class: measurement
+  availability: '{% set ent = states(''text.hph_src_hex_outlet_temp'') %} {{ ent
+    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_hex_outlet_temp'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Pump Duty
+  unique_id: hph_source_pump_duty
+  unit_of_measurement: '%'
+  state_class: measurement
+  availability: '{% set ent = states(''text.hph_src_pump_duty'') %} {{ ent and
+    states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_pump_duty'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Internal Thermal Power
+  unique_id: hph_source_internal_thermal_power
+  unit_of_measurement: W
+  device_class: power
+  state_class: measurement
+  availability: '{% set ent = states(''text.hph_src_internal_thermal_power'') %} {{ ent
+    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_internal_thermal_power'')) | float(0) }}'
+  _source_package: hph_sources.yaml
 # hph_thermal_power_active: live thermal power for COP live calculation.
 # heat_pump_internal: read the heat pump's own thermal-output sensor
 #   (e.g. Panasonic publishes heat_power_production directly via Heishamon).

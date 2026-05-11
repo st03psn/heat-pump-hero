@@ -114,8 +114,8 @@ release notes come from `CHANGELOG.md`.
   The whitelist is enforced by `tests/smoke.py:ALLOWED_HARDCODE` —
   adding any other location requires updating the whitelist with a
   one-line justification.
-- **Dashboard views**: `overview`, `schema`, `analysis`, `efficiency`,
-  `optimization`, `config`.
+- **Dashboard views**: `overview`, `schema`, `control`, `analysis`,
+  `efficiency`, `optimization`, `config`.
 
 ## Source-adapter architecture
 
@@ -154,8 +154,38 @@ utility_meter.hph_thermal_*             ← daily/monthly/yearly + tariff splits
 
 **Swapping the heat pump:** change the relevant `input_text.hph_src_*`
 helpers in the UI (Settings → Devices → Helpers). All read paths follow.
-Write paths in `hph_control.yaml` are still heat-pump-specific by
-nature — see the comment header in that file.
+Write paths for the *control automations* (`hph_control.yaml`) are managed
+through `input_text.hph_ctrl_write_*` helpers — see the Control surface
+universality section below.
+
+## Control surface universality
+
+Every helper, facade sensor, and dashboard card in the **Control tab** is
+designed vendor-agnostic. Features are classified as *universal* (most A2W
+heat pumps expose this) or *vendor-specific* (one vendor only, e.g. Panasonic
+"Powerful mode"). Dashboard cards for vendor-specific features are wrapped in
+`conditional:` — if the `hph_ctrl_write_*` helper is empty the card is hidden.
+
+**Workflow for adding a new control:**
+
+1. Classify: universal or vendor-specific.
+2. Add `input_text.hph_ctrl_write_<function>` to `packages/hph_models.yaml`
+   (under the control vendor adapter section). Default: `""` (empty).
+3. Add the matching entry to every vendor preset that supports it in the
+   `hph_vendor_preset_apply` automation.
+4. Add the card to the Control tab; wrap in `conditional:` if vendor-specific.
+
+**Read-only monitoring sensors** for the Control tab (fan speeds, pressures,
+compressor current, etc.) follow the same facade pattern as other `hph_src_*`
+helpers — defined in `packages/hph_sources.yaml` with empty defaults. The
+`aquarea` vendor preset fills all of them.
+
+**Naming convention:** use generic HVAC function names, not vendor brands:
+`hph_ctrl_write_operating_mode` (not `hph_ctrl_write_aquarea_mode`),
+`hph_src_inverter_temp` (not `hph_src_ipm_temp`).
+
+Goal: a Daikin user selecting the `daikin_altherma_core` preset gets the
+applicable subset of the Control tab with no Panasonic-branded leftovers.
 
 ## Diagnostics module
 

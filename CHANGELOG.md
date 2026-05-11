@@ -105,6 +105,64 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
 
 ### Added
 
+- **New "Control" dashboard tab — heat pump administration surface.**
+  Added a dedicated `control` view (between Overview and Analysis) with
+  seven sections covering every writable entity the heat pump exposes:
+  - *Status bar*: compressor state, operating mode (tap to cycle),
+    quiet level (tap to cycle), live COP, master power toggle
+  - *Zone 1 / Zone 2 heating*: climate setpoint (tap for thermostat
+    popup), heat shift, and heating-curve high/low endpoints (curve
+    section conditional on helper being set)
+  - *Zone 2* is wrapped in a `conditional` on `binary_sensor.hph_has_hk2`
+  - *Hot Water*: DHW actual vs target, one-tap force-DHW toggle
+  - *System & Thresholds*: heating cutoff, heat hysteresis, max pump
+    duty, active zones, bivalent mode
+  - *Machine Room* (diagnostics): inverter temperature, refrigerant
+    high/low pressure, compressor current, outdoor pipe, fan 1/2 speed,
+    3-way valve, pump duty, HEX outlet, zone 1 setpoint, thermal power
+  - *Special Functions*: holiday mode, force defrost, boost mode
+    (boost shows "— vendor-specific" when `hph_ctrl_write_powerful_mode`
+    is empty, so non-Panasonic installs get a clean indication)
+  All cards resolve their target entity at runtime via
+  `input_text.hph_ctrl_write_*` helpers — vendor-agnostic by design.
+
+- **12 new source read helpers and facade sensors.**
+  `packages/hph_sources.yaml` and `custom_components/hph/data/sensor_templates.yaml`
+  now include: `hph_src_fan1_speed`, `hph_src_fan2_speed`,
+  `hph_src_inverter_temp`, `hph_src_high_pressure`, `hph_src_low_pressure`,
+  `hph_src_compressor_current`, `hph_src_outdoor_pipe_temp`,
+  `hph_src_3way_valve`, `hph_src_zone1_target_temp`,
+  `hph_src_hex_outlet_temp`, `hph_src_pump_duty`,
+  `hph_src_internal_thermal_power`. All default to empty; populate via
+  the vendor preset or the Config tab.
+
+- **14 new control write-path helpers.**
+  `packages/hph_models.yaml` defines: `hph_ctrl_write_power`,
+  `hph_ctrl_write_holiday`, `hph_ctrl_write_force_defrost`,
+  `hph_ctrl_write_powerful_mode`, `hph_ctrl_write_operating_mode`,
+  `hph_ctrl_write_active_zones`, `hph_ctrl_write_bivalent_mode`,
+  `hph_ctrl_write_z1_heat_shift`, `hph_ctrl_write_z2_heat_shift`,
+  `hph_ctrl_write_heating_cutoff`, `hph_ctrl_write_max_pump_duty`,
+  `hph_ctrl_write_room_heat_delta`, `hph_ctrl_write_z1_climate`,
+  `hph_ctrl_write_z2_climate`. All default to empty.
+
+- **New `panasonic_aquarea` vendor preset.**
+  Selecting `panasonic_aquarea` in `input_select.hph_vendor_preset`
+  fills all 46 source and write helpers with the correct entity IDs
+  for the community `custom_components/aquarea` integration (entity
+  naming: `sensor.aquarea_*`, `select.aquarea_*`, `switch.aquarea_*`,
+  `climate.aquarea_zone_*`, `number.aquarea_*`). Distinct from the
+  existing `panasonic_heishamon_mqtt` preset which targets the
+  HeishaMon bundled MQTT YAML convention (`sensor.aquarea_main_*`).
+
+- **Hero card now shows idle state when compressor is off.**
+  `sensor.hph_operating_mode` reflects the HP's configured programme
+  even between compressor cycles. The hero card primary text is now
+  gated on `binary_sensor.hph_compressor_running`: when the compressor
+  is off, it reads "Idle — Heating mode" / "Idle — DHW mode" etc.;
+  icon switches to `mdi:radiator-off` / `mdi:water-boiler-off` /
+  `mdi:snowflake-off`; border and icon colour switch to blue-grey.
+
 - **Schematic SVGs rewritten with SMIL animations.**
   All four installation-variant SVGs (`schema_a2w_hk1`, `*_dhw`,
   `*_hk2_dhw`, `*_hk2_dhw_buffer`) now use native SMIL `<animateTransform>`

@@ -82,10 +82,18 @@ views:
           - type: custom:mushroom-template-card
             primary: >-
               {% set mode = states('sensor.hph_operating_mode') %}
-              {% if mode == 'heating' %}Heating
-              {% elif mode == 'dhw' %}Hot Water
-              {% elif mode == 'cooling' %}Cooling
-              {% else %}Standby{% endif %}
+              {% set on = is_state('binary_sensor.hph_compressor_running','on') %}
+              {% if on %}
+                {% if mode == 'heating' %}Heating
+                {% elif mode == 'dhw' %}Hot Water
+                {% elif mode == 'cooling' %}Cooling
+                {% else %}Running{% endif %}
+              {% else %}
+                {% if mode == 'heating' %}Idle — Heating mode
+                {% elif mode == 'dhw' %}Idle — DHW mode
+                {% elif mode == 'cooling' %}Idle — Cooling mode
+                {% else %}Standby{% endif %}
+              {% endif %}
               — COP live {{ states('sensor.hph_cop_live') | float(0) | round(2) }}
               {%- if is_state('binary_sensor.hph_defrost_active','on') %} (×0 defrost){% endif %}
             secondary: >-
@@ -98,15 +106,17 @@ views:
               · Electrical {% if e >= 1000 %}{{ (e / 1000) | round(2) }} kW{% else %}{{ e | round(0) | int }} W{% endif %}
             icon: >-
               {% set mode = states('sensor.hph_operating_mode') %}
-              {% if mode == 'heating' %}mdi:radiator
-              {% elif mode == 'dhw' %}mdi:water-boiler
-              {% elif mode == 'cooling' %}mdi:snowflake
+              {% set on = is_state('binary_sensor.hph_compressor_running','on') %}
+              {% if mode == 'heating' %}{{ 'mdi:radiator' if on else 'mdi:radiator-off' }}
+              {% elif mode == 'dhw' %}{{ 'mdi:water-boiler' if on else 'mdi:water-boiler-off' }}
+              {% elif mode == 'cooling' %}{{ 'mdi:snowflake' if on else 'mdi:snowflake-off' }}
               {% else %}mdi:heat-pump{% endif %}
             icon_color: >-
               {% set mode = states('sensor.hph_operating_mode') %}
-              {% if mode == 'heating' %}deep-orange
-              {% elif mode == 'dhw' %}light-blue
-              {% elif mode == 'cooling' %}cyan
+              {% set on = is_state('binary_sensor.hph_compressor_running','on') %}
+              {% if on and mode == 'heating' %}deep-orange
+              {% elif on and mode == 'dhw' %}light-blue
+              {% elif on and mode == 'cooling' %}cyan
               {% else %}blue-grey{% endif %}
             badge_icon: >-
               {% set cop = states('sensor.hph_cop_live') | float(0) %}
@@ -123,9 +133,10 @@ views:
               style: >-
                 ha-card {
                   border-left: 4px solid
-                    {% if is_state('sensor.hph_operating_mode','heating') %}#FF7043
-                    {% elif is_state('sensor.hph_operating_mode','dhw') %}#42A5F5
-                    {% elif is_state('sensor.hph_operating_mode','cooling') %}#64B5F6
+                    {% set on = is_state('binary_sensor.hph_compressor_running','on') %}
+                    {% if on and is_state('sensor.hph_operating_mode','heating') %}#FF7043
+                    {% elif on and is_state('sensor.hph_operating_mode','dhw') %}#42A5F5
+                    {% elif on and is_state('sensor.hph_operating_mode','cooling') %}#64B5F6
                     {% else %}#78909C{% endif %};
                 }
 
@@ -1106,7 +1117,490 @@ views:
                     transform: translate(-50%, -50%)
 
   # ════════════════════════════════════════════════════════════════════════
-  # 2) ANALYSIS — ApexCharts (Service-Cloud-style)
+  # 2) CONTROL — Heat Pump Administration
+  #    Section 1: Status bar (read-only quick overview)
+  #    Section 2: Zone 1 — Heating (climate setpoint, heat shift, curve)
+  #    Section 3: Zone 2 — Heating (conditional on hph_has_hk2)
+  #    Section 4: Hot Water (target setpoint, force DHW)
+  #    Section 5: System & Thresholds (heating cutoff, hysteresis, pump duty)
+  #    Section 6: Machine Room (inverter, pressures, current, fans, valve)
+  #    Section 7: Special Functions (holiday, force defrost, boost mode)
+  #
+  #    Control pattern: all write actions resolve their entity at runtime via
+  #    input_text.hph_ctrl_write_* helpers — vendor-agnostic by design.
+  #    Vendor-specific features (boost mode) always render; they show '—'
+  #    when the helper is empty so non-Panasonic users know it is not set up.
+  # ════════════════════════════════════════════════════════════════════════
+  - title: Control
+    path: control
+    icon: mdi:thermostat
+    cards:
+
+      # ── Section 1: Status bar ────────────────────────────────────────────
+      - type: custom:mushroom-chips-card
+        chips:
+          - type: entity
+            entity: binary_sensor.hph_compressor_running
+            icon: mdi:engine
+          - type: template
+            content: >-
+              {% set e = states('input_text.hph_ctrl_write_operating_mode') %}
+              Mode: {{ states(e) | title if e else '—' }}
+            icon: mdi:thermostat
+            icon_color: >-
+              {% set e = states('input_text.hph_ctrl_write_operating_mode') %}
+              {% set m = states(e) | lower %}
+              {{ 'orange' if m == 'heat' else ('blue' if m == 'cool' else ('teal' if 'dhw' in m else 'grey')) }}
+            tap_action:
+              action: perform-action
+              perform_action: select.select_next
+              target:
+                entity_id: "{{ states('input_text.hph_ctrl_write_operating_mode') }}"
+              data:
+                cycle: true
+            hold_action:
+              action: more-info
+              entity: "{{ states('input_text.hph_ctrl_write_operating_mode') }}"
+          - type: template
+            content: >-
+              {% set e = states('input_text.hph_ctrl_write_quiet_mode') %}
+              Quiet: {{ states(e) if e else '—' }}
+            icon: mdi:volume-low
+            icon_color: >-
+              {% set e = states('input_text.hph_ctrl_write_quiet_mode') %}
+              {{ 'teal' if e and states(e) | lower not in ['off','0','level 0'] else 'grey' }}
+            tap_action:
+              action: perform-action
+              perform_action: select.select_next
+              target:
+                entity_id: "{{ states('input_text.hph_ctrl_write_quiet_mode') }}"
+              data:
+                cycle: true
+            hold_action:
+              action: more-info
+              entity: "{{ states('input_text.hph_ctrl_write_quiet_mode') }}"
+          - type: template
+            content: "COP {{ states('sensor.hph_cop_live') | float(0) | round(2) }}"
+            icon: mdi:lightning-bolt-circle
+            icon_color: >-
+              {% set cop = states('sensor.hph_cop_live') | float(0) %}
+              {{ 'green' if cop > 3 else ('orange' if cop > 2 else 'red') }}
+          - type: template
+            content: >-
+              {% set e = states('input_text.hph_ctrl_write_power') %}
+              {{ 'On' if e and is_state(e,'on') else 'Standby' }}
+            icon: >-
+              {% set e = states('input_text.hph_ctrl_write_power') %}
+              {{ 'mdi:power' if e and is_state(e,'on') else 'mdi:power-sleep' }}
+            icon_color: >-
+              {% set e = states('input_text.hph_ctrl_write_power') %}
+              {{ 'green' if e and is_state(e,'on') else 'grey' }}
+            tap_action:
+              action: perform-action
+              perform_action: homeassistant.toggle
+              target:
+                entity_id: "{{ states('input_text.hph_ctrl_write_power') }}"
+
+      # ── Section 2: Zone 1 — Heating ──────────────────────────────────────
+      - type: custom:mushroom-title-card
+        title: Zone 1 — Heating
+        subtitle: Setpoint · heat shift · heating curve
+
+      - type: grid
+        columns: 2
+        square: false
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Climate Setpoint
+            secondary: >-
+              {% set e = states('input_text.hph_ctrl_write_z1_climate') %}
+              {% if not e %}Helper not configured — see Config tab
+              {% else %}Target {{ state_attr(e,'temperature') | float(0) | round(1) }}°C
+              · Actual {{ states('sensor.hph_source_zone1_temp') }}°C{% endif %}
+            icon: mdi:thermometer-lines
+            icon_color: >-
+              {% set e = states('input_text.hph_ctrl_write_z1_climate') %}
+              {{ 'deep-orange' if e and state_attr(e,'hvac_action') == 'heating' else 'blue-grey' }}
+            tap_action:
+              action: more-info
+              entity: "{{ states('input_text.hph_ctrl_write_z1_climate') }}"
+
+          - type: custom:mushroom-template-card
+            primary: Heat Shift HK1
+            secondary: >-
+              {% set e = states('input_text.hph_ctrl_write_z1_heat_shift') %}
+              {% if not e %}Not configured
+              {% else %}{{ states(e) | float(0) | round(1) }} K offset{% endif %}
+            icon: mdi:plus-minus
+            icon_color: grey
+            tap_action:
+              action: more-info
+              entity: "{{ states('input_text.hph_ctrl_write_z1_heat_shift') }}"
+
+      - type: conditional
+        conditions:
+          - condition: template
+            value_template: >-
+              {{ states('input_text.hph_ctrl_write_z1_curve_high') not in ['','unknown','unavailable'] }}
+        card:
+          type: grid
+          columns: 2
+          square: false
+          cards:
+            - type: custom:mushroom-template-card
+              primary: Curve High Point
+              secondary: >-
+                {% set e = states('input_text.hph_ctrl_write_z1_curve_high') %}
+                {{ states(e) | float(0) | round(1) }}°C supply @ cold outdoor
+              icon: mdi:chart-bell-curve
+              icon_color: red
+              tap_action:
+                action: more-info
+                entity: "{{ states('input_text.hph_ctrl_write_z1_curve_high') }}"
+
+            - type: custom:mushroom-template-card
+              primary: Curve Low Point
+              secondary: >-
+                {% set e = states('input_text.hph_ctrl_write_z1_curve_low') %}
+                {{ states(e) | float(0) | round(1) }}°C supply @ warm outdoor
+              icon: mdi:chart-bell-curve-cumulative
+              icon_color: green
+              tap_action:
+                action: more-info
+                entity: "{{ states('input_text.hph_ctrl_write_z1_curve_low') }}"
+
+      # ── Section 3: Zone 2 — Heating (conditional) ────────────────────────
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: binary_sensor.hph_has_hk2
+            state: "on"
+        card:
+          type: vertical-stack
+          cards:
+            - type: custom:mushroom-title-card
+              title: Zone 2 — Heating
+              subtitle: Setpoint · heat shift
+
+            - type: grid
+              columns: 2
+              square: false
+              cards:
+                - type: custom:mushroom-template-card
+                  primary: Climate Setpoint
+                  secondary: >-
+                    {% set e = states('input_text.hph_ctrl_write_z2_climate') %}
+                    {% if not e %}Helper not configured — see Config tab
+                    {% else %}Target {{ state_attr(e,'temperature') | float(0) | round(1) }}°C
+                    · Actual {{ states('sensor.hph_source_zone2_temp') }}°C{% endif %}
+                  icon: mdi:thermometer-lines
+                  icon_color: >-
+                    {% set e = states('input_text.hph_ctrl_write_z2_climate') %}
+                    {{ 'deep-orange' if e and state_attr(e,'hvac_action') == 'heating' else 'blue-grey' }}
+                  tap_action:
+                    action: more-info
+                    entity: "{{ states('input_text.hph_ctrl_write_z2_climate') }}"
+
+                - type: custom:mushroom-template-card
+                  primary: Heat Shift HK2
+                  secondary: >-
+                    {% set e = states('input_text.hph_ctrl_write_z2_heat_shift') %}
+                    {% if not e %}Not configured
+                    {% else %}{{ states(e) | float(0) | round(1) }} K offset{% endif %}
+                  icon: mdi:plus-minus
+                  icon_color: grey
+                  tap_action:
+                    action: more-info
+                    entity: "{{ states('input_text.hph_ctrl_write_z2_heat_shift') }}"
+
+      # ── Section 4: Hot Water ──────────────────────────────────────────────
+      - type: custom:mushroom-title-card
+        title: Hot Water
+        subtitle: Target temperature · force charge
+
+      - type: grid
+        columns: 3
+        square: false
+        cards:
+          - type: custom:mushroom-template-card
+            primary: DHW Actual
+            secondary: "{{ states('sensor.hph_source_dhw_temp') }} °C"
+            icon: mdi:water-thermometer
+            icon_color: orange
+            tap_action:
+              action: none
+
+          - type: custom:mushroom-template-card
+            primary: DHW Target
+            secondary: >-
+              {% set e = states('input_text.hph_ctrl_write_dhw_target') %}
+              {% if not e %}Not configured
+              {% else %}{{ states(e) | float(0) | round(1) }} °C{% endif %}
+            icon: mdi:water-thermometer-outline
+            icon_color: orange
+            tap_action:
+              action: more-info
+              entity: "{{ states('input_text.hph_ctrl_write_dhw_target') }}"
+
+          - type: custom:mushroom-template-card
+            primary: Force DHW
+            secondary: >-
+              {% set e = states('input_text.hph_ctrl_write_force_dhw') %}
+              {{ 'Charging' if e and is_state(e,'on') else 'Inactive' }}
+            icon: >-
+              {% set e = states('input_text.hph_ctrl_write_force_dhw') %}
+              {{ 'mdi:water-boiler' if e and is_state(e,'on') else 'mdi:water-boiler-off' }}
+            icon_color: >-
+              {% set e = states('input_text.hph_ctrl_write_force_dhw') %}
+              {{ 'orange' if e and is_state(e,'on') else 'grey' }}
+            tap_action:
+              action: perform-action
+              perform_action: homeassistant.toggle
+              target:
+                entity_id: "{{ states('input_text.hph_ctrl_write_force_dhw') }}"
+
+      # ── Section 5: System & Thresholds ───────────────────────────────────
+      - type: custom:mushroom-title-card
+        title: System & Thresholds
+        subtitle: Limits · zone config · bivalence
+
+      - type: grid
+        columns: 3
+        square: false
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Heating Cutoff
+            secondary: >-
+              {% set e = states('input_text.hph_ctrl_write_heating_cutoff') %}
+              {% if not e %}Not configured
+              {% else %}≤ {{ states(e) | float(0) | round(1) }} °C outdoor{% endif %}
+            icon: mdi:thermometer-off
+            icon_color: blue
+            tap_action:
+              action: more-info
+              entity: "{{ states('input_text.hph_ctrl_write_heating_cutoff') }}"
+
+          - type: custom:mushroom-template-card
+            primary: Heat Hysteresis
+            secondary: >-
+              {% set e = states('input_text.hph_ctrl_write_room_heat_delta') %}
+              {% if not e %}Not configured
+              {% else %}± {{ states(e) | float(0) | round(1) }} K{% endif %}
+            icon: mdi:delta
+            icon_color: grey
+            tap_action:
+              action: more-info
+              entity: "{{ states('input_text.hph_ctrl_write_room_heat_delta') }}"
+
+          - type: custom:mushroom-template-card
+            primary: Max Pump Duty
+            secondary: >-
+              {% set e = states('input_text.hph_ctrl_write_max_pump_duty') %}
+              {% if not e %}Not configured
+              {% else %}{{ states(e) | int(0) }} %{% endif %}
+            icon: mdi:pump
+            icon_color: grey
+            tap_action:
+              action: more-info
+              entity: "{{ states('input_text.hph_ctrl_write_max_pump_duty') }}"
+
+          - type: custom:mushroom-template-card
+            primary: Active Zones
+            secondary: >-
+              {% set e = states('input_text.hph_ctrl_write_active_zones') %}
+              {{ states(e) | title if e else '—' }}
+            icon: mdi:home-floor-1
+            icon_color: blue
+            tap_action:
+              action: more-info
+              entity: "{{ states('input_text.hph_ctrl_write_active_zones') }}"
+
+          - type: custom:mushroom-template-card
+            primary: Bivalent Mode
+            secondary: >-
+              {% set e = states('input_text.hph_ctrl_write_bivalent_mode') %}
+              {{ states(e) | title if e else '—' }}
+            icon: mdi:electric-switch
+            icon_color: grey
+            tap_action:
+              action: more-info
+              entity: "{{ states('input_text.hph_ctrl_write_bivalent_mode') }}"
+
+      # ── Section 6: Machine Room ───────────────────────────────────────────
+      - type: custom:mushroom-title-card
+        title: Machine Room
+        subtitle: Diagnostics — refrigerant · electrical · airside
+
+      - type: grid
+        columns: 4
+        square: false
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Inverter Temp
+            secondary: "{{ states('sensor.hph_source_inverter_temp') }} °C"
+            icon: mdi:chip
+            icon_color: >-
+              {% set t = states('sensor.hph_source_inverter_temp') | float(0) %}
+              {{ 'red' if t > 80 else ('orange' if t > 60 else 'grey') }}
+            tap_action:
+              action: none
+
+          - type: custom:mushroom-template-card
+            primary: High Pressure
+            secondary: "{{ states('sensor.hph_source_high_pressure') }} kPa"
+            icon: mdi:gauge-full
+            icon_color: >-
+              {% set p = states('sensor.hph_source_high_pressure') | float(0) %}
+              {{ 'red' if p > 2800 else ('orange' if p > 2400 else 'grey') }}
+            tap_action:
+              action: none
+
+          - type: custom:mushroom-template-card
+            primary: Low Pressure
+            secondary: "{{ states('sensor.hph_source_low_pressure') }} kPa"
+            icon: mdi:gauge-low
+            icon_color: >-
+              {% set p = states('sensor.hph_source_low_pressure') | float(0) %}
+              {{ 'red' if p < 200 else ('orange' if p < 400 else 'grey') }}
+            tap_action:
+              action: none
+
+          - type: custom:mushroom-template-card
+            primary: Compressor A
+            secondary: "{{ states('sensor.hph_source_compressor_current') }} A"
+            icon: mdi:current-ac
+            icon_color: grey
+            tap_action:
+              action: none
+
+          - type: custom:mushroom-template-card
+            primary: Outdoor Pipe
+            secondary: "{{ states('sensor.hph_source_outdoor_pipe_temp') }} °C"
+            icon: mdi:pipe
+            icon_color: blue
+            tap_action:
+              action: none
+
+          - type: custom:mushroom-template-card
+            primary: Fan 1
+            secondary: "{{ states('sensor.hph_source_fan1_speed') }} R/min"
+            icon: mdi:fan
+            icon_color: >-
+              {% set f = states('sensor.hph_source_fan1_speed') | int(0) %}
+              {{ 'green' if f > 100 else 'grey' }}
+            tap_action:
+              action: none
+
+          - type: custom:mushroom-template-card
+            primary: Fan 2
+            secondary: "{{ states('sensor.hph_source_fan2_speed') }} R/min"
+            icon: mdi:fan
+            icon_color: >-
+              {% set f = states('sensor.hph_source_fan2_speed') | int(0) %}
+              {{ 'green' if f > 100 else 'grey' }}
+            tap_action:
+              action: none
+
+          - type: custom:mushroom-template-card
+            primary: 3-Way Valve
+            secondary: "{{ states('sensor.hph_source_3way_valve') | title }}"
+            icon: mdi:valve
+            icon_color: >-
+              {% set v = states('sensor.hph_source_3way_valve') | lower %}
+              {{ 'orange' if 'dhw' in v or 'hot' in v or v == '1' else 'blue' }}
+            tap_action:
+              action: none
+
+          - type: custom:mushroom-template-card
+            primary: Pump Duty
+            secondary: "{{ states('sensor.hph_source_pump_duty') }} %"
+            icon: mdi:pump
+            icon_color: grey
+            tap_action:
+              action: none
+
+          - type: custom:mushroom-template-card
+            primary: HEX Outlet
+            secondary: "{{ states('sensor.hph_source_hex_outlet_temp') }} °C"
+            icon: mdi:heat-exchanger
+            icon_color: red
+            tap_action:
+              action: none
+
+          - type: custom:mushroom-template-card
+            primary: Zone 1 Setpoint
+            secondary: "{{ states('sensor.hph_source_zone1_target_temp') }} °C"
+            icon: mdi:thermometer-chevron-up
+            icon_color: orange
+            tap_action:
+              action: none
+
+          - type: custom:mushroom-template-card
+            primary: Thermal Power
+            secondary: "{{ states('sensor.hph_source_internal_thermal_power') | float(0) | round(0) }} W"
+            icon: mdi:radiator
+            icon_color: orange
+            tap_action:
+              action: none
+
+      # ── Section 7: Special Functions ─────────────────────────────────────
+      - type: custom:mushroom-title-card
+        title: Special Functions
+        subtitle: One-time / override operations
+
+      - type: grid
+        columns: 3
+        square: false
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Holiday Mode
+            secondary: >-
+              {% set e = states('input_text.hph_ctrl_write_holiday') %}
+              {{ 'Active' if e and is_state(e,'on') else 'Inactive' }}
+            icon: mdi:airplane-takeoff
+            icon_color: >-
+              {% set e = states('input_text.hph_ctrl_write_holiday') %}
+              {{ 'blue' if e and is_state(e,'on') else 'grey' }}
+            tap_action:
+              action: perform-action
+              perform_action: homeassistant.toggle
+              target:
+                entity_id: "{{ states('input_text.hph_ctrl_write_holiday') }}"
+
+          - type: custom:mushroom-template-card
+            primary: Force Defrost
+            secondary: >-
+              {% set e = states('input_text.hph_ctrl_write_force_defrost') %}
+              {{ 'Active' if e and is_state(e,'on') else 'Inactive' }}
+            icon: mdi:snowflake-melt
+            icon_color: >-
+              {% set e = states('input_text.hph_ctrl_write_force_defrost') %}
+              {{ 'cyan' if e and is_state(e,'on') else 'grey' }}
+            tap_action:
+              action: perform-action
+              perform_action: homeassistant.toggle
+              target:
+                entity_id: "{{ states('input_text.hph_ctrl_write_force_defrost') }}"
+
+          # Powerful / Boost mode — vendor-specific (Panasonic Aquarea)
+          # Shows '—' on installations where hph_ctrl_write_powerful_mode is empty
+          - type: custom:mushroom-template-card
+            primary: Boost Mode
+            secondary: >-
+              {% set e = states('input_text.hph_ctrl_write_powerful_mode') %}
+              {% if not e %}— (vendor-specific, not configured)
+              {% else %}{{ states(e) | title }}{% endif %}
+            icon: mdi:lightning-bolt
+            icon_color: >-
+              {% set e = states('input_text.hph_ctrl_write_powerful_mode') %}
+              {% set s = states(e) | lower %}
+              {{ 'orange' if e and s not in ['off','none','','30min'] else 'grey' }}
+            tap_action:
+              action: more-info
+              entity: "{{ states('input_text.hph_ctrl_write_powerful_mode') }}"
+
+  # ════════════════════════════════════════════════════════════════════════
+  # 3) ANALYSIS — ApexCharts (Service-Cloud-style)
   # ════════════════════════════════════════════════════════════════════════
   - title: Analysis
     path: analysis

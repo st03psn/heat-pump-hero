@@ -140,6 +140,82 @@ input_text:
     max: 255
     initial: sensor.panasonic_heat_pump_main_dhw_target_temperature
 
+  # ─── Additional monitoring sensors (Control tab display) ─────────────────
+  # Display-only — not used in any HPH calculation.
+  # Default: "" (empty) so non-Panasonic installs don't reference missing entities.
+  # Vendor preset (aquarea / panasonic_heishamon) fills these in on activation.
+  hph_src_fan1_speed:
+    name: HeatPump Hero source — fan 1 speed
+    icon: mdi:fan
+    max: 255
+    initial: ""
+
+  hph_src_fan2_speed:
+    name: HeatPump Hero source — fan 2 speed
+    icon: mdi:fan
+    max: 255
+    initial: ""
+
+  hph_src_inverter_temp:
+    name: HeatPump Hero source — inverter/IPM temperature
+    icon: mdi:thermometer
+    max: 255
+    initial: ""
+
+  hph_src_high_pressure:
+    name: HeatPump Hero source — refrigerant high-side pressure
+    icon: mdi:gauge-high
+    max: 255
+    initial: ""
+
+  hph_src_low_pressure:
+    name: HeatPump Hero source — refrigerant low-side pressure
+    icon: mdi:gauge-low
+    max: 255
+    initial: ""
+
+  hph_src_compressor_current:
+    name: HeatPump Hero source — compressor current (A)
+    icon: mdi:current-ac
+    max: 255
+    initial: ""
+
+  hph_src_outdoor_pipe_temp:
+    name: HeatPump Hero source — outdoor pipe temperature
+    icon: mdi:pipe
+    max: 255
+    initial: ""
+
+  hph_src_3way_valve:
+    name: HeatPump Hero source — 3-way valve state
+    icon: mdi:valve
+    max: 255
+    initial: ""
+
+  hph_src_zone1_target_temp:
+    name: HeatPump Hero source — zone 1 water target temperature
+    icon: mdi:home-thermometer
+    max: 255
+    initial: ""
+
+  hph_src_hex_outlet_temp:
+    name: HeatPump Hero source — heat exchanger outlet temperature
+    icon: mdi:thermometer-high
+    max: 255
+    initial: ""
+
+  hph_src_pump_duty:
+    name: HeatPump Hero source — circulation pump duty cycle (%)
+    icon: mdi:water-pump
+    max: 255
+    initial: ""
+
+  hph_src_internal_thermal_power:
+    name: HeatPump Hero source — heat pump internal thermal power output (W)
+    icon: mdi:fire
+    max: 255
+    initial: ""
+
   # ─── External meter entities (user fills in) ─────────────────────────────
   # Power sensors (W) — alternative to the calculated thermal_power.
   hph_src_external_thermal_power:
@@ -350,6 +426,121 @@ template:
           {% set ent = states('input_text.hph_src_buffer_temp') %}
           {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
         state: "{{ states(states('input_text.hph_src_buffer_temp')) | float(0) }}"
+
+      # ─── Control-tab monitoring facades (display-only, not used in calcs) ──
+      - name: "HeatPump Hero Source Fan 1 Speed"
+        unique_id: hph_source_fan1_speed
+        unit_of_measurement: "R/min"
+        state_class: measurement
+        availability: >-
+          {% set ent = states('input_text.hph_src_fan1_speed') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: "{{ states(states('input_text.hph_src_fan1_speed')) | float(0) }}"
+
+      - name: "HeatPump Hero Source Fan 2 Speed"
+        unique_id: hph_source_fan2_speed
+        unit_of_measurement: "R/min"
+        state_class: measurement
+        availability: >-
+          {% set ent = states('input_text.hph_src_fan2_speed') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: "{{ states(states('input_text.hph_src_fan2_speed')) | float(0) }}"
+
+      - name: "HeatPump Hero Source Inverter Temperature"
+        unique_id: hph_source_inverter_temp
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        availability: >-
+          {% set ent = states('input_text.hph_src_inverter_temp') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: "{{ states(states('input_text.hph_src_inverter_temp')) | float(0) }}"
+
+      - name: "HeatPump Hero Source High Pressure"
+        unique_id: hph_source_high_pressure
+        unit_of_measurement: "kPa"
+        device_class: pressure
+        state_class: measurement
+        availability: >-
+          {% set ent = states('input_text.hph_src_high_pressure') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: "{{ states(states('input_text.hph_src_high_pressure')) | float(0) }}"
+
+      - name: "HeatPump Hero Source Low Pressure"
+        unique_id: hph_source_low_pressure
+        unit_of_measurement: "kPa"
+        device_class: pressure
+        state_class: measurement
+        availability: >-
+          {% set ent = states('input_text.hph_src_low_pressure') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: "{{ states(states('input_text.hph_src_low_pressure')) | float(0) }}"
+
+      - name: "HeatPump Hero Source Compressor Current"
+        unique_id: hph_source_compressor_current
+        unit_of_measurement: "A"
+        device_class: current
+        state_class: measurement
+        availability: >-
+          {% set ent = states('input_text.hph_src_compressor_current') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: "{{ states(states('input_text.hph_src_compressor_current')) | float(0) }}"
+
+      - name: "HeatPump Hero Source Outdoor Pipe Temperature"
+        unique_id: hph_source_outdoor_pipe_temp
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        availability: >-
+          {% set ent = states('input_text.hph_src_outdoor_pipe_temp') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: "{{ states(states('input_text.hph_src_outdoor_pipe_temp')) | float(0) }}"
+
+      - name: "HeatPump Hero Source 3-Way Valve"
+        unique_id: hph_source_3way_valve
+        availability: >-
+          {% set ent = states('input_text.hph_src_3way_valve') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: "{{ states(states('input_text.hph_src_3way_valve')) }}"
+
+      - name: "HeatPump Hero Source Zone 1 Target Temperature"
+        unique_id: hph_source_zone1_target_temp
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        availability: >-
+          {% set ent = states('input_text.hph_src_zone1_target_temp') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: "{{ states(states('input_text.hph_src_zone1_target_temp')) | float(0) }}"
+
+      - name: "HeatPump Hero Source Heat Exchanger Outlet Temperature"
+        unique_id: hph_source_hex_outlet_temp
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        availability: >-
+          {% set ent = states('input_text.hph_src_hex_outlet_temp') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: "{{ states(states('input_text.hph_src_hex_outlet_temp')) | float(0) }}"
+
+      - name: "HeatPump Hero Source Pump Duty"
+        unique_id: hph_source_pump_duty
+        unit_of_measurement: "%"
+        state_class: measurement
+        availability: >-
+          {% set ent = states('input_text.hph_src_pump_duty') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: "{{ states(states('input_text.hph_src_pump_duty')) | float(0) }}"
+
+      - name: "HeatPump Hero Source Internal Thermal Power"
+        unique_id: hph_source_internal_thermal_power
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        availability: >-
+          {% set ent = states('input_text.hph_src_internal_thermal_power') %}
+          {{ ent and states(ent) not in ['unknown','unavailable','none',''] }}
+        state: "{{ states(states('input_text.hph_src_internal_thermal_power')) | float(0) }}"
 
       # ─── Active thermal power (selected source, for live COP + integration) ──
       # Returns 0 in `external_energy` mode — efficiency package will read
