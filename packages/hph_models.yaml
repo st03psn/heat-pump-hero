@@ -18,9 +18,8 @@ input_select:
     name: HeatPump Hero — vendor preset (auto-fills source helpers)
     icon: mdi:factory
     options:
-      - panasonic_heishamon          # default — kamaradclimber/heishamon-homeassistant
-      - panasonic_heishamon_mqtt     # bundled HeishaMon MQTT YAML — entities aquarea_*
-      - panasonic_aquarea            # custom aquarea HA integration (entity IDs: aquarea.*)
+      - panasonic_heishamon          # HeishaMon firmware MQTT prefix panasonic_heat_pump/ (legacy default)
+      - panasonic_heishamon_aquarea  # HeishaMon firmware MQTT prefix aquarea/ (current default since ~2023)
       - panasonic_smartcloud_mqtt    # Aquarea Smart Cloud via MQTT bridge
       - daikin_altherma_core         # HA core daikin_altherma integration
       - mitsubishi_melcloud_core     # HA core melcloud integration
@@ -439,57 +438,58 @@ automation:
                 data: { value: "number.panasonic_heat_pump_main_floor_heating_delta" }
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_ctrl_write_z1_climate }
-                data: { value: "" }
+                data: { value: "climate.panasonic_heat_pump_main_z1_temp" }
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_ctrl_write_z2_climate }
-                data: { value: "" }
-              # New read helpers — monitoring sensors
+                data: { value: "climate.panasonic_heat_pump_main_z2_temp" }
+              # New read helpers — monitoring sensors (v0.9)
+              # Entity IDs derived from HeishaMon MQTT topic slugs:
+              #   panasonic_heat_pump/main/{Topic} → panasonic_heat_pump_main_{topic_slug}
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_src_fan1_speed }
-                data: { value: "" }
+                data: { value: "sensor.panasonic_heat_pump_main_fan1_motor_speed" }
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_src_fan2_speed }
-                data: { value: "" }
+                data: { value: "sensor.panasonic_heat_pump_main_fan2_motor_speed" }
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_src_inverter_temp }
-                data: { value: "" }
+                data: { value: "sensor.panasonic_heat_pump_main_ipm_temp" }
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_src_high_pressure }
-                data: { value: "" }
+                data: { value: "sensor.panasonic_heat_pump_main_high_pressure" }
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_src_low_pressure }
-                data: { value: "" }
+                data: { value: "sensor.panasonic_heat_pump_main_low_pressure" }
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_src_compressor_current }
-                data: { value: "" }
+                data: { value: "sensor.panasonic_heat_pump_main_compressor_current" }
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_src_outdoor_pipe_temp }
-                data: { value: "" }
+                data: { value: "sensor.panasonic_heat_pump_main_outside_pipe_temp" }
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_src_3way_valve }
-                data: { value: "" }
+                data: { value: "sensor.panasonic_heat_pump_main_threeway_valve_state" }
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_src_zone1_target_temp }
-                data: { value: "" }
+                data: { value: "sensor.panasonic_heat_pump_main_z1_water_target_temp" }
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_src_hex_outlet_temp }
-                data: { value: "" }
+                data: { value: "sensor.panasonic_heat_pump_main_main_hex_outlet_temp" }
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_src_pump_duty }
-                data: { value: "" }
+                data: { value: "sensor.panasonic_heat_pump_main_pump_duty" }
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_src_internal_thermal_power }
-                data: { value: "" }
+                data: { value: "sensor.panasonic_heat_pump_main_heat_power_production" }
 
-          # ── Panasonic HeishaMon — bundled MQTT YAML (community) ──
-          # Naming convention: sensor.aquarea_* / select.aquarea_* /
-          # number.aquarea_* / button.aquarea_*. This is what users get
-          # who imported the HeishaMon project's stock packages/aquarea*.yaml
-          # rather than installing kamaradclimber's custom integration.
-          # Entity-IDs follow the HeishaMon MQTT topic convention 1:1.
+          # ── kamaradclimber/heishamon-homeassistant — MQTT prefix aquarea/main/ ──
+          # Same integration as panasonic_heishamon but with the newer HeishaMon
+          # firmware default MQTT prefix "aquarea" instead of "panasonic_heat_pump".
+          # Entity IDs: sensor.aquarea_main_* (slug of "aquarea/main/TopicName")
+          # Select this if your HeishaMon MQTT topics start with "aquarea/main/".
           - conditions:
               - condition: template
-                value_template: "{{ preset == 'panasonic_heishamon_mqtt' }}"
+                value_template: "{{ preset == 'panasonic_heishamon_aquarea' }}"
             sequence:
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_src_inlet_temp }
@@ -570,13 +570,13 @@ automation:
                 data: { value: "sensor.aquarea_main_pump_speed" }
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_src_fan1_speed }
-                data: { value: "" }
+                data: { value: "sensor.aquarea_main_fan1_motor_speed" }
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_src_fan2_speed }
-                data: { value: "" }
+                data: { value: "sensor.aquarea_main_fan2_motor_speed" }
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_src_inverter_temp }
-                data: { value: "sensor.aquarea_main_ipm_temperature" }
+                data: { value: "sensor.aquarea_main_ipm_temp" }
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_src_high_pressure }
                 data: { value: "sensor.aquarea_main_high_pressure" }
@@ -588,22 +588,22 @@ automation:
                 data: { value: "sensor.aquarea_main_compressor_current" }
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_src_outdoor_pipe_temp }
-                data: { value: "sensor.aquarea_main_outdoor_pipe_temp" }
+                data: { value: "sensor.aquarea_main_outside_pipe_temp" }
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_src_3way_valve }
-                data: { value: "sensor.aquarea_main_3way_valve" }
+                data: { value: "sensor.aquarea_main_threeway_valve_state" }
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_src_zone1_target_temp }
                 data: { value: "sensor.aquarea_main_z1_water_target_temp" }
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_src_hex_outlet_temp }
-                data: { value: "sensor.aquarea_main_hex_outlet_temp" }
+                data: { value: "sensor.aquarea_main_main_hex_outlet_temp" }
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_src_pump_duty }
                 data: { value: "sensor.aquarea_main_pump_duty" }
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_src_internal_thermal_power }
-                data: { value: "sensor.aquarea_main_produced_power" }
+                data: { value: "sensor.aquarea_main_heat_power_production" }
               # Extended control helpers (v0.9)
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_ctrl_write_power }
@@ -643,174 +643,10 @@ automation:
                 data: { value: "number.aquarea_main_floor_heating_delta" }
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_ctrl_write_z1_climate }
-                data: { value: "" }
+                data: { value: "climate.aquarea_main_z1_temp" }
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_ctrl_write_z2_climate }
-                data: { value: "" }
-
-          # ── Panasonic Aquarea (custom_components/aquarea) ──
-          # Entity-IDs from the community aquarea custom integration:
-          # https://github.com/ronhks/panasonic-aquarea-smart-cloud-ha
-          # or similar; uses sensor.aquarea_* naming without _main_ prefix.
-          - conditions:
-              - condition: template
-                value_template: "{{ preset == 'panasonic_aquarea' }}"
-            sequence:
-              # ── Read-path helpers ──
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_inlet_temp }
-                data: { value: "sensor.aquarea_inlet_temperature" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_outlet_temp }
-                data: { value: "sensor.aquarea_outlet_temperature" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_flow_rate }
-                data: { value: "sensor.aquarea_pump_flow" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_outdoor_temp }
-                data: { value: "sensor.aquarea_outdoor_ambient" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_compressor_freq }
-                data: { value: "sensor.aquarea_compressor_frequency" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_compressor_hours }
-                data: { value: "sensor.aquarea_compressor_operating_hours" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_compressor_starts }
-                data: { value: "sensor.aquarea_compressor_startop_counter" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_discharge_temp }
-                data: { value: "sensor.aquarea_discharge_temperature" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_pump_pressure }
-                data: { value: "sensor.aquarea_water_pressure" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_internal_power }
-                data: { value: "sensor.aquarea_heat_power_consumed" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_defrost_state }
-                data: { value: "" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_aux_heater_state }
-                data: { value: "binary_sensor.aquarea_tank_heater_enabled" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_operating_mode }
-                data: { value: "select.aquarea_mode" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_zone1_temp }
-                data: { value: "sensor.aquarea_zone_1_water_outlet_temperature" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_zone2_temp }
-                data: { value: "sensor.aquarea_zone_2_water_outlet_temperature" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_dhw_temp }
-                data: { value: "sensor.aquarea_tank_actual_tank_temperature" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_buffer_temp }
-                data: { value: "sensor.aquarea_actual_buffer_temperature" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_error_code }
-                data: { value: "sensor.aquarea_last_error" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_dhw_target_temp }
-                data: { value: "number.dhw_target_temperature" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_pump_speed }
-                data: { value: "sensor.aquarea_pump_speed" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_fan1_speed }
-                data: { value: "sensor.aquarea_fan_1_speed" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_fan2_speed }
-                data: { value: "sensor.aquarea_fan_2_speed" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_inverter_temp }
-                data: { value: "sensor.aquarea_ipm_temperature" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_high_pressure }
-                data: { value: "sensor.aquarea_high_pressure" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_low_pressure }
-                data: { value: "sensor.aquarea_low_pressure" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_compressor_current }
-                data: { value: "sensor.aquarea_compressor_current" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_outdoor_pipe_temp }
-                data: { value: "sensor.aquarea_outdoor_pipe_temperature" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_3way_valve }
-                data: { value: "sensor.aquarea_3way_valve" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_zone1_target_temp }
-                data: { value: "sensor.aquarea_zone_1_water_target_temperature" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_hex_outlet_temp }
-                data: { value: "sensor.aquarea_hex_outlet_temperature" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_pump_duty }
-                data: { value: "sensor.aquarea_pump_duty" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_src_internal_thermal_power }
-                data: { value: "sensor.aquarea_heat_power_produced" }
-              # ── Write-path helpers ──
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_ctrl_write_quiet_mode }
-                data: { value: "select.aquarea_quiet_mode" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_ctrl_write_force_dhw }
-                data: { value: "switch.aquarea_force_dhw_mode" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_ctrl_write_z1_curve_high }
-                data: { value: "" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_ctrl_write_z1_curve_low }
-                data: { value: "" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_ctrl_write_dhw_target }
-                data: { value: "number.dhw_target_temperature" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_ctrl_write_power }
-                data: { value: "switch.aquarea_main_power" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_ctrl_write_holiday }
-                data: { value: "switch.aquarea_holiday_mode" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_ctrl_write_force_defrost }
-                data: { value: "switch.aquarea_defrost_routine" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_ctrl_write_powerful_mode }
-                data: { value: "select.aquarea_powerful_mode" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_ctrl_write_operating_mode }
-                data: { value: "select.aquarea_mode" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_ctrl_write_active_zones }
-                data: { value: "select.active_zones" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_ctrl_write_bivalent_mode }
-                data: { value: "select.aquarea_bivalent_mode" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_ctrl_write_z1_heat_shift }
-                data: { value: "number.aquarea_zone_1_heat_requested_shift" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_ctrl_write_z2_heat_shift }
-                data: { value: "number.aquarea_zone_2_heat_requested_shift" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_ctrl_write_heating_cutoff }
-                data: { value: "number.aquarea_outdoor_temperature_heating_cutoff" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_ctrl_write_max_pump_duty }
-                data: { value: "number.aquarea_max_pump_duty_configured" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_ctrl_write_room_heat_delta }
-                data: { value: "number.aquarea_room_heating_delta" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_ctrl_write_z1_climate }
-                data: { value: "climate.aquarea_zone_1_climate" }
-              - service: input_text.set_value
-                target: { entity_id: input_text.hph_ctrl_write_z2_climate }
-                data: { value: "climate.aquarea_zone_2_climate" }
+                data: { value: "climate.aquarea_main_z2_temp" }
 
           # ── Daikin Altherma 3 (HA core daikin_altherma) ──
           - conditions:
