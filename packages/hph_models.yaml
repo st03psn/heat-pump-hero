@@ -383,6 +383,12 @@ automation:
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_src_error_code }
                 data: { value: "sensor.panasonic_heat_pump_main_error" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_src_dhw_target_temp }
+                data: { value: "sensor.panasonic_heat_pump_main_dhw_target_temperature" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_src_pump_speed }
+                data: { value: "sensor.panasonic_heat_pump_main_pump_speed" }
               # ── Write-path helpers (v0.8 control vendor adapter) ──
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_ctrl_write_quiet_mode }
@@ -546,6 +552,12 @@ automation:
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_src_error_code }
                 data: { value: "sensor.aquarea_main_error" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_src_dhw_target_temp }
+                data: { value: "sensor.aquarea_main_dhw_target_temp" }
+              - service: input_text.set_value
+                target: { entity_id: input_text.hph_src_pump_speed }
+                data: { value: "sensor.aquarea_main_pump_speed" }
               # ── Write-path helpers ──
               - service: input_text.set_value
                 target: { entity_id: input_text.hph_ctrl_write_quiet_mode }

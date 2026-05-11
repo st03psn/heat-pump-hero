@@ -146,14 +146,15 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
   `hph_ctrl_write_room_heat_delta`, `hph_ctrl_write_z1_climate`,
   `hph_ctrl_write_z2_climate`. All default to empty.
 
-- **New `panasonic_aquarea` vendor preset.**
-  Selecting `panasonic_aquarea` in `input_select.hph_vendor_preset`
-  fills all 46 source and write helpers with the correct entity IDs
-  for the community `custom_components/aquarea` integration (entity
-  naming: `sensor.aquarea_*`, `select.aquarea_*`, `switch.aquarea_*`,
-  `climate.aquarea_zone_*`, `number.aquarea_*`). Distinct from the
-  existing `panasonic_heishamon_mqtt` preset which targets the
-  HeishaMon bundled MQTT YAML convention (`sensor.aquarea_main_*`).
+- **Vendor preset cleanup and entity ID corrections.**
+  Replaced the misleadingly-named `panasonic_heishamon_mqtt` preset with
+  `panasonic_heishamon_aquarea` (same kamaradclimber integration, HeishaMon
+  MQTT prefix configured as `aquarea/` instead of the default
+  `panasonic_heat_pump/`). Removed `panasonic_aquarea` (was based on wrong
+  entity IDs without the `_main_` device slug; all kamaradclimber entities
+  always include it). Filled the `panasonic_heishamon` preset (the default
+  for standard HeishaMon installs) with correct `panasonic_heat_pump_main_*`
+  entity IDs for all 12 new monitoring sensors and climate zone entities.
 
 - **Hero card now shows idle state when compressor is off.**
   `sensor.hph_operating_mode` reflects the HP's configured programme
