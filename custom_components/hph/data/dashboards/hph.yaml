@@ -27,7 +27,7 @@ views:
             chips:
               - type: template
                 icon: mdi:heat-pump
-                content: "{{ states('sensor.hph_source_operating_mode') | title }}"
+                content: "{{ states('sensor.hph_operating_mode') | title }}"
                 icon_color: >-
                   {{ 'green' if is_state('binary_sensor.hph_compressor_running','on') else 'grey' }}
               - type: template
@@ -81,7 +81,7 @@ views:
           # label is secondary. badge shows COP quality at a glance.
           - type: custom:mushroom-template-card
             primary: >-
-              {% set mode = states('sensor.hph_source_operating_mode') %}
+              {% set mode = states('sensor.hph_operating_mode') %}
               {% if mode == 'heating' %}Heating
               {% elif mode == 'dhw' %}Hot Water
               {% elif mode == 'cooling' %}Cooling
@@ -97,13 +97,13 @@ views:
               · Thermal {% if t >= 1000 %}{{ (t / 1000) | round(2) }} kW{% else %}{{ t | round(0) | int }} W{% endif %}
               · Electrical {% if e >= 1000 %}{{ (e / 1000) | round(2) }} kW{% else %}{{ e | round(0) | int }} W{% endif %}
             icon: >-
-              {% set mode = states('sensor.hph_source_operating_mode') %}
+              {% set mode = states('sensor.hph_operating_mode') %}
               {% if mode == 'heating' %}mdi:radiator
               {% elif mode == 'dhw' %}mdi:water-boiler
               {% elif mode == 'cooling' %}mdi:snowflake
               {% else %}mdi:heat-pump{% endif %}
             icon_color: >-
-              {% set mode = states('sensor.hph_source_operating_mode') %}
+              {% set mode = states('sensor.hph_operating_mode') %}
               {% if mode == 'heating' %}deep-orange
               {% elif mode == 'dhw' %}light-blue
               {% elif mode == 'cooling' %}cyan
@@ -123,9 +123,9 @@ views:
               style: >-
                 ha-card {
                   border-left: 4px solid
-                    {% if is_state('sensor.hph_source_operating_mode','heating') %}#FF7043
-                    {% elif is_state('sensor.hph_source_operating_mode','dhw') %}#42A5F5
-                    {% elif is_state('sensor.hph_source_operating_mode','cooling') %}#64B5F6
+                    {% if is_state('sensor.hph_operating_mode','heating') %}#FF7043
+                    {% elif is_state('sensor.hph_operating_mode','dhw') %}#42A5F5
+                    {% elif is_state('sensor.hph_operating_mode','cooling') %}#64B5F6
                     {% else %}#78909C{% endif %};
                 }
 
@@ -318,7 +318,7 @@ views:
                 card:
                   type: custom:mushroom-template-card
                   primary: "{{ states('sensor.hph_source_room_temp') | float(0) | round(1) }}°C"
-                  secondary: Room temperature
+                  secondary: Zone 1 reference room temperature
                   icon: mdi:home-thermometer
                   icon_color: blue
               - type: conditional
@@ -327,7 +327,7 @@ views:
                     state_not: unavailable
                 card:
                   type: custom:mushroom-template-card
-                  primary: "{{ states('sensor.hph_source_pump_speed') | float(0) | round(0) | int }} %"
+                  primary: "{{ states('sensor.hph_source_pump_speed') | float(0) | round(0) | int }} rpm"
                   secondary: Pump speed
                   icon: mdi:pump
                   icon_color: >-
@@ -366,145 +366,160 @@ views:
               card_mod:
                 style: "ha-card { background-color: #0f1923; }"
               elements:
+                # hotspot-mode (450,44) → 900×520
                 - type: state-label
-                  entity: sensor.hph_source_operating_mode
+                  entity: sensor.hph_operating_mode
                   style:
-                    top: 9.6%
+                    top: 8.5%
                     left: 50.0%
                     color: '#8ca8c0'
                     font-size: 10px
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-outdoor-temp (117,55)
                 - type: state-label
                   entity: sensor.hph_source_outdoor_temp
                   style:
-                    top: 17.3%
-                    left: 12.2%
+                    top: 10.6%
+                    left: 13.0%
                     color: '#e0a800'
                     font-size: 14px
                     font-weight: 700
                     background: transparent
                     transform: translate(-50%, -50%)
-                - type: state-label
-                  entity: sensor.hph_source_outlet_temp
-                  style:
-                    top: 29.6%
-                    left: 44.4%
-                    color: '#e74c3c'
-                    font-size: 11px
-                    font-weight: 600
-                    background: transparent
-                    transform: translate(-50%, -50%)
+                # hotspot-discharge (460,115)
                 - type: state-label
                   entity: sensor.hph_source_discharge_temp
                   style:
-                    top: 33.7%
-                    left: 26.7%
+                    top: 22.1%
+                    left: 51.1%
+                    color: '#e67e22'
+                    font-size: 11px
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                # hotspot-supply-temp (693,130)
+                - type: state-label
+                  entity: sensor.hph_source_outlet_temp
+                  style:
+                    top: 25.0%
+                    left: 77.0%
                     color: '#e74c3c'
                     font-size: 11px
                     font-weight: 600
                     background: transparent
                     transform: translate(-50%, -50%)
-                - type: state-label
-                  entity: sensor.hph_source_inlet_temp
-                  style:
-                    top: 68.3%
-                    left: 44.4%
-                    color: '#2980b9'
-                    font-size: 11px
-                    font-weight: 600
-                    background: transparent
-                    transform: translate(-50%, -50%)
-                - type: state-label
-                  entity: sensor.hph_source_flow_rate
-                  style:
-                    top: 68.1%
-                    left: 28.9%
-                    color: '#4a9aca'
-                    font-size: 11px
-                    font-weight: 600
-                    background: transparent
-                    transform: translate(-50%, -50%)
-                - type: state-label
-                  entity: sensor.hph_source_pump_pressure
-                  style:
-                    top: 83.8%
-                    left: 7.2%
-                    color: '#5a7a96'
-                    font-size: 11px
-                    background: transparent
-                    transform: translate(-50%, -50%)
-                - type: state-label
-                  entity: sensor.hph_source_flow_rate
-                  style:
-                    top: 83.8%
-                    left: 15.6%
-                    color: '#4a9aca'
-                    font-size: 11px
-                    background: transparent
-                    transform: translate(-50%, -50%)
+                # hotspot-comp-freq-panel (823,163)
                 - type: state-label
                   entity: sensor.hph_source_compressor_freq
                   style:
-                    top: 74.8%
-                    left: 90.2%
+                    top: 31.3%
+                    left: 91.4%
                     color: '#bcbd22'
                     font-size: 11px
                     font-weight: 700
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-comp-hours (793,206)
                 - type: state-label
                   entity: sensor.hph_source_compressor_hours
                   style:
-                    top: 82.3%
-                    left: 86.7%
+                    top: 39.6%
+                    left: 88.1%
                     color: '#5a7a96'
                     font-size: 11px
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-comp-starts (848,206)
                 - type: state-label
                   entity: sensor.hph_source_compressor_starts
                   style:
-                    top: 82.3%
-                    left: 93.6%
+                    top: 39.6%
+                    left: 94.2%
                     color: '#5a7a96'
                     font-size: 11px
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-return-temp (693,254)
+                - type: state-label
+                  entity: sensor.hph_source_inlet_temp
+                  style:
+                    top: 48.8%
+                    left: 77.0%
+                    color: '#2980b9'
+                    font-size: 11px
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                # hotspot-defrost (823,255)
                 - type: state-label
                   entity: binary_sensor.hph_defrost_active
                   style:
-                    top: 88.8%
-                    left: 90.2%
+                    top: 49.0%
+                    left: 91.4%
                     color: '#17a2b8'
                     font-size: 11px
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-flow (713,287)
+                - type: state-label
+                  entity: sensor.hph_source_flow_rate
+                  style:
+                    top: 55.2%
+                    left: 79.2%
+                    color: '#4a9aca'
+                    font-size: 11px
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                # hotspot-pressure (57,443)
+                - type: state-label
+                  entity: sensor.hph_source_pump_pressure
+                  style:
+                    top: 85.2%
+                    left: 6.3%
+                    color: '#5a7a96'
+                    font-size: 11px
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                # hotspot-waterflow (145,443)
+                - type: state-label
+                  entity: sensor.hph_source_flow_rate
+                  style:
+                    top: 85.2%
+                    left: 16.1%
+                    color: '#4a9aca'
+                    font-size: 11px
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                # hotspot-cop-live (252,479)
                 - type: state-label
                   entity: sensor.hph_cop_live
                   style:
-                    top: 91.9%
-                    left: 43.3%
+                    top: 92.1%
+                    left: 28.0%
                     color: '#17a2b8'
                     font-size: 12px
                     font-weight: 700
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-cop-daily (364,479)
                 - type: state-label
                   entity: sensor.hph_cop_daily
                   style:
-                    top: 91.9%
-                    left: 50.0%
+                    top: 92.1%
+                    left: 40.4%
                     color: '#17a2b8'
                     font-size: 12px
                     font-weight: 700
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-scop (461,479)
                 - type: state-label
                   entity: sensor.hph_scop
                   style:
-                    top: 91.9%
-                    left: 57.2%
+                    top: 92.1%
+                    left: 51.2%
                     color: '#17a2b8'
                     font-size: 12px
                     font-weight: 700
@@ -522,108 +537,171 @@ views:
               card_mod:
                 style: "ha-card { background-color: #0f1923; }"
               elements:
+                # hotspot-mode (450,44) → 900×520
                 - type: state-label
-                  entity: sensor.hph_source_operating_mode
+                  entity: sensor.hph_operating_mode
                   style:
-                    top: 8.8%
-                    left: 33.3%
+                    top: 8.5%
+                    left: 50.0%
                     color: '#8ca8c0'
                     font-size: 10px
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-outdoor-temp (117,55)
                 - type: state-label
                   entity: sensor.hph_source_outdoor_temp
                   style:
-                    top: 16.9%
-                    left: 11.1%
+                    top: 10.6%
+                    left: 13.0%
                     color: '#e0a800'
                     font-size: 14px
                     font-weight: 700
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-discharge (460,115)
+                - type: state-label
+                  entity: sensor.hph_source_discharge_temp
+                  style:
+                    top: 22.1%
+                    left: 51.1%
+                    color: '#e67e22'
+                    font-size: 11px
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                # hotspot-supply-temp (693,130)
                 - type: state-label
                   entity: sensor.hph_source_outlet_temp
                   style:
-                    top: 28.3%
-                    left: 37.8%
+                    top: 25.0%
+                    left: 77.0%
                     color: '#e74c3c'
                     font-size: 11px
                     font-weight: 600
                     background: transparent
                     transform: translate(-50%, -50%)
-                - type: state-label
-                  entity: sensor.hph_source_inlet_temp
-                  style:
-                    top: 64.8%
-                    left: 37.8%
-                    color: '#2980b9'
-                    font-size: 11px
-                    font-weight: 600
-                    background: transparent
-                    transform: translate(-50%, -50%)
-                - type: state-label
-                  entity: sensor.hph_source_dhw_temp
-                  style:
-                    top: 48.1%
-                    left: 91.7%
-                    color: '#e74c3c'
-                    font-size: 11px
-                    font-weight: 600
-                    background: transparent
-                    transform: translate(-50%, -50%)
+                # hotspot-comp-freq-panel (823,163)
                 - type: state-label
                   entity: sensor.hph_source_compressor_freq
                   style:
-                    top: 83.5%
-                    left: 9.7%
+                    top: 31.3%
+                    left: 91.4%
                     color: '#bcbd22'
                     font-size: 11px
                     font-weight: 700
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-comp-hours (793,206)
                 - type: state-label
                   entity: sensor.hph_source_compressor_hours
                   style:
-                    top: 90.0%
-                    left: 6.0%
+                    top: 39.6%
+                    left: 88.1%
                     color: '#5a7a96'
                     font-size: 11px
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-comp-starts (848,206)
                 - type: state-label
                   entity: sensor.hph_source_compressor_starts
                   style:
-                    top: 90.0%
-                    left: 13.1%
+                    top: 39.6%
+                    left: 94.2%
                     color: '#5a7a96'
                     font-size: 11px
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-return-temp (693,254)
+                - type: state-label
+                  entity: sensor.hph_source_inlet_temp
+                  style:
+                    top: 48.8%
+                    left: 77.0%
+                    color: '#2980b9'
+                    font-size: 11px
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                # hotspot-defrost (823,255)
+                - type: state-label
+                  entity: binary_sensor.hph_defrost_active
+                  style:
+                    top: 49.0%
+                    left: 91.4%
+                    color: '#17a2b8'
+                    font-size: 11px
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                # hotspot-flow (713,287)
+                - type: state-label
+                  entity: sensor.hph_source_flow_rate
+                  style:
+                    top: 55.2%
+                    left: 79.2%
+                    color: '#4a9aca'
+                    font-size: 11px
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                # hotspot-dhw-temp (773,347)
+                - type: state-label
+                  entity: sensor.hph_source_dhw_temp
+                  style:
+                    top: 66.7%
+                    left: 85.9%
+                    color: '#e74c3c'
+                    font-size: 11px
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                # hotspot-pressure (57,443)
+                - type: state-label
+                  entity: sensor.hph_source_pump_pressure
+                  style:
+                    top: 85.2%
+                    left: 6.3%
+                    color: '#5a7a96'
+                    font-size: 11px
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                # hotspot-waterflow (145,443)
+                - type: state-label
+                  entity: sensor.hph_source_flow_rate
+                  style:
+                    top: 85.2%
+                    left: 16.1%
+                    color: '#4a9aca'
+                    font-size: 11px
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                # hotspot-cop-live (252,479)
                 - type: state-label
                   entity: sensor.hph_cop_live
                   style:
-                    top: 92.9%
-                    left: 23.9%
+                    top: 92.1%
+                    left: 28.0%
                     color: '#17a2b8'
                     font-size: 12px
                     font-weight: 700
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-cop-daily (364,479)
                 - type: state-label
                   entity: sensor.hph_cop_daily
                   style:
-                    top: 92.9%
-                    left: 31.1%
+                    top: 92.1%
+                    left: 40.4%
                     color: '#17a2b8'
                     font-size: 12px
                     font-weight: 700
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-scop (461,479)
                 - type: state-label
                   entity: sensor.hph_scop
                   style:
-                    top: 92.9%
-                    left: 38.3%
+                    top: 92.1%
+                    left: 51.2%
                     color: '#17a2b8'
                     font-size: 12px
                     font-weight: 700
@@ -641,128 +719,182 @@ views:
               card_mod:
                 style: "ha-card { background-color: #0f1923; }"
               elements:
+                # hotspot-mode (450,44) → 900×580
                 - type: state-label
-                  entity: sensor.hph_source_operating_mode
+                  entity: sensor.hph_operating_mode
                   style:
-                    top: 7.9%
-                    left: 33.3%
+                    top: 7.6%
+                    left: 50.0%
                     color: '#8ca8c0'
                     font-size: 10px
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-outdoor-temp (117,55)
                 - type: state-label
                   entity: sensor.hph_source_outdoor_temp
                   style:
-                    top: 17.2%
-                    left: 11.1%
+                    top: 9.5%
+                    left: 13.0%
                     color: '#e0a800'
                     font-size: 14px
                     font-weight: 700
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-discharge (460,115)
+                - type: state-label
+                  entity: sensor.hph_source_discharge_temp
+                  style:
+                    top: 19.8%
+                    left: 51.1%
+                    color: '#e67e22'
+                    font-size: 11px
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                # hotspot-supply-temp (693,130)
                 - type: state-label
                   entity: sensor.hph_source_outlet_temp
                   style:
-                    top: 25.3%
-                    left: 35.6%
+                    top: 22.4%
+                    left: 77.0%
                     color: '#e74c3c'
                     font-size: 11px
                     font-weight: 600
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-dhw-temp (823,188)
+                - type: state-label
+                  entity: sensor.hph_source_dhw_temp
+                  style:
+                    top: 32.4%
+                    left: 91.4%
+                    color: '#e74c3c'
+                    font-size: 11px
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                # hotspot-zone1-temp (731,227)
+                - type: state-label
+                  entity: sensor.hph_source_zone1_temp
+                  style:
+                    top: 39.1%
+                    left: 81.2%
+                    color: '#e74c3c'
+                    font-size: 11px
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                # hotspot-return-temp (693,262)
                 - type: state-label
                   entity: sensor.hph_source_inlet_temp
                   style:
-                    top: 57.2%
-                    left: 35.6%
+                    top: 45.2%
+                    left: 77.0%
                     color: '#2980b9'
                     font-size: 11px
                     font-weight: 600
                     background: transparent
                     transform: translate(-50%, -50%)
-                - type: state-label
-                  entity: sensor.hph_source_dhw_temp
-                  style:
-                    top: 45.7%
-                    left: 93.3%
-                    color: '#e74c3c'
-                    font-size: 11px
-                    font-weight: 600
-                    background: transparent
-                    transform: translate(-50%, -50%)
-                - type: state-label
-                  entity: sensor.hph_source_zone2_temp
-                  style:
-                    top: 85.3%
-                    left: 37.2%
-                    color: '#a78bfa'
-                    font-size: 11px
-                    font-weight: 600
-                    background: transparent
-                    transform: translate(-50%, -50%)
-                - type: state-label
-                  entity: sensor.hph_source_zone1_temp
-                  style:
-                    top: 85.3%
-                    left: 60.0%
-                    color: '#e74c3c'
-                    font-size: 11px
-                    font-weight: 600
-                    background: transparent
-                    transform: translate(-50%, -50%)
+                # hotspot-comp-freq (823,350)
                 - type: state-label
                   entity: sensor.hph_source_compressor_freq
                   style:
-                    top: 83.4%
-                    left: 86.7%
+                    top: 60.3%
+                    left: 91.4%
                     color: '#bcbd22'
                     font-size: 11px
                     font-weight: 700
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-comp-hours (793,393)
                 - type: state-label
                   entity: sensor.hph_source_compressor_hours
                   style:
-                    top: 89.8%
-                    left: 82.4%
+                    top: 67.8%
+                    left: 88.1%
                     color: '#5a7a96'
                     font-size: 11px
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-comp-starts (848,393)
                 - type: state-label
                   entity: sensor.hph_source_compressor_starts
                   style:
-                    top: 89.8%
-                    left: 90.6%
+                    top: 67.8%
+                    left: 94.2%
                     color: '#5a7a96'
                     font-size: 11px
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-zone2-temp (701,413)
+                - type: state-label
+                  entity: sensor.hph_source_zone2_temp
+                  style:
+                    top: 71.2%
+                    left: 77.9%
+                    color: '#a78bfa'
+                    font-size: 11px
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                # hotspot-defrost (823,441)
+                - type: state-label
+                  entity: binary_sensor.hph_defrost_active
+                  style:
+                    top: 76.0%
+                    left: 91.4%
+                    color: '#17a2b8'
+                    font-size: 11px
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                # hotspot-pressure (57,557)
+                - type: state-label
+                  entity: sensor.hph_source_pump_pressure
+                  style:
+                    top: 95.9%
+                    left: 6.3%
+                    color: '#5a7a96'
+                    font-size: 11px
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                # hotspot-waterflow (145,557)
+                - type: state-label
+                  entity: sensor.hph_source_flow_rate
+                  style:
+                    top: 95.9%
+                    left: 16.1%
+                    color: '#4a9aca'
+                    font-size: 11px
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                # hotspot-cop-live (252,557)
                 - type: state-label
                   entity: sensor.hph_cop_live
                   style:
-                    top: 76.2%
-                    left: 5.4%
+                    top: 95.9%
+                    left: 28.0%
                     color: '#17a2b8'
                     font-size: 12px
                     font-weight: 700
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-cop-daily (364,557)
                 - type: state-label
                   entity: sensor.hph_cop_daily
                   style:
-                    top: 76.2%
-                    left: 11.0%
+                    top: 95.9%
+                    left: 40.4%
                     color: '#17a2b8'
                     font-size: 12px
                     font-weight: 700
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-scop (461,557)
                 - type: state-label
                   entity: sensor.hph_scop
                   style:
-                    top: 76.2%
-                    left: 15.7%
+                    top: 95.9%
+                    left: 51.2%
                     color: '#17a2b8'
                     font-size: 12px
                     font-weight: 700
@@ -780,122 +912,195 @@ views:
               card_mod:
                 style: "ha-card { background-color: #0f1923; }"
               elements:
+                # hotspot-mode (450,44) → 900×620
                 - type: state-label
-                  entity: sensor.hph_source_operating_mode
+                  entity: sensor.hph_operating_mode
                   style:
-                    top: 7.4%
-                    left: 35.6%
+                    top: 7.1%
+                    left: 50.0%
                     color: '#8ca8c0'
                     font-size: 10px
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-outdoor-temp (117,55)
                 - type: state-label
                   entity: sensor.hph_source_outdoor_temp
                   style:
-                    top: 16.1%
-                    left: 11.1%
+                    top: 8.9%
+                    left: 13.0%
                     color: '#e0a800'
                     font-size: 14px
                     font-weight: 700
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-discharge (460,115)
+                - type: state-label
+                  entity: sensor.hph_source_discharge_temp
+                  style:
+                    top: 18.5%
+                    left: 51.1%
+                    color: '#e67e22'
+                    font-size: 11px
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                # hotspot-supply-temp (666,130)
                 - type: state-label
                   entity: sensor.hph_source_outlet_temp
                   style:
-                    top: 23.7%
-                    left: 20.0%
+                    top: 21.0%
+                    left: 74.0%
                     color: '#e74c3c'
                     font-size: 11px
                     font-weight: 600
                     background: transparent
                     transform: translate(-50%, -50%)
-                - type: state-label
-                  entity: sensor.hph_source_inlet_temp
-                  style:
-                    top: 56.5%
-                    left: 20.0%
-                    color: '#2980b9'
-                    font-size: 11px
-                    font-weight: 600
-                    background: transparent
-                    transform: translate(-50%, -50%)
+                # hotspot-dhw-temp (823,188)
                 - type: state-label
                   entity: sensor.hph_source_dhw_temp
                   style:
-                    top: 43.5%
-                    left: 93.1%
+                    top: 30.3%
+                    left: 91.4%
                     color: '#e74c3c'
                     font-size: 11px
                     font-weight: 600
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-buffer-temp (681,208)
                 - type: state-label
                   entity: sensor.hph_source_buffer_temp
                   style:
-                    top: 36.3%
-                    left: 48.3%
+                    top: 33.5%
+                    left: 75.7%
                     color: '#e8a87c'
                     font-size: 11px
                     font-weight: 600
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-return-temp (666,254)
+                - type: state-label
+                  entity: sensor.hph_source_inlet_temp
+                  style:
+                    top: 41.0%
+                    left: 74.0%
+                    color: '#2980b9'
+                    font-size: 11px
+                    font-weight: 600
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                # hotspot-zone1-temp (854,323)
                 - type: state-label
                   entity: sensor.hph_source_zone1_temp
                   style:
-                    top: 90.3%
-                    left: 35.6%
+                    top: 52.1%
+                    left: 94.9%
                     color: '#e74c3c'
                     font-size: 11px
                     font-weight: 600
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-comp-freq (823,415)
+                - type: state-label
+                  entity: sensor.hph_source_compressor_freq
+                  style:
+                    top: 67.0%
+                    left: 91.4%
+                    color: '#bcbd22'
+                    font-size: 11px
+                    font-weight: 700
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                # hotspot-zone2-temp (754,413)
                 - type: state-label
                   entity: sensor.hph_source_zone2_temp
                   style:
-                    top: 90.3%
-                    left: 68.3%
+                    top: 66.6%
+                    left: 83.8%
                     color: '#a78bfa'
                     font-size: 11px
                     font-weight: 600
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-comp-hours (787,449)
+                - type: state-label
+                  entity: sensor.hph_source_compressor_hours
+                  style:
+                    top: 72.4%
+                    left: 87.4%
+                    color: '#5a7a96'
+                    font-size: 11px
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                # hotspot-comp-starts (828,449)
+                - type: state-label
+                  entity: sensor.hph_source_compressor_starts
+                  style:
+                    top: 72.4%
+                    left: 92.0%
+                    color: '#5a7a96'
+                    font-size: 11px
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                # hotspot-defrost (865,449)
+                - type: state-label
+                  entity: binary_sensor.hph_defrost_active
+                  style:
+                    top: 72.4%
+                    left: 96.1%
+                    color: '#17a2b8'
+                    font-size: 11px
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                # hotspot-pressure (57,601)
+                - type: state-label
+                  entity: sensor.hph_source_pump_pressure
+                  style:
+                    top: 97.0%
+                    left: 6.3%
+                    color: '#5a7a96'
+                    font-size: 11px
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                # hotspot-waterflow (145,601)
+                - type: state-label
+                  entity: sensor.hph_source_flow_rate
+                  style:
+                    top: 97.0%
+                    left: 16.1%
+                    color: '#4a9aca'
+                    font-size: 11px
+                    background: transparent
+                    transform: translate(-50%, -50%)
+                # hotspot-cop-live (252,601)
                 - type: state-label
                   entity: sensor.hph_cop_live
                   style:
-                    top: 18.7%
-                    left: 81.7%
+                    top: 97.0%
+                    left: 28.0%
                     color: '#17a2b8'
                     font-size: 12px
                     font-weight: 700
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-cop-daily (364,601)
                 - type: state-label
                   entity: sensor.hph_cop_daily
                   style:
-                    top: 18.7%
-                    left: 87.8%
+                    top: 97.0%
+                    left: 40.4%
                     color: '#17a2b8'
                     font-size: 12px
                     font-weight: 700
                     background: transparent
                     transform: translate(-50%, -50%)
+                # hotspot-scop (461,601)
                 - type: state-label
                   entity: sensor.hph_scop
                   style:
-                    top: 18.7%
-                    left: 93.9%
+                    top: 97.0%
+                    left: 51.2%
                     color: '#17a2b8'
                     font-size: 12px
-                    font-weight: 700
-                    background: transparent
-                    transform: translate(-50%, -50%)
-                - type: state-label
-                  entity: sensor.hph_source_compressor_freq
-                  style:
-                    top: 23.2%
-                    left: 87.8%
-                    color: '#bcbd22'
-                    font-size: 11px
                     font-weight: 700
                     background: transparent
                     transform: translate(-50%, -50%)
@@ -1631,7 +1836,6 @@ views:
             title:
               text: "SCOP"
           xaxis:
-            min: 1751328000000
             labels:
               format: "yyyy"
           noData:

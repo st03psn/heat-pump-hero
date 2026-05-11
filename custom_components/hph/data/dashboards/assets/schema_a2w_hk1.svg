@@ -1,282 +1,604 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  HeatPump Hero — A2W installation schematic (HK1 only)
-  Version: v0.2
-  Design notes:
-    - Viewbox 900×500. All hotspot anchor positions are data-hotspot-x / data-hotspot-y.
-    - Bubble-Card sub-buttons are positioned by the dashboard YAML; this SVG is the background only.
-    - Color coding: red = supply/hot, blue = return/cold, grey = refrigerant.
-    - Components that may be absent (DHW tank, buffer, HK2 pump) are drawn but may be
-      hidden by Bubble-Card visibility templates.
+  HeatPump Hero — A2W heat pump schematic: Zone 1 only (animated)
+  Version: v0.3  — refrigerant-cycle layout with SMIL animations
+
+  Layout:
+    Left          Outdoor unit (evaporator + fan)
+    Centre-top    Compressor
+    Centre-right  Plate heat exchanger (condenser side)
+    Centre-bottom Expansion valve (EEV/TXV)
+    Right         Water circuit  →  Zone 1
+    Far-right     Compressor stats panel
+
+  Animations (SMIL — work inside <img> in Chromium / HA frontend):
+    · Fan blades:       animateTransform rotate
+    · Refrigerant flow: animate stroke-dashoffset on each circuit segment
+
+  Hotspot anchors (data-hotspot-x / data-hotspot-y, px in 900×520 viewBox):
+    mode(450,37)  outdoor-temp(115,50)  discharge(460,115)
+    supply-temp(693,130)  return-temp(693,255)  flow(712,287)
+    pressure(57,444)  waterflow(142,444)
+    comp-freq(823,143)  comp-hours(793,200)  comp-starts(853,200)
+    defrost(823,253)
+    cop-live(293,477)  cop-daily(365,477)  scop(440,477)
 -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" font-family="'Segoe UI', Arial, sans-serif">
-  <defs>
-    <!-- Gradients -->
-    <linearGradient id="grad-hot" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#c0392b"/>
-      <stop offset="100%" stop-color="#e74c3c"/>
-    </linearGradient>
-    <linearGradient id="grad-cold" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#1a6ea8"/>
-      <stop offset="100%" stop-color="#2980b9"/>
-    </linearGradient>
-    <linearGradient id="grad-unit" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#2c3e50"/>
-      <stop offset="100%" stop-color="#1a252f"/>
-    </linearGradient>
-    <linearGradient id="grad-hydraulic" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#27343f"/>
-      <stop offset="100%" stop-color="#1a252f"/>
-    </linearGradient>
-    <!-- Drop shadow filter -->
-    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
-      <feDropShadow dx="2" dy="2" stdDeviation="3" flood-color="#00000044"/>
-    </filter>
-    <!-- Glow for active pipes -->
-    <filter id="glow-hot">
-      <feGaussianBlur stdDeviation="2" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-    <!-- Arrow marker for flow direction -->
-    <marker id="arrow-hot" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-      <path d="M0,0 L0,6 L8,3 z" fill="#e74c3c"/>
-    </marker>
-    <marker id="arrow-cold" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-      <path d="M0,0 L0,6 L8,3 z" fill="#2980b9"/>
-    </marker>
-    <marker id="arrow-hot-l" markerWidth="8" markerHeight="8" refX="2" refY="3" orient="auto-start-reverse">
-      <path d="M8,0 L8,6 L0,3 z" fill="#e74c3c"/>
-    </marker>
-  </defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520"
+     font-family="'Segoe UI', Arial, sans-serif">
+<defs>
+  <!-- ── Gradients ── -->
+  <linearGradient id="g-dark" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#2c3e50"/>
+    <stop offset="100%" stop-color="#1a252f"/>
+  </linearGradient>
+  <linearGradient id="g-darker" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#1e2d3d"/>
+    <stop offset="100%" stop-color="#131e27"/>
+  </linearGradient>
+  <linearGradient id="g-comp" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#34495e"/>
+    <stop offset="100%" stop-color="#243342"/>
+  </linearGradient>
+  <linearGradient id="g-hx-refrig" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#3d2200"/>
+    <stop offset="100%" stop-color="#1a1200"/>
+  </linearGradient>
+  <linearGradient id="g-hx-water" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#001e33"/>
+    <stop offset="100%" stop-color="#000e1a"/>
+  </linearGradient>
 
-  <!-- Background -->
-  <rect width="900" height="520" fill="#0f1923"/>
+  <!-- ── Filters ── -->
+  <filter id="shadow" x="-8%" y="-8%" width="116%" height="116%">
+    <feDropShadow dx="2" dy="3" stdDeviation="4" flood-color="#00000066"/>
+  </filter>
+  <filter id="glow-hot" x="-30%" y="-30%" width="160%" height="160%">
+    <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="glow-cold" x="-30%" y="-30%" width="160%" height="160%">
+    <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
 
-  <!-- Grid lines (subtle) -->
-  <g stroke="#ffffff08" stroke-width="1">
-    <line x1="0" y1="130" x2="900" y2="130"/>
-    <line x1="0" y1="260" x2="900" y2="260"/>
-    <line x1="0" y1="390" x2="900" y2="390"/>
-    <line x1="225" y1="0" x2="225" y2="520"/>
-    <line x1="450" y1="0" x2="450" y2="520"/>
-    <line x1="675" y1="0" x2="675" y2="520"/>
-  </g>
+  <!-- ── Arrow markers ── -->
+  <marker id="m-discharge" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L7,3 z" fill="#e67e22"/>
+  </marker>
+  <marker id="m-liquid" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L7,3 z" fill="#f39c12"/>
+  </marker>
+  <marker id="m-cold" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L7,3 z" fill="#2980b9"/>
+  </marker>
+  <marker id="m-suction" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L7,3 z" fill="#85c1e9"/>
+  </marker>
+  <marker id="m-supply" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L7,3 z" fill="#e74c3c"/>
+  </marker>
+  <marker id="m-return" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L7,3 z" fill="#2980b9"/>
+  </marker>
+</defs>
 
-  <!-- ═══════════════════════════════════════════════════════════════
-       OUTDOOR UNIT
-       ═══════════════════════════════════════════════════════════════ -->
-  <g id="outdoor-unit" filter="url(#shadow)">
-    <rect x="20" y="140" width="160" height="220" rx="10" fill="url(#grad-unit)" stroke="#3d5166" stroke-width="1.5"/>
-    <!-- Fan circle -->
-    <circle cx="100" cy="200" r="45" fill="none" stroke="#3d5166" stroke-width="1.5" stroke-dasharray="6,3"/>
-    <circle cx="100" cy="200" r="4" fill="#3d5166"/>
-    <!-- Fan blades (decorative) -->
-    <g transform="translate(100,200)" stroke="#4a6178" stroke-width="1.5" fill="none">
-      <path d="M0,-40 Q15,-20 0,0 Q-15,-20 0,-40"/>
-      <path d="M34.6,-20 Q10,5 0,0 Q10,-25 34.6,-20"/>
-      <path d="M34.6,20 Q5,5 0,0 Q25,5 34.6,20"/>
-      <path d="M0,40 Q-15,20 0,0 Q15,20 0,40"/>
-      <path d="M-34.6,20 Q-10,5 0,0 Q-10,25 -34.6,20"/>
-      <path d="M-34.6,-20 Q-5,-5 0,0 Q-25,-5 -34.6,-20"/>
+<!-- ══════════════════════════════ BACKGROUND ══════════════════════ -->
+<rect width="900" height="520" fill="#0f1923"/>
+<!-- Subtle grid -->
+<g stroke="#ffffff05" stroke-width="1">
+  <line x1="0" y1="88" x2="900" y2="88"/>
+  <line x1="0" y1="310" x2="900" y2="310"/>
+  <line x1="0" y1="390" x2="900" y2="390"/>
+  <line x1="195" y1="0" x2="195" y2="520"/>
+  <line x1="490" y1="0" x2="490" y2="390"/>
+  <line x1="650" y1="0" x2="650" y2="390"/>
+  <line x1="762" y1="0" x2="762" y2="310"/>
+</g>
+
+<!-- ══════════════════════════════ MODE BAR (top centre) ══════════ -->
+<g filter="url(#shadow)">
+  <rect x="285" y="18" width="330" height="40" rx="8"
+        fill="#1a252f" stroke="#3d5166" stroke-width="1.5"/>
+  <text x="450" y="32" text-anchor="middle"
+        fill="#4a6a8a" font-size="8" letter-spacing="1.5">OPERATING MODE</text>
+  <!-- hotspot anchor -->
+  <rect x="305" y="36" width="290" height="16" rx="3" fill="transparent"
+        id="hotspot-mode" data-hotspot-x="450" data-hotspot-y="44"/>
+  <text x="450" y="48" text-anchor="middle"
+        fill="#8ca8c0" font-size="12" font-weight="600">Heating</text>
+</g>
+
+<!-- ════════════════════════════ OUTDOOR TEMP BOX (top left) ═══════ -->
+<g filter="url(#shadow)">
+  <rect x="15" y="18" width="183" height="56" rx="8"
+        fill="#1a252f" stroke="#3d5166" stroke-width="1.5"/>
+  <text x="107" y="32" text-anchor="middle"
+        fill="#4a6a8a" font-size="8" letter-spacing="1">OUTDOOR TEMPERATURE</text>
+  <line x1="15" y1="38" x2="198" y2="38" stroke="#3d5166" stroke-width="1"/>
+  <!-- Thermometer icon -->
+  <rect x="28" y="42" width="5" height="17" rx="2.5" fill="#e0a800"/>
+  <circle cx="30.5" cy="62" r="6" fill="#e0a800"/>
+  <!-- Value hotspot -->
+  <rect x="46" y="42" width="143" height="26" rx="4" fill="#0f1923" stroke="#3d5166" stroke-width="1"
+        id="hotspot-outdoor-temp" data-hotspot-x="117" data-hotspot-y="55"/>
+  <text x="117" y="60" text-anchor="middle"
+        fill="#e0a800" font-size="17" font-weight="700">T°</text>
+</g>
+
+<!-- ══════════════════════════════ OUTDOOR UNIT (left) ════════════ -->
+<g id="outdoor-unit" filter="url(#shadow)">
+  <rect x="15" y="88" width="180" height="272" rx="12"
+        fill="url(#g-dark)" stroke="#3d5166" stroke-width="1.5"/>
+
+  <!-- Fan housing -->
+  <circle cx="105" cy="188" r="66" fill="#1a2733" stroke="#3d5166" stroke-width="1.5"/>
+
+  <!-- Fan blades — SMIL animated rotation -->
+  <g transform="translate(105,188)">
+    <g id="fan-blades">
+      <animateTransform attributeName="transform" type="rotate"
+        from="0" to="360" dur="5s" repeatCount="indefinite" additive="sum"/>
+      <path d="M0,-58 C16,-42 18,-22 0,0 C-18,-22 -16,-42 0,-58"
+            fill="#3d5166" opacity="0.95"/>
+      <path d="M50,-29 C32,-8 14,-4 0,0 C8,-22 30,-36 50,-29"
+            fill="#3d5166" opacity="0.95"/>
+      <path d="M50,29 C24,18 10,8 0,0 C20,4 38,14 50,29"
+            fill="#3d5166" opacity="0.95"/>
+      <path d="M0,58 C-16,42 -18,22 0,0 C18,22 16,42 0,58"
+            fill="#3d5166" opacity="0.95"/>
+      <path d="M-50,29 C-28,18 -10,8 0,0 C-8,22 -30,36 -50,29"
+            fill="#3d5166" opacity="0.95"/>
+      <path d="M-50,-29 C-24,-18 -10,-8 0,0 C-20,-4 -38,-14 -50,-29"
+            fill="#3d5166" opacity="0.95"/>
     </g>
-    <!-- Label -->
-    <text x="100" y="265" text-anchor="middle" fill="#8ca8c0" font-size="11" font-weight="600" letter-spacing="0.5">OUTDOOR UNIT</text>
-    <text x="100" y="280" text-anchor="middle" fill="#5a7a96" font-size="9">compressor · evaporator</text>
-    <!-- Refrigerant port markers -->
-    <rect x="155" y="165" width="8" height="15" rx="2" fill="#3d5166" stroke="#5a7a96" stroke-width="1"/>
-    <rect x="155" y="195" width="8" height="15" rx="2" fill="#3d5166" stroke="#5a7a96" stroke-width="1"/>
-    <!-- Hotspot anchor: compressor frequency indicator -->
-    <rect x="30" y="290" width="140" height="30" rx="6" fill="#1a2733" stroke="#3d5166" stroke-width="1"
-          id="hotspot-compressor" data-hotspot-x="100" data-hotspot-y="305"/>
-    <text x="100" y="309" text-anchor="middle" fill="#4a9aca" font-size="10">⚡ compressor</text>
+    <!-- Hub -->
+    <circle r="9" fill="#243342" stroke="#4a6a8a" stroke-width="1.5"/>
+    <circle r="3" fill="#4a6a8a"/>
   </g>
 
-  <!-- ═══════════════════════════════════════════════════════════════
-       HYDRAULIC MODULE (indoor unit)
-       ═══════════════════════════════════════════════════════════════ -->
-  <g id="hydraulic-module" filter="url(#shadow)">
-    <rect x="530" y="80" width="180" height="340" rx="10" fill="url(#grad-hydraulic)" stroke="#3d5166" stroke-width="1.5"/>
-    <text x="620" y="105" text-anchor="middle" fill="#8ca8c0" font-size="11" font-weight="600" letter-spacing="0.5">HYDRAULIC MODULE</text>
-
-    <!-- Aux heater zone -->
-    <rect x="545" y="115" width="150" height="55" rx="6" fill="#1a252f" stroke="#3d5166" stroke-width="1"/>
-    <!-- Heater coil symbol -->
-    <path d="M 560 140 Q 565 130 575 140 Q 585 150 595 140 Q 605 130 615 140 Q 625 150 635 140 Q 645 130 655 140 Q 660 145 665 140"
-          fill="none" stroke="#e67e22" stroke-width="2"/>
-    <text x="620" y="158" text-anchor="middle" fill="#e67e22" font-size="9" id="hotspot-aux-heater" data-hotspot-x="620" data-hotspot-y="140">electric aux heater</text>
-
-    <!-- Circulation pump zone -->
-    <rect x="545" y="185" width="150" height="55" rx="6" fill="#1a252f" stroke="#3d5166" stroke-width="1"/>
-    <circle cx="615" cy="210" r="18" fill="none" stroke="#2980b9" stroke-width="2"/>
-    <path d="M 615 192 L 620 200 L 615 208 L 610 200 Z" fill="#2980b9"/>
-    <text x="645" y="214" text-anchor="middle" fill="#4a9aca" font-size="9" id="hotspot-pump" data-hotspot-x="620" data-hotspot-y="210">pump</text>
-    <text x="620" y="232" text-anchor="middle" fill="#5a7a96" font-size="8">circulation pump</text>
-
-    <!-- Zone 1 outlet zone -->
-    <rect x="545" y="255" width="150" height="55" rx="6" fill="#1a252f" stroke="#3d5166" stroke-width="1"/>
-    <text x="620" y="278" text-anchor="middle" fill="#8ca8c0" font-size="10" font-weight="600">Zone 1</text>
-    <text x="620" y="292" text-anchor="middle" fill="#5a7a96" font-size="8">heating circuit</text>
-    <!-- Zone outlet ports -->
-    <rect x="545" y="268" width="6" height="30" rx="2" fill="#e74c3c"/>
-    <rect x="709" y="268" width="6" height="30" rx="2" fill="#2980b9"/>
-    <text x="553" y="262" fill="#e74c3c" font-size="7" id="hotspot-zone1" data-hotspot-x="560" data-hotspot-y="284">S</text>
-    <text x="700" y="262" fill="#2980b9" font-size="7">R</text>
-
-    <!-- 3-way valve indicator (inside module) -->
-    <rect x="545" y="325" width="150" height="50" rx="6" fill="#1a252f" stroke="#3d5166" stroke-width="1"/>
-    <text x="620" y="348" text-anchor="middle" fill="#8ca8c0" font-size="9" font-weight="600"
-          id="hotspot-three-way-valve" data-hotspot-x="620" data-hotspot-y="348">3-way valve</text>
-    <!-- Triangle valve symbol -->
-    <polygon points="605,365 620,353 635,365" fill="none" stroke="#4a9aca" stroke-width="1.5"/>
-    <line x1="612" y1="365" x2="605" y2="370" stroke="#4a9aca" stroke-width="1.5"/>
-    <line x1="628" y1="365" x2="635" y2="370" stroke="#4a9aca" stroke-width="1.5"/>
-
-    <!-- Water ports on left side of hydraulic module -->
-    <rect x="522" y="150" width="12" height="8" rx="2" fill="#e74c3c" id="hotspot-supply" data-hotspot-x="528" data-hotspot-y="154"/>
-    <rect x="522" y="335" width="12" height="8" rx="2" fill="#2980b9" id="hotspot-return" data-hotspot-x="528" data-hotspot-y="339"/>
+  <!-- Evaporator fins area -->
+  <rect x="25" y="266" width="160" height="80" rx="6"
+        fill="#141f29" stroke="#3d5166" stroke-width="1"/>
+  <!-- Fin lines -->
+  <g stroke="#2c3e50" stroke-width="1">
+    <line x1="30" y1="274" x2="180" y2="274"/>
+    <line x1="30" y1="281" x2="180" y2="281"/>
+    <line x1="30" y1="288" x2="180" y2="288"/>
+    <line x1="30" y1="295" x2="180" y2="295"/>
+    <line x1="30" y1="302" x2="180" y2="302"/>
+    <line x1="30" y1="309" x2="180" y2="309"/>
+    <line x1="30" y1="316" x2="180" y2="316"/>
+    <line x1="30" y1="323" x2="180" y2="323"/>
+    <line x1="30" y1="330" x2="180" y2="330"/>
+    <line x1="30" y1="337" x2="180" y2="337"/>
+  </g>
+  <!-- Refrigerant tubes through fins (blue = cold) -->
+  <g stroke="#1a6ea8" stroke-width="2" opacity="0.5">
+    <line x1="55" y1="266" x2="55" y2="346"/>
+    <line x1="82" y1="266" x2="82" y2="346"/>
+    <line x1="109" y1="266" x2="109" y2="346"/>
+    <line x1="136" y1="266" x2="136" y2="346"/>
+    <line x1="163" y1="266" x2="163" y2="346"/>
   </g>
 
-  <!-- ═══════════════════════════════════════════════════════════════
-       PIPES — Supply (hot, red) and Return (cold, blue)
-       Outdoor unit right edge (163) → Hydraulic module left edge (522)
-       We route via a T-junction that allows future DHW/buffer branches.
-       ═══════════════════════════════════════════════════════════════ -->
+  <!-- Refrigerant port connectors (right wall) -->
+  <!-- Suction outlet (top): cold gas exits to compressor -->
+  <rect x="188" y="124" width="9" height="13" rx="2"
+        fill="#85c1e9" stroke="#5a9fc0" stroke-width="1"/>
+  <!-- Cold inlet (lower): cold mix enters from expansion valve -->
+  <rect x="188" y="318" width="9" height="13" rx="2"
+        fill="#1a6ea8" stroke="#2980b9" stroke-width="1"/>
 
-  <!-- Supply pipe: outdoor → hydraulic module -->
-  <path d="M 180 175 H 310 V 154 H 522"
-        fill="none" stroke="#e74c3c" stroke-width="5" stroke-linecap="round"
-        marker-end="url(#arrow-hot)"/>
-  <!-- Supply pipe label -->
-  <text x="350" y="145" text-anchor="middle" fill="#e74c3c" font-size="10" font-weight="600">SUPPLY</text>
+  <!-- Labels -->
+  <text x="105" y="360" text-anchor="middle"
+        fill="#8ca8c0" font-size="11" font-weight="600" letter-spacing="0.5">OUTDOOR UNIT</text>
+  <text x="105" y="374" text-anchor="middle"
+        fill="#4a6a8a" font-size="9">evaporator · fan</text>
+</g>
 
-  <!-- Return pipe: hydraulic module → outdoor unit -->
-  <path d="M 522 339 H 310 V 355 H 180"
-        fill="none" stroke="#2980b9" stroke-width="5" stroke-linecap="round"
-        marker-end="url(#arrow-hot-l)"/>
-  <!-- Return pipe label -->
-  <text x="350" y="375" text-anchor="middle" fill="#2980b9" font-size="10" font-weight="600">RETURN</text>
+<!-- ══════════════════════════════ COMPRESSOR (centre-top) ════════ -->
+<g id="compressor" filter="url(#shadow)">
+  <!-- Cylinder body -->
+  <!-- Bottom cap -->
+  <ellipse cx="360" cy="198" rx="65" ry="17"
+           fill="#1e2d3d" stroke="#3d5166" stroke-width="1.5"/>
+  <!-- Side walls -->
+  <rect x="295" y="108" width="130" height="90"
+        fill="url(#g-comp)" stroke="#3d5166" stroke-width="1.5"/>
+  <!-- Top cap (highlight) -->
+  <ellipse cx="360" cy="108" rx="65" ry="17"
+           fill="#3d5166" stroke="#4a6a8a" stroke-width="1.5"/>
 
-  <!-- ═══════════════════════════════════════════════════════════════
-       TEMPERATURE SENSOR NODES
-       Small circles on the pipes that become hotspots for live values
-       ═══════════════════════════════════════════════════════════════ -->
+  <!-- Scroll compressor interior detail -->
+  <ellipse cx="360" cy="155" rx="32" ry="32" fill="none"
+           stroke="#4a6a8a" stroke-width="1.5" stroke-dasharray="5 3"/>
+  <path d="M360,145 C365,150 368,155 360,162 C352,155 355,150 360,145"
+        fill="none" stroke="#5a7a96" stroke-width="1.5"/>
+  <circle cx="360" cy="155" r="7" fill="#1a252f" stroke="#4a6a8a" stroke-width="1.5"/>
+  <circle cx="360" cy="155" r="3" fill="#4a6a8a"/>
 
-  <!-- Supply temperature sensor -->
-  <circle cx="400" cy="154" r="10" fill="#1a252f" stroke="#e74c3c" stroke-width="2"
-          id="hotspot-supply-temp" data-hotspot-x="400" data-hotspot-y="154"/>
-  <text x="400" y="158" text-anchor="middle" fill="#e74c3c" font-size="8" font-weight="700">T</text>
-  <text x="400" y="140" text-anchor="middle" fill="#e74c3c" font-size="8">outlet</text>
+  <!-- Piston indicator (subtle animation) -->
+  <line x1="360" y1="148" x2="360" y2="130" stroke="#5a7a96" stroke-width="1.5" opacity="0.6">
+    <animate attributeName="y2" values="130;136;130" dur="0.4s" repeatCount="indefinite"/>
+  </line>
 
-  <!-- Return temperature sensor -->
-  <circle cx="400" cy="355" r="10" fill="#1a252f" stroke="#2980b9" stroke-width="2"
-          id="hotspot-return-temp" data-hotspot-x="400" data-hotspot-y="355"/>
-  <text x="400" y="359" text-anchor="middle" fill="#2980b9" font-size="8" font-weight="700">T</text>
-  <text x="400" y="373" text-anchor="middle" fill="#2980b9" font-size="8">inlet</text>
+  <!-- Port connectors -->
+  <!-- Suction inlet (left) -->
+  <rect x="283" y="127" width="13" height="16" rx="3"
+        fill="#85c1e9" stroke="#5a9fc0" stroke-width="1"/>
+  <!-- Discharge outlet (right) -->
+  <rect x="424" y="127" width="13" height="16" rx="3"
+        fill="#e67e22" stroke="#d35400" stroke-width="1"/>
 
-  <!-- Water flow meter (on return, near outdoor unit) -->
-  <rect x="240" y="345" width="40" height="18" rx="4" fill="#1a252f" stroke="#2980b9" stroke-width="1.5"
-        id="hotspot-flow" data-hotspot-x="260" data-hotspot-y="354"/>
-  <text x="260" y="357" text-anchor="middle" fill="#2980b9" font-size="8">⟳ flow</text>
+  <!-- Compressor frequency display (hotspot inside box) -->
+  <rect x="312" y="113" width="96" height="22" rx="4"
+        fill="#0f1923" stroke="#3d5166" stroke-width="1"
+        id="hotspot-compressor-freq" data-hotspot-x="360" data-hotspot-y="124"/>
+  <text x="360" y="122" text-anchor="middle"
+        fill="#bcbd22" font-size="7.5">Hz</text>
 
-  <!-- Discharge temperature sensor (near outdoor unit top) -->
-  <circle cx="240" cy="175" r="10" fill="#1a252f" stroke="#e74c3c" stroke-width="2"
-          id="hotspot-discharge" data-hotspot-x="240" data-hotspot-y="175"/>
-  <text x="240" y="179" text-anchor="middle" fill="#e74c3c" font-size="8" font-weight="700">D</text>
-  <text x="240" y="162" text-anchor="middle" fill="#e74c3c" font-size="8">discharge</text>
+  <text x="360" y="187" text-anchor="middle"
+        fill="#8ca8c0" font-size="10" font-weight="600" letter-spacing="0.5">COMPRESSOR</text>
+</g>
 
-  <!-- ═══════════════════════════════════════════════════════════════
-       OUTDOOR TEMPERATURE (ambient)
-       ═══════════════════════════════════════════════════════════════ -->
-  <g id="outdoor-temp-box" filter="url(#shadow)">
-    <rect x="20" y="50" width="160" height="60" rx="8" fill="#1a252f" stroke="#3d5166" stroke-width="1.5"/>
-    <text x="100" y="72" text-anchor="middle" fill="#5a7a96" font-size="9" letter-spacing="0.5">OUTDOOR TEMPERATURE</text>
-    <!-- Thermometer icon -->
-    <line x1="60" y1="85" x2="60" y2="93" stroke="#e0a800" stroke-width="1"/>
-    <circle cx="60" cy="95" r="4" fill="#e0a800"/>
-    <rect x="58" y="81" width="4" height="14" rx="2" fill="#e0a800"/>
-    <text x="110" y="97" text-anchor="middle" fill="#e0a800" font-size="18" font-weight="700"
-          id="hotspot-outdoor-temp" data-hotspot-x="110" data-hotspot-y="90">T°</text>
+<!-- ══════════════════════════ CONDENSER / PLATE HX (centre-right) ═ -->
+<g id="condenser" filter="url(#shadow)">
+  <rect x="490" y="108" width="160" height="165" rx="10"
+        fill="url(#g-dark)" stroke="#3d5166" stroke-width="1.5"/>
+
+  <!-- Refrigerant side (left half): hot gas → liquid -->
+  <rect x="498" y="116" width="72" height="149" rx="4"
+        fill="url(#g-hx-refrig)" stroke="#3d5166" stroke-width="1"/>
+  <!-- Plate lines — refrigerant side -->
+  <g stroke="#4d2800" stroke-width="1">
+    <line x1="508" y1="118" x2="508" y2="263"/>
+    <line x1="517" y1="118" x2="517" y2="263"/>
+    <line x1="526" y1="118" x2="526" y2="263"/>
+    <line x1="535" y1="118" x2="535" y2="263"/>
+    <line x1="544" y1="118" x2="544" y2="263"/>
+    <line x1="553" y1="118" x2="553" y2="263"/>
+    <line x1="562" y1="118" x2="562" y2="263"/>
   </g>
 
-  <!-- ═══════════════════════════════════════════════════════════════
-       COP / EFFICIENCY BOX
-       ═══════════════════════════════════════════════════════════════ -->
-  <g id="cop-box" filter="url(#shadow)">
-    <rect x="340" y="420" width="220" height="75" rx="8" fill="#1a252f" stroke="#3d5166" stroke-width="1.5"/>
-    <text x="450" y="440" text-anchor="middle" fill="#5a7a96" font-size="9" letter-spacing="0.5">EFFICIENCY</text>
-    <line x1="340" y1="447" x2="560" y2="447" stroke="#3d5166" stroke-width="1"/>
-    <text x="390" y="463" text-anchor="middle" fill="#5a7a96" font-size="8">COP live</text>
-    <text x="450" y="463" text-anchor="middle" fill="#5a7a96" font-size="8">COP today</text>
-    <text x="520" y="463" text-anchor="middle" fill="#5a7a96" font-size="8">SCOP</text>
-    <!-- Hotspot anchors -->
-    <rect x="355" y="468" width="70" height="20" rx="4" fill="#0f1923" stroke="#3d5166" stroke-width="1"
-          id="hotspot-cop-live" data-hotspot-x="390" data-hotspot-y="478"/>
-    <rect x="415" y="468" width="70" height="20" rx="4" fill="#0f1923" stroke="#3d5166" stroke-width="1"
-          id="hotspot-cop-daily" data-hotspot-x="450" data-hotspot-y="478"/>
-    <rect x="485" y="468" width="60" height="20" rx="4" fill="#0f1923" stroke="#3d5166" stroke-width="1"
-          id="hotspot-scop" data-hotspot-x="515" data-hotspot-y="478"/>
+  <!-- Divider -->
+  <line x1="574" y1="116" x2="574" y2="265"
+        stroke="#4a6a8a" stroke-width="1.5" stroke-dasharray="4 3"/>
+
+  <!-- Water side (right half): cool return → hot supply -->
+  <rect x="578" y="116" width="64" height="149" rx="4"
+        fill="url(#g-hx-water)" stroke="#3d5166" stroke-width="1"/>
+  <!-- Plate lines — water side -->
+  <g stroke="#00223d" stroke-width="1">
+    <line x1="587" y1="118" x2="587" y2="263"/>
+    <line x1="596" y1="118" x2="596" y2="263"/>
+    <line x1="605" y1="118" x2="605" y2="263"/>
+    <line x1="614" y1="118" x2="614" y2="263"/>
+    <line x1="623" y1="118" x2="623" y2="263"/>
+    <line x1="632" y1="118" x2="632" y2="263"/>
   </g>
 
-  <!-- ═══════════════════════════════════════════════════════════════
-       OPERATING MODE BOX (top center)
-       ═══════════════════════════════════════════════════════════════ -->
-  <g id="mode-box" filter="url(#shadow)">
-    <rect x="340" y="20" width="220" height="50" rx="8" fill="#1a252f" stroke="#3d5166" stroke-width="1.5"/>
-    <text x="450" y="38" text-anchor="middle" fill="#5a7a96" font-size="9" letter-spacing="0.5">OPERATING MODE</text>
-    <text x="450" y="57" text-anchor="middle" fill="#8ca8c0" font-size="12" font-weight="600"
-          id="hotspot-mode" data-hotspot-x="450" data-hotspot-y="50">Heating</text>
+  <!-- Section labels -->
+  <text x="533" y="105" text-anchor="middle"
+        fill="#7d4e1a" font-size="8" font-weight="600">REFRIG.</text>
+  <text x="612" y="105" text-anchor="middle"
+        fill="#1a5276" font-size="8" font-weight="600">WATER</text>
+
+  <!-- Refrigerant port connectors (left wall) -->
+  <!-- Hot gas inlet (top) -->
+  <rect x="479" y="122" width="12" height="16" rx="3"
+        fill="#e67e22" stroke="#d35400" stroke-width="1"/>
+  <!-- Liquid outlet (bottom) -->
+  <rect x="479" y="246" width="12" height="16" rx="3"
+        fill="#f39c12" stroke="#d68910" stroke-width="1"/>
+
+  <!-- Water port connectors (right wall) -->
+  <!-- Supply outlet (top-right) -->
+  <rect x="649" y="122" width="12" height="16" rx="3"
+        fill="#e74c3c" stroke="#c0392b" stroke-width="1"/>
+  <!-- Return inlet (bottom-right) -->
+  <rect x="649" y="246" width="12" height="16" rx="3"
+        fill="#2980b9" stroke="#1a6ea8" stroke-width="1"/>
+
+  <text x="570" y="285" text-anchor="middle"
+        fill="#5a7a96" font-size="10" font-weight="600" letter-spacing="0.3">HEAT EXCHANGER</text>
+</g>
+
+<!-- ══════════════════════════ EXPANSION VALVE (centre-bottom) ════ -->
+<g id="expansion-valve" filter="url(#shadow)">
+  <rect x="315" y="348" width="94" height="70" rx="8"
+        fill="#1a252f" stroke="#3d5166" stroke-width="1.5"/>
+
+  <!-- Liquid inlet pipe stub (top) -->
+  <line x1="362" y1="348" x2="362" y2="361"
+        stroke="#f39c12" stroke-width="4" stroke-linecap="round"/>
+  <!-- TXV / bow-tie valve symbol -->
+  <!-- Upper triangle (inlet) -->
+  <polygon points="338,361 386,361 362,383"
+           fill="#243342" stroke="#f39c12" stroke-width="1.5"/>
+  <!-- Lower triangle (outlet) -->
+  <polygon points="338,383 386,383 362,361"
+           fill="#131e27" stroke="#2980b9" stroke-width="1.5"/>
+  <!-- Cold outlet pipe stub (bottom) -->
+  <line x1="362" y1="383" x2="362" y2="396"
+        stroke="#2980b9" stroke-width="4" stroke-linecap="round"/>
+  <!-- Actuator / thermal bulb (right side) -->
+  <line x1="386" y1="371" x2="400" y2="371"
+        stroke="#4a6a8a" stroke-width="1.5"/>
+  <circle cx="406" cy="371" r="6"
+          fill="#1a252f" stroke="#4a6a8a" stroke-width="1.5"/>
+
+  <text x="362" y="408" text-anchor="middle"
+        fill="#5a7a96" font-size="9" font-weight="600">EXP. VALVE</text>
+  <text x="362" y="418" text-anchor="middle"
+        fill="#3d5166" font-size="7.5">EEV / TXV</text>
+</g>
+
+<!-- ══════════════════════════════ REFRIGERANT CIRCUIT ════════════ -->
+
+<!-- ── 1. Discharge pipe: Compressor → Condenser (hot gas, orange) ── -->
+<g id="pipe-discharge" filter="url(#glow-hot)">
+  <!-- Background pipe (solid) -->
+  <path d="M437,135 H490" fill="none"
+        stroke="#8b4800" stroke-width="7" stroke-linecap="round"/>
+  <!-- Hot gas — animated flow -->
+  <path d="M437,135 H490" fill="none"
+        stroke="#e67e22" stroke-width="5" stroke-linecap="round">
+  </path>
+  <path d="M437,135 H490" fill="none"
+        stroke="#f39c12" stroke-width="3" stroke-dasharray="10 8">
+    <animate attributeName="stroke-dashoffset"
+             from="18" to="0" dur="0.9s" repeatCount="indefinite"/>
+  </path>
+  <!-- Arrow at condenser entry -->
+  <path d="M437,135 H490" fill="none" stroke="none"
+        marker-end="url(#m-discharge)"/>
+  <!-- Label -->
+  <text x="463" y="126" text-anchor="middle"
+        fill="#e67e22" font-size="8" font-weight="600">HOT GAS ↑P</text>
+</g>
+
+<!-- Discharge temperature sensor (on discharge pipe) -->
+<circle cx="460" cy="135" r="10"
+        fill="#1a252f" stroke="#e67e22" stroke-width="2"
+        id="hotspot-discharge" data-hotspot-x="460" data-hotspot-y="115"/>
+<text x="460" y="139" text-anchor="middle"
+      fill="#e67e22" font-size="9" font-weight="700">D</text>
+
+<!-- ── 2. Liquid line: Condenser → Expansion valve (warm liquid, amber) ── -->
+<g id="pipe-liquid">
+  <!-- Background -->
+  <path d="M490,254 H362 V348" fill="none"
+        stroke="#7d5200" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Animated flow -->
+  <path d="M490,254 H362 V348" fill="none"
+        stroke="#f39c12" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M490,254 H362 V348" fill="none"
+        stroke="#f1c40f" stroke-width="3" stroke-dasharray="10 8" stroke-linejoin="round">
+    <animate attributeName="stroke-dashoffset"
+             from="18" to="0" dur="2.4s" repeatCount="indefinite"/>
+  </path>
+  <!-- Labels -->
+  <text x="430" y="246" text-anchor="middle"
+        fill="#f39c12" font-size="8" font-weight="600">LIQUID ↑P</text>
+</g>
+
+<!-- ── 3. Cold line: Expansion valve → Evaporator (cold mix, blue) ── -->
+<g id="pipe-cold" filter="url(#glow-cold)">
+  <!-- Background -->
+  <path d="M362,396 V432 H105 V346" fill="none"
+        stroke="#0a3a5e" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Animated flow -->
+  <path d="M362,396 V432 H105 V346" fill="none"
+        stroke="#2980b9" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M362,396 V432 H105 V346" fill="none"
+        stroke="#3498db" stroke-width="3" stroke-dasharray="10 8" stroke-linejoin="round">
+    <animate attributeName="stroke-dashoffset"
+             from="18" to="0" dur="2.6s" repeatCount="indefinite"/>
+  </path>
+  <!-- Label -->
+  <text x="228" y="444" text-anchor="middle"
+        fill="#2980b9" font-size="8" font-weight="600">COLD MIX ↓P</text>
+</g>
+
+<!-- ── 4. Suction gas: Evaporator → Compressor (cold gas, light blue) ── -->
+<g id="pipe-suction">
+  <!-- Background -->
+  <path d="M195,130 H295" fill="none"
+        stroke="#0a2030" stroke-width="7" stroke-linecap="round"/>
+  <!-- Animated flow -->
+  <path d="M195,130 H295" fill="none"
+        stroke="#85c1e9" stroke-width="5" stroke-linecap="round"/>
+  <path d="M195,130 H295" fill="none"
+        stroke="#aed6f1" stroke-width="3" stroke-dasharray="10 8">
+    <animate attributeName="stroke-dashoffset"
+             from="18" to="0" dur="1.2s" repeatCount="indefinite"/>
+  </path>
+  <!-- Label -->
+  <text x="245" y="120" text-anchor="middle"
+        fill="#85c1e9" font-size="8" font-weight="600">SUCTION GAS ↓P</text>
+</g>
+
+<!-- ══════════════════════════════════ WATER CIRCUIT ══════════════ -->
+
+<!-- Supply pipe: condenser → Zone 1 (hot water, red) -->
+<path d="M661,130 H757" fill="none"
+      stroke="#8b1a1a" stroke-width="7" stroke-linecap="round"/>
+<path d="M661,130 H757" fill="none"
+      stroke="#e74c3c" stroke-width="5" stroke-linecap="round"
+      marker-end="url(#m-supply)"/>
+<path d="M661,130 H757" fill="none"
+      stroke="#ff6b6b" stroke-width="3" stroke-dasharray="10 8">
+  <animate attributeName="stroke-dashoffset"
+           from="18" to="0" dur="1.8s" repeatCount="indefinite"/>
+</path>
+<text x="757" y="120" text-anchor="end"
+      fill="#e74c3c" font-size="9" font-weight="600">→ SUPPLY</text>
+
+<!-- Return pipe: Zone 1 → condenser (cool water, blue) -->
+<path d="M757,254 H661" fill="none"
+      stroke="#0a1e30" stroke-width="7" stroke-linecap="round"/>
+<path d="M757,254 H661" fill="none"
+      stroke="#2980b9" stroke-width="5" stroke-linecap="round"
+      marker-end="url(#m-return)"/>
+<path d="M757,254 H661" fill="none"
+      stroke="#5dade2" stroke-width="3" stroke-dasharray="10 8">
+  <animate attributeName="stroke-dashoffset"
+           from="18" to="0" dur="1.8s" repeatCount="indefinite"/>
+</path>
+<text x="757" y="245" text-anchor="end"
+      fill="#2980b9" font-size="9" font-weight="600">← RETURN</text>
+
+<!-- Zone 1 label area (right of water pipes) -->
+<g filter="url(#shadow)">
+  <rect x="660" y="108" width="95" height="160" rx="8"
+        fill="#1a252f" stroke="#3d5166" stroke-width="1.5"/>
+  <text x="707" y="125" text-anchor="middle"
+        fill="#8ca8c0" font-size="10" font-weight="600">ZONE 1</text>
+  <text x="707" y="137" text-anchor="middle"
+        fill="#4a6a8a" font-size="8">heating circuit</text>
+  <!-- Radiator symbol -->
+  <g fill="none" stroke="#e74c3c" stroke-width="1.5" opacity="0.55">
+    <rect x="675" y="146" width="11" height="36" rx="2"/>
+    <rect x="691" y="146" width="11" height="36" rx="2"/>
+    <rect x="707" y="146" width="11" height="36" rx="2"/>
+    <rect x="723" y="146" width="11" height="36" rx="2"/>
+    <line x1="673" y1="150" x2="736" y2="150"/>
+    <line x1="673" y1="178" x2="736" y2="178"/>
   </g>
+  <text x="707" y="200" text-anchor="middle"
+        fill="#4a6a8a" font-size="8">HK1 / Zone 1</text>
+  <text x="707" y="213" text-anchor="middle"
+        fill="#3d5166" font-size="7.5">heating circuit</text>
+  <!-- Pump symbol on return line -->
+  <circle cx="707" cy="253" r="14"
+          fill="#1a252f" stroke="#2980b9" stroke-width="2"/>
+  <path d="M707,241 L711,247 L707,253 L703,247 Z" fill="#2980b9"/>
+  <text x="707" y="269" text-anchor="middle"
+        fill="#4a9aca" font-size="7.5">pump</text>
+</g>
 
-  <!-- ═══════════════════════════════════════════════════════════════
-       PRESSURE / FLOW READINGS (bottom left)
-       ═══════════════════════════════════════════════════════════════ -->
-  <g id="pressure-box" filter="url(#shadow)">
-    <rect x="20" y="380" width="160" height="80" rx="8" fill="#1a252f" stroke="#3d5166" stroke-width="1.5"/>
-    <text x="100" y="400" text-anchor="middle" fill="#5a7a96" font-size="9" letter-spacing="0.5">SYSTEM</text>
-    <text x="65" y="420" text-anchor="middle" fill="#5a7a96" font-size="8">pressure</text>
-    <text x="140" y="420" text-anchor="middle" fill="#5a7a96" font-size="8">flow rate</text>
-    <rect x="25" y="424" width="75" height="25" rx="4" fill="#0f1923" stroke="#3d5166" stroke-width="1"
-          id="hotspot-pressure" data-hotspot-x="65" data-hotspot-y="436"/>
-    <rect x="105" y="424" width="70" height="25" rx="4" fill="#0f1923" stroke="#3d5166" stroke-width="1"
-          id="hotspot-waterflow" data-hotspot-x="140" data-hotspot-y="436"/>
-    <text x="65" y="451" text-anchor="middle" fill="#4a9aca" font-size="7">bar</text>
-    <text x="140" y="451" text-anchor="middle" fill="#4a9aca" font-size="7">L/min</text>
-  </g>
+<!-- Supply temperature sensor -->
+<circle cx="693" cy="130" r="10"
+        fill="#1a252f" stroke="#e74c3c" stroke-width="2"
+        id="hotspot-supply-temp" data-hotspot-x="693" data-hotspot-y="130"/>
+<text x="693" y="134" text-anchor="middle"
+      fill="#e74c3c" font-size="9" font-weight="700">T</text>
 
-  <!-- ═══════════════════════════════════════════════════════════════
-       COMPRESSOR STATUS (bottom right, near outdoor unit)
-       ═══════════════════════════════════════════════════════════════ -->
-  <g id="compressor-box" filter="url(#shadow)">
-    <rect x="740" y="330" width="145" height="120" rx="8" fill="#1a252f" stroke="#3d5166" stroke-width="1.5"/>
-    <text x="812" y="350" text-anchor="middle" fill="#5a7a96" font-size="9" letter-spacing="0.5">COMPRESSOR</text>
-    <line x1="740" y1="357" x2="885" y2="357" stroke="#3d5166" stroke-width="1"/>
-    <text x="812" y="374" text-anchor="middle" fill="#5a7a96" font-size="8">frequency</text>
-    <rect x="755" y="378" width="114" height="22" rx="4" fill="#0f1923" stroke="#3d5166" stroke-width="1"
-          id="hotspot-compressor-freq" data-hotspot-x="812" data-hotspot-y="389"/>
-    <text x="812" y="393" text-anchor="middle" fill="#bcbd22" font-size="7">Hz</text>
-    <text x="812" y="414" text-anchor="middle" fill="#5a7a96" font-size="8">running hrs · starts</text>
-    <rect x="755" y="418" width="50" height="20" rx="4" fill="#0f1923" stroke="#3d5166" stroke-width="1"
-          id="hotspot-comp-hours" data-hotspot-x="780" data-hotspot-y="428"/>
-    <rect x="815" y="418" width="55" height="20" rx="4" fill="#0f1923" stroke="#3d5166" stroke-width="1"
-          id="hotspot-comp-starts" data-hotspot-x="842" data-hotspot-y="428"/>
-    <!-- Defrost indicator -->
-    <text x="812" y="450" text-anchor="middle" fill="#5a7a96" font-size="8">defrost</text>
-    <rect x="755" y="434" width="114" height="0" rx="0" fill="transparent"/>
-    <rect x="780" y="453" width="64" height="18" rx="4" fill="#0f1923" stroke="#3d5166" stroke-width="1"
-          id="hotspot-defrost" data-hotspot-x="812" data-hotspot-y="462"/>
-  </g>
+<!-- Return temperature sensor -->
+<circle cx="693" cy="254" r="10"
+        fill="#1a252f" stroke="#2980b9" stroke-width="2"
+        id="hotspot-return-temp" data-hotspot-x="693" data-hotspot-y="254"/>
+<text x="693" y="258" text-anchor="middle"
+      fill="#2980b9" font-size="9" font-weight="700">T</text>
 
-  <!-- ═══════════════════════════════════════════════════════════════
-       TITLE
-       ═══════════════════════════════════════════════════════════════ -->
-  <text x="720" y="75" text-anchor="middle" fill="#3d5166" font-size="10" letter-spacing="1">A2W HEAT PUMP — ZONE 1</text>
+<!-- Flow meter -->
+<rect x="685" y="278" width="56" height="18" rx="4"
+      fill="#1a252f" stroke="#2980b9" stroke-width="1.5"
+      id="hotspot-flow" data-hotspot-x="713" data-hotspot-y="287"/>
+<text x="713" y="290" text-anchor="middle"
+      fill="#4a9aca" font-size="8">⟳ flow</text>
 
-  <!-- ═══════════════════════════════════════════════════════════════
-       PIPE INSULATION INDICATORS (decorative dashes on pipes to show insulation)
-       ═══════════════════════════════════════════════════════════════ -->
-  <line x1="195" y1="154" x2="310" y2="154" stroke="#e74c3c" stroke-width="5" stroke-dasharray="0" opacity="0.15"
-        stroke-linecap="butt"/>
+<!-- ════════════════════════════ COMPRESSOR STATS BOX (far right) ═ -->
+<g id="comp-stats" filter="url(#shadow)">
+  <rect x="762" y="108" width="123" height="195" rx="8"
+        fill="#1a252f" stroke="#3d5166" stroke-width="1.5"/>
+  <text x="823" y="125" text-anchor="middle"
+        fill="#4a6a8a" font-size="8" letter-spacing="1">COMPRESSOR</text>
+  <line x1="762" y1="131" x2="885" y2="131" stroke="#3d5166" stroke-width="1"/>
 
-  <!-- Version watermark -->
-  <text x="880" y="515" text-anchor="end" fill="#3d5166" font-size="8" opacity="0.6">HeatPump Hero v0.2</text>
+  <!-- Frequency -->
+  <text x="823" y="146" text-anchor="middle"
+        fill="#5a7a96" font-size="8">frequency</text>
+  <rect x="772" y="150" width="102" height="26" rx="4"
+        fill="#0f1923" stroke="#3d5166" stroke-width="1"
+        id="hotspot-compressor-freq-panel" data-hotspot-x="823" data-hotspot-y="163"/>
+  <text x="823" y="168" text-anchor="middle"
+        fill="#bcbd22" font-size="8">Hz</text>
+
+  <!-- Run hours / starts -->
+  <text x="823" y="191" text-anchor="middle"
+        fill="#5a7a96" font-size="8">run hrs · starts</text>
+  <rect x="769" y="195" width="48" height="22" rx="4"
+        fill="#0f1923" stroke="#3d5166" stroke-width="1"
+        id="hotspot-comp-hours" data-hotspot-x="793" data-hotspot-y="206"/>
+  <rect x="824" y="195" width="48" height="22" rx="4"
+        fill="#0f1923" stroke="#3d5166" stroke-width="1"
+        id="hotspot-comp-starts" data-hotspot-x="848" data-hotspot-y="206"/>
+  <text x="793" y="210" text-anchor="middle"
+        fill="#5a7a96" font-size="7">h</text>
+  <text x="848" y="210" text-anchor="middle"
+        fill="#5a7a96" font-size="7">×</text>
+
+  <!-- Defrost status -->
+  <line x1="762" y1="225" x2="885" y2="225" stroke="#3d5166" stroke-width="1"/>
+  <text x="823" y="240" text-anchor="middle"
+        fill="#5a7a96" font-size="8">defrost</text>
+  <rect x="772" y="244" width="102" height="22" rx="4"
+        fill="#0f1923" stroke="#3d5166" stroke-width="1"
+        id="hotspot-defrost" data-hotspot-x="823" data-hotspot-y="255"/>
+  <text x="823" y="258" text-anchor="middle"
+        fill="#17a2b8" font-size="8">●</text>
+
+  <!-- Snowflake icon for defrost -->
+  <text x="823" y="276" text-anchor="middle"
+        fill="#17a2b855" font-size="10">❄</text>
+
+  <!-- Status legend -->
+  <text x="823" y="293" text-anchor="middle"
+        fill="#3d5166" font-size="7">on · off</text>
+</g>
+
+<!-- ════════════════════════════════ SYSTEM BOX (bottom left) ═════ -->
+<g id="system-box" filter="url(#shadow)">
+  <rect x="15" y="390" width="183" height="78" rx="8"
+        fill="#1a252f" stroke="#3d5166" stroke-width="1.5"/>
+  <text x="107" y="407" text-anchor="middle"
+        fill="#4a6a8a" font-size="8" letter-spacing="1">SYSTEM</text>
+  <line x1="15" y1="413" x2="198" y2="413" stroke="#3d5166" stroke-width="1"/>
+  <text x="57" y="428" text-anchor="middle"
+        fill="#5a7a96" font-size="8">pressure</text>
+  <text x="151" y="428" text-anchor="middle"
+        fill="#5a7a96" font-size="8">flow rate</text>
+  <rect x="22" y="431" width="70" height="24" rx="4"
+        fill="#0f1923" stroke="#3d5166" stroke-width="1"
+        id="hotspot-pressure" data-hotspot-x="57" data-hotspot-y="443"/>
+  <rect x="100" y="431" width="90" height="24" rx="4"
+        fill="#0f1923" stroke="#3d5166" stroke-width="1"
+        id="hotspot-waterflow" data-hotspot-x="145" data-hotspot-y="443"/>
+  <text x="57" y="458" text-anchor="middle"
+        fill="#4a9aca" font-size="7">bar</text>
+  <text x="145" y="458" text-anchor="middle"
+        fill="#4a9aca" font-size="7">L/min</text>
+</g>
+
+<!-- ════════════════════════════════ COP / EFFICIENCY BOX ══════════ -->
+<g id="cop-box" filter="url(#shadow)">
+  <rect x="208" y="428" width="312" height="68" rx="8"
+        fill="#1a252f" stroke="#3d5166" stroke-width="1.5"/>
+  <text x="364" y="445" text-anchor="middle"
+        fill="#4a6a8a" font-size="8" letter-spacing="1">EFFICIENCY</text>
+  <line x1="208" y1="451" x2="520" y2="451" stroke="#3d5166" stroke-width="1"/>
+  <text x="293" y="466" text-anchor="middle"
+        fill="#5a7a96" font-size="8">COP live</text>
+  <text x="364" y="466" text-anchor="middle"
+        fill="#5a7a96" font-size="8">COP today</text>
+  <text x="447" y="466" text-anchor="middle"
+        fill="#5a7a96" font-size="8">SCOP</text>
+  <rect x="218" y="469" width="68" height="20" rx="4"
+        fill="#0f1923" stroke="#3d5166" stroke-width="1"
+        id="hotspot-cop-live" data-hotspot-x="252" data-hotspot-y="479"/>
+  <rect x="294" y="469" width="140" height="20" rx="4"
+        fill="#0f1923" stroke="#3d5166" stroke-width="1"
+        id="hotspot-cop-daily" data-hotspot-x="364" data-hotspot-y="479"/>
+  <rect x="412" y="469" width="98" height="20" rx="4"
+        fill="#0f1923" stroke="#3d5166" stroke-width="1"
+        id="hotspot-scop" data-hotspot-x="461" data-hotspot-y="479"/>
+</g>
+
+<!-- ════════════════════════════════ TITLE / WATERMARK ════════════ -->
+<text x="716" y="412" text-anchor="middle"
+      fill="#2c3e50" font-size="9" letter-spacing="1">A2W HEAT PUMP — ZONE 1</text>
+<text x="887" y="516" text-anchor="end"
+      fill="#2c3e50" font-size="7.5" opacity="0.7">HeatPump Hero v0.3</text>
+
 </svg>

@@ -1073,7 +1073,7 @@ sensors:
   _source_package: hph_sources.yaml
 - name: HeatPump Hero Source Pump Speed
   unique_id: hph_source_pump_speed
-  unit_of_measurement: "%"
+  unit_of_measurement: "rpm"
   state_class: measurement
   availability: '{% set ent = states(''text.hph_src_pump_speed'') %} {{ ent
     and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
@@ -1191,7 +1191,7 @@ sensors:
   state_class: measurement
   state: >-
     {% if is_state('binary_sensor.hph_compressor_running','on')
-       and is_state('sensor.hph_source_operating_mode','heating') %}
+       and is_state('sensor.hph_operating_mode','heating') %}
       {{ states('sensor.hph_electrical_power_active') | float(0) }}
     {% else %}0{% endif %}
   _source_package: hph_efficiency.yaml
@@ -1202,7 +1202,7 @@ sensors:
   state_class: measurement
   state: >-
     {% if is_state('binary_sensor.hph_compressor_running','on')
-       and is_state('sensor.hph_source_operating_mode','dhw') %}
+       and is_state('sensor.hph_operating_mode','dhw') %}
       {{ states('sensor.hph_electrical_power_active') | float(0) }}
     {% else %}0{% endif %}
   _source_package: hph_efficiency.yaml
@@ -1213,7 +1213,7 @@ sensors:
   state_class: measurement
   state: >-
     {% if is_state('binary_sensor.hph_compressor_running','on')
-       and is_state('sensor.hph_source_operating_mode','cooling') %}
+       and is_state('sensor.hph_operating_mode','cooling') %}
       {{ states('sensor.hph_electrical_power_active') | float(0) }}
     {% else %}0{% endif %}
   _source_package: hph_efficiency.yaml

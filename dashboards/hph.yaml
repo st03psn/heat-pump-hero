@@ -181,60 +181,90 @@ views:
                 position: relative;
               }
           sub_buttons:
+            # mode (450,44) → 900×520
             - entity: sensor.hph_source_operating_mode
               show_state: true
               show_name: false
               show_icon: false
               styles: |
-                .bubble-sub-button { position: absolute; left: 44%; top: 5%; background: transparent; color: #8ca8c0; font-size: 11px; font-weight: 600; }
+                .bubble-sub-button { position: absolute; left: 47%; top: 7%; background: transparent; color: #8ca8c0; font-size: 11px; font-weight: 600; }
+            # outdoor-temp (117,55)
             - entity: sensor.hph_source_outdoor_temp
               show_state: true
               show_name: false
               show_icon: false
               styles: |
-                .bubble-sub-button { position: absolute; left: 8%; top: 14%; background: transparent; color: #e0a800; font-size: 14px; font-weight: 700; }
+                .bubble-sub-button { position: absolute; left: 10%; top: 9%; background: transparent; color: #e0a800; font-size: 14px; font-weight: 700; }
+            # discharge (460,115)
+            - entity: sensor.hph_source_discharge_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 49%; top: 20%; background: transparent; color: #e67e22; font-size: 11px; font-weight: 600; }
+            # supply-temp (693,130)
             - entity: sensor.hph_source_outlet_temp
               show_state: true
               show_name: false
               show_icon: false
               styles: |
-                .bubble-sub-button { position: absolute; left: 41%; top: 22%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
-            - entity: sensor.hph_source_inlet_temp
-              show_state: true
-              show_name: false
-              show_icon: false
-              styles: |
-                .bubble-sub-button { position: absolute; left: 41%; top: 70%; background: #1a252f; border: 1px solid #2980b9; color: #2980b9; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
-            - entity: sensor.hph_source_flow_rate
-              show_state: true
-              show_name: false
-              show_icon: false
-              styles: |
-                .bubble-sub-button { position: absolute; left: 24%; top: 65%; background: #1a252f; border: 1px solid #2980b9; color: #4a9aca; font-size: 10px; border-radius: 6px; padding: 2px 4px; }
+                .bubble-sub-button { position: absolute; left: 74%; top: 23%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            # comp-freq-panel (823,163)
             - entity: sensor.hph_source_compressor_freq
               show_state: true
               show_name: false
               show_icon: false
               styles: |
-                .bubble-sub-button { position: absolute; left: 84%; top: 71%; background: #0f1923; border: 1px solid #3d5166; color: #bcbd22; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+                .bubble-sub-button { position: absolute; left: 88%; top: 29%; background: #0f1923; border: 1px solid #3d5166; color: #bcbd22; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            # comp-hours (793,206)
+            - entity: sensor.hph_source_compressor_hours
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 85%; top: 37%; background: transparent; color: #5a7a96; font-size: 10px; }
+            # comp-starts (848,206)
+            - entity: sensor.hph_source_compressor_starts
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 91%; top: 37%; background: transparent; color: #5a7a96; font-size: 10px; }
+            # return-temp (693,254)
+            - entity: sensor.hph_source_inlet_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 74%; top: 46%; background: #1a252f; border: 1px solid #2980b9; color: #2980b9; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            # flow (713,287)
+            - entity: sensor.hph_source_flow_rate
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 76%; top: 53%; background: transparent; color: #4a9aca; font-size: 10px; }
+            # cop-live (252,479)
             - entity: sensor.hph_cop_live
               show_state: true
               show_name: false
               show_icon: false
               styles: |
-                .bubble-sub-button { position: absolute; left: 37%; top: 88%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
+                .bubble-sub-button { position: absolute; left: 25%; top: 90%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
+            # cop-daily (364,479)
             - entity: sensor.hph_cop_daily
               show_state: true
               show_name: false
               show_icon: false
               styles: |
-                .bubble-sub-button { position: absolute; left: 46%; top: 88%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
+                .bubble-sub-button { position: absolute; left: 37%; top: 90%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
+            # scop (461,479)
             - entity: sensor.hph_scop
               show_state: true
               show_name: false
               show_icon: false
               styles: |
-                .bubble-sub-button { position: absolute; left: 54%; top: 88%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
+                .bubble-sub-button { position: absolute; left: 48%; top: 90%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
       # ═══════════════════════════════════════════════════════════════════
       # Variant a2w_hk1_dhw
       # ═══════════════════════════════════════════════════════════════════
@@ -257,54 +287,97 @@ views:
                 position: relative;
               }
           sub_buttons:
+            # mode (450,44) → 900×520
             - entity: sensor.hph_source_operating_mode
               show_state: true
               show_name: false
               show_icon: false
               styles: |
-                .bubble-sub-button { position: absolute; left: 28%; top: 8%; background: transparent; color: #8ca8c0; font-size: 11px; font-weight: 600; }
+                .bubble-sub-button { position: absolute; left: 47%; top: 7%; background: transparent; color: #8ca8c0; font-size: 11px; font-weight: 600; }
+            # outdoor-temp (117,55)
             - entity: sensor.hph_source_outdoor_temp
               show_state: true
               show_name: false
               show_icon: false
               styles: |
-                .bubble-sub-button { position: absolute; left: 9%; top: 17%; background: transparent; color: #e0a800; font-size: 14px; font-weight: 700; }
+                .bubble-sub-button { position: absolute; left: 10%; top: 9%; background: transparent; color: #e0a800; font-size: 14px; font-weight: 700; }
+            # discharge (460,115)
+            - entity: sensor.hph_source_discharge_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 49%; top: 20%; background: transparent; color: #e67e22; font-size: 11px; font-weight: 600; }
+            # supply-temp (693,130)
             - entity: sensor.hph_source_outlet_temp
               show_state: true
               show_name: false
               show_icon: false
               styles: |
-                .bubble-sub-button { position: absolute; left: 35%; top: 25%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
-            - entity: sensor.hph_source_inlet_temp
-              show_state: true
-              show_name: false
-              show_icon: false
-              styles: |
-                .bubble-sub-button { position: absolute; left: 35%; top: 60%; background: #1a252f; border: 1px solid #2980b9; color: #2980b9; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+                .bubble-sub-button { position: absolute; left: 74%; top: 23%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            # comp-freq-panel (823,163)
             - entity: sensor.hph_source_compressor_freq
               show_state: true
               show_name: false
               show_icon: false
               styles: |
-                .bubble-sub-button { position: absolute; left: 6%; top: 82%; background: #0f1923; border: 1px solid #3d5166; color: #bcbd22; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
-            - entity: sensor.hph_cop_live
+                .bubble-sub-button { position: absolute; left: 88%; top: 29%; background: #0f1923; border: 1px solid #3d5166; color: #bcbd22; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            # comp-hours (793,206)
+            - entity: sensor.hph_source_compressor_hours
               show_state: true
               show_name: false
               show_icon: false
               styles: |
-                .bubble-sub-button { position: absolute; left: 22%; top: 91%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
-            - entity: sensor.hph_scop
+                .bubble-sub-button { position: absolute; left: 85%; top: 37%; background: transparent; color: #5a7a96; font-size: 10px; }
+            # comp-starts (848,206)
+            - entity: sensor.hph_source_compressor_starts
               show_state: true
               show_name: false
               show_icon: false
               styles: |
-                .bubble-sub-button { position: absolute; left: 38%; top: 91%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
+                .bubble-sub-button { position: absolute; left: 91%; top: 37%; background: transparent; color: #5a7a96; font-size: 10px; }
+            # return-temp (693,254)
+            - entity: sensor.hph_source_inlet_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 74%; top: 46%; background: #1a252f; border: 1px solid #2980b9; color: #2980b9; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            # flow (713,287)
+            - entity: sensor.hph_source_flow_rate
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 76%; top: 53%; background: transparent; color: #4a9aca; font-size: 10px; }
+            # dhw-temp (773,347)
             - entity: sensor.hph_source_dhw_temp
               show_state: true
               show_name: false
               show_icon: false
               styles: |
-                .bubble-sub-button { position: absolute; left: 90%; top: 47%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+                .bubble-sub-button { position: absolute; left: 83%; top: 65%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            # cop-live (252,479)
+            - entity: sensor.hph_cop_live
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 25%; top: 90%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
+            # cop-daily (364,479)
+            - entity: sensor.hph_cop_daily
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 37%; top: 90%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
+            # scop (461,479)
+            - entity: sensor.hph_scop
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 48%; top: 90%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
       # ═══════════════════════════════════════════════════════════════════
       # Variant a2w_hk1_hk2_dhw
       # ═══════════════════════════════════════════════════════════════════
@@ -327,66 +400,104 @@ views:
                 position: relative;
               }
           sub_buttons:
+            # mode (450,44) → 900×580
             - entity: sensor.hph_source_operating_mode
               show_state: true
               show_name: false
               show_icon: false
               styles: |
-                .bubble-sub-button { position: absolute; left: 30%; top: 7%; background: transparent; color: #8ca8c0; font-size: 11px; font-weight: 600; }
+                .bubble-sub-button { position: absolute; left: 47%; top: 6%; background: transparent; color: #8ca8c0; font-size: 11px; font-weight: 600; }
+            # outdoor-temp (117,55)
             - entity: sensor.hph_source_outdoor_temp
               show_state: true
               show_name: false
               show_icon: false
               styles: |
-                .bubble-sub-button { position: absolute; left: 9%; top: 16%; background: transparent; color: #e0a800; font-size: 14px; font-weight: 700; }
+                .bubble-sub-button { position: absolute; left: 10%; top: 8%; background: transparent; color: #e0a800; font-size: 14px; font-weight: 700; }
+            # discharge (460,115)
+            - entity: sensor.hph_source_discharge_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 49%; top: 18%; background: transparent; color: #e67e22; font-size: 11px; font-weight: 600; }
+            # supply-temp (693,130)
             - entity: sensor.hph_source_outlet_temp
               show_state: true
               show_name: false
               show_icon: false
               styles: |
-                .bubble-sub-button { position: absolute; left: 32%; top: 23%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
-            - entity: sensor.hph_source_inlet_temp
-              show_state: true
-              show_name: false
-              show_icon: false
-              styles: |
-                .bubble-sub-button { position: absolute; left: 32%; top: 55%; background: #1a252f; border: 1px solid #2980b9; color: #2980b9; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
-            - entity: sensor.hph_source_compressor_freq
-              show_state: true
-              show_name: false
-              show_icon: false
-              styles: |
-                .bubble-sub-button { position: absolute; left: 84%; top: 81%; background: #0f1923; border: 1px solid #3d5166; color: #bcbd22; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
-            - entity: sensor.hph_cop_live
-              show_state: true
-              show_name: false
-              show_icon: false
-              styles: |
-                .bubble-sub-button { position: absolute; left: 3%; top: 74%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
-            - entity: sensor.hph_scop
-              show_state: true
-              show_name: false
-              show_icon: false
-              styles: |
-                .bubble-sub-button { position: absolute; left: 14%; top: 74%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
+                .bubble-sub-button { position: absolute; left: 74%; top: 21%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            # dhw-temp (823,188)
             - entity: sensor.hph_source_dhw_temp
               show_state: true
               show_name: false
               show_icon: false
               styles: |
-                .bubble-sub-button { position: absolute; left: 91%; top: 44%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+                .bubble-sub-button { position: absolute; left: 88%; top: 30%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            # zone1-temp (731,227)
             - entity: sensor.hph_source_zone1_temp
               show_state: true
               show_name: false
               show_icon: false
               styles: |
-                .bubble-sub-button { position: absolute; left: 56%; top: 84%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 10px; border-radius: 4px; padding: 1px 3px; }
+                .bubble-sub-button { position: absolute; left: 78%; top: 37%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 10px; border-radius: 4px; padding: 1px 3px; }
+            # return-temp (693,262)
+            - entity: sensor.hph_source_inlet_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 74%; top: 43%; background: #1a252f; border: 1px solid #2980b9; color: #2980b9; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            # comp-freq (823,350)
+            - entity: sensor.hph_source_compressor_freq
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 88%; top: 58%; background: #0f1923; border: 1px solid #3d5166; color: #bcbd22; font-size: 11px; font-weight: 700; border-radius: 6px; padding: 2px 5px; }
+            # comp-hours (793,393)
+            - entity: sensor.hph_source_compressor_hours
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 85%; top: 65%; background: transparent; color: #5a7a96; font-size: 10px; }
+            # comp-starts (848,393)
+            - entity: sensor.hph_source_compressor_starts
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 91%; top: 65%; background: transparent; color: #5a7a96; font-size: 10px; }
+            # zone2-temp (701,413)
             - entity: sensor.hph_source_zone2_temp
               show_state: true
               show_name: false
               show_icon: false
               styles: |
-                .bubble-sub-button { position: absolute; left: 33%; top: 84%; background: #1a252f; border: 1px solid #a78bfa; color: #a78bfa; font-size: 10px; border-radius: 4px; padding: 1px 3px; }
+                .bubble-sub-button { position: absolute; left: 75%; top: 69%; background: #1a252f; border: 1px solid #a78bfa; color: #a78bfa; font-size: 10px; border-radius: 4px; padding: 1px 3px; }
+            # cop-live (252,557)
+            - entity: sensor.hph_cop_live
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 25%; top: 94%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
+            # cop-daily (364,557)
+            - entity: sensor.hph_cop_daily
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 37%; top: 94%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
+            # scop (461,557)
+            - entity: sensor.hph_scop
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 48%; top: 94%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 5px; }
       # ═══════════════════════════════════════════════════════════════════
       # Variant a2w_hk1_hk2_dhw_buffer
       # ═══════════════════════════════════════════════════════════════════
@@ -409,78 +520,111 @@ views:
                 position: relative;
               }
           sub_buttons:
+            # mode (450,44) → 900×620
             - entity: sensor.hph_source_operating_mode
               show_state: true
               show_name: false
               show_icon: false
               styles: |
-                .bubble-sub-button { position: absolute; left: 32%; top: 7%; background: transparent; color: #8ca8c0; font-size: 11px; font-weight: 600; }
+                .bubble-sub-button { position: absolute; left: 47%; top: 6%; background: transparent; color: #8ca8c0; font-size: 11px; font-weight: 600; }
+            # outdoor-temp (117,55)
             - entity: sensor.hph_source_outdoor_temp
               show_state: true
               show_name: false
               show_icon: false
               styles: |
-                .bubble-sub-button { position: absolute; left: 9%; top: 15%; background: transparent; color: #e0a800; font-size: 14px; font-weight: 700; }
+                .bubble-sub-button { position: absolute; left: 10%; top: 7%; background: transparent; color: #e0a800; font-size: 14px; font-weight: 700; }
+            # discharge (460,115)
+            - entity: sensor.hph_source_discharge_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 49%; top: 17%; background: transparent; color: #e67e22; font-size: 11px; font-weight: 600; }
+            # supply-temp (666,130)
             - entity: sensor.hph_source_outlet_temp
               show_state: true
               show_name: false
               show_icon: false
               styles: |
-                .bubble-sub-button { position: absolute; left: 16%; top: 22%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 10px; font-weight: 700; border-radius: 6px; padding: 2px 4px; }
-            - entity: sensor.hph_source_inlet_temp
-              show_state: true
-              show_name: false
-              show_icon: false
-              styles: |
-                .bubble-sub-button { position: absolute; left: 16%; top: 53%; background: #1a252f; border: 1px solid #2980b9; color: #2980b9; font-size: 10px; font-weight: 700; border-radius: 6px; padding: 2px 4px; }
-            - entity: sensor.hph_source_compressor_freq
-              show_state: true
-              show_name: false
-              show_icon: false
-              styles: |
-                .bubble-sub-button { position: absolute; left: 84%; top: 22%; background: #0f1923; border: 1px solid #3d5166; color: #bcbd22; font-size: 11px; font-weight: 700; border-radius: 4px; padding: 2px 4px; }
-            - entity: sensor.hph_cop_live
-              show_state: true
-              show_name: false
-              show_icon: false
-              styles: |
-                .bubble-sub-button { position: absolute; left: 78%; top: 17%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 10px; font-weight: 700; border-radius: 4px; padding: 1px 4px; }
-            - entity: sensor.hph_cop_daily
-              show_state: true
-              show_name: false
-              show_icon: false
-              styles: |
-                .bubble-sub-button { position: absolute; left: 84%; top: 17%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 10px; font-weight: 700; border-radius: 4px; padding: 1px 4px; }
-            - entity: sensor.hph_scop
-              show_state: true
-              show_name: false
-              show_icon: false
-              styles: |
-                .bubble-sub-button { position: absolute; left: 91%; top: 17%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 10px; font-weight: 700; border-radius: 4px; padding: 1px 4px; }
+                .bubble-sub-button { position: absolute; left: 71%; top: 19%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 10px; font-weight: 700; border-radius: 6px; padding: 2px 4px; }
+            # dhw-temp (823,188)
             - entity: sensor.hph_source_dhw_temp
               show_state: true
               show_name: false
               show_icon: false
               styles: |
-                .bubble-sub-button { position: absolute; left: 91%; top: 42%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 10px; font-weight: 700; border-radius: 6px; padding: 2px 4px; }
+                .bubble-sub-button { position: absolute; left: 88%; top: 28%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 10px; font-weight: 700; border-radius: 6px; padding: 2px 4px; }
+            # buffer-temp (681,208)
             - entity: sensor.hph_source_buffer_temp
               show_state: true
               show_name: false
               show_icon: false
               styles: |
-                .bubble-sub-button { position: absolute; left: 46%; top: 35%; background: #1a252f; border: 1px solid #e8a87c; color: #e8a87c; font-size: 10px; font-weight: 700; border-radius: 6px; padding: 2px 4px; }
+                .bubble-sub-button { position: absolute; left: 73%; top: 31%; background: #1a252f; border: 1px solid #e8a87c; color: #e8a87c; font-size: 10px; font-weight: 700; border-radius: 6px; padding: 2px 4px; }
+            # return-temp (666,254)
+            - entity: sensor.hph_source_inlet_temp
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 71%; top: 39%; background: #1a252f; border: 1px solid #2980b9; color: #2980b9; font-size: 10px; font-weight: 700; border-radius: 6px; padding: 2px 4px; }
+            # zone1-temp (854,323)
             - entity: sensor.hph_source_zone1_temp
               show_state: true
               show_name: false
               show_icon: false
               styles: |
-                .bubble-sub-button { position: absolute; left: 33%; top: 89%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 10px; border-radius: 4px; padding: 1px 3px; }
+                .bubble-sub-button { position: absolute; left: 91%; top: 50%; background: #1a252f; border: 1px solid #e74c3c; color: #e74c3c; font-size: 10px; border-radius: 4px; padding: 1px 3px; }
+            # comp-freq (823,415)
+            - entity: sensor.hph_source_compressor_freq
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 88%; top: 65%; background: #0f1923; border: 1px solid #3d5166; color: #bcbd22; font-size: 11px; font-weight: 700; border-radius: 4px; padding: 2px 4px; }
+            # zone2-temp (754,413)
             - entity: sensor.hph_source_zone2_temp
               show_state: true
               show_name: false
               show_icon: false
               styles: |
-                .bubble-sub-button { position: absolute; left: 67%; top: 89%; background: #1a252f; border: 1px solid #a78bfa; color: #a78bfa; font-size: 10px; border-radius: 4px; padding: 1px 3px; }
+                .bubble-sub-button { position: absolute; left: 80%; top: 64%; background: #1a252f; border: 1px solid #a78bfa; color: #a78bfa; font-size: 10px; border-radius: 4px; padding: 1px 3px; }
+            # comp-hours (787,449)
+            - entity: sensor.hph_source_compressor_hours
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 84%; top: 70%; background: transparent; color: #5a7a96; font-size: 10px; }
+            # comp-starts (828,449)
+            - entity: sensor.hph_source_compressor_starts
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 89%; top: 70%; background: transparent; color: #5a7a96; font-size: 10px; }
+            # cop-live (252,601)
+            - entity: sensor.hph_cop_live
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 25%; top: 95%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 10px; font-weight: 700; border-radius: 4px; padding: 1px 4px; }
+            # cop-daily (364,601)
+            - entity: sensor.hph_cop_daily
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 37%; top: 95%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 10px; font-weight: 700; border-radius: 4px; padding: 1px 4px; }
+            # scop (461,601)
+            - entity: sensor.hph_scop
+              show_state: true
+              show_name: false
+              show_icon: false
+              styles: |
+                .bubble-sub-button { position: absolute; left: 48%; top: 95%; background: #0f1923; border: 1px solid #3d5166; color: #17a2b8; font-size: 10px; font-weight: 700; border-radius: 4px; padding: 1px 4px; }
 
   # ════════════════════════════════════════════════════════════════════════
   # 3) ANALYSIS — ApexCharts (Service-Cloud-style)

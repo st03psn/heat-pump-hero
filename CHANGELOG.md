@@ -78,6 +78,43 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
   `HomeAssistantError` to the caller and surface a notification, instead
   of being silently logged. Each row also carries `friendly_name`.
 
+- **Hero card and per-mode energy display showed "Standby" / 0 % heating
+  while the compressor was actively running.**
+  The hero card, operating-mode chip, schematic state-labels, and the three
+  per-mode runtime power sensors (`hph_electrical_power_{heating,dhw,cooling}_runtime`)
+  all checked `sensor.hph_source_operating_mode` — the raw source-facade
+  that returns Heishamon strings like "Heat only" — against lowercase
+  `'heating'`/`'dhw'`/`'cooling'`, which never matched. Fixed by switching
+  every check to `sensor.hph_operating_mode` (the mapped sensor in
+  `hph_core.yaml` that normalises the raw value to `heating`/`dhw`/`cooling`).
+  The tariff-switch coordinator (`coordinators/efficiency.py`) was already
+  correct; only the dashboard and `sensor_templates.yaml` were affected.
+
+- **Pump-speed sensor reported `%` instead of `rpm`.**
+  `sensor.hph_source_pump_speed` had `unit_of_measurement: "%"`. Fixed to
+  `rpm` in both `sensor_templates.yaml` and the dashboard display.
+
+- **SCOP seasonal chart started from epoch 2017 instead of the first real
+  data point.**
+  A hardcoded `xaxis.min: 1751328000000` timestamp was ignored by
+  ApexCharts in `statistics` mode and forced the x-axis to start from
+  that epoch (2025-07-01) while the graph span still fetched 10 years,
+  leaving a long empty region. Removed the hardcoded min; `graph_span:
+  3650d` is kept so the chart covers a full 10-year window starting from
+  the first data point in the statistics archive.
+
+### Added
+
+- **Schematic SVGs rewritten with SMIL animations.**
+  All four installation-variant SVGs (`schema_a2w_hk1`, `*_dhw`,
+  `*_hk2_dhw`, `*_hk2_dhw_buffer`) now use native SMIL `<animateTransform>`
+  and `<animate>` elements instead of CSS keyframes. SMIL animations work
+  inside Chrome's `<img>` tag (which Bubble-Card and `picture-elements` both
+  use); CSS animations are silently blocked in that context. Hotspot
+  `data-hotspot-x/y` attributes updated to match the new layout; dashboard
+  overlay positions refreshed for all four variants in both the
+  picture-elements and Bubble-Card sub-button dashboards.
+
 ### Changed
 
 - **Comparison sensors now compare year-over-year, not month-over-month.**
