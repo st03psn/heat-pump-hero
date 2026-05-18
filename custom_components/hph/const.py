@@ -105,6 +105,28 @@ VENDOR_PRESETS: Final[dict[str, dict[str, str]]] = {
         "hph_src_zone1_target_temp": "sensor.panasonic_heat_pump_main_z1_water_target_temp",
         "hph_src_hex_outlet_temp": "sensor.panasonic_heat_pump_main_main_hex_outlet_temp",
         "hph_src_pump_duty": "sensor.panasonic_heat_pump_main_pump_duty",
+        # Heating curve reference points
+        "hph_ctrl_write_z1_outside_low": "number.panasonic_heat_pump_main_z1_heat_curve_outside_low_temp",
+        "hph_ctrl_write_z1_outside_high": "number.panasonic_heat_pump_main_z1_heat_curve_outside_high_temp",
+        "hph_ctrl_write_z2_outside_low": "number.panasonic_heat_pump_main_z2_heat_curve_outside_low_temp",
+        "hph_ctrl_write_z2_outside_high": "number.panasonic_heat_pump_main_z2_heat_curve_outside_high_temp",
+        "hph_ctrl_write_z2_curve_high": "number.panasonic_heat_pump_main_z2_heat_curve_target_high_temp",
+        "hph_ctrl_write_z2_curve_low": "number.panasonic_heat_pump_main_z2_heat_curve_target_low_temp",
+        # DHW additional
+        "hph_ctrl_write_dhw_heat_delta": "number.panasonic_heat_pump_main_dhw_heat_delta",
+        "hph_ctrl_write_smart_dhw": "select.panasonic_heat_pump_main_smart_dhw",
+        # Advanced settings
+        "hph_ctrl_write_heating_control": "select.panasonic_heat_pump_main_heating_control",
+        "hph_ctrl_write_cool_delta": "number.panasonic_heat_pump_main_cool_delta",
+        "hph_ctrl_write_dhw_sensor_selection": "select.panasonic_heat_pump_main_dhw_sensor_selection",
+        "hph_ctrl_write_bivalent_start_temp": "number.panasonic_heat_pump_main_bivalent_start_temp",
+        "hph_ctrl_write_heater_delay_time": "number.panasonic_heat_pump_main_heater_delay_time",
+        "hph_ctrl_write_heater_start_delta": "number.panasonic_heat_pump_main_heater_start_delta",
+        "hph_ctrl_write_heater_stop_delta": "number.panasonic_heat_pump_main_heater_stop_delta",
+        # Status binary sensors
+        "hph_src_force_heater": "binary_sensor.panasonic_heat_pump_main_force_heater_state",
+        "hph_src_sterilization": "binary_sensor.panasonic_heat_pump_main_sterilization_state",
+        "hph_src_quiet_schedule": "binary_sensor.panasonic_heat_pump_main_quiet_mode_schedule",
     },
     "panasonic_heishamon_aquarea": {
         # Bundled HeishaMon MQTT YAML naming (aquarea_*)
@@ -158,6 +180,28 @@ VENDOR_PRESETS: Final[dict[str, dict[str, str]]] = {
         "hph_src_zone1_target_temp": "sensor.aquarea_main_z1_water_target_temp",
         "hph_src_hex_outlet_temp": "sensor.aquarea_main_main_hex_outlet_temp",
         "hph_src_pump_duty": "sensor.aquarea_main_pump_duty",
+        # Heating curve reference points
+        "hph_ctrl_write_z1_outside_low": "number.aquarea_main_z1_heat_curve_outside_low_temp",
+        "hph_ctrl_write_z1_outside_high": "number.aquarea_main_z1_heat_curve_outside_high_temp",
+        "hph_ctrl_write_z2_outside_low": "number.aquarea_main_z2_heat_curve_outside_low_temp",
+        "hph_ctrl_write_z2_outside_high": "number.aquarea_main_z2_heat_curve_outside_high_temp",
+        "hph_ctrl_write_z2_curve_high": "number.aquarea_main_z2_heat_curve_target_high_temp",
+        "hph_ctrl_write_z2_curve_low": "number.aquarea_main_z2_heat_curve_target_low_temp",
+        # DHW additional
+        "hph_ctrl_write_dhw_heat_delta": "number.aquarea_main_dhw_heat_delta",
+        "hph_ctrl_write_smart_dhw": "select.aquarea_main_smart_dhw",
+        # Advanced settings
+        "hph_ctrl_write_heating_control": "select.aquarea_main_heating_control",
+        "hph_ctrl_write_cool_delta": "number.aquarea_main_cool_delta",
+        "hph_ctrl_write_dhw_sensor_selection": "select.aquarea_main_dhw_sensor_selection",
+        "hph_ctrl_write_bivalent_start_temp": "number.aquarea_main_bivalent_start_temp",
+        "hph_ctrl_write_heater_delay_time": "number.aquarea_main_heater_delay_time",
+        "hph_ctrl_write_heater_start_delta": "number.aquarea_main_heater_start_delta",
+        "hph_ctrl_write_heater_stop_delta": "number.aquarea_main_heater_stop_delta",
+        # Status binary sensors
+        "hph_src_force_heater": "binary_sensor.aquarea_main_force_heater_state",
+        "hph_src_sterilization": "binary_sensor.aquarea_main_sterilization_state",
+        "hph_src_quiet_schedule": "binary_sensor.aquarea_main_quiet_mode_schedule",
     },
     "daikin_altherma_core": {
         "hph_src_inlet_temp": "sensor.altherma_leaving_water_temperature",
@@ -428,6 +472,31 @@ TEXT_HELPERS: Final[dict[str, dict[str, Any]]] = {
                                    "initial": ""},
     "hph_ctrl_write_z2_climate": {"name": "Control write — zone 2 climate entity", "icon": "mdi:home-thermometer-outline",
                                    "initial": ""},
+    # Heating curve reference points (v0.9.1 — previously hardcoded in dashboard)
+    "hph_ctrl_write_z1_outside_low": {"name": "Control write — Z1 heat-curve outside_low entity", "icon": "mdi:snowflake", "initial": ""},
+    "hph_ctrl_write_z1_outside_high": {"name": "Control write — Z1 heat-curve outside_high entity", "icon": "mdi:white-balance-sunny", "initial": ""},
+    "hph_ctrl_write_z2_outside_low": {"name": "Control write — Z2 heat-curve outside_low entity", "icon": "mdi:snowflake", "initial": ""},
+    "hph_ctrl_write_z2_outside_high": {"name": "Control write — Z2 heat-curve outside_high entity", "icon": "mdi:white-balance-sunny", "initial": ""},
+    "hph_ctrl_write_z2_curve_high": {"name": "Control write — Z2 heat-curve target_high entity", "icon": "mdi:thermometer-high", "initial": ""},
+    "hph_ctrl_write_z2_curve_low": {"name": "Control write — Z2 heat-curve target_low entity", "icon": "mdi:thermometer-low", "initial": ""},
+    # DHW additional
+    "hph_ctrl_write_dhw_heat_delta": {"name": "Control write — DHW heat delta (number)", "icon": "mdi:delta", "initial": ""},
+    "hph_ctrl_write_smart_dhw": {"name": "Control write — smart DHW select entity", "icon": "mdi:auto-fix", "initial": ""},
+    # Advanced settings
+    "hph_ctrl_write_heating_control": {"name": "Control write — heating control select entity", "icon": "mdi:home-thermometer", "initial": ""},
+    "hph_ctrl_write_cool_delta": {"name": "Control write — cooling delta (number)", "icon": "mdi:delta", "initial": ""},
+    "hph_ctrl_write_dhw_sensor_selection": {"name": "Control write — DHW sensor selection entity", "icon": "mdi:water-thermometer", "initial": ""},
+    "hph_ctrl_write_bivalent_start_temp": {"name": "Control write — bivalent start temperature (number)", "icon": "mdi:fire-circle", "initial": ""},
+    "hph_ctrl_write_heater_delay_time": {"name": "Control write — backup heater delay time (number)", "icon": "mdi:timer-outline", "initial": ""},
+    "hph_ctrl_write_heater_start_delta": {"name": "Control write — backup heater start delta (number)", "icon": "mdi:thermometer-plus", "initial": ""},
+    "hph_ctrl_write_heater_stop_delta": {"name": "Control write — backup heater stop delta (number)", "icon": "mdi:thermometer-minus", "initial": ""},
+    # Source — status binary sensors (read-only, vendor-conditional)
+    "hph_src_force_heater": {"name": "HeatPump Hero source — force heater state", "icon": "mdi:radiator-disabled",
+                              "initial": "binary_sensor.panasonic_heat_pump_main_force_heater_state"},
+    "hph_src_sterilization": {"name": "HeatPump Hero source — sterilization state", "icon": "mdi:bacteria-outline",
+                               "initial": "binary_sensor.panasonic_heat_pump_main_sterilization_state"},
+    "hph_src_quiet_schedule": {"name": "HeatPump Hero source — quiet mode schedule", "icon": "mdi:alarm",
+                                "initial": "binary_sensor.panasonic_heat_pump_main_quiet_mode_schedule"},
     # Analysis (hph_analysis.yaml)
     "hph_indoor_temp_entity": {"name": "Analysis — indoor reference temperature entity", "icon": "mdi:home-thermometer",
                                 "initial": ""},
@@ -829,6 +898,84 @@ CTRL_FACADES: Final[dict[str, dict[str, Any]]] = {
     "hph_force_dhw": {
         "platform": "button", "writer": "hph_ctrl_write_force_dhw",
         "name": "Force DHW now", "icon": "mdi:water-boiler",
+    },
+    # Heating curve reference points (v0.9.1)
+    "hph_z1_outside_low": {
+        "platform": "number", "writer": "hph_ctrl_write_z1_outside_low",
+        "name": "Zone 1 heat curve — outside low", "icon": "mdi:snowflake",
+        "min": -20, "max": 20, "step": 1, "unit_of_measurement": "°C",
+    },
+    "hph_z1_outside_high": {
+        "platform": "number", "writer": "hph_ctrl_write_z1_outside_high",
+        "name": "Zone 1 heat curve — outside high", "icon": "mdi:white-balance-sunny",
+        "min": -10, "max": 30, "step": 1, "unit_of_measurement": "°C",
+    },
+    "hph_z2_outside_low": {
+        "platform": "number", "writer": "hph_ctrl_write_z2_outside_low",
+        "name": "Zone 2 heat curve — outside low", "icon": "mdi:snowflake",
+        "min": -20, "max": 20, "step": 1, "unit_of_measurement": "°C",
+    },
+    "hph_z2_outside_high": {
+        "platform": "number", "writer": "hph_ctrl_write_z2_outside_high",
+        "name": "Zone 2 heat curve — outside high", "icon": "mdi:white-balance-sunny",
+        "min": -10, "max": 30, "step": 1, "unit_of_measurement": "°C",
+    },
+    "hph_z2_curve_high": {
+        "platform": "number", "writer": "hph_ctrl_write_z2_curve_high",
+        "name": "Zone 2 heat curve — outlet at low outdoor", "icon": "mdi:thermometer-high",
+        "min": 20, "max": 60, "step": 1, "unit_of_measurement": "°C",
+    },
+    "hph_z2_curve_low": {
+        "platform": "number", "writer": "hph_ctrl_write_z2_curve_low",
+        "name": "Zone 2 heat curve — outlet at high outdoor", "icon": "mdi:thermometer-low",
+        "min": 20, "max": 60, "step": 1, "unit_of_measurement": "°C",
+    },
+    # DHW additional (v0.9.1)
+    "hph_dhw_heat_delta": {
+        "platform": "number", "writer": "hph_ctrl_write_dhw_heat_delta",
+        "name": "DHW heat delta", "icon": "mdi:delta",
+        "min": 2, "max": 15, "step": 1, "unit_of_measurement": "K",
+    },
+    "hph_smart_dhw": {
+        "platform": "select", "writer": "hph_ctrl_write_smart_dhw",
+        "name": "Smart DHW", "icon": "mdi:auto-fix",
+        "options": ["Off", "On"],
+    },
+    # Advanced settings (v0.9.1)
+    "hph_heating_control": {
+        "platform": "select", "writer": "hph_ctrl_write_heating_control",
+        "name": "Heating control mode", "icon": "mdi:home-thermometer",
+        "options": ["Compensation curve", "Direct", "Thermostat"],
+    },
+    "hph_cool_delta": {
+        "platform": "number", "writer": "hph_ctrl_write_cool_delta",
+        "name": "Cooling delta", "icon": "mdi:snowflake",
+        "min": 1, "max": 15, "step": 1, "unit_of_measurement": "K",
+    },
+    "hph_dhw_sensor_selection": {
+        "platform": "select", "writer": "hph_ctrl_write_dhw_sensor_selection",
+        "name": "DHW sensor selection", "icon": "mdi:water-thermometer",
+        "options": ["Internal", "External", "Compensation"],
+    },
+    "hph_bivalent_start_temp": {
+        "platform": "number", "writer": "hph_ctrl_write_bivalent_start_temp",
+        "name": "Bivalent start temperature", "icon": "mdi:thermometer-low",
+        "min": -20, "max": 20, "step": 1, "unit_of_measurement": "°C",
+    },
+    "hph_heater_delay_time": {
+        "platform": "number", "writer": "hph_ctrl_write_heater_delay_time",
+        "name": "Backup heater delay time", "icon": "mdi:timer-outline",
+        "min": 0, "max": 60, "step": 1, "unit_of_measurement": "min",
+    },
+    "hph_heater_start_delta": {
+        "platform": "number", "writer": "hph_ctrl_write_heater_start_delta",
+        "name": "Backup heater start delta", "icon": "mdi:arrow-up-bold-circle",
+        "min": 1, "max": 30, "step": 1, "unit_of_measurement": "K",
+    },
+    "hph_heater_stop_delta": {
+        "platform": "number", "writer": "hph_ctrl_write_heater_stop_delta",
+        "name": "Backup heater stop delta", "icon": "mdi:arrow-down-bold-circle",
+        "min": 1, "max": 30, "step": 1, "unit_of_measurement": "K",
     },
 }
 

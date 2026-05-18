@@ -46,3 +46,45 @@ run_legionella_now:
     schedule). Uses the configured target temperature and hold
     duration. Master switch must be on; the per-program switch may
     be off — this service explicitly overrides it for one run.
+
+write_toggle:
+  name: Toggle resolved write target
+  description: >-
+    Read a `text.hph_ctrl_write_*` helper, then call homeassistant.toggle
+    on the entity_id stored in it. Lets dashboard cards perform vendor-
+    agnostic toggles without templating `target.entity_id` (which HA
+    rejects). Silently skips if the helper is empty/unavailable.
+  fields:
+    helper:
+      name: Helper entity
+      description: The `text.hph_ctrl_write_*` helper that stores the target entity_id.
+      required: true
+      example: "text.hph_ctrl_write_force_dhw"
+      selector:
+        entity:
+          domain: text
+
+write_set:
+  name: Set value on resolved write target
+  description: >-
+    Read a `text.hph_ctrl_write_*` helper, then dispatch the appropriate
+    set service (number/select/text/switch/input_*) on the entity_id
+    stored in it. Lets dashboard cards perform vendor-agnostic writes
+    without templating `target.entity_id`. Silently skips if the helper
+    is empty/unavailable.
+  fields:
+    helper:
+      name: Helper entity
+      description: The `text.hph_ctrl_write_*` helper that stores the target entity_id.
+      required: true
+      example: "text.hph_ctrl_write_z1_climate"
+      selector:
+        entity:
+          domain: text
+    value:
+      name: Value
+      description: New value (number, string, or on/off for switches).
+      required: true
+      example: "21.5"
+      selector:
+        text:

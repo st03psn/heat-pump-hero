@@ -7,6 +7,18 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
 
 ### Added
 
+- **HAL completion — heating curve, DHW, advanced settings.** Extended
+  `CTRL_FACADES` with 15 additional proxy entities covering all remaining
+  hardcoded vendor entity references in the dashboard: Z1/Z2 heating curve
+  reference points (`hph_z1_outside_low/high`, `hph_z2_outside_low/high`,
+  `hph_z2_curve_high/low`), DHW heat delta, Smart DHW, heating control
+  mode, cooling delta, DHW sensor selection, bivalent start temperature,
+  backup heater delay / start-delta / stop-delta. Three read-only binary
+  sensor facades (`hph_src_force_heater`, `hph_src_sterilization`,
+  `hph_src_quiet_schedule`) make the Force-Heater, Sterilization, and
+  Quiet-Schedule status cards vendor-agnostic. Dashboard now references
+  zero hardcoded vendor entity IDs outside the allowed whitelist.
+
 - **Typed control facade entities (HAL completion).** The hardware
   abstraction layer is now symmetric: previously only *reads* went
   through `text.hph_src_*` facades, while *writes* required the user to

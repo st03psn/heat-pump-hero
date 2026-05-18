@@ -40,14 +40,17 @@ Robustness:
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Callable
 
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.event import (
     async_track_state_change_event,
     async_track_time_change,
+    async_track_time_interval,
 )
+
+_CHECKPOINT_INTERVAL = timedelta(seconds=60)
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
@@ -116,46 +119,65 @@ async def async_setup(hass: HomeAssistant, entry: ConfigEntry) -> list[Callable]
         elif old_s == "on" and new_s == "off":
             hass.async_create_task(_close_interval())
 
-    async def _close_interval() -> None:
-        """Add (current_meter − baseline) to today's accumulator."""
+    async def _checkpoint() -> None:
+        """Flush (current_meter − baseline) into today's accumulator and
+        advance the baseline to the current meter value. Keeps the
+        interval open so kWh continue to accrue between calls."""
         for key, src_helper, num_eid in (
             ("thermal_baseline", _THERMAL_SOURCE_HELPER, _THERMAL_NUMBER),
             ("electrical_baseline", _ELECTRICAL_SOURCE_HELPER, _ELECTRICAL_NUMBER),
         ):
             baseline = state.get(key)
             if baseline is None:
-                continue  # no baseline (off→on transition was missed/skipped)
+                continue  # no interval in progress
             current = _read_kwh(hass, src_helper)
             if current is None:
                 state[key] = None
                 continue
             delta = current - baseline
             if delta < 0:
-                # Counter reset on the source — skip this interval.
                 _LOGGER.warning(
                     "runtime_kwh: %s went backwards (%.3f → %.3f); skipping interval",
                     src_helper, baseline, current,
                 )
                 state[key] = None
                 continue
+            if delta == 0:
+                continue  # nothing to book, leave baseline as-is
             num_st = hass.states.get(num_eid)
             try:
                 today = float(num_st.state) if num_st else 0.0
             except (TypeError, ValueError):
                 today = 0.0
             await _set_number(hass, num_eid, today + delta)
-            _LOGGER.debug("runtime_kwh: %s += %.3f kWh (today=%.3f)", num_eid, delta, today + delta)
-            state[key] = None
+            _LOGGER.debug(
+                "runtime_kwh: %s += %.3f kWh (today=%.3f)",
+                num_eid, delta, today + delta,
+            )
+            state[key] = current
+
+    async def _close_interval() -> None:
+        """Final flush at compressor on→off — checkpoint then clear baselines."""
+        await _checkpoint()
+        state["thermal_baseline"] = None
+        state["electrical_baseline"] = None
+
+    @callback
+    def _on_tick(now: datetime) -> None:
+        hass.async_create_task(_checkpoint())
 
     @callback
     def _on_midnight(now: datetime) -> None:
         hass.async_create_task(_reset_daily())
 
     async def _reset_daily() -> None:
-        """Zero today's accumulators. If a compressor interval is still
-        in progress, restart its baseline at midnight so kWh accrued
-        before midnight stays on yesterday and post-midnight kWh starts
-        fresh on today."""
+        """Flush any in-progress interval onto yesterday's value first,
+        then zero today's accumulators. If a compressor interval is
+        still running, re-baseline at midnight so post-midnight kWh
+        starts fresh on today."""
+        # Flush before reset: otherwise the partial-day kWh of an
+        # ongoing interval would silently disappear at midnight.
+        await _checkpoint()
         await _set_number(hass, _THERMAL_NUMBER, 0.0)
         await _set_number(hass, _ELECTRICAL_NUMBER, 0.0)
         comp = hass.states.get(_COMPRESSOR_ENTITY)
@@ -174,6 +196,9 @@ async def async_setup(hass: HomeAssistant, entry: ConfigEntry) -> list[Callable]
     )
     unsubs.append(
         async_track_time_change(hass, _on_midnight, hour=0, minute=0, second=0)
+    )
+    unsubs.append(
+        async_track_time_interval(hass, _on_tick, _CHECKPOINT_INTERVAL)
     )
 
     # If the compressor is already on at coordinator start, seed baselines

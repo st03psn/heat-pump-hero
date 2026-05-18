@@ -254,6 +254,62 @@ async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
 
     hass.services.async_register(DOMAIN, "reapply_vendor_preset", _reapply_vendor_preset)
 
+    # write_toggle / write_set — resolve a `text.hph_ctrl_write_*` helper to its
+    # configured target entity, then forward a toggle / set_value call. Dashboards
+    # cannot template `target.entity_id`, so cards delegate the resolve step here.
+    async def _write_toggle(call: Any) -> None:
+        helper = call.data.get("helper", "").strip()
+        if not helper:
+            _LOGGER.warning("hph.write_toggle: no 'helper' arg")
+            return
+        st = hass.states.get(helper)
+        target = st.state.strip() if st else ""
+        if not target or target in ("unknown", "unavailable", ""):
+            _LOGGER.info("hph.write_toggle: helper %s empty/unavailable — skip", helper)
+            return
+        try:
+            await hass.services.async_call(
+                "homeassistant", "toggle", {"entity_id": target}, blocking=False
+            )
+        except Exception as exc:  # noqa: BLE001
+            _LOGGER.warning("hph.write_toggle: toggle %s failed: %s", target, exc)
+
+    hass.services.async_register(DOMAIN, "write_toggle", _write_toggle)
+
+    async def _write_set(call: Any) -> None:
+        helper = call.data.get("helper", "").strip()
+        value = call.data.get("value")
+        if not helper or value is None:
+            _LOGGER.warning("hph.write_set: missing 'helper' or 'value'")
+            return
+        st = hass.states.get(helper)
+        target = st.state.strip() if st else ""
+        if not target or target in ("unknown", "unavailable", ""):
+            _LOGGER.info("hph.write_set: helper %s empty/unavailable — skip", helper)
+            return
+        domain = target.split(".", 1)[0]
+        service_map = {
+            "number": ("number", "set_value", {"entity_id": target, "value": value}),
+            "input_number": ("input_number", "set_value", {"entity_id": target, "value": value}),
+            "select": ("select", "select_option", {"entity_id": target, "option": value}),
+            "input_select": ("input_select", "select_option", {"entity_id": target, "option": value}),
+            "text": ("text", "set_value", {"entity_id": target, "value": value}),
+            "input_text": ("input_text", "set_value", {"entity_id": target, "value": value}),
+            "switch": ("switch", "turn_on" if value in (True, "on", "true", 1) else "turn_off", {"entity_id": target}),
+            "input_boolean": ("input_boolean", "turn_on" if value in (True, "on", "true", 1) else "turn_off", {"entity_id": target}),
+        }
+        spec = service_map.get(domain)
+        if not spec:
+            _LOGGER.warning("hph.write_set: unsupported domain %s for %s", domain, target)
+            return
+        svc_domain, svc_name, payload = spec
+        try:
+            await hass.services.async_call(svc_domain, svc_name, payload, blocking=False)
+        except Exception as exc:  # noqa: BLE001
+            _LOGGER.warning("hph.write_set: %s.%s %s failed: %s", svc_domain, svc_name, target, exc)
+
+    hass.services.async_register(DOMAIN, "write_set", _write_set)
+
     return True
 
 
