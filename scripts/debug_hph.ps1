@@ -54,6 +54,8 @@ if ($bad.Count -gt 0) {
 
 Write-Host ""
 Write-Host "=== switch.hph_* ==="
+# Build lookup to avoid $_ scoping conflicts inside nested Where-Object
+$lookup = @{}; $states | ForEach-Object { $lookup[$_.entity_id] = $_.state }
 $hphStates | Where-Object { $_.entity_id -match "^switch\.hph_" } | Sort-Object entity_id | ForEach-Object {
     "  {0,-55} {1}" -f $_.entity_id, $_.state
 }

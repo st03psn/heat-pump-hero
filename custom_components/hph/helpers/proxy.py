@@ -81,8 +81,13 @@ class FacadeProxyMixin:
         # Subscribe to the currently resolved target.
         self._cached_target_id = self._resolved_target()
         self._attach_target_listener(self._cached_target_id)
-        # Push initial state into the subclass.
+        # Push initial state into the subclass AND commit it to HA's state machine.
+        # Without async_write_ha_state() here the entity stays 'unavailable' after
+        # a reload because _on_target_state only updates internal attrs — HA never
+        # learns the resolved state until the next writer/target state-change event.
         self._on_target_state(self._target_state())  # type: ignore[attr-defined]
+        if hasattr(self, "async_write_ha_state"):
+            self.async_write_ha_state()
 
     def _attach_target_listener(self, target_id: str) -> None:
         if self._unsub_target is not None:

@@ -13,6 +13,7 @@ from typing import Any
 from homeassistant.components.button import ButtonEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import BUTTON_DEFS, CTRL_FACADES, DOMAIN, INTEGRATION_NAME
@@ -36,6 +37,7 @@ async def async_setup_entry(
 class HphButton(ButtonEntity):
     _attr_has_entity_name = False
     _attr_should_poll = False
+    _attr_entity_category = EntityCategory.CONFIG
 
     def __init__(self, hass: HomeAssistant, unique_id: str, cfg: dict[str, Any]) -> None:
         self.hass = hass

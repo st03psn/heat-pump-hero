@@ -12,6 +12,7 @@ from typing import Any
 from homeassistant.components.text import TextEntity, TextMode
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 
@@ -32,6 +33,7 @@ class HphText(TextEntity, RestoreEntity):
     _attr_has_entity_name = False
     _attr_should_poll = False
     _attr_mode = TextMode.TEXT
+    _attr_entity_category = EntityCategory.CONFIG
 
     def __init__(self, unique_id: str, cfg: dict[str, Any]) -> None:
         self._attr_unique_id = unique_id
