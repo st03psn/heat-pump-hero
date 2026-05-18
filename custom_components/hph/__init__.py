@@ -728,6 +728,55 @@ async def _async_check_prerequisites(hass: HomeAssistant, entry: ConfigEntry) ->
         )
 
 
+async def _async_exclude_from_recorder(hass: HomeAssistant) -> None:
+    """Mark HPH config and runtime-accumulator entities as recorder-excluded.
+
+    These entities are either:
+    - pure configuration (text helpers, datetime helpers, button triggers) —
+      their history has zero analytical value; only the current value matters
+    - runtime accumulators reset daily (runtime kWh numbers) — already
+      aggregated by utility_meter; raw per-minute history is wasted space
+
+    The guard `"recorder" in entry.options` ensures we never override an
+    explicit user choice (either direction).
+    """
+    from homeassistant.helpers import entity_registry as er
+
+    from .const import BUTTON_DEFS, CTRL_FACADES, DATETIME_HELPERS, TEXT_HELPERS
+
+    no_history_ids: set[str] = set()
+    for uid in TEXT_HELPERS:
+        no_history_ids.add(f"text.{uid}")
+    for uid in DATETIME_HELPERS:
+        no_history_ids.add(f"datetime.{uid}")
+    for uid in BUTTON_DEFS:
+        no_history_ids.add(f"button.{uid}")
+    for uid, cfg in CTRL_FACADES.items():
+        if cfg.get("platform") == "button":
+            no_history_ids.add(f"button.{uid}")
+    # Daily-reset accumulators: only today's value is meaningful
+    no_history_ids.update({
+        "number.hph_thermal_runtime_today_kwh",
+        "number.hph_electrical_runtime_today_kwh",
+    })
+
+    registry = er.async_get(hass)
+    excluded = 0
+    for entity_id in sorted(no_history_ids):
+        entry = registry.async_get(entity_id)
+        if entry is None:
+            continue
+        if "recorder" in entry.options:
+            continue  # user has explicitly configured recorder for this entity
+        registry.async_update_entity(
+            entity_id,
+            options={**dict(entry.options), "recorder": {"exclude_from_recorder": True}},
+        )
+        excluded += 1
+    if excluded:
+        _LOGGER.info("HPH recorder: excluded %d config/runtime entities from history", excluded)
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up HeatPump Hero from a config entry."""
     _LOGGER.info("Setting up HeatPump Hero entry %s", entry.entry_id)
@@ -779,6 +828,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Surface missing prerequisites as HA Repairs entries.
     hass.async_create_task(_async_check_prerequisites(hass, entry))
+
+    # Exclude config/runtime entities from recorder (idempotent; respects user overrides).
+    hass.async_create_task(_async_exclude_from_recorder(hass))
 
     # Apply chosen vendor preset (one-shot on first install).
     preset = merged.get("vendor_preset")

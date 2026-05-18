@@ -1143,7 +1143,7 @@ views:
             entity: binary_sensor.hph_compressor_running
             icon: mdi:engine
           - type: template
-            entity: select.hph_operating_mode
+            entity: select.hph_ctrl_operating_mode
             content: >-
               {% set e = states('text.hph_ctrl_write_operating_mode') %}
               Mode: {{ states(e) | title if e else '—' }}

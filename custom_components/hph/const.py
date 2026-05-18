@@ -679,7 +679,13 @@ SELECT_HELPERS: Final[dict[str, dict[str, Any]]] = {
                            "initial": "keep_current"},
     "hph_pump_model": {"name": "HeatPump Hero — heat-pump model",
                         "icon": "mdi:heat-pump-outline",
-                        "options": list(PUMP_MODELS.keys()),
+                        # Only Panasonic models until multi-vendor support ships.
+                        # Non-Panasonic entries remain in PUMP_MODELS for threshold
+                        # data but are not exposed in the UI dropdown yet.
+                        "options": [
+                            "panasonic_j_aqj", "panasonic_k_aqk", "panasonic_l_aql",
+                            "panasonic_tcap", "panasonic_m_aqm",
+                        ],
                         "initial": "panasonic_l_aql"},
     # Programs — screed
     "hph_prog_screed_profile": {"name": "Screed dry-out — profile",
@@ -820,7 +826,7 @@ CTRL_FACADES: Final[dict[str, dict[str, Any]]] = {
         "name": "Quiet mode", "icon": "mdi:volume-mute",
         "options": ["Off", "Level 1", "Level 2", "Level 3"],
     },
-    "hph_operating_mode": {
+    "hph_ctrl_operating_mode": {
         "platform": "select", "writer": "hph_ctrl_write_operating_mode",
         "name": "Operating mode", "icon": "mdi:thermostat",
         "options": ["Heat", "Cool", "Auto", "DHW", "Heat+DHW", "Cool+DHW"],
