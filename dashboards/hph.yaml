@@ -1144,25 +1144,19 @@ views:
             icon: mdi:engine
           - type: template
             entity: select.hph_ctrl_operating_mode
-            content: >-
-              {% set e = states('text.hph_ctrl_write_operating_mode') %}
-              Mode: {{ states(e) | title if e else '—' }}
+            content: "Mode: {{ states('select.hph_ctrl_operating_mode') | title }}"
             icon: mdi:thermostat
             icon_color: >-
-              {% set e = states('text.hph_ctrl_write_operating_mode') %}
-              {% set m = states(e) | lower %}
+              {% set m = states('select.hph_ctrl_operating_mode') | lower %}
               {{ 'orange' if m == 'heat' else ('blue' if m == 'cool' else ('teal' if 'dhw' in m else 'grey')) }}
             tap_action:
               action: more-info
           - type: template
             entity: select.hph_quiet_mode
-            content: >-
-              {% set e = states('text.hph_ctrl_write_quiet_mode') %}
-              Quiet: {{ states(e) if e else '—' }}
+            content: "Quiet: {{ states('select.hph_quiet_mode') }}"
             icon: mdi:volume-low
             icon_color: >-
-              {% set e = states('text.hph_ctrl_write_quiet_mode') %}
-              {{ 'teal' if e and states(e) | lower not in ['off','0','level 0'] else 'grey' }}
+              {{ 'teal' if states('select.hph_quiet_mode') | lower not in ['off','0','level 0','unavailable','unknown'] else 'grey' }}
             tap_action:
               action: more-info
           - type: template
@@ -1173,15 +1167,9 @@ views:
               {{ 'green' if cop > 3 else ('orange' if cop > 2 else 'red') }}
           - type: template
             entity: switch.hph_power
-            content: >-
-              {% set e = states('text.hph_ctrl_write_power') %}
-              {{ 'On' if e and is_state(e,'on') else 'Standby' }}
-            icon: >-
-              {% set e = states('text.hph_ctrl_write_power') %}
-              {{ 'mdi:power' if e and is_state(e,'on') else 'mdi:power-sleep' }}
-            icon_color: >-
-              {% set e = states('text.hph_ctrl_write_power') %}
-              {{ 'green' if e and is_state(e,'on') else 'grey' }}
+            content: "{{ 'On' if is_state('switch.hph_power','on') else 'Standby' }}"
+            icon: "{{ 'mdi:power' if is_state('switch.hph_power','on') else 'mdi:power-sleep' }}"
+            icon_color: "{{ 'green' if is_state('switch.hph_power','on') else 'grey' }}"
             tap_action:
               action: more-info
 
@@ -1217,15 +1205,13 @@ views:
           - type: conditional
             conditions:
               - condition: state
-                entity: text.hph_ctrl_write_z1_heat_shift
-                state_not: ""
+                entity: number.hph_z1_heat_shift
+                state_not: unavailable
             card:
               type: custom:mushroom-template-card
               entity: number.hph_z1_heat_shift
               primary: Heat Shift HK1
-              secondary: >-
-                {% set e = states('text.hph_ctrl_write_z1_heat_shift') %}
-                {{ states(e) | float(0) | round(1) }} K offset
+              secondary: "{{ states('number.hph_z1_heat_shift') | float(0) | round(1) }} K offset"
               icon: mdi:plus-minus
               icon_color: grey
               tap_action:
@@ -1234,8 +1220,8 @@ views:
       - type: conditional
         conditions:
           - condition: state
-            entity: text.hph_ctrl_write_z1_curve_high
-            state_not: ""
+            entity: number.hph_z1_curve_high
+            state_not: unavailable
         card:
           type: grid
           columns: 2
@@ -1244,9 +1230,7 @@ views:
             - type: custom:mushroom-template-card
               entity: number.hph_z1_curve_high
               primary: Curve High Point
-              secondary: >-
-                {% set e = states('text.hph_ctrl_write_z1_curve_high') %}
-                {{ states(e) | float(0) | round(1) }}°C supply @ cold outdoor
+              secondary: "{{ states('number.hph_z1_curve_high') | float(0) | round(1) }}°C supply @ cold outdoor"
               icon: mdi:chart-bell-curve
               icon_color: red
               tap_action:
@@ -1255,9 +1239,7 @@ views:
             - type: custom:mushroom-template-card
               entity: number.hph_z1_curve_low
               primary: Curve Low Point
-              secondary: >-
-                {% set e = states('text.hph_ctrl_write_z1_curve_low') %}
-                {{ states(e) | float(0) | round(1) }}°C supply @ warm outdoor
+              secondary: "{{ states('number.hph_z1_curve_low') | float(0) | round(1) }}°C supply @ warm outdoor"
               icon: mdi:chart-bell-curve-cumulative
               icon_color: green
               tap_action:
@@ -1297,9 +1279,7 @@ views:
                 - type: custom:mushroom-template-card
                   entity: number.hph_z2_heat_shift
                   primary: Heat Shift HK2
-                  secondary: >-
-                    {% set e = states('text.hph_ctrl_write_z2_heat_shift') %}
-                    {{ states(e) | float(0) | round(1) }} K offset
+                  secondary: "{{ states('number.hph_z2_heat_shift') | float(0) | round(1) }} K offset"
                   icon: mdi:plus-minus
                   icon_color: grey
                   tap_action:
@@ -1333,9 +1313,7 @@ views:
                 - type: custom:mushroom-template-card
                   entity: number.hph_dhw_target
                   primary: DHW Target
-                  secondary: >-
-                    {% set e = states('text.hph_ctrl_write_dhw_target') %}
-                    {{ states(e) | float(0) | round(1) }} °C
+                  secondary: "{{ states('number.hph_dhw_target') | float(0) | round(1) }} °C"
                   icon: mdi:water-thermometer-outline
                   icon_color: orange
                   tap_action:
@@ -1361,9 +1339,7 @@ views:
                 - type: custom:mushroom-template-card
                   entity: number.hph_dhw_heat_delta
                   primary: DHW heat Δ
-                  secondary: >-
-                    {% set e = states('text.hph_ctrl_write_dhw_heat_delta') %}
-                    {{ states(e) | float(0) | round(1) }} K
+                  secondary: "{{ states('number.hph_dhw_heat_delta') | float(0) | round(1) }} K"
                   icon: mdi:delta
                   tap_action:
                     action: more-info
@@ -1371,9 +1347,7 @@ views:
                 - type: custom:mushroom-template-card
                   entity: select.hph_smart_dhw
                   primary: Smart DHW
-                  secondary: >-
-                    {% set e = states('text.hph_ctrl_write_smart_dhw') %}
-                    {{ states(e) | title if e else '—' }}
+                  secondary: "{{ states('select.hph_smart_dhw') | title }}"
                   icon: mdi:auto-fix
                   tap_action:
                     action: more-info
@@ -1390,15 +1364,13 @@ views:
           - type: conditional
             conditions:
               - condition: state
-                entity: text.hph_ctrl_write_heating_cutoff
-                state_not: ""
+                entity: number.hph_heating_cutoff
+                state_not: unavailable
             card:
               type: custom:mushroom-template-card
               entity: number.hph_heating_cutoff
               primary: Heating Cutoff
-              secondary: >-
-                {% set e = states('text.hph_ctrl_write_heating_cutoff') %}
-                ≤ {{ states(e) | float(0) | round(1) }} °C outdoor
+              secondary: "≤ {{ states('number.hph_heating_cutoff') | float(0) | round(1) }} °C outdoor"
               icon: mdi:thermometer-off
               icon_color: blue
               tap_action:
@@ -1407,15 +1379,13 @@ views:
           - type: conditional
             conditions:
               - condition: state
-                entity: text.hph_ctrl_write_room_heat_delta
-                state_not: ""
+                entity: number.hph_room_heat_delta
+                state_not: unavailable
             card:
               type: custom:mushroom-template-card
               entity: number.hph_room_heat_delta
               primary: Heat Hysteresis
-              secondary: >-
-                {% set e = states('text.hph_ctrl_write_room_heat_delta') %}
-                ± {{ states(e) | float(0) | round(1) }} K
+              secondary: "± {{ states('number.hph_room_heat_delta') | float(0) | round(1) }} K"
               icon: mdi:delta
               icon_color: grey
               tap_action:
@@ -1424,15 +1394,13 @@ views:
           - type: conditional
             conditions:
               - condition: state
-                entity: text.hph_ctrl_write_max_pump_duty
-                state_not: ""
+                entity: number.hph_max_pump_duty
+                state_not: unavailable
             card:
               type: custom:mushroom-template-card
               entity: number.hph_max_pump_duty
               primary: Max Pump Duty
-              secondary: >-
-                {% set e = states('text.hph_ctrl_write_max_pump_duty') %}
-                {{ states(e) | int(0) }} %
+              secondary: "{{ states('number.hph_max_pump_duty') | int(0) }} %"
               icon: mdi:pump
               icon_color: grey
               tap_action:
@@ -1441,15 +1409,13 @@ views:
           - type: conditional
             conditions:
               - condition: state
-                entity: text.hph_ctrl_write_active_zones
-                state_not: ""
+                entity: select.hph_active_zones
+                state_not: unavailable
             card:
               type: custom:mushroom-template-card
               entity: select.hph_active_zones
               primary: Active Zones
-              secondary: >-
-                {% set e = states('text.hph_ctrl_write_active_zones') %}
-                {{ states(e) | title }}
+              secondary: "{{ states('select.hph_active_zones') | title }}"
               icon: mdi:home-floor-1
               icon_color: blue
               tap_action:
@@ -1458,15 +1424,13 @@ views:
           - type: conditional
             conditions:
               - condition: state
-                entity: text.hph_ctrl_write_bivalent_mode
-                state_not: ""
+                entity: select.hph_bivalent_mode
+                state_not: unavailable
             card:
               type: custom:mushroom-template-card
               entity: select.hph_bivalent_mode
               primary: Bivalent Mode
-              secondary: >-
-                {% set e = states('text.hph_ctrl_write_bivalent_mode') %}
-                {{ states(e) | title }}
+              secondary: "{{ states('select.hph_bivalent_mode') | title }}"
               icon: mdi:electric-switch
               icon_color: grey
               tap_action:
@@ -1736,49 +1700,35 @@ views:
         square: false
         cards:
           - type: custom:mushroom-template-card
+            entity: switch.hph_holiday
             primary: Holiday Mode
-            secondary: >-
-              {% set e = states('text.hph_ctrl_write_holiday') %}
-              {{ 'Active' if e and is_state(e,'on') else 'Inactive' }}
+            secondary: "{{ 'Active' if is_state('switch.hph_holiday','on') else 'Inactive' }}"
             icon: mdi:airplane-takeoff
-            icon_color: >-
-              {% set e = states('text.hph_ctrl_write_holiday') %}
-              {{ 'blue' if e and is_state(e,'on') else 'grey' }}
+            icon_color: "{{ 'blue' if is_state('switch.hph_holiday','on') else 'grey' }}"
             tap_action:
-              action: perform-action
-              perform_action: hph.write_toggle
-              data:
-                helper: text.hph_ctrl_write_holiday
+              action: toggle
 
           - type: custom:mushroom-template-card
+            entity: switch.hph_force_defrost
             primary: Force Defrost
-            secondary: >-
-              {% set e = states('text.hph_ctrl_write_force_defrost') %}
-              {{ 'Active' if e and is_state(e,'on') else 'Inactive' }}
+            secondary: "{{ 'Active' if is_state('switch.hph_force_defrost','on') else 'Inactive' }}"
             icon: mdi:snowflake-melt
-            icon_color: >-
-              {% set e = states('text.hph_ctrl_write_force_defrost') %}
-              {{ 'cyan' if e and is_state(e,'on') else 'grey' }}
+            icon_color: "{{ 'cyan' if is_state('switch.hph_force_defrost','on') else 'grey' }}"
             tap_action:
-              action: perform-action
-              perform_action: hph.write_toggle
-              data:
-                helper: text.hph_ctrl_write_force_defrost
+              action: toggle
 
           # Powerful / Boost mode — vendor-specific (Panasonic Aquarea)
-          # Shows '—' on installations where hph_ctrl_write_powerful_mode is empty
+          # Shows '—' when proxy is unavailable (writer empty / vendor not configured)
           - type: custom:mushroom-template-card
             entity: select.hph_powerful_mode
             primary: Boost Mode
             secondary: >-
-              {% set e = states('text.hph_ctrl_write_powerful_mode') %}
-              {% if not e %}— (vendor-specific, not configured)
-              {% else %}{{ states(e) | title }}{% endif %}
+              {% if is_state('select.hph_powerful_mode','unavailable') %}— (vendor-specific, not configured)
+              {% else %}{{ states('select.hph_powerful_mode') | title }}{% endif %}
             icon: mdi:lightning-bolt
             icon_color: >-
-              {% set e = states('text.hph_ctrl_write_powerful_mode') %}
-              {% set s = states(e) | lower %}
-              {{ 'orange' if e and s not in ['off','none','','30min'] else 'grey' }}
+              {% set s = states('select.hph_powerful_mode') | lower %}
+              {{ 'orange' if s not in ['off','none','','30min','unavailable','unknown'] else 'grey' }}
             tap_action:
               action: more-info
 
@@ -1861,9 +1811,7 @@ views:
           - type: custom:mushroom-template-card
             entity: number.hph_z1_outside_low
             primary: Outside low
-            secondary: >-
-              {% set e = states('text.hph_ctrl_write_z1_outside_low') %}
-              {{ states(e) | float(0) | round(1) }} °C
+            secondary: "{{ states('number.hph_z1_outside_low') | float(0) | round(1) }} °C"
             icon: mdi:snowflake
             icon_color: blue
             tap_action:
@@ -1871,9 +1819,7 @@ views:
           - type: custom:mushroom-template-card
             entity: number.hph_z1_outside_high
             primary: Outside high
-            secondary: >-
-              {% set e = states('text.hph_ctrl_write_z1_outside_high') %}
-              {{ states(e) | float(0) | round(1) }} °C
+            secondary: "{{ states('number.hph_z1_outside_high') | float(0) | round(1) }} °C"
             icon: mdi:white-balance-sunny
             icon_color: yellow
             tap_action:
@@ -1881,9 +1827,7 @@ views:
           - type: custom:mushroom-template-card
             entity: number.hph_z1_curve_low
             primary: Target low
-            secondary: >-
-              {% set e = states('text.hph_ctrl_write_z1_curve_low') %}
-              {{ states(e) | float(0) | round(1) }} °C
+            secondary: "{{ states('number.hph_z1_curve_low') | float(0) | round(1) }} °C"
             icon: mdi:water-thermometer
             icon_color: orange
             tap_action:
@@ -1891,9 +1835,7 @@ views:
           - type: custom:mushroom-template-card
             entity: number.hph_z1_curve_high
             primary: Target high
-            secondary: >-
-              {% set e = states('text.hph_ctrl_write_z1_curve_high') %}
-              {{ states(e) | float(0) | round(1) }} °C
+            secondary: "{{ states('number.hph_z1_curve_high') | float(0) | round(1) }} °C"
             icon: mdi:fire
             icon_color: red
             tap_action:
@@ -1917,9 +1859,7 @@ views:
                 - type: custom:mushroom-template-card
                   entity: number.hph_z2_outside_low
                   primary: Z2 outside low
-                  secondary: >-
-                    {% set e = states('text.hph_ctrl_write_z2_outside_low') %}
-                    {{ states(e) | float(0) | round(1) }} °C
+                  secondary: "{{ states('number.hph_z2_outside_low') | float(0) | round(1) }} °C"
                   icon: mdi:snowflake
                   icon_color: blue
                   tap_action:
@@ -1927,9 +1867,7 @@ views:
                 - type: custom:mushroom-template-card
                   entity: number.hph_z2_outside_high
                   primary: Z2 outside high
-                  secondary: >-
-                    {% set e = states('text.hph_ctrl_write_z2_outside_high') %}
-                    {{ states(e) | float(0) | round(1) }} °C
+                  secondary: "{{ states('number.hph_z2_outside_high') | float(0) | round(1) }} °C"
                   icon: mdi:white-balance-sunny
                   icon_color: yellow
                   tap_action:
@@ -1937,9 +1875,7 @@ views:
                 - type: custom:mushroom-template-card
                   entity: number.hph_z2_curve_low
                   primary: Z2 target low
-                  secondary: >-
-                    {% set e = states('text.hph_ctrl_write_z2_curve_low') %}
-                    {{ states(e) | float(0) | round(1) }} °C
+                  secondary: "{{ states('number.hph_z2_curve_low') | float(0) | round(1) }} °C"
                   icon: mdi:water-thermometer
                   icon_color: orange
                   tap_action:
@@ -1947,9 +1883,7 @@ views:
                 - type: custom:mushroom-template-card
                   entity: number.hph_z2_curve_high
                   primary: Z2 target high
-                  secondary: >-
-                    {% set e = states('text.hph_ctrl_write_z2_curve_high') %}
-                    {{ states(e) | float(0) | round(1) }} °C
+                  secondary: "{{ states('number.hph_z2_curve_high') | float(0) | round(1) }} °C"
                   icon: mdi:fire
                   icon_color: red
                   tap_action:
@@ -1976,9 +1910,7 @@ views:
               type: custom:mushroom-template-card
               entity: select.hph_heating_control
               primary: Heating control
-              secondary: >-
-                {% set e = states('text.hph_ctrl_write_heating_control') %}
-                {{ states(e) | title if e else '—' }}
+              secondary: "{{ states('select.hph_heating_control') | title }}"
               icon: mdi:home-thermometer
               tap_action:
                 action: more-info
@@ -1990,9 +1922,7 @@ views:
               type: custom:mushroom-template-card
               entity: number.hph_cool_delta
               primary: Cool Δ
-              secondary: >-
-                {% set e = states('text.hph_ctrl_write_cool_delta') %}
-                {{ states(e) | float(0) | round(1) }} K
+              secondary: "{{ states('number.hph_cool_delta') | float(0) | round(1) }} K"
               icon: mdi:snowflake
               icon_color: blue
               tap_action:
@@ -2005,9 +1935,7 @@ views:
               type: custom:mushroom-template-card
               entity: select.hph_dhw_sensor_selection
               primary: DHW sensor
-              secondary: >-
-                {% set e = states('text.hph_ctrl_write_dhw_sensor_selection') %}
-                {{ states(e) | title if e else '—' }}
+              secondary: "{{ states('select.hph_dhw_sensor_selection') | title }}"
               icon: mdi:format-list-bulleted-type
               tap_action:
                 action: more-info
@@ -2048,36 +1976,28 @@ views:
                 - type: custom:mushroom-template-card
                   entity: number.hph_bivalent_start_temp
                   primary: Bivalent start
-                  secondary: >-
-                    {% set e = states('text.hph_ctrl_write_bivalent_start_temp') %}
-                    {{ states(e) | float(0) | round(1) }} °C
+                  secondary: "{{ states('number.hph_bivalent_start_temp') | float(0) | round(1) }} °C"
                   icon: mdi:thermometer-low
                   tap_action:
                     action: more-info
                 - type: custom:mushroom-template-card
                   entity: number.hph_heater_delay_time
                   primary: Heater delay
-                  secondary: >-
-                    {% set e = states('text.hph_ctrl_write_heater_delay_time') %}
-                    {{ states(e) | int(0) }} min
+                  secondary: "{{ states('number.hph_heater_delay_time') | int(0) }} min"
                   icon: mdi:timer-sand
                   tap_action:
                     action: more-info
                 - type: custom:mushroom-template-card
                   entity: number.hph_heater_start_delta
                   primary: Heater start Δ
-                  secondary: >-
-                    {% set e = states('text.hph_ctrl_write_heater_start_delta') %}
-                    {{ states(e) | float(0) | round(1) }} K
+                  secondary: "{{ states('number.hph_heater_start_delta') | float(0) | round(1) }} K"
                   icon: mdi:arrow-up-bold-circle
                   tap_action:
                     action: more-info
                 - type: custom:mushroom-template-card
                   entity: number.hph_heater_stop_delta
                   primary: Heater stop Δ
-                  secondary: >-
-                    {% set e = states('text.hph_ctrl_write_heater_stop_delta') %}
-                    {{ states(e) | float(0) | round(1) }} K
+                  secondary: "{{ states('number.hph_heater_stop_delta') | float(0) | round(1) }} K"
                   icon: mdi:arrow-down-bold-circle
                   tap_action:
                     action: more-info
@@ -3095,9 +3015,7 @@ views:
                 - type: custom:mushroom-template-card
                   entity: number.hph_z2_outside_low
                   primary: Z2 outside low
-                  secondary: >-
-                    {% set e = states('text.hph_ctrl_write_z2_outside_low') %}
-                    {{ states(e) | float(0) | round(1) }} °C
+                  secondary: "{{ states('number.hph_z2_outside_low') | float(0) | round(1) }} °C"
                   icon: mdi:snowflake
                   icon_color: blue
                   fill_container: true
@@ -3106,9 +3024,7 @@ views:
                 - type: custom:mushroom-template-card
                   entity: number.hph_z2_outside_high
                   primary: Z2 outside high
-                  secondary: >-
-                    {% set e = states('text.hph_ctrl_write_z2_outside_high') %}
-                    {{ states(e) | float(0) | round(1) }} °C
+                  secondary: "{{ states('number.hph_z2_outside_high') | float(0) | round(1) }} °C"
                   icon: mdi:white-balance-sunny
                   icon_color: yellow
                   fill_container: true
@@ -3117,9 +3033,7 @@ views:
                 - type: custom:mushroom-template-card
                   entity: number.hph_z2_curve_low
                   primary: Z2 target low
-                  secondary: >-
-                    {% set e = states('text.hph_ctrl_write_z2_curve_low') %}
-                    {{ states(e) | float(0) | round(1) }} °C
+                  secondary: "{{ states('number.hph_z2_curve_low') | float(0) | round(1) }} °C"
                   icon: mdi:water-thermometer
                   icon_color: orange
                   fill_container: true
@@ -3128,9 +3042,7 @@ views:
                 - type: custom:mushroom-template-card
                   entity: number.hph_z2_curve_high
                   primary: Z2 target high
-                  secondary: >-
-                    {% set e = states('text.hph_ctrl_write_z2_curve_high') %}
-                    {{ states(e) | float(0) | round(1) }} °C
+                  secondary: "{{ states('number.hph_z2_curve_high') | float(0) | round(1) }} °C"
                   icon: mdi:fire
                   icon_color: red
                   fill_container: true

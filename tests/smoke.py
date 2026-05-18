@@ -494,6 +494,65 @@ def test_dashboard_no_templated_entity() -> int:
     return failures
 
 
+def test_ctrl_facades_writer_consistency() -> int:
+    """Every CTRL_FACADES entry's writer must exist in TEXT_HELPERS.
+
+    Parsed via regex to avoid importing homeassistant (same pattern as the
+    rest of this file).
+    """
+    section("CTRL_FACADES: writer keys in TEXT_HELPERS")
+    failures = 0
+    const_py = ROOT / "custom_components" / "hph" / "const.py"
+    if not const_py.is_file():
+        fail("const.py not found — skipping")
+        return 1
+    text = const_py.read_text(encoding="utf-8")
+
+    # Extract TEXT_HELPERS keys
+    helpers_match = re.search(
+        r"^TEXT_HELPERS.*?=\s*\{(.*?)^\}",
+        text, re.DOTALL | re.MULTILINE,
+    )
+    if not helpers_match:
+        fail("TEXT_HELPERS not found in const.py")
+        return 1
+    text_helper_keys = set(re.findall(r'^\s*"(hph_[a-z0-9_]+)":', helpers_match.group(1), re.MULTILINE))
+
+    # Extract CTRL_FACADES entries: unique_id → writer
+    facades_match = re.search(
+        r"^CTRL_FACADES.*?=\s*\{(.*?)^\}",
+        text, re.DOTALL | re.MULTILINE,
+    )
+    if not facades_match:
+        fail("CTRL_FACADES not found in const.py")
+        return 1
+    facades_block = facades_match.group(1)
+    # Each entry looks like: "hph_quiet_mode": { ... "writer": "hph_ctrl_write_quiet_mode", ... }
+    entries = re.findall(
+        r'"(hph_[a-z0-9_]+)":\s*\{[^}]*?"writer":\s*"([^"]+)"',
+        facades_block, re.DOTALL,
+    )
+    missing_writer = [
+        (uid, writer) for uid, writer in entries if writer not in text_helper_keys
+    ]
+    no_writer = list(re.finditer(
+        r'"(hph_[a-z0-9_]+)":\s*\{(?![^}]*"writer":)[^}]*\}',
+        facades_block, re.DOTALL,
+    ))
+
+    if missing_writer:
+        for uid, writer in missing_writer:
+            fail(f"{uid}: writer '{writer}' not in TEXT_HELPERS")
+        failures += len(missing_writer)
+    if no_writer:
+        for m in no_writer:
+            fail(f"{m.group(1)}: no 'writer' key in CTRL_FACADES entry")
+        failures += len(no_writer)
+    if not missing_writer and not no_writer:
+        ok(f"all {len(entries)} CTRL_FACADES writers found in TEXT_HELPERS")
+    return failures
+
+
 def main() -> int:
     print(f"HeatPump Hero smoke tests · root: {ROOT}")
     failures = 0
@@ -506,6 +565,7 @@ def main() -> int:
     failures += test_custom_integration_layout()
     failures += test_bundled_dashboard_entities()
     failures += test_dashboard_no_templated_entity()
+    failures += test_ctrl_facades_writer_consistency()
 
     print()
     if failures:
