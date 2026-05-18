@@ -426,6 +426,21 @@ def test_bundled_dashboard_entities() -> int:
             for key_match in re.finditer(r'^\s*"(hph_[a-z0-9_]+)":', block, re.MULTILINE):
                 defined.add(f"{domain}.{key_match.group(1)}")
 
+        # CTRL_FACADES — typed-facade proxy entities. Each entry's `platform`
+        # field determines the domain (select / switch / number / button).
+        facades_match = re.search(
+            r"^CTRL_FACADES.*?=\s*\{(.*?)^\}",
+            text, re.DOTALL | re.MULTILINE,
+        )
+        if facades_match:
+            facades_block = facades_match.group(1)
+            # Scan per-entry: "hph_<key>": { ... "platform": "<domain>" ... }
+            for entry in re.finditer(
+                r'"(hph_[a-z0-9_]+)":\s*\{[^}]*?"platform":\s*"(\w+)"',
+                facades_block, re.DOTALL,
+            ):
+                defined.add(f"{entry.group(2)}.{entry.group(1)}")
+
     # Allowlist: heat-pump native entities the dashboard references in
     # auto-entities filters (Heishamon-specific by design).
     allowlist_prefixes = (
@@ -451,6 +466,34 @@ def test_bundled_dashboard_entities() -> int:
     return failures
 
 
+def test_dashboard_no_templated_entity() -> int:
+    """`entity:` / `entity_id:` fields in Lovelace cards do not accept Jinja.
+
+    A templated string (e.g. ``entity: "{{ states('text.hph_ctrl_write_X') }}"``)
+    is passed verbatim to the service call when the user taps the card and
+    Home Assistant rejects it with ``invalid_format``. The Control-Tab in
+    the bundled dashboard previously used this pattern for ~17 widgets and
+    broke every tap action. Resolution must happen in the backend via the
+    ``hph.write_toggle`` / ``hph.write_set`` services instead.
+    """
+    section("Dashboard: no templated entity/entity_id fields")
+    failures = 0
+    text = DASHBOARD_FILE.read_text(encoding="utf-8")
+    # Match `entity:` or `entity_id:` followed by a Jinja template string.
+    pattern = re.compile(r'^\s*entity(?:_id)?:\s*"?\{\{', re.MULTILINE)
+    matches = []
+    for m in pattern.finditer(text):
+        line_no = text[: m.start()].count("\n") + 1
+        matches.append(line_no)
+    if matches:
+        for ln in matches:
+            fail(f"dashboards/hph.yaml:{ln} uses a Jinja template in `entity:`/`entity_id:`")
+        failures += 1
+    else:
+        ok("no templated entity/entity_id fields in dashboard")
+    return failures
+
+
 def main() -> int:
     print(f"HeatPump Hero smoke tests · root: {ROOT}")
     failures = 0
@@ -462,6 +505,7 @@ def main() -> int:
     failures += test_diagnostics_consistency()
     failures += test_custom_integration_layout()
     failures += test_bundled_dashboard_entities()
+    failures += test_dashboard_no_templated_entity()
 
     print()
     if failures:

@@ -720,6 +720,119 @@ BUTTON_DEFS: Final[dict[str, dict[str, Any]]] = {
                                         "service_data": {"counter": "hph_short_cycles_today"}},
 }
 
+# ───────────────────────────────────────────────────────────────────────────
+# Typed control facade entities — Phase B of the HAL completion.
+#
+# Each entry describes a vendor-agnostic proxy entity (select.hph_*, switch.hph_*,
+# number.hph_* or button.hph_*) that transparently forwards reads/writes to the
+# native vendor entity configured in the matching text.hph_ctrl_write_* helper.
+#
+# Conditional availability is built-in: when the writer helper is empty (vendor
+# does not support this feature, or feature gated off), the proxy reports
+# `unavailable` and dashboard cards wrapped in `condition: state_not: unavailable`
+# disappear automatically. This is how feature support per vendor / model is
+# expressed at runtime.
+#
+# Each entry:
+#   platform: "select" | "switch" | "number" | "button"
+#   writer:   key of the matching entry in TEXT_HELPERS (its value is the
+#             entity_id of the native vendor entity)
+#   name:     display name of the proxy
+#   icon:     mdi: icon
+#   options:  (select only, optional) fallback options if the target entity
+#             does not expose attributes.options at registration time
+#   min/max/step/unit_of_measurement: (number only, optional) fallback range
+#             if the target entity does not expose them
+# ───────────────────────────────────────────────────────────────────────────
+CTRL_FACADES: Final[dict[str, dict[str, Any]]] = {
+    # Selects (multi-option choices)
+    "hph_quiet_mode": {
+        "platform": "select", "writer": "hph_ctrl_write_quiet_mode",
+        "name": "Quiet mode", "icon": "mdi:volume-mute",
+        "options": ["Off", "Level 1", "Level 2", "Level 3"],
+    },
+    "hph_operating_mode": {
+        "platform": "select", "writer": "hph_ctrl_write_operating_mode",
+        "name": "Operating mode", "icon": "mdi:thermostat",
+        "options": ["Heat", "Cool", "Auto", "DHW", "Heat+DHW", "Cool+DHW"],
+    },
+    "hph_powerful_mode": {
+        "platform": "select", "writer": "hph_ctrl_write_powerful_mode",
+        "name": "Powerful / boost mode", "icon": "mdi:rocket-launch",
+        "options": ["Off", "30 min", "60 min", "90 min"],
+    },
+    "hph_active_zones": {
+        "platform": "select", "writer": "hph_ctrl_write_active_zones",
+        "name": "Active zones", "icon": "mdi:home-floor-a",
+        "options": ["Zone 1", "Zone 2", "Both"],
+    },
+    "hph_bivalent_mode": {
+        "platform": "select", "writer": "hph_ctrl_write_bivalent_mode",
+        "name": "Bivalent mode", "icon": "mdi:fire-circle",
+        "options": ["Off", "Alternative", "Parallel", "Advanced parallel"],
+    },
+    # Switches (on/off)
+    "hph_power": {
+        "platform": "switch", "writer": "hph_ctrl_write_power",
+        "name": "Main power", "icon": "mdi:power",
+    },
+    "hph_holiday": {
+        "platform": "switch", "writer": "hph_ctrl_write_holiday",
+        "name": "Holiday mode", "icon": "mdi:beach",
+    },
+    "hph_force_defrost": {
+        "platform": "switch", "writer": "hph_ctrl_write_force_defrost",
+        "name": "Force defrost", "icon": "mdi:snowflake-melt",
+    },
+    # Numbers (continuous values)
+    "hph_z1_curve_high": {
+        "platform": "number", "writer": "hph_ctrl_write_z1_curve_high",
+        "name": "Zone 1 heat curve — outlet at low outdoor", "icon": "mdi:thermometer-high",
+        "min": 20, "max": 60, "step": 1, "unit_of_measurement": "°C",
+    },
+    "hph_z1_curve_low": {
+        "platform": "number", "writer": "hph_ctrl_write_z1_curve_low",
+        "name": "Zone 1 heat curve — outlet at high outdoor", "icon": "mdi:thermometer-low",
+        "min": 20, "max": 60, "step": 1, "unit_of_measurement": "°C",
+    },
+    "hph_dhw_target": {
+        "platform": "number", "writer": "hph_ctrl_write_dhw_target",
+        "name": "DHW target temperature", "icon": "mdi:thermostat-cog",
+        "min": 30, "max": 65, "step": 1, "unit_of_measurement": "°C",
+    },
+    "hph_z1_heat_shift": {
+        "platform": "number", "writer": "hph_ctrl_write_z1_heat_shift",
+        "name": "Zone 1 heat request shift", "icon": "mdi:plus-minus",
+        "min": -5, "max": 5, "step": 1, "unit_of_measurement": "°C",
+    },
+    "hph_z2_heat_shift": {
+        "platform": "number", "writer": "hph_ctrl_write_z2_heat_shift",
+        "name": "Zone 2 heat request shift", "icon": "mdi:plus-minus",
+        "min": -5, "max": 5, "step": 1, "unit_of_measurement": "°C",
+    },
+    "hph_heating_cutoff": {
+        "platform": "number", "writer": "hph_ctrl_write_heating_cutoff",
+        "name": "Heating cutoff outdoor temperature", "icon": "mdi:thermometer-off",
+        "min": 5, "max": 25, "step": 1, "unit_of_measurement": "°C",
+    },
+    "hph_max_pump_duty": {
+        "platform": "number", "writer": "hph_ctrl_write_max_pump_duty",
+        "name": "Maximum pump duty cycle", "icon": "mdi:pump",
+        "min": 30, "max": 100, "step": 1, "unit_of_measurement": "%",
+    },
+    "hph_room_heat_delta": {
+        "platform": "number", "writer": "hph_ctrl_write_room_heat_delta",
+        "name": "Room heating delta / hysteresis", "icon": "mdi:delta",
+        "min": 1, "max": 10, "step": 1, "unit_of_measurement": "°C",
+    },
+    # Buttons (one-shot actions)
+    "hph_force_dhw": {
+        "platform": "button", "writer": "hph_ctrl_write_force_dhw",
+        "name": "Force DHW now", "icon": "mdi:water-boiler",
+    },
+}
+
+
 # Platforms HA loads at setup time
 PLATFORMS: Final[list[str]] = [
     "text", "number", "select", "switch", "datetime", "button",

@@ -7,6 +7,25 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
 
 ### Added
 
+- **Typed control facade entities (HAL completion).** The hardware
+  abstraction layer is now symmetric: previously only *reads* went
+  through `text.hph_src_*` facades, while *writes* required the user to
+  open the native vendor entity via more-info. The new `CTRL_FACADES`
+  registry in `const.py` declares 17 vendor-agnostic proxy entities
+  (5 selects, 3 switches, 8 numbers, 1 button — e.g.
+  `select.hph_quiet_mode`, `switch.hph_holiday`, `number.hph_dhw_target`,
+  `button.hph_force_dhw`) that transparently forward to the native
+  vendor entity configured in the matching `text.hph_ctrl_write_*`
+  helper. The Control-Tab dashboard chips now reference these proxies
+  directly, so tap → more-info opens a real select dropdown / number
+  slider / switch toggle. Per-vendor conditional support is built-in:
+  when a writer helper is empty (vendor / model does not expose that
+  function), the proxy reports `unavailable` and the existing
+  `conditional:` wrappers hide the card automatically. New shared
+  `helpers/proxy.py` mixin handles writer→target resolution, state
+  tracking, and domain-aware service dispatch (target may be on any of
+  `select.*`, `switch.*`, `input_boolean.*`, `number.*`, `button.*`).
+
 - **Model capability map** (`MODEL_CAPABILITIES` in `const.py`): each Panasonic
   model now declares which sensors physically exist. Applying a vendor preset
   to a J/K/L-series (single-fan) model no longer fills `text.hph_src_fan2_speed`

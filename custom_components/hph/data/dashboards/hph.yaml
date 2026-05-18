@@ -1127,7 +1127,7 @@ views:
   #    Section 7: Special Functions (holiday, force defrost, boost mode)
   #
   #    Control pattern: all write actions resolve their entity at runtime via
-  #    input_text.hph_ctrl_write_* helpers — vendor-agnostic by design.
+  #    text.hph_ctrl_write_* helpers — vendor-agnostic by design.
   #    Vendor-specific features (boost mode) always render; they show '—'
   #    when the helper is empty so non-Panasonic users know it is not set up.
   # ════════════════════════════════════════════════════════════════════════
@@ -1143,28 +1143,28 @@ views:
             entity: binary_sensor.hph_compressor_running
             icon: mdi:engine
           - type: template
+            entity: select.hph_operating_mode
             content: >-
-              {% set e = states('input_text.hph_ctrl_write_operating_mode') %}
+              {% set e = states('text.hph_ctrl_write_operating_mode') %}
               Mode: {{ states(e) | title if e else '—' }}
             icon: mdi:thermostat
             icon_color: >-
-              {% set e = states('input_text.hph_ctrl_write_operating_mode') %}
+              {% set e = states('text.hph_ctrl_write_operating_mode') %}
               {% set m = states(e) | lower %}
               {{ 'orange' if m == 'heat' else ('blue' if m == 'cool' else ('teal' if 'dhw' in m else 'grey')) }}
             tap_action:
               action: more-info
-              entity: "{{ states('input_text.hph_ctrl_write_operating_mode') }}"
           - type: template
+            entity: select.hph_quiet_mode
             content: >-
-              {% set e = states('input_text.hph_ctrl_write_quiet_mode') %}
+              {% set e = states('text.hph_ctrl_write_quiet_mode') %}
               Quiet: {{ states(e) if e else '—' }}
             icon: mdi:volume-low
             icon_color: >-
-              {% set e = states('input_text.hph_ctrl_write_quiet_mode') %}
+              {% set e = states('text.hph_ctrl_write_quiet_mode') %}
               {{ 'teal' if e and states(e) | lower not in ['off','0','level 0'] else 'grey' }}
             tap_action:
               action: more-info
-              entity: "{{ states('input_text.hph_ctrl_write_quiet_mode') }}"
           - type: template
             content: "COP {{ states('sensor.hph_cop_live') | float(0) | round(2) }}"
             icon: mdi:lightning-bolt-circle
@@ -1172,18 +1172,18 @@ views:
               {% set cop = states('sensor.hph_cop_live') | float(0) %}
               {{ 'green' if cop > 3 else ('orange' if cop > 2 else 'red') }}
           - type: template
+            entity: switch.hph_power
             content: >-
-              {% set e = states('input_text.hph_ctrl_write_power') %}
+              {% set e = states('text.hph_ctrl_write_power') %}
               {{ 'On' if e and is_state(e,'on') else 'Standby' }}
             icon: >-
-              {% set e = states('input_text.hph_ctrl_write_power') %}
+              {% set e = states('text.hph_ctrl_write_power') %}
               {{ 'mdi:power' if e and is_state(e,'on') else 'mdi:power-sleep' }}
             icon_color: >-
-              {% set e = states('input_text.hph_ctrl_write_power') %}
+              {% set e = states('text.hph_ctrl_write_power') %}
               {{ 'green' if e and is_state(e,'on') else 'grey' }}
             tap_action:
               action: more-info
-              entity: "{{ states('input_text.hph_ctrl_write_power') }}"
 
       # ── Section 2: Zone 1 — Heating ──────────────────────────────────────
       - type: custom:mushroom-title-card
@@ -1194,37 +1194,47 @@ views:
         columns: 2
         square: false
         cards:
-          - type: custom:mushroom-template-card
-            primary: Climate Setpoint
-            secondary: >-
-              {% set e = states('input_text.hph_ctrl_write_z1_climate') %}
-              {% if not e %}Helper not configured — see Config tab
-              {% else %}Target {{ state_attr(e,'temperature') | float(0) | round(1) }}°C
-              · Actual {{ states('sensor.hph_source_zone1_temp') }}°C{% endif %}
-            icon: mdi:thermometer-lines
-            icon_color: >-
-              {% set e = states('input_text.hph_ctrl_write_z1_climate') %}
-              {{ 'deep-orange' if e and state_attr(e,'hvac_action') == 'heating' else 'blue-grey' }}
-            tap_action:
-              action: more-info
-              entity: "{{ states('input_text.hph_ctrl_write_z1_climate') }}"
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_ctrl_write_z1_climate
+                state_not: ""
+            card:
+              type: custom:mushroom-template-card
+              entity: text.hph_ctrl_write_z1_climate
+              primary: Climate Setpoint
+              secondary: >-
+                {% set e = states('text.hph_ctrl_write_z1_climate') %}
+                Target {{ state_attr(e,'temperature') | float(0) | round(1) }}°C
+                · Actual {{ states('sensor.hph_source_zone1_temp') }}°C
+              icon: mdi:thermometer-lines
+              icon_color: >-
+                {% set e = states('text.hph_ctrl_write_z1_climate') %}
+                {{ 'deep-orange' if e and state_attr(e,'hvac_action') == 'heating' else 'blue-grey' }}
+              tap_action:
+                action: more-info
 
-          - type: custom:mushroom-template-card
-            primary: Heat Shift HK1
-            secondary: >-
-              {% set e = states('input_text.hph_ctrl_write_z1_heat_shift') %}
-              {% if not e %}Not configured
-              {% else %}{{ states(e) | float(0) | round(1) }} K offset{% endif %}
-            icon: mdi:plus-minus
-            icon_color: grey
-            tap_action:
-              action: more-info
-              entity: "{{ states('input_text.hph_ctrl_write_z1_heat_shift') }}"
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_ctrl_write_z1_heat_shift
+                state_not: ""
+            card:
+              type: custom:mushroom-template-card
+              entity: number.hph_z1_heat_shift
+              primary: Heat Shift HK1
+              secondary: >-
+                {% set e = states('text.hph_ctrl_write_z1_heat_shift') %}
+                {{ states(e) | float(0) | round(1) }} K offset
+              icon: mdi:plus-minus
+              icon_color: grey
+              tap_action:
+                action: more-info
 
       - type: conditional
         conditions:
           - condition: state
-            entity: input_text.hph_ctrl_write_z1_curve_high
+            entity: text.hph_ctrl_write_z1_curve_high
             state_not: ""
         card:
           type: grid
@@ -1232,26 +1242,26 @@ views:
           square: false
           cards:
             - type: custom:mushroom-template-card
+              entity: number.hph_z1_curve_high
               primary: Curve High Point
               secondary: >-
-                {% set e = states('input_text.hph_ctrl_write_z1_curve_high') %}
+                {% set e = states('text.hph_ctrl_write_z1_curve_high') %}
                 {{ states(e) | float(0) | round(1) }}°C supply @ cold outdoor
               icon: mdi:chart-bell-curve
               icon_color: red
               tap_action:
                 action: more-info
-                entity: "{{ states('input_text.hph_ctrl_write_z1_curve_high') }}"
 
             - type: custom:mushroom-template-card
+              entity: number.hph_z1_curve_low
               primary: Curve Low Point
               secondary: >-
-                {% set e = states('input_text.hph_ctrl_write_z1_curve_low') %}
+                {% set e = states('text.hph_ctrl_write_z1_curve_low') %}
                 {{ states(e) | float(0) | round(1) }}°C supply @ warm outdoor
               icon: mdi:chart-bell-curve-cumulative
               icon_color: green
               tap_action:
                 action: more-info
-                entity: "{{ states('input_text.hph_ctrl_write_z1_curve_low') }}"
 
       # ── Section 3: Zone 2 — Heating (conditional) ────────────────────────
       - type: conditional
@@ -1271,77 +1281,98 @@ views:
               square: false
               cards:
                 - type: custom:mushroom-template-card
+                  entity: text.hph_ctrl_write_z2_climate
                   primary: Climate Setpoint
                   secondary: >-
-                    {% set e = states('input_text.hph_ctrl_write_z2_climate') %}
-                    {% if not e %}Helper not configured — see Config tab
-                    {% else %}Target {{ state_attr(e,'temperature') | float(0) | round(1) }}°C
-                    · Actual {{ states('sensor.hph_source_zone2_temp') }}°C{% endif %}
+                    {% set e = states('text.hph_ctrl_write_z2_climate') %}
+                    Target {{ state_attr(e,'temperature') | float(0) | round(1) }}°C
+                    · Actual {{ states('sensor.hph_source_zone2_temp') }}°C
                   icon: mdi:thermometer-lines
                   icon_color: >-
-                    {% set e = states('input_text.hph_ctrl_write_z2_climate') %}
+                    {% set e = states('text.hph_ctrl_write_z2_climate') %}
                     {{ 'deep-orange' if e and state_attr(e,'hvac_action') == 'heating' else 'blue-grey' }}
                   tap_action:
                     action: more-info
-                    entity: "{{ states('input_text.hph_ctrl_write_z2_climate') }}"
 
                 - type: custom:mushroom-template-card
+                  entity: number.hph_z2_heat_shift
                   primary: Heat Shift HK2
                   secondary: >-
-                    {% set e = states('input_text.hph_ctrl_write_z2_heat_shift') %}
-                    {% if not e %}Not configured
-                    {% else %}{{ states(e) | float(0) | round(1) }} K offset{% endif %}
+                    {% set e = states('text.hph_ctrl_write_z2_heat_shift') %}
+                    {{ states(e) | float(0) | round(1) }} K offset
                   icon: mdi:plus-minus
                   icon_color: grey
                   tap_action:
                     action: more-info
-                    entity: "{{ states('input_text.hph_ctrl_write_z2_heat_shift') }}"
 
-      # ── Section 4: Hot Water ──────────────────────────────────────────────
-      - type: custom:mushroom-title-card
-        title: Hot Water
-        subtitle: Target temperature · force charge
+      # ── Section 4: Hot Water (conditional on has_dhw) ────────────────────
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: binary_sensor.hph_has_dhw
+            state: "on"
+        card:
+          type: vertical-stack
+          cards:
+            - type: custom:mushroom-title-card
+              title: Hot Water
+              subtitle: Target temperature · force charge
 
-      - type: grid
-        columns: 3
-        square: false
-        cards:
-          - type: custom:mushroom-template-card
-            primary: DHW Actual
-            secondary: "{{ states('sensor.hph_source_dhw_temp') }} °C"
-            icon: mdi:water-thermometer
-            icon_color: orange
-            tap_action:
-              action: none
+            - type: grid
+              columns: 3
+              square: false
+              cards:
+                - type: custom:mushroom-template-card
+                  primary: DHW Actual
+                  secondary: "{{ states('sensor.hph_source_dhw_temp') }} °C"
+                  icon: mdi:water-thermometer
+                  icon_color: orange
+                  tap_action:
+                    action: none
 
-          - type: custom:mushroom-template-card
-            primary: DHW Target
-            secondary: >-
-              {% set e = states('input_text.hph_ctrl_write_dhw_target') %}
-              {% if not e %}Not configured
-              {% else %}{{ states(e) | float(0) | round(1) }} °C{% endif %}
-            icon: mdi:water-thermometer-outline
-            icon_color: orange
-            tap_action:
-              action: more-info
-              entity: "{{ states('input_text.hph_ctrl_write_dhw_target') }}"
+                - type: custom:mushroom-template-card
+                  entity: number.hph_dhw_target
+                  primary: DHW Target
+                  secondary: >-
+                    {% set e = states('text.hph_ctrl_write_dhw_target') %}
+                    {{ states(e) | float(0) | round(1) }} °C
+                  icon: mdi:water-thermometer-outline
+                  icon_color: orange
+                  tap_action:
+                    action: more-info
 
-          - type: custom:mushroom-template-card
-            primary: Force DHW
-            secondary: >-
-              {% set e = states('input_text.hph_ctrl_write_force_dhw') %}
-              {{ 'Charging' if e and is_state(e,'on') else 'Inactive' }}
-            icon: >-
-              {% set e = states('input_text.hph_ctrl_write_force_dhw') %}
-              {{ 'mdi:water-boiler' if e and is_state(e,'on') else 'mdi:water-boiler-off' }}
-            icon_color: >-
-              {% set e = states('input_text.hph_ctrl_write_force_dhw') %}
-              {{ 'orange' if e and is_state(e,'on') else 'grey' }}
-            tap_action:
-              action: perform-action
-              perform_action: homeassistant.toggle
-              target:
-                entity_id: "{{ states('input_text.hph_ctrl_write_force_dhw') }}"
+                - type: custom:mushroom-template-card
+                  primary: Force DHW
+                  secondary: >-
+                    {% set e = states('text.hph_ctrl_write_force_dhw') %}
+                    {{ 'Charging' if e and is_state(e,'on') else 'Inactive' }}
+                  icon: >-
+                    {% set e = states('text.hph_ctrl_write_force_dhw') %}
+                    {{ 'mdi:water-boiler' if e and is_state(e,'on') else 'mdi:water-boiler-off' }}
+                  icon_color: >-
+                    {% set e = states('text.hph_ctrl_write_force_dhw') %}
+                    {{ 'orange' if e and is_state(e,'on') else 'grey' }}
+                  tap_action:
+                    action: perform-action
+                    perform_action: hph.write_toggle
+                    data:
+                      helper: text.hph_ctrl_write_force_dhw
+
+                - type: custom:mushroom-template-card
+                  primary: DHW heat Δ
+                  secondary: "{{ states('number.panasonic_heat_pump_main_dhw_heat_delta') }} K"
+                  icon: mdi:delta
+                  tap_action:
+                    action: more-info
+                    entity: number.panasonic_heat_pump_main_dhw_heat_delta
+
+                - type: custom:mushroom-template-card
+                  primary: Smart DHW
+                  secondary: "{{ states('select.panasonic_heat_pump_main_smart_dhw') }}"
+                  icon: mdi:auto-fix
+                  tap_action:
+                    action: more-info
+                    entity: select.panasonic_heat_pump_main_smart_dhw
 
       # ── Section 5: System & Thresholds ───────────────────────────────────
       - type: custom:mushroom-title-card
@@ -1352,63 +1383,90 @@ views:
         columns: 3
         square: false
         cards:
-          - type: custom:mushroom-template-card
-            primary: Heating Cutoff
-            secondary: >-
-              {% set e = states('input_text.hph_ctrl_write_heating_cutoff') %}
-              {% if not e %}Not configured
-              {% else %}≤ {{ states(e) | float(0) | round(1) }} °C outdoor{% endif %}
-            icon: mdi:thermometer-off
-            icon_color: blue
-            tap_action:
-              action: more-info
-              entity: "{{ states('input_text.hph_ctrl_write_heating_cutoff') }}"
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_ctrl_write_heating_cutoff
+                state_not: ""
+            card:
+              type: custom:mushroom-template-card
+              entity: number.hph_heating_cutoff
+              primary: Heating Cutoff
+              secondary: >-
+                {% set e = states('text.hph_ctrl_write_heating_cutoff') %}
+                ≤ {{ states(e) | float(0) | round(1) }} °C outdoor
+              icon: mdi:thermometer-off
+              icon_color: blue
+              tap_action:
+                action: more-info
 
-          - type: custom:mushroom-template-card
-            primary: Heat Hysteresis
-            secondary: >-
-              {% set e = states('input_text.hph_ctrl_write_room_heat_delta') %}
-              {% if not e %}Not configured
-              {% else %}± {{ states(e) | float(0) | round(1) }} K{% endif %}
-            icon: mdi:delta
-            icon_color: grey
-            tap_action:
-              action: more-info
-              entity: "{{ states('input_text.hph_ctrl_write_room_heat_delta') }}"
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_ctrl_write_room_heat_delta
+                state_not: ""
+            card:
+              type: custom:mushroom-template-card
+              entity: number.hph_room_heat_delta
+              primary: Heat Hysteresis
+              secondary: >-
+                {% set e = states('text.hph_ctrl_write_room_heat_delta') %}
+                ± {{ states(e) | float(0) | round(1) }} K
+              icon: mdi:delta
+              icon_color: grey
+              tap_action:
+                action: more-info
 
-          - type: custom:mushroom-template-card
-            primary: Max Pump Duty
-            secondary: >-
-              {% set e = states('input_text.hph_ctrl_write_max_pump_duty') %}
-              {% if not e %}Not configured
-              {% else %}{{ states(e) | int(0) }} %{% endif %}
-            icon: mdi:pump
-            icon_color: grey
-            tap_action:
-              action: more-info
-              entity: "{{ states('input_text.hph_ctrl_write_max_pump_duty') }}"
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_ctrl_write_max_pump_duty
+                state_not: ""
+            card:
+              type: custom:mushroom-template-card
+              entity: number.hph_max_pump_duty
+              primary: Max Pump Duty
+              secondary: >-
+                {% set e = states('text.hph_ctrl_write_max_pump_duty') %}
+                {{ states(e) | int(0) }} %
+              icon: mdi:pump
+              icon_color: grey
+              tap_action:
+                action: more-info
 
-          - type: custom:mushroom-template-card
-            primary: Active Zones
-            secondary: >-
-              {% set e = states('input_text.hph_ctrl_write_active_zones') %}
-              {{ states(e) | title if e else '—' }}
-            icon: mdi:home-floor-1
-            icon_color: blue
-            tap_action:
-              action: more-info
-              entity: "{{ states('input_text.hph_ctrl_write_active_zones') }}"
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_ctrl_write_active_zones
+                state_not: ""
+            card:
+              type: custom:mushroom-template-card
+              entity: select.hph_active_zones
+              primary: Active Zones
+              secondary: >-
+                {% set e = states('text.hph_ctrl_write_active_zones') %}
+                {{ states(e) | title }}
+              icon: mdi:home-floor-1
+              icon_color: blue
+              tap_action:
+                action: more-info
 
-          - type: custom:mushroom-template-card
-            primary: Bivalent Mode
-            secondary: >-
-              {% set e = states('input_text.hph_ctrl_write_bivalent_mode') %}
-              {{ states(e) | title if e else '—' }}
-            icon: mdi:electric-switch
-            icon_color: grey
-            tap_action:
-              action: more-info
-              entity: "{{ states('input_text.hph_ctrl_write_bivalent_mode') }}"
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_ctrl_write_bivalent_mode
+                state_not: ""
+            card:
+              type: custom:mushroom-template-card
+              entity: select.hph_bivalent_mode
+              primary: Bivalent Mode
+              secondary: >-
+                {% set e = states('text.hph_ctrl_write_bivalent_mode') %}
+                {{ states(e) | title }}
+              icon: mdi:electric-switch
+              icon_color: grey
+              tap_action:
+                action: more-info
 
       # ── Section 6: Machine Room ───────────────────────────────────────────
       - type: custom:mushroom-title-card
@@ -1419,13 +1477,20 @@ views:
         columns: 4
         square: false
         cards:
-          # Each tile wraps in conditional: state_not: "" so it hides
-          # when the source helper is blank (sensor absent on this model).
+          # Each tile wraps in conditional so it hides when either:
+          #  (a) the source helper is blank (sensor absent on this model), or
+          #  (b) the facade sensor is unavailable/unknown (entity disabled in HA).
           - type: conditional
             conditions:
               - condition: state
                 entity: text.hph_src_inverter_temp
                 state_not: ""
+              - condition: state
+                entity: sensor.hph_source_inverter_temp
+                state_not: "unavailable"
+              - condition: state
+                entity: sensor.hph_source_inverter_temp
+                state_not: "unknown"
             card:
               type: custom:mushroom-template-card
               primary: Inverter Temp
@@ -1442,6 +1507,12 @@ views:
               - condition: state
                 entity: text.hph_src_high_pressure
                 state_not: ""
+              - condition: state
+                entity: sensor.hph_source_high_pressure
+                state_not: "unavailable"
+              - condition: state
+                entity: sensor.hph_source_high_pressure
+                state_not: "unknown"
             card:
               type: custom:mushroom-template-card
               primary: High Pressure
@@ -1458,6 +1529,12 @@ views:
               - condition: state
                 entity: text.hph_src_low_pressure
                 state_not: ""
+              - condition: state
+                entity: sensor.hph_source_low_pressure
+                state_not: "unavailable"
+              - condition: state
+                entity: sensor.hph_source_low_pressure
+                state_not: "unknown"
             card:
               type: custom:mushroom-template-card
               primary: Low Pressure
@@ -1474,6 +1551,12 @@ views:
               - condition: state
                 entity: text.hph_src_compressor_current
                 state_not: ""
+              - condition: state
+                entity: sensor.hph_source_compressor_current
+                state_not: "unavailable"
+              - condition: state
+                entity: sensor.hph_source_compressor_current
+                state_not: "unknown"
             card:
               type: custom:mushroom-template-card
               primary: Compressor A
@@ -1488,6 +1571,12 @@ views:
               - condition: state
                 entity: text.hph_src_outdoor_pipe_temp
                 state_not: ""
+              - condition: state
+                entity: sensor.hph_source_outdoor_pipe_temp
+                state_not: "unavailable"
+              - condition: state
+                entity: sensor.hph_source_outdoor_pipe_temp
+                state_not: "unknown"
             card:
               type: custom:mushroom-template-card
               primary: Outdoor Pipe
@@ -1502,6 +1591,12 @@ views:
               - condition: state
                 entity: text.hph_src_fan1_speed
                 state_not: ""
+              - condition: state
+                entity: sensor.hph_source_fan1_speed
+                state_not: "unavailable"
+              - condition: state
+                entity: sensor.hph_source_fan1_speed
+                state_not: "unknown"
             card:
               type: custom:mushroom-template-card
               primary: Fan 1
@@ -1518,6 +1613,12 @@ views:
               - condition: state
                 entity: text.hph_src_fan2_speed
                 state_not: ""
+              - condition: state
+                entity: sensor.hph_source_fan2_speed
+                state_not: "unavailable"
+              - condition: state
+                entity: sensor.hph_source_fan2_speed
+                state_not: "unknown"
             card:
               type: custom:mushroom-template-card
               primary: Fan 2
@@ -1534,6 +1635,12 @@ views:
               - condition: state
                 entity: text.hph_src_3way_valve
                 state_not: ""
+              - condition: state
+                entity: sensor.hph_source_3way_valve
+                state_not: "unavailable"
+              - condition: state
+                entity: sensor.hph_source_3way_valve
+                state_not: "unknown"
             card:
               type: custom:mushroom-template-card
               primary: 3-Way Valve
@@ -1550,6 +1657,12 @@ views:
               - condition: state
                 entity: text.hph_src_pump_duty
                 state_not: ""
+              - condition: state
+                entity: sensor.hph_source_pump_duty
+                state_not: "unavailable"
+              - condition: state
+                entity: sensor.hph_source_pump_duty
+                state_not: "unknown"
             card:
               type: custom:mushroom-template-card
               primary: Pump Duty
@@ -1564,6 +1677,12 @@ views:
               - condition: state
                 entity: text.hph_src_hex_outlet_temp
                 state_not: ""
+              - condition: state
+                entity: sensor.hph_source_hex_outlet_temp
+                state_not: "unavailable"
+              - condition: state
+                entity: sensor.hph_source_hex_outlet_temp
+                state_not: "unknown"
             card:
               type: custom:mushroom-template-card
               primary: HEX Outlet
@@ -1578,6 +1697,12 @@ views:
               - condition: state
                 entity: text.hph_src_zone1_target_temp
                 state_not: ""
+              - condition: state
+                entity: sensor.hph_source_zone1_target_temp
+                state_not: "unavailable"
+              - condition: state
+                entity: sensor.hph_source_zone1_target_temp
+                state_not: "unknown"
             card:
               type: custom:mushroom-template-card
               primary: Zone 1 Setpoint
@@ -1609,49 +1734,315 @@ views:
           - type: custom:mushroom-template-card
             primary: Holiday Mode
             secondary: >-
-              {% set e = states('input_text.hph_ctrl_write_holiday') %}
+              {% set e = states('text.hph_ctrl_write_holiday') %}
               {{ 'Active' if e and is_state(e,'on') else 'Inactive' }}
             icon: mdi:airplane-takeoff
             icon_color: >-
-              {% set e = states('input_text.hph_ctrl_write_holiday') %}
+              {% set e = states('text.hph_ctrl_write_holiday') %}
               {{ 'blue' if e and is_state(e,'on') else 'grey' }}
             tap_action:
               action: perform-action
-              perform_action: homeassistant.toggle
-              target:
-                entity_id: "{{ states('input_text.hph_ctrl_write_holiday') }}"
+              perform_action: hph.write_toggle
+              data:
+                helper: text.hph_ctrl_write_holiday
 
           - type: custom:mushroom-template-card
             primary: Force Defrost
             secondary: >-
-              {% set e = states('input_text.hph_ctrl_write_force_defrost') %}
+              {% set e = states('text.hph_ctrl_write_force_defrost') %}
               {{ 'Active' if e and is_state(e,'on') else 'Inactive' }}
             icon: mdi:snowflake-melt
             icon_color: >-
-              {% set e = states('input_text.hph_ctrl_write_force_defrost') %}
+              {% set e = states('text.hph_ctrl_write_force_defrost') %}
               {{ 'cyan' if e and is_state(e,'on') else 'grey' }}
             tap_action:
               action: perform-action
-              perform_action: homeassistant.toggle
-              target:
-                entity_id: "{{ states('input_text.hph_ctrl_write_force_defrost') }}"
+              perform_action: hph.write_toggle
+              data:
+                helper: text.hph_ctrl_write_force_defrost
 
           # Powerful / Boost mode — vendor-specific (Panasonic Aquarea)
           # Shows '—' on installations where hph_ctrl_write_powerful_mode is empty
           - type: custom:mushroom-template-card
+            entity: select.hph_powerful_mode
             primary: Boost Mode
             secondary: >-
-              {% set e = states('input_text.hph_ctrl_write_powerful_mode') %}
+              {% set e = states('text.hph_ctrl_write_powerful_mode') %}
               {% if not e %}— (vendor-specific, not configured)
               {% else %}{{ states(e) | title }}{% endif %}
             icon: mdi:lightning-bolt
             icon_color: >-
-              {% set e = states('input_text.hph_ctrl_write_powerful_mode') %}
+              {% set e = states('text.hph_ctrl_write_powerful_mode') %}
               {% set s = states(e) | lower %}
               {{ 'orange' if e and s not in ['off','none','','30min'] else 'grey' }}
             tap_action:
               action: more-info
-              entity: "{{ states('input_text.hph_ctrl_write_powerful_mode') }}"
+
+          # Force heater — conditional: only shown when heishamon exposes it
+          - type: conditional
+            conditions:
+              - entity: binary_sensor.panasonic_heat_pump_main_force_heater_state
+                state_not: unavailable
+              - entity: binary_sensor.panasonic_heat_pump_main_force_heater_state
+                state_not: unknown
+            card:
+              type: custom:mushroom-template-card
+              primary: Force Heater
+              secondary: >-
+                {{ 'on' if is_state('binary_sensor.panasonic_heat_pump_main_force_heater_state','on') else 'off' }}
+              icon: mdi:radiator-disabled
+              icon_color: >-
+                {{ 'red' if is_state('binary_sensor.panasonic_heat_pump_main_force_heater_state','on') else 'grey' }}
+              tap_action:
+                action: more-info
+                entity: binary_sensor.panasonic_heat_pump_main_force_heater_state
+
+          # Sterilization — conditional: only when DHW is present
+          - type: conditional
+            conditions:
+              - entity: binary_sensor.hph_has_dhw
+                state: "on"
+            card:
+              type: custom:mushroom-template-card
+              primary: Sterilization
+              secondary: >-
+                {{ 'running' if is_state('binary_sensor.panasonic_heat_pump_main_sterilization_state','on') else 'off' }}
+              icon: mdi:bacteria-outline
+              icon_color: >-
+                {{ 'red' if is_state('binary_sensor.panasonic_heat_pump_main_sterilization_state','on') else 'grey' }}
+              tap_action:
+                action: more-info
+                entity: binary_sensor.panasonic_heat_pump_main_sterilization_state
+
+      # ── Section 8: Heating curve — Zone 1 ───────────────────────────────
+      - type: custom:mushroom-title-card
+        title: Heating Curve — Zone 1
+        subtitle: Outside-temp axis vs. supply-target axis. Tap any point to adjust.
+
+      - type: grid
+        columns: 2
+        square: false
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Z1 supply (live)
+            secondary: >-
+              {{ states('sensor.hph_source_outlet_temp') | float(0) | round(1) }} °C
+              → {{ states('sensor.panasonic_heat_pump_main_z1_water_target_temp') | float(0) | round(1) }} °C target
+            icon: mdi:thermometer-lines
+            icon_color: red
+            multiline_secondary: true
+            tap_action:
+              action: more-info
+              entity: sensor.panasonic_heat_pump_main_z1_water_target_temp
+          - type: custom:mushroom-template-card
+            primary: Z1 room
+            secondary: "{{ states('sensor.panasonic_heat_pump_main_z1_temp') }} °C"
+            icon: mdi:home-thermometer
+            icon_color: orange
+            tap_action:
+              action: more-info
+              entity: sensor.panasonic_heat_pump_main_z1_temp
+
+      - type: grid
+        columns: 4
+        square: false
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Outside low
+            secondary: "{{ states('number.panasonic_heat_pump_main_z1_heat_curve_outside_low_temp') }} °C"
+            icon: mdi:snowflake
+            icon_color: blue
+            tap_action:
+              action: more-info
+              entity: number.panasonic_heat_pump_main_z1_heat_curve_outside_low_temp
+          - type: custom:mushroom-template-card
+            primary: Outside high
+            secondary: "{{ states('number.panasonic_heat_pump_main_z1_heat_curve_outside_high_temp') }} °C"
+            icon: mdi:white-balance-sunny
+            icon_color: yellow
+            tap_action:
+              action: more-info
+              entity: number.panasonic_heat_pump_main_z1_heat_curve_outside_high_temp
+          - type: custom:mushroom-template-card
+            primary: Target low
+            secondary: "{{ states('number.panasonic_heat_pump_main_z1_heat_curve_target_low_temp') }} °C"
+            icon: mdi:water-thermometer
+            icon_color: orange
+            tap_action:
+              action: more-info
+              entity: number.panasonic_heat_pump_main_z1_heat_curve_target_low_temp
+          - type: custom:mushroom-template-card
+            primary: Target high
+            secondary: "{{ states('number.panasonic_heat_pump_main_z1_heat_curve_target_high_temp') }} °C"
+            icon: mdi:fire
+            icon_color: red
+            tap_action:
+              action: more-info
+              entity: number.panasonic_heat_pump_main_z1_heat_curve_target_high_temp
+
+      # ── Section 8b: Heating curve — Zone 2 (conditional) ─────────────────
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: binary_sensor.hph_has_hk2
+            state: "on"
+        card:
+          type: vertical-stack
+          cards:
+            - type: custom:mushroom-title-card
+              title: Heating Curve — Zone 2
+            - type: grid
+              columns: 4
+              square: false
+              cards:
+                - type: custom:mushroom-template-card
+                  primary: Z2 outside low
+                  secondary: "{{ states('number.panasonic_heat_pump_main_z2_heat_curve_outside_low_temp') }} °C"
+                  icon: mdi:snowflake
+                  icon_color: blue
+                  tap_action:
+                    action: more-info
+                    entity: number.panasonic_heat_pump_main_z2_heat_curve_outside_low_temp
+                - type: custom:mushroom-template-card
+                  primary: Z2 outside high
+                  secondary: "{{ states('number.panasonic_heat_pump_main_z2_heat_curve_outside_high_temp') }} °C"
+                  icon: mdi:white-balance-sunny
+                  icon_color: yellow
+                  tap_action:
+                    action: more-info
+                    entity: number.panasonic_heat_pump_main_z2_heat_curve_outside_high_temp
+                - type: custom:mushroom-template-card
+                  primary: Z2 target low
+                  secondary: "{{ states('number.panasonic_heat_pump_main_z2_heat_curve_target_low_temp') }} °C"
+                  icon: mdi:water-thermometer
+                  icon_color: orange
+                  tap_action:
+                    action: more-info
+                    entity: number.panasonic_heat_pump_main_z2_heat_curve_target_low_temp
+                - type: custom:mushroom-template-card
+                  primary: Z2 target high
+                  secondary: "{{ states('number.panasonic_heat_pump_main_z2_heat_curve_target_high_temp') }} °C"
+                  icon: mdi:fire
+                  icon_color: red
+                  tap_action:
+                    action: more-info
+                    entity: number.panasonic_heat_pump_main_z2_heat_curve_target_high_temp
+
+      # ── Section 9: Advanced settings ─────────────────────────────────────
+      # Less-frequent tweaks. Each group hides when the heat pump does not
+      # expose the relevant entities. Heating cutoff / Heat Δ / Bivalent mode
+      # are already in Section 5 via HPH helpers — only the additional
+      # parameters (detail, cooling, bivalent specifics) are shown here.
+      - type: custom:mushroom-title-card
+        title: Advanced Settings
+        subtitle: Less-frequent tweaks — only shown when the heat pump exposes them
+
+      - type: grid
+        columns: 3
+        square: false
+        cards:
+          - type: conditional
+            conditions:
+              - entity: select.panasonic_heat_pump_main_heating_control
+                state_not: unavailable
+              - entity: select.panasonic_heat_pump_main_heating_control
+                state_not: unknown
+            card:
+              type: custom:mushroom-template-card
+              primary: Heating control
+              secondary: "{{ states('select.panasonic_heat_pump_main_heating_control') }}"
+              icon: mdi:home-thermometer
+              tap_action:
+                action: more-info
+                entity: select.panasonic_heat_pump_main_heating_control
+          - type: conditional
+            conditions:
+              - entity: binary_sensor.hph_has_cooling
+                state: "on"
+            card:
+              type: custom:mushroom-template-card
+              primary: Cool Δ
+              secondary: "{{ states('number.panasonic_heat_pump_main_cool_delta') }} K"
+              icon: mdi:snowflake
+              icon_color: blue
+              tap_action:
+                action: more-info
+                entity: number.panasonic_heat_pump_main_cool_delta
+          - type: conditional
+            conditions:
+              - entity: select.panasonic_heat_pump_main_dhw_sensor_selection
+                state_not: unavailable
+              - entity: select.panasonic_heat_pump_main_dhw_sensor_selection
+                state_not: unknown
+            card:
+              type: custom:mushroom-template-card
+              primary: DHW sensor
+              secondary: "{{ states('select.panasonic_heat_pump_main_dhw_sensor_selection') }}"
+              icon: mdi:format-list-bulleted-type
+              tap_action:
+                action: more-info
+                entity: select.panasonic_heat_pump_main_dhw_sensor_selection
+          - type: conditional
+            conditions:
+              - entity: binary_sensor.panasonic_heat_pump_main_quiet_mode_schedule
+                state_not: unavailable
+              - entity: binary_sensor.panasonic_heat_pump_main_quiet_mode_schedule
+                state_not: unknown
+            card:
+              type: custom:mushroom-template-card
+              primary: Quiet schedule
+              secondary: >-
+                {{ 'active' if is_state('binary_sensor.panasonic_heat_pump_main_quiet_mode_schedule','on') else 'idle' }}
+              icon: mdi:calendar-clock
+              icon_color: >-
+                {{ 'green' if is_state('binary_sensor.panasonic_heat_pump_main_quiet_mode_schedule','on') else 'grey' }}
+              tap_action:
+                action: more-info
+                entity: binary_sensor.panasonic_heat_pump_main_quiet_mode_schedule
+
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: binary_sensor.hph_has_bivalent
+            state: "on"
+        card:
+          type: vertical-stack
+          cards:
+            - type: custom:mushroom-title-card
+              title: Bivalent / Aux Heater
+              subtitle: Extra detail — bivalent mode is in Section 5
+            - type: grid
+              columns: 3
+              square: false
+              cards:
+                - type: custom:mushroom-template-card
+                  primary: Bivalent start
+                  secondary: "{{ states('number.panasonic_heat_pump_main_bivalent_start_temp') }} °C"
+                  icon: mdi:thermometer-low
+                  tap_action:
+                    action: more-info
+                    entity: number.panasonic_heat_pump_main_bivalent_start_temp
+                - type: custom:mushroom-template-card
+                  primary: Heater delay
+                  secondary: "{{ states('number.panasonic_heat_pump_main_heater_delay_time') }} min"
+                  icon: mdi:timer-sand
+                  tap_action:
+                    action: more-info
+                    entity: number.panasonic_heat_pump_main_heater_delay_time
+                - type: custom:mushroom-template-card
+                  primary: Heater start Δ
+                  secondary: "{{ states('number.panasonic_heat_pump_main_heater_start_delta') }} K"
+                  icon: mdi:arrow-up-bold-circle
+                  tap_action:
+                    action: more-info
+                    entity: number.panasonic_heat_pump_main_heater_start_delta
+                - type: custom:mushroom-template-card
+                  primary: Heater stop Δ
+                  secondary: "{{ states('number.panasonic_heat_pump_main_heater_stop_delta') }} K"
+                  icon: mdi:arrow-down-bold-circle
+                  tap_action:
+                    action: more-info
+                    entity: number.panasonic_heat_pump_main_heater_stop_delta
 
   # ════════════════════════════════════════════════════════════════════════
   # 3) ANALYSIS — ApexCharts (Service-Cloud-style)
@@ -2649,271 +3040,7 @@ views:
     path: heatpump
     icon: mdi:heat-pump
     cards:
-      # ── Heat-pump native controls (Heishamon) ─────────────────────────
-      # Mushroom-styled quick-action layout for the controls users touch
-      # most. Power-user controls (bivalent, optional PCB, sterilization
-      # detail, etc.) stay accessible via the collapsed entities card at
-      # the bottom of this section.
-      - type: vertical-stack
-        cards:
-          - type: markdown
-            content: |
-              ## Heat pump — native controls
-              Tap any tile to change directly on the heat pump.
-
-          # ── Operation: mode + state chip strip ────────────────────────
-          - type: custom:mushroom-template-card
-            primary: Operation mode
-            secondary: "{{ states('select.panasonic_heat_pump_main_operating_mode_state') }}"
-            icon: |-
-              {% set m = states('select.panasonic_heat_pump_main_operating_mode_state') | lower %}
-              {% if 'heat' in m %}mdi:radiator
-              {% elif 'cool' in m %}mdi:snowflake
-              {% elif 'dhw' in m or 'tank' in m %}mdi:water-boiler
-              {% else %}mdi:heat-pump{% endif %}
-            icon_color: |-
-              {% if is_state('binary_sensor.hph_compressor_running','on') %}green{% else %}grey{% endif %}
-            multiline_secondary: true
-            fill_container: true
-            tap_action:
-              action: more-info
-              entity: select.panasonic_heat_pump_main_operating_mode_state
-
-          # ── Quick actions: each card conditional on its entity being
-          # exposed by the heat pump (Heishamon disables many controls
-          # for heat-only / DHW-on-separate-boiler installs). Conditional
-          # cards on state_not unavailable+unknown render only when the
-          # entity actually has a value. ─────────────────────────────────
-          - type: grid
-            columns: 4
-            square: false
-            cards:
-              - type: conditional
-                conditions:
-                  - entity: binary_sensor.panasonic_heat_pump_main_holiday_mode_state
-                    state_not: unavailable
-                  - entity: binary_sensor.panasonic_heat_pump_main_holiday_mode_state
-                    state_not: unknown
-                card:
-                  type: custom:mushroom-template-card
-                  primary: Holiday
-                  secondary: "{{ 'on' if is_state('binary_sensor.panasonic_heat_pump_main_holiday_mode_state','on') else 'off' }}"
-                  icon: mdi:airplane-takeoff
-                  icon_color: >-
-                    {{ 'orange' if is_state('binary_sensor.panasonic_heat_pump_main_holiday_mode_state','on') else 'grey' }}
-                  fill_container: true
-                  tap_action:
-                    action: more-info
-                    entity: binary_sensor.panasonic_heat_pump_main_holiday_mode_state
-              - type: conditional
-                conditions:
-                  - entity: binary_sensor.hph_has_native_dhw
-                    state: "on"
-                card:
-                  type: custom:mushroom-template-card
-                  primary: Force DHW
-                  secondary: "{{ 'running' if is_state('binary_sensor.panasonic_heat_pump_main_force_dhw_state','on') else 'idle' }}"
-                  icon: mdi:water-boiler-alert
-                  icon_color: >-
-                    {{ 'red' if is_state('binary_sensor.panasonic_heat_pump_main_force_dhw_state','on') else 'blue' }}
-                  fill_container: true
-                  tap_action:
-                    action: more-info
-                    entity: binary_sensor.panasonic_heat_pump_main_force_dhw_state
-              - type: conditional
-                conditions:
-                  - entity: binary_sensor.panasonic_heat_pump_main_force_heater_state
-                    state_not: unavailable
-                  - entity: binary_sensor.panasonic_heat_pump_main_force_heater_state
-                    state_not: unknown
-                card:
-                  type: custom:mushroom-template-card
-                  primary: Force heater
-                  secondary: "{{ 'on' if is_state('binary_sensor.panasonic_heat_pump_main_force_heater_state','on') else 'off' }}"
-                  icon: mdi:radiator-disabled
-                  icon_color: >-
-                    {{ 'red' if is_state('binary_sensor.panasonic_heat_pump_main_force_heater_state','on') else 'grey' }}
-                  fill_container: true
-                  tap_action:
-                    action: more-info
-                    entity: binary_sensor.panasonic_heat_pump_main_force_heater_state
-              - type: conditional
-                conditions:
-                  - entity: binary_sensor.hph_has_native_dhw
-                    state: "on"
-                card:
-                  type: custom:mushroom-template-card
-                  primary: Sterilization
-                  secondary: "{{ 'running' if is_state('binary_sensor.panasonic_heat_pump_main_sterilization_state','on') else 'off' }}"
-                  icon: mdi:bacteria-outline
-                  icon_color: >-
-                    {{ 'red' if is_state('binary_sensor.panasonic_heat_pump_main_sterilization_state','on') else 'grey' }}
-                  fill_container: true
-                  tap_action:
-                    action: more-info
-                    entity: binary_sensor.panasonic_heat_pump_main_sterilization_state
-
-          # ── Comfort: quiet + powerful in chip strip (always shown —
-          # quiet/powerful selects exist on every Aquarea generation) ──
-          - type: custom:mushroom-chips-card
-            chips:
-              - type: template
-                icon: mdi:volume-low
-                content: "Quiet {{ states('select.panasonic_heat_pump_main_quiet_mode_level') }}"
-                icon_color: >-
-                  {% set v = states('select.panasonic_heat_pump_main_quiet_mode_level') %}
-                  {% if v in ['1','2','3'] %}blue{% else %}grey{% endif %}
-                tap_action:
-                  action: more-info
-                  entity: select.panasonic_heat_pump_main_quiet_mode_level
-              - type: template
-                icon: mdi:priority-high
-                content: "{{ states('select.panasonic_heat_pump_main_quiet_mode_priority') }}"
-                tap_action:
-                  action: more-info
-                  entity: select.panasonic_heat_pump_main_quiet_mode_priority
-              - type: template
-                icon: mdi:rocket-launch-outline
-                content: "{{ states('select.panasonic_heat_pump_main_powerful_mode_time') }}"
-                icon_color: >-
-                  {% set v = states('select.panasonic_heat_pump_main_powerful_mode_time') %}
-                  {% if v not in ['off','0','unknown','unavailable',''] %}orange{% else %}grey{% endif %}
-                tap_action:
-                  action: more-info
-                  entity: select.panasonic_heat_pump_main_powerful_mode_time
-              - type: conditional
-                conditions:
-                  - entity: binary_sensor.panasonic_heat_pump_main_main_schedule_state
-                    state_not: unavailable
-                  - entity: binary_sensor.panasonic_heat_pump_main_main_schedule_state
-                    state_not: unknown
-                chip:
-                  type: template
-                  icon: mdi:calendar-clock
-                  content: "Schedule"
-                  icon_color: >-
-                    {{ 'green' if is_state('binary_sensor.panasonic_heat_pump_main_main_schedule_state','on') else 'grey' }}
-                  tap_action:
-                    action: more-info
-                    entity: binary_sensor.panasonic_heat_pump_main_main_schedule_state
-
-          # ── DHW: target / delta / smart in 3-up — only when the
-          # heat pump exposes native DHW controls. ──────────────────────
-          - type: conditional
-            conditions:
-              - entity: binary_sensor.hph_has_native_dhw
-                state: "on"
-            card:
-              type: grid
-              columns: 3
-              square: false
-              cards:
-                - type: custom:mushroom-template-card
-                  primary: DHW target
-                  secondary: "{{ states('number.panasonic_heat_pump_main_dhw_target_temp') }} °C"
-                  icon: mdi:thermometer-water
-                  icon_color: red
-                  fill_container: true
-                  tap_action:
-                    action: more-info
-                    entity: number.panasonic_heat_pump_main_dhw_target_temp
-                - type: custom:mushroom-template-card
-                  primary: DHW heat Δ
-                  secondary: "{{ states('number.panasonic_heat_pump_main_dhw_heat_delta') }} K"
-                  icon: mdi:delta
-                  fill_container: true
-                  tap_action:
-                    action: more-info
-                    entity: number.panasonic_heat_pump_main_dhw_heat_delta
-                - type: custom:mushroom-template-card
-                  primary: Smart DHW
-                  secondary: "{{ states('select.panasonic_heat_pump_main_smart_dhw') }}"
-                  icon: mdi:auto-fix
-                  fill_container: true
-                  tap_action:
-                    action: more-info
-                    entity: select.panasonic_heat_pump_main_smart_dhw
-
-      # ── Heating curve Z1: hero + 4 curve points ──────────────────────
-      - type: vertical-stack
-        cards:
-          - type: markdown
-            content: |
-              ## Heating curve — Zone 1
-              Outside-temp axis vs. supply-target axis. Tap any point
-              to adjust; the heat pump recalculates the supply target
-              live.
-
-          - type: grid
-            columns: 2
-            square: false
-            cards:
-              - type: custom:mushroom-template-card
-                primary: Z1 supply (live)
-                secondary: >-
-                  {{ states('sensor.hph_source_outlet_temp') | float(0) | round(1) }} °C
-                  → {{ states('sensor.panasonic_heat_pump_main_z1_water_target_temp') | float(0) | round(1) }} °C target
-                icon: mdi:thermometer-lines
-                icon_color: red
-                multiline_secondary: true
-                fill_container: true
-                tap_action:
-                  action: more-info
-                  entity: sensor.panasonic_heat_pump_main_z1_water_target_temp
-              - type: custom:mushroom-template-card
-                primary: Z1 room
-                secondary: >-
-                  {{ states('sensor.panasonic_heat_pump_main_z1_temp') }} °C
-                icon: mdi:home-thermometer
-                icon_color: orange
-                fill_container: true
-                tap_action:
-                  action: more-info
-                  entity: sensor.panasonic_heat_pump_main_z1_temp
-
-          # 4 curve points: outside_low/high × target_low/high
-          - type: grid
-            columns: 4
-            square: false
-            cards:
-              - type: custom:mushroom-template-card
-                primary: Outside low
-                secondary: "{{ states('number.panasonic_heat_pump_main_z1_heat_curve_outside_low_temp') }} °C"
-                icon: mdi:snowflake
-                icon_color: blue
-                fill_container: true
-                tap_action:
-                  action: more-info
-                  entity: number.panasonic_heat_pump_main_z1_heat_curve_outside_low_temp
-              - type: custom:mushroom-template-card
-                primary: Outside high
-                secondary: "{{ states('number.panasonic_heat_pump_main_z1_heat_curve_outside_high_temp') }} °C"
-                icon: mdi:white-balance-sunny
-                icon_color: yellow
-                fill_container: true
-                tap_action:
-                  action: more-info
-                  entity: number.panasonic_heat_pump_main_z1_heat_curve_outside_high_temp
-              - type: custom:mushroom-template-card
-                primary: Target low
-                secondary: "{{ states('number.panasonic_heat_pump_main_z1_heat_curve_target_low_temp') }} °C"
-                icon: mdi:water-thermometer
-                icon_color: orange
-                fill_container: true
-                tap_action:
-                  action: more-info
-                  entity: number.panasonic_heat_pump_main_z1_heat_curve_target_low_temp
-              - type: custom:mushroom-template-card
-                primary: Target high
-                secondary: "{{ states('number.panasonic_heat_pump_main_z1_heat_curve_target_high_temp') }} °C"
-                icon: mdi:fire
-                icon_color: red
-                fill_container: true
-                tap_action:
-                  action: more-info
-                  entity: number.panasonic_heat_pump_main_z1_heat_curve_target_high_temp
-
-      # ── Heating curve Z2 (conditional) ─────────────────────────────
+      # ── Heating curve Z2 (conditional) — kept here for reference ─────
       - type: conditional
         conditions:
           - entity: binary_sensor.hph_has_hk2
@@ -2922,7 +3049,7 @@ views:
           type: vertical-stack
           cards:
             - type: markdown
-              content: "## Heating curve — Zone 2"
+              content: "## Heating curve — Zone 2 (reference)"
             - type: grid
               columns: 4
               square: false
@@ -2963,175 +3090,6 @@ views:
                   tap_action:
                     action: more-info
                     entity: number.panasonic_heat_pump_main_z2_heat_curve_target_high_temp
-
-      # ── Advanced settings: each row conditional on its entity being
-      # exposed by the heat pump. Grouped under section headings to
-      # match the visual rhythm of the native-controls section above. ──
-      - type: vertical-stack
-        cards:
-          - type: markdown
-            content: |
-              ## Advanced settings
-              Less-frequent tweaks. Sections appear only when the heat
-              pump exposes the relevant entities.
-
-          # Heating control — always shown (heating_control + heat_delta
-          # + heating_off_outdoor_temp exist on every install)
-          - type: grid
-            columns: 3
-            square: false
-            cards:
-              - type: custom:mushroom-template-card
-                primary: Heating control
-                secondary: "{{ states('select.panasonic_heat_pump_main_heating_control') }}"
-                icon: mdi:home-thermometer
-                fill_container: true
-                tap_action:
-                  action: more-info
-                  entity: select.panasonic_heat_pump_main_heating_control
-              - type: custom:mushroom-template-card
-                primary: Heat Δ
-                secondary: "{{ states('number.panasonic_heat_pump_main_heat_delta') }} K"
-                icon: mdi:delta
-                icon_color: red
-                fill_container: true
-                tap_action:
-                  action: more-info
-                  entity: number.panasonic_heat_pump_main_heat_delta
-              - type: custom:mushroom-template-card
-                primary: Heating off above
-                secondary: "{{ states('number.panasonic_heat_pump_main_heating_off_outdoor_temp') }} °C"
-                icon: mdi:thermometer-off
-                fill_container: true
-                tap_action:
-                  action: more-info
-                  entity: number.panasonic_heat_pump_main_heating_off_outdoor_temp
-
-          # Cooling — only if heat pump supports it
-          - type: conditional
-            conditions:
-              - entity: binary_sensor.hph_has_cooling
-                state: "on"
-            card:
-              type: custom:mushroom-template-card
-              primary: Cool Δ
-              secondary: "{{ states('number.panasonic_heat_pump_main_cool_delta') }} K"
-              icon: mdi:snowflake
-              icon_color: blue
-              fill_container: true
-              tap_action:
-                action: more-info
-                entity: number.panasonic_heat_pump_main_cool_delta
-
-          # Zones state — only if Z2 is installed
-          - type: conditional
-            conditions:
-              - entity: binary_sensor.hph_has_hk2
-                state: "on"
-            card:
-              type: custom:mushroom-template-card
-              primary: Zones state
-              secondary: "{{ states('select.panasonic_heat_pump_main_zones_state') }}"
-              icon: mdi:home-floor-1
-              fill_container: true
-              tap_action:
-                action: more-info
-                entity: select.panasonic_heat_pump_main_zones_state
-
-          # Bivalent / aux-heater section — only if exposed
-          - type: conditional
-            conditions:
-              - entity: binary_sensor.hph_has_bivalent
-                state: "on"
-            card:
-              type: vertical-stack
-              cards:
-                - type: markdown
-                  content: "### Bivalent / aux heater"
-                - type: grid
-                  columns: 3
-                  square: false
-                  cards:
-                    - type: custom:mushroom-template-card
-                      primary: Bivalent mode
-                      secondary: "{{ states('select.panasonic_heat_pump_main_bivalent_mode') }}"
-                      icon: mdi:radiator
-                      fill_container: true
-                      tap_action:
-                        action: more-info
-                        entity: select.panasonic_heat_pump_main_bivalent_mode
-                    - type: custom:mushroom-template-card
-                      primary: Bivalent start
-                      secondary: "{{ states('number.panasonic_heat_pump_main_bivalent_start_temp') }} °C"
-                      icon: mdi:thermometer-low
-                      fill_container: true
-                      tap_action:
-                        action: more-info
-                        entity: number.panasonic_heat_pump_main_bivalent_start_temp
-                    - type: custom:mushroom-template-card
-                      primary: Heater delay
-                      secondary: "{{ states('number.panasonic_heat_pump_main_heater_delay_time') }} min"
-                      icon: mdi:timer-sand
-                      fill_container: true
-                      tap_action:
-                        action: more-info
-                        entity: number.panasonic_heat_pump_main_heater_delay_time
-                - type: grid
-                  columns: 2
-                  square: false
-                  cards:
-                    - type: custom:mushroom-template-card
-                      primary: Heater start Δ
-                      secondary: "{{ states('number.panasonic_heat_pump_main_heater_start_delta') }} K"
-                      icon: mdi:arrow-up-bold-circle
-                      fill_container: true
-                      tap_action:
-                        action: more-info
-                        entity: number.panasonic_heat_pump_main_heater_start_delta
-                    - type: custom:mushroom-template-card
-                      primary: Heater stop Δ
-                      secondary: "{{ states('number.panasonic_heat_pump_main_heater_stop_delta') }} K"
-                      icon: mdi:arrow-down-bold-circle
-                      fill_container: true
-                      tap_action:
-                        action: more-info
-                        entity: number.panasonic_heat_pump_main_heater_stop_delta
-
-          # DHW sensor-selection (advanced) — only if exposed
-          - type: conditional
-            conditions:
-              - entity: select.panasonic_heat_pump_main_dhw_sensor_selection
-                state_not: unavailable
-              - entity: select.panasonic_heat_pump_main_dhw_sensor_selection
-                state_not: unknown
-            card:
-              type: custom:mushroom-template-card
-              primary: DHW sensor selection
-              secondary: "{{ states('select.panasonic_heat_pump_main_dhw_sensor_selection') }}"
-              icon: mdi:format-list-bulleted-type
-              fill_container: true
-              tap_action:
-                action: more-info
-                entity: select.panasonic_heat_pump_main_dhw_sensor_selection
-
-          # Quiet-mode schedule status (passive read-only)
-          - type: conditional
-            conditions:
-              - entity: binary_sensor.panasonic_heat_pump_main_quiet_mode_schedule
-                state_not: unavailable
-              - entity: binary_sensor.panasonic_heat_pump_main_quiet_mode_schedule
-                state_not: unknown
-            card:
-              type: custom:mushroom-template-card
-              primary: Quiet schedule
-              secondary: "{{ 'active' if is_state('binary_sensor.panasonic_heat_pump_main_quiet_mode_schedule','on') else 'idle' }}"
-              icon: mdi:calendar-clock
-              icon_color: >-
-                {{ 'green' if is_state('binary_sensor.panasonic_heat_pump_main_quiet_mode_schedule','on') else 'grey' }}
-              fill_container: true
-              tap_action:
-                action: more-info
-                entity: binary_sensor.panasonic_heat_pump_main_quiet_mode_schedule
 
       - type: entities
         title: Control strategies (HeishaMoNR parity)

@@ -20,6 +20,7 @@ pytestmark = pytest.mark.skipif(
 from homeassistant.core import HomeAssistant  # noqa: E402  (conditional import)
 
 from custom_components.hph.const import (
+    CTRL_FACADES,
     DOMAIN,
     MODEL_CAPABILITIES,
     TEXT_HELPERS,
@@ -116,7 +117,8 @@ async def test_vendor_preset_panasonic_l_gates_fan2(hass: HomeAssistant) -> None
 
 @pytest.mark.usefixtures("enable_custom_integrations")
 async def test_vendor_preset_panasonic_j_gates_fan2(hass: HomeAssistant) -> None:
-    """J-series: fan2_speed stays empty (single-fan unit, no water pressure)."""
+    """J-series: fan2_speed stays empty (single-fan unit). pump_pressure is
+    universal across J/K/L/T-CAP/M and must be filled."""
     await _setup_entry(hass, {
         "vendor_preset": "panasonic_heishamon",
         "pump_model": "panasonic_j_aqj",
@@ -130,8 +132,8 @@ async def test_vendor_preset_panasonic_j_gates_fan2(hass: HomeAssistant) -> None
         f"J-series: fan2_speed must be empty, got {fan2.state!r}"
     )
     assert pump_pressure is not None
-    assert pump_pressure.state == "", (
-        f"J-series: pump_pressure must be empty (K/L All-In-One only), got {pump_pressure.state!r}"
+    assert pump_pressure.state != "", (
+        f"pump_pressure must be filled (universal across Panasonic models), got {pump_pressure.state!r}"
     )
 
 
@@ -193,3 +195,33 @@ async def test_model_capabilities_cover_all_preset_src_keys() -> None:
             f"MODEL_CAPABILITIES (will fill unconditionally): {ungated!r}. "
             "Add them to MODEL_CAPABILITIES or to always_present."
         )
+
+
+def test_ctrl_facades_writers_exist_in_text_helpers() -> None:
+    """Every CTRL_FACADES.writer must reference a real TEXT_HELPERS entry."""
+    missing = [
+        (uid, cfg["writer"])
+        for uid, cfg in CTRL_FACADES.items()
+        if cfg["writer"] not in TEXT_HELPERS
+    ]
+    assert not missing, (
+        f"{len(missing)} CTRL_FACADES entries reference unknown writer helpers: {missing!r}"
+    )
+
+
+@pytest.mark.usefixtures("enable_custom_integrations")
+async def test_setup_creates_all_facade_proxies(hass: HomeAssistant) -> None:
+    """Every CTRL_FACADES entry must result in a registered proxy entity."""
+    await _setup_entry(hass)
+
+    missing = []
+    for uid, cfg in CTRL_FACADES.items():
+        domain = cfg["platform"]
+        entity_id = f"{domain}.{uid}"
+        if hass.states.get(entity_id) is None:
+            missing.append(entity_id)
+
+    assert not missing, (
+        f"{len(missing)} facade proxy entity/entities not created after setup:\n"
+        + "\n".join(f"  {e}" for e in sorted(missing))
+    )
