@@ -1,0 +1,6 @@
+# Copy this file to scripts/local.ps1 (gitignored) and fill in your values.
+# The dev scripts source this file automatically if it exists.
+
+$env:HA_URL   = "http://192.168.111.73:8123"
+$env:HA_TOKEN = "eyJ..."        # Settings → Profile → Long-Lived Access Tokens
+$env:HA_CONFIG_PATH = "P:\"    # Samba mount of /config on your HA host

@@ -11,13 +11,30 @@ except ImportError:
     sys.exit(1)
 
 import os
+from pathlib import Path
 
-HA_URL   = os.environ.get("HA_URL", "ws://homeassistant.local:8123/api/websocket").replace("http://", "ws://").replace("https://", "wss://")
+# Auto-load scripts/local.ps1 values if a .env companion exists.
+# Create scripts/local.env (gitignored) with KEY=VALUE lines as an alternative
+# to setting environment variables manually.
+_env_file = Path(__file__).parent / "local.env"
+if _env_file.exists():
+    for _line in _env_file.read_text().splitlines():
+        _line = _line.strip()
+        if _line and not _line.startswith("#") and "=" in _line:
+            _k, _v = _line.split("=", 1)
+            os.environ.setdefault(_k.strip(), _v.strip())
+
+HA_URL   = os.environ.get("HA_URL", "http://homeassistant.local:8123")
+HA_URL   = HA_URL.replace("http://", "ws://").replace("https://", "wss://")
+if not HA_URL.endswith("/api/websocket"):
+    HA_URL = HA_URL.rstrip("/") + "/api/websocket"
+
 HA_TOKEN = os.environ.get("HA_TOKEN", "")
 if not HA_TOKEN:
-    print("ERROR: set HA_TOKEN environment variable to a long-lived access token")
-    print("  $env:HA_TOKEN = 'eyJ...'  (PowerShell)")
-    print("  export HA_TOKEN='eyJ...'  (bash)")
+    print("ERROR: HA_TOKEN not set.")
+    print("  Option A: copy scripts/local.ps1.example → scripts/local.ps1 and fill in values")
+    print("  Option B: create scripts/local.env with HA_URL=... and HA_TOKEN=... lines")
+    print("  Option C: set $env:HA_TOKEN manually in your shell")
     sys.exit(1)
 
 # full_name (GitHub owner/repo) for precise matching

@@ -11,3 +11,5 @@ __pycache__/
 .venv/
 .env
 secrets.yaml
+scripts/local.ps1
+scripts/local.env

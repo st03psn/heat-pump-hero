@@ -13,9 +13,12 @@
 [CmdletBinding()]
 param([switch] $ShowOk)
 
+$_local = Join-Path $PSScriptRoot "local.ps1"
+if (Test-Path $_local) { . $_local }
+
 $HA_URL   = if ($env:HA_URL)   { $env:HA_URL }   else { "http://homeassistant.local:8123" }
 $HA_TOKEN = if ($env:HA_TOKEN) { $env:HA_TOKEN } else {
-    Write-Error "Set `$env:HA_TOKEN to a long-lived access token before running this script."
+    Write-Error "No HA token found. Copy scripts/local.ps1.example to scripts/local.ps1 and fill in your values."
     exit 1
 }
 $h = @{ Authorization = "Bearer $HA_TOKEN"; "Content-Type" = "application/json" }
