@@ -240,24 +240,30 @@ PUMP_MODELS: Final[dict[str, dict[str, Any]]] = {
 #   • pump_pressure (TOP115): K/L All-In-One only (noted in const.py comment
 #     predating this map). J-series and split-unit T-CAP/M lack this sensor.
 # ───────────────────────────────────────────────────────────────────────────
-_PANASONIC_COMMON_SENSORS: Final = frozenset({
-    "fan1_speed", "inverter_temp", "high_pressure", "low_pressure",
-    "compressor_current", "outdoor_pipe_temp", "3way_valve",
-    "zone1_target_temp", "hex_outlet_temp", "pump_duty",
-    # internal_thermal_power has a non-empty default so is not capability-gated
-})
+# Capability gating in vendor_apply works by EXCLUSION: a hph_src_* helper is
+# emptied iff its suffix is *absent* from the per-model capability set. So caps
+# must enumerate every suffix the model exposes — not just the optional ones.
+# We derive the universal base from the Panasonic preset itself so the set
+# stays in sync when sensors are added/renamed, and then express per-model
+# variants as additions of model-conditional suffixes.
+_MODEL_CONDITIONAL: Final = frozenset({"fan2_speed"})
+_PANASONIC_BASE_SENSORS: Final = frozenset(
+    k.removeprefix("hph_src_")
+    for k in VENDOR_PRESETS["panasonic_heishamon"]
+    if k.startswith("hph_src_")
+) - _MODEL_CONDITIONAL
 
 MODEL_CAPABILITIES: Final[dict[str, frozenset[str]]] = {
-    # J-series (WH-MDC*, R410A, oldest): single fan, no water pressure
-    "panasonic_j_aqj": _PANASONIC_COMMON_SENSORS,
-    # K-series (R410A improved): single fan, adds water pressure on All-In-One
-    "panasonic_k_aqk": _PANASONIC_COMMON_SENSORS | {"pump_pressure"},
+    # J-series (WH-MDC*, R410A, oldest): single fan
+    "panasonic_j_aqj": _PANASONIC_BASE_SENSORS,
+    # K-series (R410A improved): single fan
+    "panasonic_k_aqk": _PANASONIC_BASE_SENSORS,
     # L-series (R32, current mainstream): single fan, confirmed by user
-    "panasonic_l_aql": _PANASONIC_COMMON_SENSORS | {"pump_pressure"},
-    # T-CAP / All-Season (R32): DUAL outdoor fan, no integrated pressure sensor
-    "panasonic_tcap":  _PANASONIC_COMMON_SENSORS | {"fan2_speed"},
+    "panasonic_l_aql": _PANASONIC_BASE_SENSORS,
+    # T-CAP / All-Season (R32): DUAL outdoor fan
+    "panasonic_tcap":  _PANASONIC_BASE_SENSORS | {"fan2_speed"},
     # M-series (R290): DUAL outdoor fan
-    "panasonic_m_aqm": _PANASONIC_COMMON_SENSORS | {"fan2_speed"},
+    "panasonic_m_aqm": _PANASONIC_BASE_SENSORS | {"fan2_speed"},
 }
 
 # ───────────────────────────────────────────────────────────────────────────
@@ -313,7 +319,7 @@ TEXT_HELPERS: Final[dict[str, dict[str, Any]]] = {
     "hph_src_discharge_temp": {"name": "HeatPump Hero source — compressor discharge temperature", "icon": "mdi:thermometer-high",
                                 "initial": "sensor.panasonic_heat_pump_main_discharge_temperature"},
     "hph_src_pump_pressure": {"name": "HeatPump Hero source — water pressure", "icon": "mdi:gauge",
-                               # K/L-series All-In-One only (TOP115). J/T-CAP/M: blank this helper.
+                               # Universal across Panasonic J/K/L/T-CAP/M (TOP115).
                                "initial": "sensor.panasonic_heat_pump_main_water_pressure"},
     "hph_src_internal_power": {"name": "HeatPump Hero source — heat pump internal power consumption", "icon": "mdi:flash",
                                 "initial": "sensor.panasonic_heat_pump_main_consumed_power"},
@@ -366,7 +372,7 @@ TEXT_HELPERS: Final[dict[str, dict[str, Any]]] = {
                                 "initial": ""},
     "hph_src_room_temp": {"name": "HeatPump Hero source — room thermostat temperature", "icon": "mdi:home-thermometer",
                            "initial": ""},
-    "hph_src_pump_speed": {"name": "HeatPump Hero source — pump speed (%)", "icon": "mdi:pump",
+    "hph_src_pump_speed": {"name": "HeatPump Hero source — pump speed (rpm)", "icon": "mdi:pump",
                             "initial": ""},
     "hph_src_valve_state": {"name": "HeatPump Hero source — two-way valve state", "icon": "mdi:valve",
                              "initial": ""},

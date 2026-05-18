@@ -129,3 +129,29 @@ when one is present; the Mobile view shows a red fault tile.
 
 Set the right entity in `input_text.hph_src_error_code` (Configuration
 view → Optional components).
+
+## HA Reparaturen nach Update / HA Repairs after updates
+
+Wenn HPH eine `unit_of_measurement` oder `state_class` eines bestehenden
+Sensors korrigiert (z.B. `sensor.hph_source_pump_speed` von `%` auf `rpm`
+oder `sensor.hph_cop_same_month_last_year` mit nachgereichtem
+`state_class: measurement`), erkennt Home Assistant die Änderung als
+Migrations-Pflicht und zeigt eine Reparatur in **Einstellungen →
+Reparaturen**:
+
+- *"Die Einheit von sensor.X hat sich geändert"* — Klick auf "Übernehmen".
+  HA verwirft die Long-Term-Statistik mit der alten Einheit und beginnt
+  unter der neuen Einheit eine neue Reihe. Historische Werte bleiben
+  unter der alten Einheit gespeichert; sie werden nicht konvertiert.
+- *"sensor.X verfügt nicht mehr über eine Zustandsklasse"* — verschwindet
+  automatisch nach dem nächsten HPH-Reload, wenn die fehlende
+  `state_class` ergänzt wurde.
+
+Diese Reparaturen sind ungefährlich, müssen aber einmalig manuell
+bestätigt werden, sonst bleibt der Eintrag dauerhaft.
+
+If HPH corrects a sensor's `unit_of_measurement` or `state_class`,
+acknowledge the resulting repair in **Settings → Repairs** once. HA
+discards the old long-term-statistics series and starts a fresh one
+under the new unit. Historical values keep their old unit and are not
+converted.

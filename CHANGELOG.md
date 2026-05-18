@@ -29,6 +29,40 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
 
 ### Fixed
 
+- **`sensor.hph_source_pump_speed` display name no longer says "(%)".**
+  The unit was corrected to `rpm` in an earlier rc, but `TEXT_HELPERS`
+  in `const.py` still labelled the source helper "pump speed (%)".
+  Updated to `(rpm)` for consistency with the actual measurement
+  (Heishamon TOP9, in r/min). Users will see a one-time HA repair about
+  the unit change — see `docs/diagnostics.md` for the acknowledgement
+  procedure.
+
+- **`sensor.hph_cop_same_month_last_year` missing `state_class`.**
+  HA flagged the sensor in Repairs as having "no state class anymore"
+  after a recent core upgrade tightened validation. Added
+  `state_class: measurement` to match the sibling thermal/electrical
+  YoY sensors. The repair clears automatically on next HPH reload.
+
+- **Log-spam from `statistic_during_period` template error** (~2 ERROR/min).
+  `sensor.hph_thermal_same_month_last_year` and
+  `sensor.hph_electrical_same_month_last_year` referenced a Jinja function
+  `statistic_during_period(...)` that does not exist in HA core (only the
+  WS API / `recorder.statistics_during_period` service do). Both sensors are
+  now neutralised to `state: 0` until a trigger-template + recorder-service
+  implementation lands. `hph_cop_same_month_last_year` and
+  `hph_cop_change_yoy_pct` consequently read 0 for now.
+
+- **Control-Tab tap actions broken on every widget that resolves its target
+  via a `text.hph_ctrl_write_*` helper.** Cards used
+  `entity: "{{ states('text.hph_ctrl_write_X') }}"` and
+  `target.entity_id: "{{ ... }}"`, but Lovelace does not template either
+  field — the literal Jinja string was sent to the WS API and rejected as
+  `invalid_format`. New backend services `hph.write_toggle` and
+  `hph.write_set` resolve the helper in the integration and dispatch the
+  appropriate `homeassistant.toggle` / `<domain>.set_value` /
+  `select.select_option` / etc. call. Cards now reference the helper
+  itself for `more-info` actions.
+
 - **`panasonic_heishamon_aquarea` preset unreachable from config flow UI.**
   `_selectable_vendor_keys()` still had the old key `panasonic_heishamon_mqtt`
   instead of `panasonic_heishamon_aquarea`, blocking the Aquarea preset selection.

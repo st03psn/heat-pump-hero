@@ -729,25 +729,22 @@ sensors:
   unique_id: hph_thermal_same_month_last_year
   unit_of_measurement: kWh
   state_class: measurement
-  state: >-
-    {% set n = now() %}
-    {% set start = n.replace(year=n.year-1, day=1, hour=0, minute=0, second=0, microsecond=0) %}
-    {% set end = (start + timedelta(days=32)).replace(day=1) %}
-    {{ statistic_during_period('sensor.hph_thermal_energy', start, end, 'change') | float(0) | round(2) }}
+  # TODO: YoY via recorder.statistics_during_period service + trigger-template (action_response).
+  # Previous template used Jinja `statistic_during_period(...)` which does not exist in HA core
+  # and produced ~2 ERROR/min in the log. Neutralized to 0 until proper implementation lands.
+  state: '0'
   _source_package: hph_efficiency.yaml
 - name: HeatPump Hero Electrical Same Month Last Year
   unique_id: hph_electrical_same_month_last_year
   unit_of_measurement: kWh
   state_class: measurement
-  state: >-
-    {% set n = now() %}
-    {% set start = n.replace(year=n.year-1, day=1, hour=0, minute=0, second=0, microsecond=0) %}
-    {% set end = (start + timedelta(days=32)).replace(day=1) %}
-    {{ statistic_during_period('sensor.hph_electrical_energy', start, end, 'change') | float(0) | round(2) }}
+  # TODO: see hph_thermal_same_month_last_year.
+  state: '0'
   _source_package: hph_efficiency.yaml
 - name: HeatPump Hero COP Same Month Last Year
   unique_id: hph_cop_same_month_last_year
   unit_of_measurement: x
+  state_class: measurement
   state: >-
     {% set t = states('sensor.hph_thermal_same_month_last_year') | float(0) %}
     {% set e = states('sensor.hph_electrical_same_month_last_year') | float(0) %}
