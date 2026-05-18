@@ -16,8 +16,11 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$HA_URL   = "http://192.168.111.73:8123"
-$HA_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiIyOWM3ZDllM2ZjMzc0ZGQ0YmIxNmY0N2VmYjliODYyNCIsImlhdCI6MTc3OTEwNDU1NiwiZXhwIjoyMDk0NDY0NTU2fQ.8cHz_EXmWYmtjhmFtx5LdndM6ZioaXbNgWhHaTQM-GU"
+$HA_URL   = if ($env:HA_URL)   { $env:HA_URL }   else { "http://homeassistant.local:8123" }
+$HA_TOKEN = if ($env:HA_TOKEN) { $env:HA_TOKEN } else {
+    Write-Error "Set `$env:HA_TOKEN to a long-lived access token before running this script."
+    exit 1
+}
 $h        = @{ Authorization = "Bearer $HA_TOKEN"; "Content-Type" = "application/json" }
 
 # ── 1. Deploy ────────────────────────────────────────────────────────────────

@@ -15,7 +15,7 @@ from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.issue_registry import IssueSeverity, async_create_issue
+from homeassistant.helpers.issue_registry import IssueSeverity, async_create_issue, async_delete_issue
 
 from .bootstrap import (
     async_clean_deployed_files,
@@ -661,9 +661,12 @@ _REQUIRED_FRONTEND_CARDS = [
     ("card-mod",        "lovelace-card-mod/card-mod",          "thomasloven/lovelace-card-mod",       "www/community/lovelace-card-mod/card-mod.js"),
 ]
 
-# Vendor presets that map to a specific HA integration domain we can check.
-_VENDOR_INTEGRATION_MAP: dict[str, str] = {
-    "panasonic_heishamon": "panasonic_heishamon",
+# Vendor presets that map to acceptable HA integration domains.
+# kamaradclimber/heishamon-homeassistant was renamed from panasonic_heat_pump → aquarea;
+# accept either so installs on older versions don't see a false-positive repair.
+_VENDOR_INTEGRATION_MAP: dict[str, list[str]] = {
+    "panasonic_heishamon": ["aquarea", "panasonic_heat_pump"],
+    "panasonic_heishamon_aquarea": ["aquarea", "panasonic_heat_pump"],
 }
 
 
@@ -676,6 +679,57 @@ def _missing_cards_from_filesystem(config_dir_path: str, cards: list) -> list[tu
         for name, url_sub, repo, fs_path in cards
         if not (config_dir / fs_path).exists()
     ]
+
+
+async def _async_try_hacs_install(
+    hass: HomeAssistant,
+    missing: list[tuple[str, str, str]],
+) -> list[tuple[str, str, str]]:
+    """Try to install missing frontend cards via HACS.
+
+    Returns the subset that could not be auto-installed (HACS absent,
+    repo not found, or download failed) so callers can raise repair issues.
+    """
+    hacs = hass.data.get("hacs")
+    if hacs is None:
+        return missing  # HACS not loaded — nothing we can do
+
+    still_missing: list[tuple[str, str, str]] = []
+    installed_names: list[str] = []
+
+    for card_name, url_sub, hacs_repo in missing:
+        try:
+            repo = hacs.repositories.get_by_full_name(hacs_repo)
+            if repo is None:
+                _LOGGER.debug("HPH HACS install: repo %s not found in HACS catalog", hacs_repo)
+                still_missing.append((card_name, url_sub, hacs_repo))
+                continue
+            if repo.data.installed:
+                _LOGGER.debug("HPH HACS install: %s already installed (catalog says so)", card_name)
+                continue
+            _LOGGER.info("HPH HACS install: installing %s (%s) …", card_name, hacs_repo)
+            await repo.async_download_repository()
+            installed_names.append(card_name)
+            _LOGGER.info("HPH HACS install: %s installed successfully", card_name)
+        except Exception as exc:  # noqa: BLE001
+            _LOGGER.warning("HPH HACS install: failed for %s — %s", card_name, exc)
+            still_missing.append((card_name, url_sub, hacs_repo))
+
+    if installed_names:
+        await hass.services.async_call(
+            "persistent_notification", "create",
+            {
+                "notification_id": "hph_frontend_installed",
+                "title": "HeatPump Hero — Frontend cards installed",
+                "message": (
+                    f"Installed via HACS: {', '.join(installed_names)}.\n\n"
+                    "**Reload your browser (Ctrl+Shift+R)** to activate the new cards."
+                ),
+            },
+            blocking=False,
+        )
+
+    return still_missing
 
 
 async def _async_check_prerequisites(hass: HomeAssistant, entry: ConfigEntry) -> None:
@@ -701,6 +755,10 @@ async def _async_check_prerequisites(hass: HomeAssistant, entry: ConfigEntry) ->
             _missing_cards_from_filesystem, hass.config.path(), _REQUIRED_FRONTEND_CARDS
         )
 
+    # Try to auto-install via HACS; only raise repair issues for what remains.
+    if missing_cards:
+        missing_cards = await _async_try_hacs_install(hass, missing_cards)
+
     for card_name, _url_sub, hacs_repo in missing_cards:
         async_create_issue(
             hass,
@@ -715,17 +773,23 @@ async def _async_check_prerequisites(hass: HomeAssistant, entry: ConfigEntry) ->
 
     # Check vendor integration.
     vendor = entry.data.get("vendor_preset", "")
-    integration_domain = _VENDOR_INTEGRATION_MAP.get(vendor)
-    if integration_domain and integration_domain not in hass.config.components:
+    integration_domains = _VENDOR_INTEGRATION_MAP.get(vendor, [])
+    issue_id = f"missing_vendor_integration_{vendor}"
+    if integration_domains and not any(d in hass.config.components for d in integration_domains):
         async_create_issue(
             hass,
             DOMAIN,
-            f"missing_vendor_integration_{integration_domain}",
+            issue_id,
             is_fixable=False,
             severity=IssueSeverity.ERROR,
             translation_key="missing_vendor_integration",
             translation_placeholders={"vendor": vendor},
         )
+    else:
+        async_delete_issue(hass, DOMAIN, issue_id)
+        # Also clear legacy issue IDs that used the integration domain name instead of vendor name.
+        for legacy_domain in integration_domains:
+            async_delete_issue(hass, DOMAIN, f"missing_vendor_integration_{legacy_domain}")
 
 
 

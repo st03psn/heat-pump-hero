@@ -58,7 +58,22 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
   `pytest` job in `.github/workflows/validate.yml`. `tests/test_setup.py` runs
   full integration tests when `pytest-homeassistant-custom-component` is present.
 
+- **Auto-install of required Lovelace frontend cards via HACS** on integration
+  setup. If HACS is installed and a required card (Mushroom, ApexCharts Card,
+  Bubble Card, Button Card, auto-entities, card-mod) is missing, HPH now
+  downloads it automatically via the HACS internal API and shows a persistent
+  notification asking the user to reload the browser. Falls back to a Repairs
+  issue if HACS is not installed or the download fails.
+
 ### Fixed
+
+- **False-positive "missing vendor integration" repair** for installations
+  running kamaradclimber/heishamon-homeassistant ≥ 1.8 (`aquarea` domain).
+  HPH checked for a component named `panasonic_heishamon` which never exists;
+  the integration was registered as `panasonic_heat_pump` in older versions
+  and `aquarea` in current releases. Fixed: `_VENDOR_INTEGRATION_MAP` now
+  accepts either domain; the repair is also explicitly deleted when the
+  integration IS present so stale issues from earlier runs are cleared.
 
 - **`sensor.hph_source_pump_speed` display name no longer says "(%)".**
   The unit was corrected to `rpm` in an earlier rc, but `TEXT_HELPERS`
