@@ -81,8 +81,8 @@ VENDOR_PRESETS: Final[dict[str, dict[str, str]]] = {
         # Extended control write-path helpers (v0.9)
         "hph_ctrl_write_operating_mode": "select.panasonic_heat_pump_main_operating_mode_state",
         "hph_ctrl_write_power": "switch.panasonic_heat_pump_main_heatpump_state",
-        "hph_ctrl_write_holiday": "switch.panasonic_heat_pump_main_holiday_mode",
-        "hph_ctrl_write_force_defrost": "switch.panasonic_heat_pump_main_force_defrost",
+        "hph_ctrl_write_holiday": "switch.panasonic_heat_pump_main_holiday_mode_state",
+        "hph_ctrl_write_force_defrost": "switch.panasonic_heat_pump_main_defrosting_state",
         "hph_ctrl_write_powerful_mode": "select.panasonic_heat_pump_main_powerful_mode",
         "hph_ctrl_write_active_zones": "select.panasonic_heat_pump_main_zones_state",
         "hph_ctrl_write_bivalent_mode": "",
@@ -156,8 +156,8 @@ VENDOR_PRESETS: Final[dict[str, dict[str, str]]] = {
         # Extended control write-path helpers (v0.9)
         "hph_ctrl_write_operating_mode": "select.aquarea_main_operating_mode_state",
         "hph_ctrl_write_power": "switch.aquarea_main_heatpump_state",
-        "hph_ctrl_write_holiday": "switch.aquarea_main_holiday_mode",
-        "hph_ctrl_write_force_defrost": "switch.aquarea_main_force_defrost",
+        "hph_ctrl_write_holiday": "switch.aquarea_main_holiday_mode_state",
+        "hph_ctrl_write_force_defrost": "switch.aquarea_main_defrosting_state",
         "hph_ctrl_write_powerful_mode": "select.aquarea_main_powerful_mode",
         "hph_ctrl_write_active_zones": "select.aquarea_main_zones_state",
         "hph_ctrl_write_bivalent_mode": "",
