@@ -3846,6 +3846,12 @@ views:
           - entity: sensor.hph_schema_variant_detected
             name: Schematic — auto-detected
 
+      - type: entities
+        title: Dashboard appearance
+        entities:
+          - entity: select.hph_ui_style
+            name: UI style (mushroom / classic)
+
       # ── Optional-component sources (zone 2 / DHW / buffer) ──
       # Set the entity-ID to point at the right sensor, or leave blank to
       # mark the component as definitely absent. Detection follows.
