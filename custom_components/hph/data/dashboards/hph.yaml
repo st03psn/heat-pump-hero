@@ -1563,7 +1563,7 @@ views:
             state: mushroom
         card:
           type: grid
-          columns: 3
+          columns: 2
           square: false
           cards:
             - type: conditional
@@ -1631,6 +1631,9 @@ views:
                 - condition: state
                   entity: select.hph_bivalent_mode
                   state_not: unavailable
+                - condition: state
+                  entity: select.hph_bivalent_mode
+                  state_not: unknown
               card:
                 type: custom:mushroom-template-card
                 entity: select.hph_bivalent_mode
@@ -1659,7 +1662,7 @@ views:
             state: mushroom
         card:
           type: grid
-          columns: 4
+          columns: 2
           square: false
           cards:
             # Each tile wraps in conditional so it hides when either:
@@ -2255,7 +2258,7 @@ views:
             state: mushroom
         card:
           type: grid
-          columns: 3
+          columns: 2
           square: false
           cards:
             - type: custom:mushroom-template-card
@@ -2294,12 +2297,12 @@ views:
             # Force heater — conditional: only shown when vendor helper is filled
             - type: conditional
               conditions:
-                - condition: template
-                  value_template: >-
-                    {% set ent = states('text.hph_src_force_heater') %}
-                    {{ ent != '' and states(ent) not in ['unavailable', 'unknown'] }}
+                - condition: state
+                  entity: text.hph_src_force_heater
+                  state_not: ""
               card:
                 type: custom:mushroom-template-card
+                entity: text.hph_src_force_heater
                 primary: Force Heater
                 secondary: >-
                   {% set ent = states('text.hph_src_force_heater') %}
@@ -2317,12 +2320,12 @@ views:
                 - condition: state
                   entity: binary_sensor.hph_has_dhw
                   state: "on"
-                - condition: template
-                  value_template: >-
-                    {% set ent = states('text.hph_src_sterilization') %}
-                    {{ ent != '' }}
+                - condition: state
+                  entity: text.hph_src_sterilization
+                  state_not: ""
               card:
                 type: custom:mushroom-template-card
+                entity: text.hph_src_sterilization
                 primary: Sterilization
                 secondary: >-
                   {% set ent = states('text.hph_src_sterilization') %}
@@ -2340,10 +2343,9 @@ views:
                 - condition: state
                   entity: binary_sensor.hph_has_dhw
                   state: "on"
-                - condition: template
-                  value_template: >-
-                    {% set ent = states('text.hph_ctrl_write_force_dhw') %}
-                    {{ ent != '' and states(ent) not in ['unavailable','unknown'] }}
+                - condition: state
+                  entity: text.hph_ctrl_write_force_dhw
+                  state_not: ""
               card:
                 type: custom:mushroom-template-card
                 entity: button.hph_force_dhw
@@ -2436,7 +2438,7 @@ views:
             state: mushroom
         card:
           type: grid
-          columns: 4
+          columns: 2
           square: false
           cards:
             - type: conditional
@@ -2596,13 +2598,17 @@ views:
             state: mushroom
         card:
           type: grid
-          columns: 3
+          columns: 2
           square: false
           cards:
             - type: conditional
               conditions:
-                - entity: select.hph_heating_control
+                - condition: state
+                  entity: select.hph_heating_control
                   state_not: unavailable
+                - condition: state
+                  entity: select.hph_heating_control
+                  state_not: unknown
               card:
                 type: custom:mushroom-template-card
                 entity: select.hph_heating_control
@@ -2613,8 +2619,15 @@ views:
                   action: more-info
             - type: conditional
               conditions:
-                - entity: binary_sensor.hph_has_cooling
+                - condition: state
+                  entity: binary_sensor.hph_has_cooling
                   state: "on"
+                - condition: state
+                  entity: number.hph_cool_delta
+                  state_not: unavailable
+                - condition: state
+                  entity: number.hph_cool_delta
+                  state_not: unknown
               card:
                 type: custom:mushroom-template-card
                 entity: number.hph_cool_delta
@@ -2626,8 +2639,12 @@ views:
                   action: more-info
             - type: conditional
               conditions:
-                - entity: select.hph_dhw_sensor_selection
+                - condition: state
+                  entity: select.hph_dhw_sensor_selection
                   state_not: unavailable
+                - condition: state
+                  entity: select.hph_dhw_sensor_selection
+                  state_not: unknown
               card:
                 type: custom:mushroom-template-card
                 entity: select.hph_dhw_sensor_selection
@@ -2638,12 +2655,12 @@ views:
                   action: more-info
             - type: conditional
               conditions:
-                - condition: template
-                  value_template: >-
-                    {% set ent = states('text.hph_src_quiet_schedule') %}
-                    {{ ent != '' and states(ent) not in ['unavailable', 'unknown'] }}
+                - condition: state
+                  entity: text.hph_src_quiet_schedule
+                  state_not: ""
               card:
                 type: custom:mushroom-template-card
+                entity: text.hph_src_quiet_schedule
                 primary: Quiet schedule
                 secondary: >-
                   {% set ent = states('text.hph_src_quiet_schedule') %}
@@ -3058,7 +3075,26 @@ views:
   - title: Analysis
     path: analysis
     icon: mdi:chart-multiline
+    panel: true
     cards:
+    - type: grid
+      columns: 1
+      square: false
+      card_mod:
+        style: |
+          :host {
+            max-width: 1100px !important;
+            margin: 0 auto !important;
+            display: block !important;
+          }
+          ha-card {
+            max-width: 1100px !important;
+            margin: 0 auto !important;
+            background: transparent;
+            box-shadow: none;
+            border: none;
+          }
+      cards:
       # ── Service-Cloud layout: status panel (left) + matching chart (right) ─
       # Pattern: the number on the left is the same data point as the rightmost
       # value in the chart. Instant cross-reference without any mental leap.
@@ -3072,7 +3108,7 @@ views:
             state: mushroom
         card:
           type: grid
-          columns: 4
+          columns: 2
           square: false
           cards:
             - type: custom:mushroom-template-card
@@ -3104,7 +3140,7 @@ views:
             state: mushroom
         card:
           type: grid
-          columns: 5
+          columns: 2
           square: false
           cards:
             - type: custom:mushroom-template-card
@@ -3207,9 +3243,9 @@ views:
       - type: custom:apexcharts-card
         header:
           show: true
-          title: Temperatures — last 12h
+          title: Temperatures — last 24h
           show_states: true
-        graph_span: 12h
+        graph_span: 24h
         span:
           end: minute
         yaxis:
@@ -3224,60 +3260,40 @@ views:
             foreColor: var(--primary-text-color)
           grid:
             borderColor: var(--divider-color)
+          stroke:
+            width: 2
+          # Lücken durch kurzzeitige MQTT-`unknown`-Events überbrücken
+          # (vor allem für outdoor_temp, das nur alle ~18 min sampelt).
+          connectNulls: true
         series:
           - entity: sensor.hph_source_outdoor_temp
             name: Outdoor
             yaxis_id: temp
             color: "#e0a800"
+            extend_to: now
           - entity: sensor.hph_source_inlet_temp
             name: Return
             yaxis_id: temp
             color: "#7ec1ff"
+            extend_to: now
           - entity: sensor.hph_source_outlet_temp
             name: Supply
             yaxis_id: temp
             color: "#d62728"
+            extend_to: now
           - entity: sensor.hph_source_discharge_temp
             name: Discharge
             yaxis_id: temp
             color: "#2ca02c"
+            extend_to: now
 
-      # Row 2: Power/COP status strip + full-width chart
-      - type: custom:apexcharts-card
-        header:
-          show: true
-          title: Compressor & flow — last 12h
-        graph_span: 12h
-        span:
-          end: minute
-        yaxis:
-          - id: hz
-            decimals: 0
-            apex_config:
-              title: { text: "Hz" }
-          - id: lpm
-            opposite: true
-            decimals: 1
-            apex_config:
-              title: { text: "L/min" }
-        apex_config:
-          chart:
-            height: 380
-            background: transparent
-            foreColor: var(--primary-text-color)
-          grid:
-            borderColor: var(--divider-color)
-        series:
-          - entity: sensor.hph_source_compressor_freq
-            name: Compressor frequency
-            yaxis_id: hz
-            color: "#bcbd22"
-          - entity: sensor.hph_source_flow_rate
-            name: Water flow
-            yaxis_id: lpm
-            color: "#7fb3d5"
+      # ── Compressor & flow Chart entfernt ──
+      # Cycling-/Modulations-Analyse braucht ≥ 7 Tage Daten und sinnvolle
+      # Heatmap-/Aggregations-Views — beides ist im Grafana-Board besser
+      # aufgehoben (siehe grafana/heatpump-hero.json). 12h-Snapshot war
+      # diagnostisch zu kurz und überlappte mit den Live-Chips.
 
-      # Row 3: COP trend (24h) full width
+      # Row 2: COP trend (24h) full width
       - type: custom:apexcharts-card
         header:
           show: true
@@ -3285,6 +3301,8 @@ views:
         graph_span: 24h
         yaxis:
           - decimals: 1
+            min: 0
+            max: 8
         series:
           - entity: sensor.hph_cop_live
             name: COP (live)
@@ -3303,47 +3321,15 @@ views:
             size: 3
           stroke:
             curve: smooth
+            width: 2
           noData:
             text: "Sammele Daten — der Trend füllt sich, sobald der Kompressor läuft."
 
-      # ── Heatmap: COP by hour-of-day (last 30 days) ──
-      # Reveals when the system is least efficient (e.g. cold mornings,
-      # DHW pulls in the evening). Uses top-level chart_type: heatmap
-      # — apexcharts-card requires this matches series.type.
-      - type: custom:apexcharts-card
-        header:
-          show: true
-          title: COP heatmap — hour-of-day (last 30 days)
-        chart_type: heatmap
-        graph_span: 30d
-        apex_config:
-          chart:
-            height: 320
-            background: transparent
-            foreColor: var(--primary-text-color)
-          grid:
-            borderColor: var(--divider-color)
-          dataLabels:
-            enabled: false
-          plotOptions:
-            heatmap:
-              colorScale:
-                ranges:
-                  - { from: 0,   to: 1,   color: "#7f1d1d", name: "very poor (<1)" }
-                  - { from: 1,   to: 2,   color: "#dc2626", name: "poor (1-2)" }
-                  - { from: 2,   to: 3,   color: "#f59e0b", name: "marginal (2-3)" }
-                  - { from: 3,   to: 4,   color: "#facc15", name: "ok (3-4)" }
-                  - { from: 4,   to: 5,   color: "#84cc16", name: "good (4-5)" }
-                  - { from: 5,   to: 100, color: "#15803d", name: "excellent (5+)" }
-          noData:
-            text: "Sammele Daten — Heatmap füllt sich nach mehreren Betriebstagen."
-        series:
-          - entity: sensor.hph_cop_live
-            name: COP
-            type: heatmap
-            group_by:
-              func: avg
-              duration: 1h
+      # ── COP-Heatmap entfernt ──
+      # apexcharts-card (v2.x) unterstützt `chart_type: heatmap` nicht — nur
+      # line/scatter/pie/donut/radialBar. Card hat dauerhaft "Konfigurationsfehler"
+      # angezeigt. Wieder aufnehmen, sobald apexcharts-card heatmap-Typ erhält
+      # oder durch alternative Heatmap-Card (z. B. plotly-graph-card) ersetzt.
 
   # ════════════════════════════════════════════════════════════════════════
   # 4) EFFICIENCY — period KPIs, comparisons, tariff splits, multi-year trend
@@ -4030,6 +4016,64 @@ views:
           `efficiency_jaz_maz.json` for cross-year SCOP/MAZ charts
           (see [docs/installation.md](/local/hph/installation.md)).
 
+      # ── Efficiency-quality block (Quatt + HeatpumpMonitor lessons) ──
+      # hph-help renders the title + ? icon inline. Click ? for full help.
+      - type: custom:hph-help
+        title: Efficiency quality
+        content: |
+          Beyond raw COP, four numbers tell you whether your heat pump
+          is *well used* under the conditions it actually sees:
+
+          - **Carnot %** — share of the theoretical maximum COP at the
+            current outlet and outdoor temperatures. A COP 3.0 in deep
+            winter can outrank a COP 4.0 in spring. Healthy installs
+            land at 40–55 %; >60 % is excellent.
+          - **Cycles / hour** — compressor on/off rate. >3/h hints at an
+            over-aggressive heating curve, tight hysteresis, or missing
+            buffer volume.
+          - **Δ flow − outside (24 h mean)** — the heating-curve
+            steepness actually delivered (vs. theoretical). Together
+            with outdoor temperature this tells whether your curve is
+            too steep.
+          - **Samples / 24 h** — coverage of the thermal-power signal.
+            Low values mean SCOP confidence is degraded; see the
+            data-quality advisor below.
+      - type: grid
+        columns: 2
+        square: false
+        cards:
+          - type: gauge
+            entity: sensor.hph_carnot_efficiency_percent
+            name: Carnot efficiency
+            unit: '%'
+            min: 0
+            max: 70
+            severity:
+              green: 40
+              yellow: 25
+              red: 0
+            needle: true
+          - type: gauge
+            entity: sensor.hph_cycles_per_hour
+            name: Cycles per hour
+            unit: '1/h'
+            min: 0
+            max: 6
+            severity:
+              green: 0
+              yellow: 3
+              red: 4
+            needle: true
+      - type: entities
+        title: Heating-curve and data-quality observations
+        entities:
+          - entity: sensor.hph_flowt_minus_outsidet_24h
+            name: Δ flow − outside (24 h mean)
+          - entity: sensor.hph_quality_24h_samples
+            name: Samples / 24 h
+          - entity: sensor.hph_advisor_data_quality
+            name: Data-quality advisor
+
   # ════════════════════════════════════════════════════════════════════════
   # 5) OPTIMIZATION — cycle analysis + advisor + control switches
   # ════════════════════════════════════════════════════════════════════════
@@ -4641,6 +4685,109 @@ views:
         entities:
           - entity: select.hph_ui_style
             name: UI style (mushroom / classic)
+
+      # ── Installation context ──
+      # Optional bookkeeping fields. They do not change HPH behaviour, but
+      # they make your SCOP submission to heatpumpmonitor.org meaningful —
+      # see docs/heatpumpmonitor.md for the mapping table.
+      - type: markdown
+        content: >
+          ### Installation context &nbsp;
+          <details><summary>❓ help</summary>
+
+
+          These fields are **purely informational**. They don't change how
+          HPH calculates anything — they just give you one place to look
+          up the planning numbers of your installation.
+
+
+          **When you'll thank yourself for filling these in:**
+
+          - Applying to list your system on
+          [heatpumpmonitor.org](https://heatpumpmonitor.org) — the form
+          asks for exactly these values.
+
+          - Forum questions ("what design flow temp did you pick?") —
+          instead of digging through old paperwork.
+
+          - Comparing SCOP with a neighbour — without these numbers
+          you're comparing apples to pears.
+
+
+          | Field | Where to find it |
+          |---|---|
+          | **Design heat loss (kW)** | Heat-loss calculation from your installer. Typical: 5–12 kW for single-family homes. |
+          | **Heat emitter type** | Radiators (large or small), underfloor heating, or a mix. Determines design supply temp. |
+          | **Design supply temperature (°C)** | The flow temp at which the heat loss is met at coldest outdoor design temp. Typical: 35 °C UFH, 45–55 °C radiators. |
+          | **Refrigerant** | On the type plate of the outdoor unit. R32 / R290 / R454B common. |
+          | **Commissioning year** | Year of first start-up. Useful for warranty / lifetime tracking. |
+
+
+          Leave anything blank if you don't know — no consequence.
+
+
+          </details>
+      - type: entities
+        title: Installation context
+        entities:
+          - entity: text.hph_install_heat_loss_kw
+            name: Design heat loss (kW)
+          - entity: select.hph_install_emitter_type
+            name: Heat emitter type
+          - entity: text.hph_install_design_flow_temp_c
+            name: Design supply temperature (°C)
+          - entity: select.hph_install_refrigerant
+            name: Refrigerant
+          - entity: text.hph_install_year
+            name: Commissioning year
+
+      - type: markdown
+        content: >
+          ### Electrical metering &nbsp;
+          <details><summary>❓ help</summary>
+
+
+          Your SCOP depends on **what is counted as the electrical
+          input**. If your electricity meter sits between the consumer
+          unit and the heat pump's main contactor, it sees just the
+          heat pump. If it sits earlier in the chain, it may also see
+          the immersion heater, the circulation pump, or the controller.
+
+
+          **Why this matters:**
+
+          - Including the **immersion / backup heater** drags the SCOP
+          down sharply in cold spells but is the most honest figure.
+
+          - Including the **circulation pump** (~50–200 W continuously)
+          costs ~0.1–0.3 SCOP points over a season.
+
+          - Including **controls / standby** (~5–30 W) is usually a
+          rounding error but matters at the bottom of the range.
+
+          - **Brine pump** only applies to ground-source heat pumps
+          (GSHP) — leave off for air-to-water.
+
+
+          Default: all off (conservative assumption that your meter
+          sees only the heat-pump contactor). Adjust to match how your
+          electrical wiring actually runs. If you don't know, ask your
+          installer or measure with a clamp meter where the meter
+          input is fed.
+
+
+          </details>
+      - type: entities
+        title: Electrical metering — what is included?
+        entities:
+          - entity: switch.hph_metering_includes_immersion
+            name: Includes immersion heater
+          - entity: switch.hph_metering_includes_circulation
+            name: Includes circulation pump
+          - entity: switch.hph_metering_includes_controls
+            name: Includes controls / standby
+          - entity: switch.hph_metering_includes_brine
+            name: Includes brine pump (GSHP only)
 
       # ── Optional-component sources (zone 2 / DHW / buffer) ──
       # Set the entity-ID to point at the right sensor, or leave blank to

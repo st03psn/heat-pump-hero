@@ -355,6 +355,41 @@ sensors:
       {% endif %}
   _source_package: hph_advisor.yaml
 
+# ── Data-quality advisor (24h sample coverage) ──────────────────────────────
+# Reads sensor.hph_quality_24h_samples (statistics-platform count over 24h on
+# hph_thermal_power_active). Fewer than 100 samples in 24 h means the source
+# entity barely updates — recorder retention, MQTT broker hiccup, or the
+# upstream Heishamon entity being throttled. Affects SCOP confidence.
+- name: HeatPump Hero Advisor Data Quality
+  unique_id: hph_advisor_data_quality
+  icon: mdi:database-check
+  state: >-
+    {% set n = states('sensor.hph_quality_24h_samples') | float(-1) %}
+    {% if n < 0 %}info
+    {% elif n < 50 %}critical
+    {% elif n < 200 %}warn
+    {% else %}ok{% endif %}
+  attributes:
+    metric: "{{ states('sensor.hph_quality_24h_samples') }} samples / 24h"
+    message: >-
+      {% set n = states('sensor.hph_quality_24h_samples') | float(-1) %}
+      {% if n < 0 %}
+        Data-quality sensor not yet populated — needs ~5 min after first
+        integration setup. No action required.
+      {% elif n < 50 %}
+        Very few thermal-power samples in the last 24 h ({{ n | int }}).
+        Likely cause: the upstream entity (Heishamon, external meter) is
+        offline, throttled, or the recorder is purging too aggressively.
+        SCOP and energy totals will be unreliable.
+      {% elif n < 200 %}
+        Low sample count in the last 24 h ({{ n | int }}). Acceptable
+        for sporadic-use modes but tight for accurate SCOP. Check that
+        the source entity updates at least every 5 minutes.
+      {% else %}
+        Sample coverage healthy ({{ n | int }} samples / 24 h).
+      {% endif %}
+  _source_package: hph_advisor.yaml
+
 - name: HeatPump Hero Advisor Summary
   unique_id: hph_advisor_summary
   icon: mdi:lightbulb-on-outline
@@ -364,7 +399,7 @@ sensors:
     \  states('sensor.hph_advisor_diagnostics'),\n  states('sensor.hph_advisor_pressure_trend'),\n\
     \  states('sensor.hph_advisor_analysis'),\n  states('sensor.hph_advisor_pump_curve'),\n\
     \  states('sensor.hph_advisor_efficiency_drift'),\n  states('sensor.hph_advisor_dhw_timing'),\n\
-    \  states('sensor.hph_advisor_source_health')\n\
+    \  states('sensor.hph_advisor_source_health'),\n  states('sensor.hph_advisor_data_quality')\n\
     ] %} {% if 'critical' in advisors %}critical {% elif 'warn' in advisors %}warn\
     \ {% else %}ok{% endif %}"
   attributes:
@@ -374,7 +409,7 @@ sensors:
       \    states('sensor.hph_advisor_diagnostics'),\n    states('sensor.hph_advisor_pressure_trend'),\n\
       \    states('sensor.hph_advisor_analysis'),\n    states('sensor.hph_advisor_pump_curve'),\n\
       \    states('sensor.hph_advisor_efficiency_drift'),\n    states('sensor.hph_advisor_dhw_timing'),\n\
-      \    states('sensor.hph_advisor_source_health')]\n\
+      \    states('sensor.hph_advisor_source_health'),\n    states('sensor.hph_advisor_data_quality')]\n\
       \   | select('in', ['warn','critical']) | list | count }}"
   _source_package: hph_advisor.yaml
 - name: HPH Source Indoor Temperature
@@ -461,10 +496,18 @@ sensors:
     \   and states('sensor.hph_source_outlet_temp')\n   not in ['unknown','unavailable','none']\n\
     \   and states('sensor.hph_source_flow_rate')\n   not in ['unknown','unavailable','none']\
     \ }}"
+  # cp (specific heat capacity of water) varies slightly with temperature.
+  # Linear interpolation between known reference values (J/(kg·K)):
+  #   ≤40 °C → 4179 (heating-circuit range, physically accurate floor)
+  #   40–80 °C → 4179 + 0.425 × (Tmean − 40) → reaches 4196 at 80 °C
+  #   ≥80 °C → 4196 (clamp for safety / Legionella runs)
+  # Effect on heating COP is <0.1 %, on DHW (60–70 °C) ~0.3 % — sub-noise
+  # but physically correct vs. the fixed 4180 (≈20 °C reference, wrong direction).
   state: '{% set tin = states(''sensor.hph_source_inlet_temp'') | float(0) %} {% set
     tout = states(''sensor.hph_source_outlet_temp'') | float(0) %} {% set flow = states(''sensor.hph_source_flow_rate'')
-    | float(0) %} {% set power = (tout - tin) * flow * 4180 / 60 %} {{ [power, 0]
-    | max | round(0) }}'
+    | float(0) %} {% set tmean = (tin + tout) / 2 %} {% set cp = 4179 if tmean <= 40
+    else (4196 if tmean >= 80 else 4179 + 0.425 * (tmean - 40)) %} {% set power = (tout
+    - tin) * flow * cp / 60 %} {{ [power, 0] | max | round(0) }}'
   _source_package: hph_core.yaml
 - name: HeatPump Hero Operating Mode
   unique_id: hph_operating_mode
@@ -591,10 +634,47 @@ sensors:
   availability: "{{ states('sensor.hph_thermal_power_active')\n   not in ['unknown','unavailable','none']\n\
     \   and states('sensor.hph_electrical_power_active')\n   not in ['unknown','unavailable','none']\
     \ }}"
-  state: "{% if is_state('binary_sensor.hph_defrost_active','on') %}\n  0\n{% else\
+  state: "{% if is_state('binary_sensor.hph_defrost_active','on') %}\n  0\n{% elif\
+    \ not is_state('binary_sensor.hph_compressor_running','on') %}\n  0\n{% else\
     \ %}\n  {% set t = states('sensor.hph_thermal_power_active') | float(0) %}\n \
     \ {% set e = states('sensor.hph_electrical_power_active') | float(0) %}\n  {{\
-    \ (t / e) | round(2) if e > 50 else 0 }}\n{% endif %}"
+    \ (t / e) | round(2) if e > 150 else 0 }}\n{% endif %}"
+  _source_package: hph_efficiency.yaml
+# ── Carnot efficiency (HeatpumpMonitor-style quality metric) ────────────────
+# Compares live COP against the theoretical maximum given current operating
+# temperatures. Carnot_COP = T_hot / (T_hot − T_cold) with absolute temps.
+# An "honest" rating that levels playing field across outdoor conditions —
+# a COP 3.0 in deep winter may outperform a COP 4.0 in mild weather.
+- name: HeatPump Hero Carnot Efficiency Percent
+  unique_id: hph_carnot_efficiency_percent
+  unit_of_measurement: '%'
+  state_class: measurement
+  icon: mdi:gauge
+  availability: "{{ states('sensor.hph_cop_live') not in ['unknown','unavailable','none']\n\
+    \   and states('sensor.hph_source_outlet_temp') not in ['unknown','unavailable','none']\n\
+    \   and states('sensor.hph_source_outdoor_temp') not in ['unknown','unavailable','none']\
+    \ }}"
+  state: "{% set cop = states('sensor.hph_cop_live') | float(0) %}\n{% set t_hot\
+    \ = (states('sensor.hph_source_outlet_temp') | float(0)) + 273.15 %}\n{% set\
+    \ t_cold = (states('sensor.hph_source_outdoor_temp') | float(0)) + 273.15 %}\n\
+    {% set dt = t_hot - t_cold %}\n{% if dt > 1 and cop > 0 %}\n  {% set carnot =\
+    \ t_hot / dt %}\n  {{ (cop / carnot * 100) | round(1) }}\n{% else %}0{% endif\
+    \ %}"
+  _source_package: hph_efficiency.yaml
+# ── flow_T − outside_T instant helper ──────────────────────────────────────
+# Source for the statistics-platform 24h mean further down. Only emits a
+# value while the compressor is actually running, so the rolling mean
+# reflects active-heating conditions, not standby.
+- name: HeatPump Hero FlowT minus OutsideT Instant
+  unique_id: hph_flowt_minus_outsidet_instant
+  unit_of_measurement: K
+  state_class: measurement
+  availability: "{{ is_state('binary_sensor.hph_compressor_running','on')\n   and\
+    \ states('sensor.hph_source_outlet_temp') not in ['unknown','unavailable','none']\n\
+    \   and states('sensor.hph_source_outdoor_temp') not in ['unknown','unavailable','none']\
+    \ }}"
+  state: "{{ ((states('sensor.hph_source_outlet_temp') | float(0))\n  - (states('sensor.hph_source_outdoor_temp')\
+    \ | float(0))) | round(1) }}"
   _source_package: hph_efficiency.yaml
 - name: HeatPump Hero COP Daily
   unique_id: hph_cop_daily
