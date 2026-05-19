@@ -2192,38 +2192,62 @@ views:
         columns: 4
         square: false
         cards:
-          - type: custom:mushroom-template-card
-            entity: number.hph_z1_outside_low
-            primary: Outside low
-            secondary: "{{ states('number.hph_z1_outside_low') | float(0) | round(1) }} °C"
-            icon: mdi:snowflake
-            icon_color: blue
-            tap_action:
-              action: more-info
-          - type: custom:mushroom-template-card
-            entity: number.hph_z1_outside_high
-            primary: Outside high
-            secondary: "{{ states('number.hph_z1_outside_high') | float(0) | round(1) }} °C"
-            icon: mdi:white-balance-sunny
-            icon_color: yellow
-            tap_action:
-              action: more-info
-          - type: custom:mushroom-template-card
-            entity: number.hph_z1_curve_low
-            primary: Target low
-            secondary: "{{ states('number.hph_z1_curve_low') | float(0) | round(1) }} °C"
-            icon: mdi:water-thermometer
-            icon_color: orange
-            tap_action:
-              action: more-info
-          - type: custom:mushroom-template-card
-            entity: number.hph_z1_curve_high
-            primary: Target high
-            secondary: "{{ states('number.hph_z1_curve_high') | float(0) | round(1) }} °C"
-            icon: mdi:fire
-            icon_color: red
-            tap_action:
-              action: more-info
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: number.hph_z1_outside_low
+                state_not: unavailable
+            card:
+              type: custom:mushroom-template-card
+              entity: number.hph_z1_outside_low
+              primary: Outside low
+              secondary: "{{ states('number.hph_z1_outside_low') | float(0) | round(1) }} °C"
+              icon: mdi:snowflake
+              icon_color: blue
+              tap_action:
+                action: more-info
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: number.hph_z1_outside_high
+                state_not: unavailable
+            card:
+              type: custom:mushroom-template-card
+              entity: number.hph_z1_outside_high
+              primary: Outside high
+              secondary: "{{ states('number.hph_z1_outside_high') | float(0) | round(1) }} °C"
+              icon: mdi:white-balance-sunny
+              icon_color: yellow
+              tap_action:
+                action: more-info
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: number.hph_z1_curve_low
+                state_not: unavailable
+            card:
+              type: custom:mushroom-template-card
+              entity: number.hph_z1_curve_low
+              primary: Target low
+              secondary: "{{ states('number.hph_z1_curve_low') | float(0) | round(1) }} °C"
+              icon: mdi:water-thermometer
+              icon_color: orange
+              tap_action:
+                action: more-info
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: number.hph_z1_curve_high
+                state_not: unavailable
+            card:
+              type: custom:mushroom-template-card
+              entity: number.hph_z1_curve_high
+              primary: Target high
+              secondary: "{{ states('number.hph_z1_curve_high') | float(0) | round(1) }} °C"
+              icon: mdi:fire
+              icon_color: red
+              tap_action:
+                action: more-info
 
       # ── Section 8b: Heating curve — Zone 2 (conditional) ─────────────────
       - type: conditional
@@ -2240,38 +2264,62 @@ views:
               columns: 4
               square: false
               cards:
-                - type: custom:mushroom-template-card
-                  entity: number.hph_z2_outside_low
-                  primary: Z2 outside low
-                  secondary: "{{ states('number.hph_z2_outside_low') | float(0) | round(1) }} °C"
-                  icon: mdi:snowflake
-                  icon_color: blue
-                  tap_action:
-                    action: more-info
-                - type: custom:mushroom-template-card
-                  entity: number.hph_z2_outside_high
-                  primary: Z2 outside high
-                  secondary: "{{ states('number.hph_z2_outside_high') | float(0) | round(1) }} °C"
-                  icon: mdi:white-balance-sunny
-                  icon_color: yellow
-                  tap_action:
-                    action: more-info
-                - type: custom:mushroom-template-card
-                  entity: number.hph_z2_curve_low
-                  primary: Z2 target low
-                  secondary: "{{ states('number.hph_z2_curve_low') | float(0) | round(1) }} °C"
-                  icon: mdi:water-thermometer
-                  icon_color: orange
-                  tap_action:
-                    action: more-info
-                - type: custom:mushroom-template-card
-                  entity: number.hph_z2_curve_high
-                  primary: Z2 target high
-                  secondary: "{{ states('number.hph_z2_curve_high') | float(0) | round(1) }} °C"
-                  icon: mdi:fire
-                  icon_color: red
-                  tap_action:
-                    action: more-info
+                - type: conditional
+                  conditions:
+                    - condition: state
+                      entity: number.hph_z2_outside_low
+                      state_not: unavailable
+                  card:
+                    type: custom:mushroom-template-card
+                    entity: number.hph_z2_outside_low
+                    primary: Z2 outside low
+                    secondary: "{{ states('number.hph_z2_outside_low') | float(0) | round(1) }} °C"
+                    icon: mdi:snowflake
+                    icon_color: blue
+                    tap_action:
+                      action: more-info
+                - type: conditional
+                  conditions:
+                    - condition: state
+                      entity: number.hph_z2_outside_high
+                      state_not: unavailable
+                  card:
+                    type: custom:mushroom-template-card
+                    entity: number.hph_z2_outside_high
+                    primary: Z2 outside high
+                    secondary: "{{ states('number.hph_z2_outside_high') | float(0) | round(1) }} °C"
+                    icon: mdi:white-balance-sunny
+                    icon_color: yellow
+                    tap_action:
+                      action: more-info
+                - type: conditional
+                  conditions:
+                    - condition: state
+                      entity: number.hph_z2_curve_low
+                      state_not: unavailable
+                  card:
+                    type: custom:mushroom-template-card
+                    entity: number.hph_z2_curve_low
+                    primary: Z2 target low
+                    secondary: "{{ states('number.hph_z2_curve_low') | float(0) | round(1) }} °C"
+                    icon: mdi:water-thermometer
+                    icon_color: orange
+                    tap_action:
+                      action: more-info
+                - type: conditional
+                  conditions:
+                    - condition: state
+                      entity: number.hph_z2_curve_high
+                      state_not: unavailable
+                  card:
+                    type: custom:mushroom-template-card
+                    entity: number.hph_z2_curve_high
+                    primary: Z2 target high
+                    secondary: "{{ states('number.hph_z2_curve_high') | float(0) | round(1) }} °C"
+                    icon: mdi:fire
+                    icon_color: red
+                    tap_action:
+                      action: more-info
 
       # ── Section 9: Advanced settings ─────────────────────────────────────
       # Less-frequent tweaks. Each group hides when the heat pump does not
@@ -2357,34 +2405,58 @@ views:
               columns: 3
               square: false
               cards:
-                - type: custom:mushroom-template-card
-                  entity: number.hph_bivalent_start_temp
-                  primary: Bivalent start
-                  secondary: "{{ states('number.hph_bivalent_start_temp') | float(0) | round(1) }} °C"
-                  icon: mdi:thermometer-low
-                  tap_action:
-                    action: more-info
-                - type: custom:mushroom-template-card
-                  entity: number.hph_heater_delay_time
-                  primary: Heater delay
-                  secondary: "{{ states('number.hph_heater_delay_time') | int(0) }} min"
-                  icon: mdi:timer-sand
-                  tap_action:
-                    action: more-info
-                - type: custom:mushroom-template-card
-                  entity: number.hph_heater_start_delta
-                  primary: Heater start Δ
-                  secondary: "{{ states('number.hph_heater_start_delta') | float(0) | round(1) }} K"
-                  icon: mdi:arrow-up-bold-circle
-                  tap_action:
-                    action: more-info
-                - type: custom:mushroom-template-card
-                  entity: number.hph_heater_stop_delta
-                  primary: Heater stop Δ
-                  secondary: "{{ states('number.hph_heater_stop_delta') | float(0) | round(1) }} K"
-                  icon: mdi:arrow-down-bold-circle
-                  tap_action:
-                    action: more-info
+                - type: conditional
+                  conditions:
+                    - condition: state
+                      entity: number.hph_bivalent_start_temp
+                      state_not: unavailable
+                  card:
+                    type: custom:mushroom-template-card
+                    entity: number.hph_bivalent_start_temp
+                    primary: Bivalent start
+                    secondary: "{{ states('number.hph_bivalent_start_temp') | float(0) | round(1) }} °C"
+                    icon: mdi:thermometer-low
+                    tap_action:
+                      action: more-info
+                - type: conditional
+                  conditions:
+                    - condition: state
+                      entity: number.hph_heater_delay_time
+                      state_not: unavailable
+                  card:
+                    type: custom:mushroom-template-card
+                    entity: number.hph_heater_delay_time
+                    primary: Heater delay
+                    secondary: "{{ states('number.hph_heater_delay_time') | int(0) }} min"
+                    icon: mdi:timer-sand
+                    tap_action:
+                      action: more-info
+                - type: conditional
+                  conditions:
+                    - condition: state
+                      entity: number.hph_heater_start_delta
+                      state_not: unavailable
+                  card:
+                    type: custom:mushroom-template-card
+                    entity: number.hph_heater_start_delta
+                    primary: Heater start Δ
+                    secondary: "{{ states('number.hph_heater_start_delta') | float(0) | round(1) }} K"
+                    icon: mdi:arrow-up-bold-circle
+                    tap_action:
+                      action: more-info
+                - type: conditional
+                  conditions:
+                    - condition: state
+                      entity: number.hph_heater_stop_delta
+                      state_not: unavailable
+                  card:
+                    type: custom:mushroom-template-card
+                    entity: number.hph_heater_stop_delta
+                    primary: Heater stop Δ
+                    secondary: "{{ states('number.hph_heater_stop_delta') | float(0) | round(1) }} K"
+                    icon: mdi:arrow-down-bold-circle
+                    tap_action:
+                      action: more-info
 
   # ════════════════════════════════════════════════════════════════════════
   # 3) ANALYSIS — ApexCharts (Service-Cloud-style)
@@ -3691,14 +3763,80 @@ views:
             name: Operating mode (select)
           - entity: text.hph_src_internal_power
             name: Internal power consumption (W)
+          - type: divider
+          - entity: text.hph_src_fan1_speed
+            name: Fan 1 speed (R/min)
+          - entity: text.hph_src_fan2_speed
+            name: Fan 2 speed (R/min)
+          - entity: text.hph_src_inverter_temp
+            name: Inverter / IPM temperature
+          - entity: text.hph_src_high_pressure
+            name: Refrigerant high-side pressure
+          - entity: text.hph_src_low_pressure
+            name: Refrigerant low-side pressure
+          - entity: text.hph_src_compressor_current
+            name: Compressor current (A)
+          - entity: text.hph_src_outdoor_pipe_temp
+            name: Outdoor pipe temperature
+          - entity: text.hph_src_3way_valve
+            name: 3-way valve state
+          - entity: text.hph_src_zone1_target_temp
+            name: Zone 1 water target temperature
+          - entity: text.hph_src_hex_outlet_temp
+            name: Main HEX outlet temperature
+          - entity: text.hph_src_pump_duty
+            name: Pump duty cycle (%)
+          - entity: text.hph_src_expansion_valve
+            name: Expansion valve position
+          - type: divider
+          - entity: text.hph_src_eva_outlet_temp
+            name: Eva outlet temperature
+          - entity: text.hph_src_inside_pipe_temp
+            name: Inside pipe temperature
+          - entity: text.hph_src_bypass_outlet_temp
+            name: Bypass outlet temperature
+          - entity: text.hph_src_defrost_temp
+            name: Defrost temperature
+          - type: divider
+          - entity: text.hph_src_dhw_power_thermal
+            name: DHW thermal power (W)
+          - entity: text.hph_src_dhw_power_electrical
+            name: DHW electrical power (W)
+          - entity: text.hph_src_z1_water_temp
+            name: Zone 1 water temperature
+          - entity: text.hph_src_z2_water_temp
+            name: Zone 2 water temperature
+          - entity: text.hph_src_internal_heater_state
+            name: Internal heater state
+          - entity: text.hph_src_dhw_heater_state
+            name: DHW heater state
+          - entity: text.hph_src_antifreeze_mode
+            name: Anti-freeze mode
+          - entity: text.hph_src_force_heater
+            name: Force heater state
+          - entity: text.hph_src_sterilization
+            name: Sterilization state
+          - entity: text.hph_src_quiet_schedule
+            name: Quiet mode schedule
 
-      # ── Control write targets (v0.8 vendor adapter) ──
+      # ── Optional PCB components ──
+      - type: entities
+        title: Optional PCB components
+        entities:
+          - entity: text.hph_src_opt_z1_pump
+            name: Zone 1 water pump (Optional PCB)
+          - entity: text.hph_src_opt_z2_pump
+            name: Zone 2 water pump (Optional PCB)
+          - entity: text.hph_src_opt_z1_mixing_valve
+            name: Zone 1 mixing valve (Optional PCB)
+
+      # ── Control write targets (v0.9 vendor adapter) ──
       # Auto-filled by the vendor preset above; override here only if
       # your install uses non-standard entity-IDs (e.g. renamed entities,
       # second heat-pump unit). All control automations and programs
       # write through these helpers.
       - type: entities
-        title: Control write targets (v0.8 vendor adapter)
+        title: Control write targets
         entities:
           - entity: text.hph_ctrl_write_quiet_mode
             name: Quiet-mode select
@@ -3710,6 +3848,71 @@ views:
             name: Z1 heat-curve target_low (number)
           - entity: text.hph_ctrl_write_dhw_target
             name: DHW target temperature (number)
+          - type: divider
+          - entity: text.hph_ctrl_write_operating_mode
+            name: Operating mode (select)
+          - entity: text.hph_ctrl_write_power
+            name: Main power (switch)
+          - entity: text.hph_ctrl_write_holiday
+            name: Holiday mode (switch)
+          - entity: text.hph_ctrl_write_force_defrost
+            name: Force defrost (switch)
+          - entity: text.hph_ctrl_write_schedule
+            name: Schedule (switch)
+          - entity: text.hph_ctrl_write_restart_heishamon
+            name: Restart HeishaMon (button)
+          - entity: text.hph_ctrl_write_powerful_mode
+            name: Powerful / boost mode (select)
+          - entity: text.hph_ctrl_write_active_zones
+            name: Active zones (select)
+          - entity: text.hph_ctrl_write_bivalent_mode
+            name: Bivalent mode (select)
+          - entity: text.hph_ctrl_write_z1_heat_shift
+            name: Zone 1 heat request shift (number)
+          - entity: text.hph_ctrl_write_z2_heat_shift
+            name: Zone 2 heat request shift (number)
+          - entity: text.hph_ctrl_write_heating_cutoff
+            name: Heating cutoff outdoor T° (number)
+          - entity: text.hph_ctrl_write_max_pump_duty
+            name: Max pump duty cycle (number)
+          - entity: text.hph_ctrl_write_room_heat_delta
+            name: Room heating delta (number)
+          - entity: text.hph_ctrl_write_z1_climate
+            name: Zone 1 climate entity
+          - entity: text.hph_ctrl_write_z2_climate
+            name: Zone 2 climate entity
+          - type: divider
+          - entity: text.hph_ctrl_write_z1_outside_low
+            name: Z1 heat-curve outside low
+          - entity: text.hph_ctrl_write_z1_outside_high
+            name: Z1 heat-curve outside high
+          - entity: text.hph_ctrl_write_z2_outside_low
+            name: Z2 heat-curve outside low
+          - entity: text.hph_ctrl_write_z2_outside_high
+            name: Z2 heat-curve outside high
+          - entity: text.hph_ctrl_write_z2_curve_high
+            name: Z2 heat-curve target_high
+          - entity: text.hph_ctrl_write_z2_curve_low
+            name: Z2 heat-curve target_low
+          - type: divider
+          - entity: text.hph_ctrl_write_dhw_heat_delta
+            name: DHW heat delta (number)
+          - entity: text.hph_ctrl_write_smart_dhw
+            name: Smart DHW (select)
+          - entity: text.hph_ctrl_write_heating_control
+            name: Heating control (select)
+          - entity: text.hph_ctrl_write_cool_delta
+            name: Cooling delta (number)
+          - entity: text.hph_ctrl_write_dhw_sensor_selection
+            name: DHW sensor selection (select)
+          - entity: text.hph_ctrl_write_bivalent_start_temp
+            name: Bivalent start temperature (number)
+          - entity: text.hph_ctrl_write_heater_delay_time
+            name: Heater delay time (number)
+          - entity: text.hph_ctrl_write_heater_start_delta
+            name: Heater start delta (number)
+          - entity: text.hph_ctrl_write_heater_stop_delta
+            name: Heater stop delta (number)
 
       # ── External meter entities (optional) ──
       - type: entities
@@ -3783,22 +3986,41 @@ views:
           [docs/multivendor_bridge.md](https://github.com/st03psn/heat-pump-hero/blob/main/docs/multivendor_bridge.md)
           for the topic schema and per-platform recipes.
 
-      # ── Heat-curve auto-entities (Heishamon-specific UI shortcut) ──
-      # Note: this filter pattern is heat-pump specific — adapt if you swap
-      # to a non-Heishamon heat pump.
-      - type: custom:auto-entities
+      # ── Heat-curve write-target helpers (vendor-generic via CTRL_FACADE) ──
+      # Shows the entity-ID strings stored in the ctrl_write helpers — useful
+      # for verifying which vendor entities the dashboard will write to.
+      # Both cards hide when the relevant helper is empty (non-configured vendor).
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: text.hph_ctrl_write_z1_outside_low
+            state_not: ""
         card:
           type: entities
-          title: Heating curve — zone 1 (Heishamon-specific)
-        filter:
-          include:
-            - entity_id: number.panasonic_heat_pump_main_z1_heat_curve_*
-        show_empty: false
-      - type: custom:auto-entities
+          title: Heating curve — zone 1 (write targets)
+          entities:
+            - entity: text.hph_ctrl_write_z1_outside_low
+              name: Outside low entity
+            - entity: text.hph_ctrl_write_z1_outside_high
+              name: Outside high entity
+            - entity: text.hph_ctrl_write_z1_curve_low
+              name: Target low entity
+            - entity: text.hph_ctrl_write_z1_curve_high
+              name: Target high entity
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: text.hph_ctrl_write_z2_outside_low
+            state_not: ""
         card:
           type: entities
-          title: Heating curve — zone 2 (if present, Heishamon-specific)
-        filter:
-          include:
-            - entity_id: number.panasonic_heat_pump_main_z2_heat_curve_*
-        show_empty: false
+          title: Heating curve — zone 2 (write targets, if configured)
+          entities:
+            - entity: text.hph_ctrl_write_z2_outside_low
+              name: Outside low entity
+            - entity: text.hph_ctrl_write_z2_outside_high
+              name: Outside high entity
+            - entity: text.hph_ctrl_write_z2_curve_low
+              name: Target low entity
+            - entity: text.hph_ctrl_write_z2_curve_high
+              name: Target high entity

@@ -39,11 +39,11 @@ ALLOWED_HARDCODE = {
     "packages/hph_models.yaml": "vendor-preset auto-fill payloads (write per-vendor entity-IDs into helpers, including write-path helpers)",
 }
 
-# Dashboard exceptions: the main on/off switch and heat-curve auto-entities
-# filters are heat-pump specific by nature and documented as such.
+# Dashboard exceptions: the main on/off switch is heat-pump specific by
+# nature and documented as such. The heating-curve auto-entities filter was
+# replaced by facade-based entities cards in PR D — no patterns needed.
 DASHBOARD_ALLOWED_PATTERNS = [
     r"switch\.panasonic_heat_pump_main_heatpump_state",
-    r"number\.panasonic_heat_pump_main_z[12]_heat_curve_\*",
 ]
 
 def fail(msg: str) -> None:
@@ -567,6 +567,99 @@ def test_ctrl_facades_writer_consistency() -> int:
     return failures
 
 
+def test_const_consistency() -> int:
+    """Cross-check const.py data structures for internal consistency.
+
+    Checks beyond the existing CTRL_FACADES writer test:
+    1. Every VENDOR_PRESET key must be in TEXT_HELPERS.
+    2. Any TEXT_HELPER with a non-empty 'initial' value and a hph_src_* or
+       hph_ctrl_write_* prefix must also appear in the panasonic_heishamon preset
+       (keeps presets in sync when new helpers are added).
+
+    Uses regex parsing so we don't need to import homeassistant.
+    """
+    section("const.py: VENDOR_PRESET / TEXT_HELPERS cross-consistency")
+    failures = 0
+    const_py = ROOT / "custom_components" / "hph" / "const.py"
+    if not const_py.is_file():
+        fail("const.py not found — skipping")
+        return 1
+    text = const_py.read_text(encoding="utf-8")
+
+    # Extract TEXT_HELPERS keys
+    helpers_match = re.search(
+        r"^TEXT_HELPERS.*?=\s*\{(.*?)^\}",
+        text, re.DOTALL | re.MULTILINE,
+    )
+    if not helpers_match:
+        fail("TEXT_HELPERS not found in const.py")
+        return 1
+    helpers_block = helpers_match.group(1)
+    text_helper_keys = set(re.findall(r'^\s*"(hph_[a-z0-9_]+)":', helpers_block, re.MULTILINE))
+
+    # Extract all VENDOR_PRESET blocks
+    presets_match = re.search(
+        r"^VENDOR_PRESETS.*?=\s*\{(.*?)^\}",
+        text, re.DOTALL | re.MULTILINE,
+    )
+    if not presets_match:
+        fail("VENDOR_PRESETS not found in const.py")
+        return 1
+    presets_block = presets_match.group(1)
+
+    # Extract each preset name and its keys
+    preset_sections = re.findall(
+        r'"([a-z_]+)":\s*\{([^}]*)\}',
+        presets_block, re.DOTALL,
+    )
+    preset_errors: list[str] = []
+    for preset_name, preset_body in preset_sections:
+        for key in re.findall(r'"(hph_[a-z0-9_]+)":', preset_body):
+            if key not in text_helper_keys:
+                preset_errors.append(f"VENDOR_PRESET '{preset_name}' key '{key}' not in TEXT_HELPERS")
+
+    if preset_errors:
+        for e in preset_errors:
+            fail(e)
+        failures += len(preset_errors)
+    else:
+        # Count total unique preset keys checked
+        all_keys = set()
+        for _, body in preset_sections:
+            all_keys.update(re.findall(r'"(hph_[a-z0-9_]+)":', body))
+        ok(f"all {len(all_keys)} VENDOR_PRESET keys found in TEXT_HELPERS")
+
+    # Check panasonic_heishamon completeness: TEXT_HELPERs with non-empty
+    # initial values must be in the panasonic_heishamon preset.
+    heishamon_match = re.search(
+        r'"panasonic_heishamon":\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\}',
+        presets_block, re.DOTALL,
+    )
+    if not heishamon_match:
+        fail("panasonic_heishamon preset not found in VENDOR_PRESETS")
+        return failures + 1
+    heishamon_keys = set(re.findall(r'"(hph_[a-z0-9_]+)":', heishamon_match.group(1)))
+
+    missing_from_preset: list[str] = []
+    # Extract helper entries with their initial values
+    helper_entries = re.findall(
+        r'"(hph_(?:src|ctrl_write)_[a-z0-9_]+)":\s*\{[^}]*"initial":\s*"([^"]*)"',
+        helpers_block, re.DOTALL,
+    )
+    for key, initial in helper_entries:
+        if initial and key not in heishamon_keys:
+            missing_from_preset.append(f"TEXT_HELPER '{key}' has initial='{initial}' but absent from panasonic_heishamon preset")
+
+    if missing_from_preset:
+        for e in missing_from_preset:
+            fail(e)
+        failures += len(missing_from_preset)
+    else:
+        ok(f"panasonic_heishamon preset covers all TEXT_HELPERs with non-empty initial values")
+
+    return failures
+
+
 def main() -> int:
     print(f"HeatPump Hero smoke tests · root: {ROOT}")
     failures = 0
@@ -580,6 +673,7 @@ def main() -> int:
     failures += test_bundled_dashboard_entities()
     failures += test_dashboard_no_templated_entity()
     failures += test_ctrl_facades_writer_consistency()
+    failures += test_const_consistency()
 
     print()
     if failures:
