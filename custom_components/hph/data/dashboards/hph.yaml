@@ -3265,27 +3265,43 @@ views:
           # Lücken durch kurzzeitige MQTT-`unknown`-Events überbrücken
           # (vor allem für outdoor_temp, das nur alle ~18 min sampelt).
           connectNulls: true
+        # Liest aus HA Long-Term-Statistics statt Recorder-History:
+        # garantiert einen Datenpunkt pro 5-min-Bucket auch wenn Wert
+        # konstant bleibt (Recorder speichert nur Wertänderungen).
+        # Behebt die langen "Lücken" wenn Temperaturen sich nicht ändern.
         series:
           - entity: sensor.hph_source_outdoor_temp
             name: Outdoor
             yaxis_id: temp
             color: "#e0a800"
             extend_to: now
+            statistics:
+              type: mean
+              period: 5minute
           - entity: sensor.hph_source_inlet_temp
             name: Return
             yaxis_id: temp
             color: "#7ec1ff"
             extend_to: now
+            statistics:
+              type: mean
+              period: 5minute
           - entity: sensor.hph_source_outlet_temp
             name: Supply
             yaxis_id: temp
             color: "#d62728"
             extend_to: now
+            statistics:
+              type: mean
+              period: 5minute
           - entity: sensor.hph_source_discharge_temp
             name: Discharge
             yaxis_id: temp
             color: "#2ca02c"
             extend_to: now
+            statistics:
+              type: mean
+              period: 5minute
 
       # ── Compressor & flow Chart entfernt ──
       # Cycling-/Modulations-Analyse braucht ≥ 7 Tage Daten und sinnvolle
@@ -3310,6 +3326,9 @@ views:
             color: "#17a2b8"
             stroke_width: 2
             extend_to: now
+            statistics:
+              type: mean
+              period: 5minute
         apex_config:
           chart:
             height: 260
@@ -3324,6 +3343,92 @@ views:
             width: 2
           noData:
             text: "Sammele Daten — der Trend füllt sich, sobald der Kompressor läuft."
+
+      # ── Defrost-KPIs (numerisch) + Cycle-Chart ──
+      # Step-Chart der Defrost-Aktivität + Defrost-Coil-Temperatur als Overlay.
+      # KPI-Chips über dem Chart: Anzahl Zyklen, Gesamtdauer, ⌀-Dauer in 24h.
+      - type: grid
+        columns: 3
+        square: false
+        cards:
+          - type: custom:mushroom-template-card
+            entity: sensor.hph_defrost_count_24h
+            primary: "{{ states('sensor.hph_defrost_count_24h') | int(0) }}"
+            secondary: Defrost cycles (24h)
+            icon: mdi:counter
+            icon_color: blue
+          - type: custom:mushroom-template-card
+            entity: sensor.hph_defrost_duration_24h
+            primary: >-
+              {% set h = states('sensor.hph_defrost_duration_24h') | float(0) %}
+              {% if h >= 1 %}{{ h | round(2) }} h
+              {% else %}{{ (h * 60) | round(0) | int }} min{% endif %}
+            secondary: Total defrost time (24h)
+            icon: mdi:timer-sand
+            icon_color: cyan
+          - type: custom:mushroom-template-card
+            entity: sensor.hph_defrost_avg_duration_24h
+            primary: "{{ states('sensor.hph_defrost_avg_duration_24h') | float(0) | round(1) }} min"
+            secondary: Avg cycle length
+            icon: mdi:chart-bell-curve
+            icon_color: indigo
+
+      - type: custom:apexcharts-card
+        header:
+          show: true
+          title: Defrost cycles — last 24h
+          show_states: true
+        graph_span: 24h
+        span:
+          end: minute
+        yaxis:
+          - id: state
+            decimals: 0
+            min: 0
+            max: 1
+            apex_config:
+              labels: { show: false }
+              axisTicks: { show: false }
+          - id: temp
+            opposite: true
+            decimals: 1
+            apex_config:
+              title: { text: "°C" }
+        apex_config:
+          chart:
+            height: 220
+            background: transparent
+            foreColor: var(--primary-text-color)
+          grid:
+            borderColor: var(--divider-color)
+          stroke:
+            width: 2
+          fill:
+            opacity: [0.4, 1]
+          legend:
+            show: true
+          noData:
+            text: "Noch keine Defrost-Daten — füllt sich nach 24 h Laufzeit."
+        series:
+          - entity: binary_sensor.hph_defrost_active
+            name: Defrost active
+            type: area
+            color: "#42a5f5"
+            yaxis_id: state
+            curve: stepline
+            stroke_width: 2
+            transform: "return x === 'on' ? 1 : 0;"
+            extend_to: now
+          - entity: sensor.hph_source_defrost_temp
+            name: Defrost coil temp
+            type: line
+            color: "#fb8c00"
+            yaxis_id: temp
+            stroke_width: 2
+            extend_to: now
+            statistics:
+              type: mean
+              period: 5minute
 
       # ── COP-Heatmap entfernt ──
       # apexcharts-card (v2.x) unterstützt `chart_type: heatmap` nicht — nur
@@ -4016,28 +4121,9 @@ views:
           `efficiency_jaz_maz.json` for cross-year SCOP/MAZ charts
           (see [docs/installation.md](/local/hph/installation.md)).
 
-      # ── Efficiency-quality block (Quatt + HeatpumpMonitor lessons) ──
-      # hph-help renders the title + ? icon inline. Click ? for full help.
+      # ── Efficiency-quality block — i18n via help_<lang>.json ──
       - type: custom:hph-help
-        title: Efficiency quality
-        content: |
-          Beyond raw COP, four numbers tell you whether your heat pump
-          is *well used* under the conditions it actually sees:
-
-          - **Carnot %** — share of the theoretical maximum COP at the
-            current outlet and outdoor temperatures. A COP 3.0 in deep
-            winter can outrank a COP 4.0 in spring. Healthy installs
-            land at 40–55 %; >60 % is excellent.
-          - **Cycles / hour** — compressor on/off rate. >3/h hints at an
-            over-aggressive heating curve, tight hysteresis, or missing
-            buffer volume.
-          - **Δ flow − outside (24 h mean)** — the heating-curve
-            steepness actually delivered (vs. theoretical). Together
-            with outdoor temperature this tells whether your curve is
-            too steep.
-          - **Samples / 24 h** — coverage of the thermal-power signal.
-            Low values mean SCOP confidence is degraded; see the
-            data-quality advisor below.
+        translation_key: efficiency_quality
       - type: grid
         columns: 2
         square: false
@@ -4498,29 +4584,50 @@ views:
                     name: Z2 target high
 
       - type: entities
-        title: Control strategies (HeishaMoNR parity)
+        title: Control master
         entities:
           - switch.hph_ctrl_master
+
+      # ── Compressor Cycle Control (with inline help) ──
+      - type: custom:hph-help
+        translation_key: control_ccc
+      - type: entities
+        title: Compressor Cycle Control (CCC)
+        entities:
           - switch.hph_ctrl_ccc
           - number.hph_ctrl_ccc_min_pause_min
           - number.hph_ctrl_ccc_min_runtime_min
-          - switch.hph_ctrl_quiet_night
+
+      # ── Solar-DHW boost (with inline help) ──
+      - type: custom:hph-help
+        translation_key: control_solar_dhw
+      - type: entities
+        title: Solar-DHW boost
+        entities:
           - switch.hph_ctrl_solar_dhw
           - text.hph_ctrl_pv_surplus_entity
           - number.hph_ctrl_solar_pv_threshold_w
 
       - type: entities
-        title: Control extensions (v0.7) — adaptive curve / price / forecast
+        title: Night quiet mode
         entities:
-          - type: section
-            label: Adaptive heating curve (self-learning, weekly)
+          - switch.hph_ctrl_quiet_night
+
+      # ── Adaptive heating curve (with inline help) ──
+      - type: custom:hph-help
+        translation_key: control_adaptive_curve
+      - type: entities
+        title: Adaptive heating curve (self-learning, weekly)
+        entities:
           - switch.hph_ctrl_adaptive_curve
           - number.hph_ctrl_adaptive_max_step_k
           - number.hph_ctrl_adaptive_supply_min_c
           - number.hph_ctrl_adaptive_supply_max_c
           - datetime.hph_ctrl_adaptive_last_run
-          - type: section
-            label: Price-driven DHW (Tibber / aWATTar)
+
+      - type: entities
+        title: Price-driven DHW (Tibber / aWATTar)
+        entities:
           - switch.hph_ctrl_price_dhw
           - entity: text.hph_electricity_price_entity
             name: Current price sensor (shared with cost calc)
@@ -4529,8 +4636,10 @@ views:
           - number.hph_ctrl_price_max_per_day
           - number.hph_ctrl_price_dhw_fires_today
           - datetime.hph_ctrl_price_dhw_last_fire
-          - type: section
-            label: Weather-forecast pre-heating
+
+      - type: entities
+        title: Weather-forecast pre-heating
+        entities:
           - switch.hph_ctrl_forecast_preheat
           - entity: text.hph_ctrl_forecast_entity
             name: Forecast sensor (tomorrow's minimum outdoor T° in °C)
@@ -4552,6 +4661,9 @@ views:
 
           Leave blank to disable forecast pre-heating.
 
+      # ── Advisor thresholds (with inline help) ──
+      - type: custom:hph-help
+        translation_key: advisor_thresholds
       - type: entities
         title: Advisor thresholds (power-user tweaks)
         entities:
@@ -4630,16 +4742,9 @@ views:
     path: config
     icon: mdi:cog
     cards:
-      - type: markdown
-        content: |
-          ## Source adapter
-          HeatPump Hero reads everything via the configurable source helpers
-          below. Defaults match the kamaradclimber Heishamon integration —
-          if you use a different heat pump or different meters, change the
-          relevant entity-ID and HeatPump Hero follows automatically. No YAML
-          editing required.
-
-      # ── Vendor preset & model selector (1-click setup) ──
+      # ── Vendor & model (with inline help) ──
+      - type: custom:hph-help
+        translation_key: vendor_preset
       - type: entities
         title: Vendor & model
         entities:
@@ -4653,6 +4758,9 @@ views:
           - entity: sensor.hph_model_refrigerant
             name: Refrigerant
 
+      # ── Model thresholds (with inline help) ──
+      - type: custom:hph-help
+        translation_key: model_thresholds
       - type: entities
         title: Model thresholds (auto-set on model change, override OK)
         entities:
@@ -4665,7 +4773,9 @@ views:
           - entity: number.hph_model_max_supply_c
             name: Maximum supply temperature (°C)
 
-      # ── Source-mode selectors ──
+      # ── Source modes (with inline help) ──
+      - type: custom:hph-help
+        translation_key: source_modes
       - type: entities
         title: Source modes
         entities:
@@ -4673,6 +4783,13 @@ views:
             name: Thermal source mode
           - entity: select.hph_electrical_source
             name: Electrical source mode
+
+      # ── Schema variant (with inline help) ──
+      - type: custom:hph-help
+        translation_key: schema_variant
+      - type: entities
+        title: Schematic variant
+        entities:
           - entity: select.hph_schema_variant
             name: Schematic variant (auto / manual)
           - entity: sensor.hph_schema_variant_active
@@ -4686,47 +4803,9 @@ views:
           - entity: select.hph_ui_style
             name: UI style (mushroom / classic)
 
-      # ── Installation context ──
-      # Optional bookkeeping fields. They do not change HPH behaviour, but
-      # they make your SCOP submission to heatpumpmonitor.org meaningful —
-      # see docs/heatpumpmonitor.md for the mapping table.
-      - type: markdown
-        content: >
-          ### Installation context &nbsp;
-          <details><summary>❓ help</summary>
-
-
-          These fields are **purely informational**. They don't change how
-          HPH calculates anything — they just give you one place to look
-          up the planning numbers of your installation.
-
-
-          **When you'll thank yourself for filling these in:**
-
-          - Applying to list your system on
-          [heatpumpmonitor.org](https://heatpumpmonitor.org) — the form
-          asks for exactly these values.
-
-          - Forum questions ("what design flow temp did you pick?") —
-          instead of digging through old paperwork.
-
-          - Comparing SCOP with a neighbour — without these numbers
-          you're comparing apples to pears.
-
-
-          | Field | Where to find it |
-          |---|---|
-          | **Design heat loss (kW)** | Heat-loss calculation from your installer. Typical: 5–12 kW for single-family homes. |
-          | **Heat emitter type** | Radiators (large or small), underfloor heating, or a mix. Determines design supply temp. |
-          | **Design supply temperature (°C)** | The flow temp at which the heat loss is met at coldest outdoor design temp. Typical: 35 °C UFH, 45–55 °C radiators. |
-          | **Refrigerant** | On the type plate of the outdoor unit. R32 / R290 / R454B common. |
-          | **Commissioning year** | Year of first start-up. Useful for warranty / lifetime tracking. |
-
-
-          Leave anything blank if you don't know — no consequence.
-
-
-          </details>
+      # ── Installation context (with inline help) ──
+      - type: custom:hph-help
+        translation_key: installation_context
       - type: entities
         title: Installation context
         entities:
@@ -4741,42 +4820,9 @@ views:
           - entity: text.hph_install_year
             name: Commissioning year
 
-      - type: markdown
-        content: >
-          ### Electrical metering &nbsp;
-          <details><summary>❓ help</summary>
-
-
-          Your SCOP depends on **what is counted as the electrical
-          input**. If your electricity meter sits between the consumer
-          unit and the heat pump's main contactor, it sees just the
-          heat pump. If it sits earlier in the chain, it may also see
-          the immersion heater, the circulation pump, or the controller.
-
-
-          **Why this matters:**
-
-          - Including the **immersion / backup heater** drags the SCOP
-          down sharply in cold spells but is the most honest figure.
-
-          - Including the **circulation pump** (~50–200 W continuously)
-          costs ~0.1–0.3 SCOP points over a season.
-
-          - Including **controls / standby** (~5–30 W) is usually a
-          rounding error but matters at the bottom of the range.
-
-          - **Brine pump** only applies to ground-source heat pumps
-          (GSHP) — leave off for air-to-water.
-
-
-          Default: all off (conservative assumption that your meter
-          sees only the heat-pump contactor). Adjust to match how your
-          electrical wiring actually runs. If you don't know, ask your
-          installer or measure with a clamp meter where the meter
-          input is fed.
-
-
-          </details>
+      # ── Electrical metering (with inline help) ──
+      - type: custom:hph-help
+        translation_key: electrical_metering
       - type: entities
         title: Electrical metering — what is included?
         entities:

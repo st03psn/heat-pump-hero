@@ -1660,6 +1660,16 @@ sensors:
     {% set ct = states('sensor.hph_electricity_price_effective') | float(30) %}
     {{ (kwh * ct / 100) | round(2) }}
   _source_package: hph_efficiency.yaml
+- name: HeatPump Hero Defrost Avg Duration 24h
+  unique_id: hph_defrost_avg_duration_24h
+  unit_of_measurement: min
+  state_class: measurement
+  icon: mdi:snowflake-melt
+  state: >-
+    {% set count = states('sensor.hph_defrost_count_24h') | float(0) %}
+    {% set hours = states('sensor.hph_defrost_duration_24h') | float(0) %}
+    {{ ((hours * 60) / count) | round(1) if count > 0 else 0 }}
+  _source_package: hph_efficiency.yaml
 - name: HeatPump Hero Efficiency Trend
   unique_id: hph_efficiency_trend
   icon: "{% set v = states('sensor.hph_cop_change_yoy_pct') | float(0) %} {% if v > 5 %}mdi:rocket-launch {% elif v > 1 %}mdi:trending-up {% elif v < -5 %}mdi:alert {% elif v < -1 %}mdi:trending-down {% else %}mdi:trending-neutral{% endif %}"

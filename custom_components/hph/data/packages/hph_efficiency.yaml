@@ -100,6 +100,34 @@ sensor:
   keep_last_sample: true
   precision: 2
 
+# Mean flow_T − outside_T over the last 24h while the compressor is running.
+# Proxy for the heating-curve steepness actually delivered (vs. the
+# theoretical setpoint). Source sensor only emits when compressor is on,
+# so the mean reflects active-heating conditions, not standby.
+- platform: statistics
+  name: "HPH FlowT minus OutsideT 24h"
+  unique_id: hph_flowt_minus_outsidet_24h
+  entity_id: sensor.hph_flowt_minus_outsidet_instant
+  state_characteristic: mean
+  sampling_size: 5000
+  max_age:
+    hours: 24
+  keep_last_sample: true
+  precision: 1
+
+# Sample-count of thermal-power-active over the last 24h. Feeds the
+# data-quality advisor — low sample count → source entity throttled or
+# offline, SCOP confidence degraded.
+- platform: statistics
+  name: "HPH Quality 24h Samples"
+  unique_id: hph_quality_24h_samples
+  entity_id: sensor.hph_thermal_power_active
+  state_characteristic: count
+  sampling_size: 50000
+  max_age:
+    hours: 24
+  keep_last_sample: false
+
 - platform: integration
   source: sensor.hph_thermal_power_active
   name: HPH Thermal Energy
@@ -175,6 +203,30 @@ sensor:
   unit_time: h
   method: left
   round: 2
+
+# ── Defrost-Statistik (last 24h, rolling) ──────────────────────────────────
+# `history_stats` ist eine HA-Core-Plattform — kann nicht via Python-API
+# registriert werden. Beide Sensoren laufen auf rollendem 24h-Fenster
+# (nicht Mitternachts-Reset), passend zum 24h-Chart auf der Analysis-View.
+- platform: history_stats
+  name: HPH Defrost Count 24h
+  unique_id: hph_defrost_count_24h
+  entity_id: binary_sensor.hph_defrost_active
+  state: "on"
+  type: count
+  end: "{{ now() }}"
+  duration:
+    hours: 24
+
+- platform: history_stats
+  name: HPH Defrost Duration 24h
+  unique_id: hph_defrost_duration_24h
+  entity_id: binary_sensor.hph_defrost_active
+  state: "on"
+  type: time
+  end: "{{ now() }}"
+  duration:
+    hours: 24
 
 utility_meter:
   # ── Daily ───────────────────────────────────────────────────────────────
