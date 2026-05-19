@@ -1,172 +1,153 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 900" font-family="'Segoe UI', Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" font-family="'Segoe UI', Arial, sans-serif">
 
   <!-- Background -->
-  <rect width="1280" height="900" fill="#111111"/>
+  <rect width="1280" height="720" fill="#0f1923"/>
 
-  <!-- Sidebar -->
-  <rect x="0" y="0" width="56" height="900" fill="#1c1c1c"/>
-  <rect x="8" y="16" width="40" height="40" rx="8" fill="#e05a00" opacity="0.9"/>
-  <text x="28" y="42" text-anchor="middle" fill="white" font-size="18" font-weight="700">H</text>
-  <g fill="#4a4a4a">
-    <rect x="12" y="72"  width="32" height="32" rx="6"/>
-    <rect x="12" y="116" width="32" height="32" rx="6"/>
-    <rect x="12" y="160" width="32" height="32" rx="6"/>
-    <rect x="12" y="204" width="32" height="32" rx="6"/>
-    <rect x="12" y="248" width="32" height="32" rx="6"/>
-    <rect x="12" y="292" width="32" height="32" rx="6"/>
-    <rect x="12" y="336" width="32" height="32" rx="6"/>
-    <rect x="12" y="380" width="32" height="32" rx="6"/>
+  <!-- Header bar -->
+  <rect x="40" y="24" width="1200" height="52" rx="8" fill="#1a252f" stroke="#3d5166"/>
+  <text x="64" y="56" fill="#8ca8c0" font-size="18" font-weight="600">HeatPump Hero — Overview</text>
+  <text x="1220" y="56" text-anchor="end" fill="#3d5166" font-size="12">v0.9.0-rc6</text>
+
+  <!-- ── Row 1: three status cards ── -->
+
+  <!-- System status -->
+  <rect x="40" y="92" width="370" height="198" rx="8" fill="#1a252f" stroke="#3d5166"/>
+  <text x="60" y="118" fill="#8ca8c0" font-size="13" font-weight="600">System status</text>
+  <line x1="40" y1="128" x2="410" y2="128" stroke="#3d5166"/>
+  <g fill="#5a7a96" font-size="12">
+    <text x="60" y="152">Operating mode</text>
+    <text x="60" y="176">Outdoor temperature</text>
+    <text x="60" y="200">Supply / return</text>
+    <text x="60" y="224">Flow rate</text>
+    <text x="60" y="248">Compressor</text>
+    <text x="60" y="272">Defrost active</text>
   </g>
-  <!-- Active tab highlight -->
-  <rect x="12" y="72" width="32" height="32" rx="6" fill="#e05a00" opacity="0.7"/>
+  <g fill="#8ca8c0" font-size="12" text-anchor="end">
+    <text x="390" y="152">Heating</text>
+    <text x="390" y="176">3.2 °C</text>
+    <text x="390" y="200">38.6 / 33.1 °C</text>
+    <text x="390" y="224">14.2 L/min</text>
+    <text x="390" y="248">52 Hz</text>
+    <text x="390" y="272">off</text>
+  </g>
 
-  <!-- Top bar -->
-  <rect x="56" y="0" width="1224" height="52" fill="#1c1c1c"/>
-  <text x="80" y="33" fill="#cccccc" font-size="16" font-weight="600">HeatPump Hero</text>
-  <text x="200" y="33" fill="#666666" font-size="14">Overview</text>
+  <!-- COP / Efficiency -->
+  <rect x="425" y="92" width="370" height="198" rx="8" fill="#1a252f" stroke="#3d5166"/>
+  <text x="445" y="118" fill="#8ca8c0" font-size="13" font-weight="600">Efficiency</text>
+  <line x1="425" y1="128" x2="795" y2="128" stroke="#3d5166"/>
+  <g fill="#5a7a96" font-size="12">
+    <text x="445" y="152">COP live</text>
+    <text x="445" y="176">COP today</text>
+    <text x="445" y="200">COP this month</text>
+    <text x="445" y="224">SCOP (season)</text>
+    <text x="445" y="248">Thermal today</text>
+    <text x="445" y="272">Electrical today</text>
+  </g>
+  <g fill="#17a2b8" font-size="12" text-anchor="end" font-weight="600">
+    <text x="775" y="152">3.84</text>
+    <text x="775" y="176">3.62</text>
+    <text x="775" y="200">3.41</text>
+    <text x="775" y="224">3.55</text>
+  </g>
+  <g fill="#8ca8c0" font-size="12" text-anchor="end">
+    <text x="775" y="248">42.6 kWh</text>
+    <text x="775" y="272">11.8 kWh</text>
+  </g>
 
-  <!-- ── Row 1: Operating mode + Live COP mushroom chips ── -->
+  <!-- Cost -->
+  <rect x="810" y="92" width="430" height="198" rx="8" fill="#1a252f" stroke="#3d5166"/>
+  <text x="830" y="118" fill="#8ca8c0" font-size="13" font-weight="600">Cost &amp; energy</text>
+  <line x1="810" y1="128" x2="1240" y2="128" stroke="#3d5166"/>
+  <g fill="#5a7a96" font-size="12">
+    <text x="830" y="152">Cost today</text>
+    <text x="830" y="176">Cost this month</text>
+    <text x="830" y="200">Electrical tariff</text>
+    <text x="830" y="224">vs last month</text>
+    <text x="830" y="248">vs last year</text>
+    <text x="830" y="272">Cycles today</text>
+  </g>
+  <g fill="#8ca8c0" font-size="12" text-anchor="end">
+    <text x="1220" y="152">3.26 €</text>
+    <text x="1220" y="176">48.70 €</text>
+    <text x="1220" y="200">27.6 ct/kWh</text>
+  </g>
+  <text x="1220" y="224" text-anchor="end" fill="#2ca02c" font-size="12" font-weight="600">−8 %</text>
+  <text x="1220" y="248" text-anchor="end" fill="#2ca02c" font-size="12" font-weight="600">−3 %</text>
+  <text x="1220" y="272" text-anchor="end" fill="#8ca8c0" font-size="12">4</text>
 
-  <!-- Operating mode chip -->
-  <rect x="72" y="68" width="280" height="72" rx="12" fill="#1e1e1e"/>
-  <rect x="88" y="84" width="40" height="40" rx="20" fill="#e05a001a"/>
-  <text x="108" y="109" text-anchor="middle" fill="#e05a00" font-size="20">🔥</text>
-  <text x="144" y="97"  fill="#cccccc" font-size="13" font-weight="600">Heating</text>
-  <text x="144" y="116" fill="#666666" font-size="11">Operating mode</text>
+  <!-- ── Row 2: charts placeholder area ── -->
 
-  <!-- COP live chip -->
-  <rect x="364" y="68" width="280" height="72" rx="12" fill="#1e1e1e"/>
-  <rect x="380" y="84" width="40" height="40" rx="20" fill="#17a2b81a"/>
-  <text x="400" y="109" text-anchor="middle" fill="#17a2b8" font-size="20">⚡</text>
-  <text x="436" y="97"  fill="#cccccc" font-size="13" font-weight="600">3.84</text>
-  <text x="436" y="116" fill="#666666" font-size="11">COP live</text>
-
-  <!-- Outdoor temp chip -->
-  <rect x="656" y="68" width="280" height="72" rx="12" fill="#1e1e1e"/>
-  <rect x="672" y="84" width="40" height="40" rx="20" fill="#6c8ebf1a"/>
-  <text x="692" y="109" text-anchor="middle" fill="#6c8ebf" font-size="20">🌡</text>
-  <text x="728" y="97"  fill="#cccccc" font-size="13" font-weight="600">3.2 °C</text>
-  <text x="728" y="116" fill="#666666" font-size="11">Outdoor temperature</text>
-
-  <!-- Compressor chip -->
-  <rect x="948" y="68" width="308" height="72" rx="12" fill="#1e1e1e"/>
-  <rect x="964" y="84" width="40" height="40" rx="20" fill="#bcbd221a"/>
-  <text x="984" y="109" text-anchor="middle" fill="#bcbd22" font-size="20">⚙</text>
-  <text x="1020" y="97"  fill="#cccccc" font-size="13" font-weight="600">52 Hz</text>
-  <text x="1020" y="116" fill="#666666" font-size="11">Compressor frequency</text>
-
-  <!-- ── Row 2: KPI strip ── -->
-  <rect x="72" y="156" width="1184" height="8" rx="4" fill="#222222"/>
-
-  <!-- KPI cards row -->
+  <!-- Energy 7d chart -->
+  <rect x="40" y="306" width="580" height="196" rx="8" fill="#1a252f" stroke="#3d5166"/>
+  <text x="60" y="332" fill="#8ca8c0" font-size="13" font-weight="600">Energy — last 7 days</text>
+  <line x1="40" y1="342" x2="620" y2="342" stroke="#3d5166"/>
+  <!-- bars -->
   <g>
-    <!-- COP today -->
-    <rect x="72"  y="172" width="226" height="68" rx="10" fill="#1e1e1e"/>
-    <text x="84"  y="195" fill="#666666" font-size="11">COP today</text>
-    <text x="84"  y="222" fill="#17a2b8" font-size="22" font-weight="700">3.62</text>
-
-    <!-- COP month -->
-    <rect x="308" y="172" width="226" height="68" rx="10" fill="#1e1e1e"/>
-    <text x="320" y="195" fill="#666666" font-size="11">COP this month</text>
-    <text x="320" y="222" fill="#17a2b8" font-size="22" font-weight="700">3.41</text>
-
-    <!-- SCOP -->
-    <rect x="544" y="172" width="226" height="68" rx="10" fill="#1e1e1e"/>
-    <text x="556" y="195" fill="#666666" font-size="11">SCOP (season)</text>
-    <text x="556" y="222" fill="#2ca02c" font-size="22" font-weight="700">3.55</text>
-
-    <!-- Cost today -->
-    <rect x="780" y="172" width="226" height="68" rx="10" fill="#1e1e1e"/>
-    <text x="792" y="195" fill="#666666" font-size="11">Cost today</text>
-    <text x="792" y="222" fill="#cccccc" font-size="22" font-weight="700">3.26 €</text>
-
-    <!-- Thermal today -->
-    <rect x="1016" y="172" width="240" height="68" rx="10" fill="#1e1e1e"/>
-    <text x="1028" y="195" fill="#666666" font-size="11">Thermal today</text>
-    <text x="1028" y="222" fill="#e05a00" font-size="22" font-weight="700">42.6 kWh</text>
-  </g>
-
-  <!-- ── Row 3: Energy 7d chart ── -->
-  <rect x="72" y="256" width="1184" height="192" rx="12" fill="#1e1e1e"/>
-  <text x="92" y="282" fill="#aaaaaa" font-size="13" font-weight="600">Energy — last 7 days</text>
-  <text x="92" y="300" fill="#444444" font-size="11">Thermal kWh · Electrical kWh</text>
-
-  <!-- Chart bars -->
-  <g opacity="0.85">
-    <g><!-- Mo -->
-      <rect x="130" y="358" width="28" height="60" rx="3" fill="#e05a00"/>
-      <rect x="130" y="336" width="28" height="20" rx="3" fill="#17a2b8"/>
-      <text x="144" y="430" text-anchor="middle" fill="#555555" font-size="10">Mo</text>
+    <g opacity="0.8">
+      <rect x="76"  y="420" width="22" height="60" rx="2" fill="#e05a00"/>
+      <rect x="76"  y="402" width="22" height="16" rx="2" fill="#17a2b8"/>
+      <text x="87"  y="498" text-anchor="middle" fill="#3d5166" font-size="10">Mo</text>
     </g>
-    <g><!-- Tu -->
-      <rect x="290" y="348" width="28" height="70" rx="3" fill="#e05a00"/>
-      <rect x="290" y="328" width="28" height="18" rx="3" fill="#17a2b8"/>
-      <text x="304" y="430" text-anchor="middle" fill="#555555" font-size="10">Tu</text>
+    <g opacity="0.8">
+      <rect x="156" y="408" width="22" height="72" rx="2" fill="#e05a00"/>
+      <rect x="156" y="390" width="22" height="16" rx="2" fill="#17a2b8"/>
+      <text x="167" y="498" text-anchor="middle" fill="#3d5166" font-size="10">Tu</text>
     </g>
-    <g><!-- We -->
-      <rect x="450" y="340" width="28" height="78" rx="3" fill="#e05a00"/>
-      <rect x="450" y="318" width="28" height="20" rx="3" fill="#17a2b8"/>
-      <text x="464" y="430" text-anchor="middle" fill="#555555" font-size="10">We</text>
+    <g opacity="0.8">
+      <rect x="236" y="400" width="22" height="80" rx="2" fill="#e05a00"/>
+      <rect x="236" y="382" width="22" height="16" rx="2" fill="#17a2b8"/>
+      <text x="247" y="498" text-anchor="middle" fill="#3d5166" font-size="10">We</text>
     </g>
-    <g><!-- Th -->
-      <rect x="610" y="355" width="28" height="63" rx="3" fill="#e05a00"/>
-      <rect x="610" y="337" width="28" height="16" rx="3" fill="#17a2b8"/>
-      <text x="624" y="430" text-anchor="middle" fill="#555555" font-size="10">Th</text>
+    <g opacity="0.8">
+      <rect x="316" y="415" width="22" height="65" rx="2" fill="#e05a00"/>
+      <rect x="316" y="398" width="22" height="15" rx="2" fill="#17a2b8"/>
+      <text x="327" y="498" text-anchor="middle" fill="#3d5166" font-size="10">Th</text>
     </g>
-    <g><!-- Fr -->
-      <rect x="770" y="345" width="28" height="73" rx="3" fill="#e05a00"/>
-      <rect x="770" y="325" width="28" height="18" rx="3" fill="#17a2b8"/>
-      <text x="784" y="430" text-anchor="middle" fill="#555555" font-size="10">Fr</text>
+    <g opacity="0.8">
+      <rect x="396" y="405" width="22" height="75" rx="2" fill="#e05a00"/>
+      <rect x="396" y="388" width="22" height="15" rx="2" fill="#17a2b8"/>
+      <text x="407" y="498" text-anchor="middle" fill="#3d5166" font-size="10">Fr</text>
     </g>
-    <g><!-- Sa -->
-      <rect x="930" y="362" width="28" height="56" rx="3" fill="#e05a00"/>
-      <rect x="930" y="344" width="28" height="16" rx="3" fill="#17a2b8"/>
-      <text x="944" y="430" text-anchor="middle" fill="#555555" font-size="10">Sa</text>
+    <g opacity="0.8">
+      <rect x="476" y="422" width="22" height="58" rx="2" fill="#e05a00"/>
+      <rect x="476" y="406" width="22" height="14" rx="2" fill="#17a2b8"/>
+      <text x="487" y="498" text-anchor="middle" fill="#3d5166" font-size="10">Sa</text>
     </g>
-    <g><!-- Su -->
-      <rect x="1090" y="350" width="28" height="68" rx="3" fill="#e05a00"/>
-      <rect x="1090" y="332" width="28" height="16" rx="3" fill="#17a2b8"/>
-      <text x="1104" y="430" text-anchor="middle" fill="#555555" font-size="10">Su</text>
+    <g opacity="0.8">
+      <rect x="556" y="412" width="22" height="68" rx="2" fill="#e05a00"/>
+      <rect x="556" y="395" width="22" height="15" rx="2" fill="#17a2b8"/>
+      <text x="567" y="498" text-anchor="middle" fill="#3d5166" font-size="10">Su</text>
     </g>
   </g>
-  <!-- y-axis labels -->
-  <text x="88" y="330" fill="#333333" font-size="10">50</text>
-  <text x="88" y="370" fill="#333333" font-size="10">25</text>
-  <text x="88" y="422" fill="#333333" font-size="10">0</text>
-  <line x1="112" y1="418" x2="1244" y2="418" stroke="#2a2a2a" stroke-width="1"/>
+  <line x1="60" y1="482" x2="610" y2="482" stroke="#3d5166" stroke-opacity="0.4"/>
+  <!-- legend -->
+  <rect x="60"  y="488" width="10" height="10" fill="#e05a00"/>
+  <text x="76"  y="498" fill="#5a7a96" font-size="10">Thermal kWh</text>
+  <rect x="160" y="488" width="10" height="10" fill="#17a2b8"/>
+  <text x="176" y="498" fill="#5a7a96" font-size="10">Electrical kWh</text>
 
-  <!-- ── Row 4: COP 30d + Cycling 7d side by side ── -->
+  <!-- COP 30d sparkline -->
+  <rect x="636" y="306" width="604" height="196" rx="8" fill="#1a252f" stroke="#3d5166"/>
+  <text x="656" y="332" fill="#8ca8c0" font-size="13" font-weight="600">COP — last 30 days</text>
+  <line x1="636" y1="342" x2="1240" y2="342" stroke="#3d5166"/>
+  <polyline
+    points="660,448 680,438 700,442 720,428 740,422 760,435 780,418 800,424
+            820,412 840,430 860,416 880,410 900,420 920,406 940,414 960,400
+            980,408 1000,395 1020,403 1040,415 1060,402 1080,394 1100,408
+            1120,396 1140,388 1160,400 1180,390 1200,396 1220,382"
+    stroke="#17a2b8" stroke-width="2" fill="none" opacity="0.85"/>
+  <!-- zero / reference lines -->
+  <line x1="656" y1="470" x2="1228" y2="470" stroke="#3d5166" stroke-opacity="0.5"/>
+  <line x1="656" y1="460" x2="1228" y2="460" stroke="#3d5166" stroke-width="1" stroke-dasharray="3,3" stroke-opacity="0.3"/>
+  <text x="640" y="474" fill="#3d5166" font-size="10">0</text>
+  <text x="640" y="420" fill="#3d5166" font-size="10">3</text>
+  <text x="640" y="396" fill="#3d5166" font-size="10">4</text>
+  <!-- legend -->
+  <line x1="656" y1="494" x2="676" y2="494" stroke="#17a2b8" stroke-width="2"/>
+  <text x="682" y="498" fill="#5a7a96" font-size="10">Daily COP</text>
 
-  <!-- COP last 30 days -->
-  <rect x="72" y="464" width="578" height="192" rx="12" fill="#1e1e1e"/>
-  <text x="92" y="490" fill="#aaaaaa" font-size="13" font-weight="600">COP — last 30 days</text>
-  <!-- sparkline -->
-  <polyline points="112,610 145,592 178,598 211,580 244,572 277,588 310,565 343,570 376,558 409,575 442,562 475,555 508,568 541,550 574,560 607,545 640,552" stroke="#17a2b8" stroke-width="2" fill="none" opacity="0.8"/>
-  <line x1="112" y1="628" x2="628" y2="628" stroke="#2a2a2a" stroke-width="1"/>
-  <text x="92"  y="643" fill="#333333" font-size="10">0</text>
-  <text x="92"  y="580" fill="#333333" font-size="10">4</text>
-  <!-- Reference line COP=1 -->
-  <line x1="112" y1="615" x2="628" y2="615" stroke="#444444" stroke-width="1" stroke-dasharray="3,3"/>
-
-  <!-- Cycling last 7 days -->
-  <rect x="678" y="464" width="578" height="192" rx="12" fill="#1e1e1e"/>
-  <text x="698" y="490" fill="#aaaaaa" font-size="13" font-weight="600">Compressor cycles — last 7 days</text>
-  <!-- bar chart cycles -->
-  <g fill="#bcbd22" opacity="0.75">
-    <rect x="720" y="570" width="36" height="58" rx="3"/>
-    <rect x="800" y="580" width="36" height="48" rx="3"/>
-    <rect x="880" y="565" width="36" height="63" rx="3"/>
-    <rect x="960" y="575" width="36" height="53" rx="3"/>
-    <rect x="1040" y="568" width="36" height="60" rx="3"/>
-    <rect x="1120" y="578" width="36" height="50" rx="3"/>
-    <rect x="1200" y="572" width="36" height="56" rx="3"/>
-  </g>
-  <line x1="698" y1="628" x2="1244" y2="628" stroke="#2a2a2a" stroke-width="1"/>
-
-  <!-- ── Footer ── -->
-  <rect x="56" y="868" width="1224" height="32" fill="#161616"/>
-  <text x="80"  y="888" fill="#3a3a3a" font-size="11">HeatPump Hero v0.9.0-rc6</text>
-  <text x="1256" y="888" text-anchor="end" fill="#3a3a3a" font-size="11">placeholder — replace with real screenshot</text>
+  <!-- Footer -->
+  <text x="1240" y="714" text-anchor="end" fill="#3d5166" font-size="10" opacity="0.6">HeatPump Hero v0.9.0-rc6 — placeholder</text>
 
 </svg>
