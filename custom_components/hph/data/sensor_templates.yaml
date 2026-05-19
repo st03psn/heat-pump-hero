@@ -1079,15 +1079,6 @@ sensors:
     and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
   state: '{{ states(states(''text.hph_src_target_supply_temp'')) | float(0) }}'
   _source_package: hph_sources.yaml
-- name: HeatPump Hero Source Zone 1 Setpoint
-  unique_id: hph_source_zone1_setpoint
-  unit_of_measurement: °C
-  device_class: temperature
-  state_class: measurement
-  availability: '{% set ent = states(''text.hph_src_zone1_setpoint'') %} {{ ent
-    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
-  state: '{{ states(states(''text.hph_src_zone1_setpoint'')) | float(0) }}'
-  _source_package: hph_sources.yaml
 - name: HeatPump Hero Source Room Temperature
   unique_id: hph_source_room_temp
   unit_of_measurement: °C
@@ -1309,6 +1300,15 @@ sensors:
   availability: '{% set ent = states(''text.hph_src_opt_z1_mixing_valve'') %} {{ ent
     and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
   state: '{{ states(states(''text.hph_src_opt_z1_mixing_valve'')) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source S0 Power
+  unique_id: hph_source_s0_power
+  unit_of_measurement: W
+  device_class: power
+  state_class: measurement
+  availability: '{% set ent = states(''text.hph_src_s0_power'') %} {{ ent
+    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_s0_power'')) | float(0) }}'
   _source_package: hph_sources.yaml
 - name: HeatPump Hero Source Internal Thermal Power
   unique_id: hph_source_internal_thermal_power

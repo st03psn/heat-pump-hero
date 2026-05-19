@@ -309,18 +309,18 @@ views:
                   icon_color: deep-orange
               - type: conditional
                 conditions:
-                  - entity: sensor.hph_source_zone1_setpoint
+                  - entity: sensor.hph_source_zone1_target_temp
                     state_not: unavailable
                 card:
                   type: custom:mushroom-template-card
                   primary: >-
                     Z1 {{ states('sensor.hph_source_zone1_temp') | float(0) | round(1) }}°C
-                    / set {{ states('sensor.hph_source_zone1_setpoint') | float(0) | round(1) }}°C
+                    / set {{ states('sensor.hph_source_zone1_target_temp') | float(0) | round(1) }}°C
                   secondary: Zone 1 actual / setpoint
                   icon: mdi:thermostat
                   icon_color: >-
                     {% set diff = (states('sensor.hph_source_zone1_temp') | float(0))
-                                - (states('sensor.hph_source_zone1_setpoint') | float(0)) %}
+                                - (states('sensor.hph_source_zone1_target_temp') | float(0)) %}
                     {% if diff | abs > 3 %}red{% elif diff | abs > 1.5 %}amber{% else %}green{% endif %}
               - type: conditional
                 conditions:
@@ -1986,6 +1986,27 @@ views:
               icon_color: >-
                 {% set v = states('sensor.hph_source_opt_z1_mixing_valve') | lower %}
                 {{ 'orange' if v == 'increase' else ('blue' if v == 'decrease' else 'grey') }}
+              tap_action:
+                action: none
+
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_src_s0_power
+                state_not: ""
+              - condition: state
+                entity: sensor.hph_source_s0_power
+                state_not: "unavailable"
+              - condition: state
+                entity: sensor.hph_source_s0_power
+                state_not: "unknown"
+            card:
+              type: custom:mushroom-template-card
+              primary: S0 Power
+              secondary: "{{ states('sensor.hph_source_s0_power') | float(0) | round(0) }} W"
+              icon: mdi:flash-outline
+              icon_color: >-
+                {{ 'amber' if states('sensor.hph_source_s0_power') | float(0) > 0 else 'grey' }}
               tap_action:
                 action: none
 
@@ -3698,6 +3719,8 @@ views:
             name: External thermal power (W)
           - entity: text.hph_src_external_thermal_energy
             name: External heat meter (kWh, total_increasing)
+          - entity: text.hph_src_s0_power
+            name: S0 pulse power (W) — HeishaMon S0 input → set electrical source to sensor.hph_source_s0_power to use it
           - entity: text.hph_src_external_electrical_power
             name: External electrical power (W)
           - entity: text.hph_src_external_electrical_energy

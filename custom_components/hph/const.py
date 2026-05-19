@@ -67,7 +67,6 @@ VENDOR_PRESETS: Final[dict[str, dict[str, str]]] = {
         "hph_src_buffer_temp": "sensor.panasonic_heat_pump_main_buffer_temp",
         "hph_src_dhw_target_temp": "sensor.panasonic_heat_pump_main_dhw_target_temp",
         "hph_src_target_supply_temp": "sensor.panasonic_heat_pump_main_main_target_temp",
-        "hph_src_zone1_setpoint": "sensor.panasonic_heat_pump_main_z1_water_target_temp",
         "hph_src_room_temp": "sensor.panasonic_heat_pump_main_room_thermostat_temp",
         "hph_src_pump_speed": "sensor.panasonic_heat_pump_main_pump_speed",
         "hph_src_valve_state": "sensor.panasonic_heat_pump_main_twoway_valve_state",
@@ -106,6 +105,7 @@ VENDOR_PRESETS: Final[dict[str, dict[str, str]]] = {
         "hph_src_zone1_target_temp": "sensor.panasonic_heat_pump_main_z1_water_target_temp",
         "hph_src_hex_outlet_temp": "sensor.panasonic_heat_pump_main_main_hex_outlet_temp",
         "hph_src_pump_duty": "sensor.panasonic_heat_pump_main_pump_duty",
+        "hph_src_expansion_valve":      "sensor.panasonic_heat_pump_main_expansion_valve",
         # Heating curve reference points
         "hph_ctrl_write_z1_outside_low": "number.panasonic_heat_pump_main_z1_heat_curve_outside_low_temp",
         "hph_ctrl_write_z1_outside_high": "number.panasonic_heat_pump_main_z1_heat_curve_outside_high_temp",
@@ -139,6 +139,7 @@ VENDOR_PRESETS: Final[dict[str, dict[str, str]]] = {
         # Zone water temperatures
         "hph_src_z1_water_temp":        "sensor.panasonic_heat_pump_main_z1_water_temp",
         "hph_src_z2_water_temp":        "sensor.panasonic_heat_pump_main_z2_water_temp",
+        "hph_src_buffer_temp":          "sensor.panasonic_heat_pump_main_buffer_temp",
         # Binary heater / protection states
         "hph_src_internal_heater_state":"binary_sensor.panasonic_heat_pump_main_internal_heater_state",
         "hph_src_dhw_heater_state":     "binary_sensor.panasonic_heat_pump_main_dhw_heater_state",
@@ -151,6 +152,8 @@ VENDOR_PRESETS: Final[dict[str, dict[str, str]]] = {
         "hph_src_opt_z1_pump":              "binary_sensor.panasonic_heat_pump_optional_z1_water_pump",
         "hph_src_opt_z2_pump":              "",
         "hph_src_opt_z1_mixing_valve":      "sensor.panasonic_heat_pump_optional_z1_mixing_valve",
+        # S0 pulse counter (external electricity meter input on HeishaMon board)
+        "hph_src_s0_power":                 "sensor.panasonic_heat_pump_s0_watt",
     },
     "panasonic_heishamon_aquarea": {
         # Bundled HeishaMon MQTT YAML naming (aquarea_*)
@@ -464,8 +467,6 @@ TEXT_HELPERS: Final[dict[str, dict[str, Any]]] = {
                                  "initial": "sensor.panasonic_heat_pump_main_dhw_target_temperature"},
     "hph_src_target_supply_temp": {"name": "HeatPump Hero source — target supply temperature", "icon": "mdi:thermometer-chevron-up",
                                     "initial": ""},
-    "hph_src_zone1_setpoint": {"name": "HeatPump Hero source — zone 1 water target temperature", "icon": "mdi:thermostat",
-                                "initial": ""},
     "hph_src_room_temp": {"name": "HeatPump Hero source — room thermostat temperature", "icon": "mdi:home-thermometer",
                            "initial": ""},
     "hph_src_pump_speed": {"name": "HeatPump Hero source — pump speed (rpm)", "icon": "mdi:pump",
@@ -518,6 +519,12 @@ TEXT_HELPERS: Final[dict[str, dict[str, Any]]] = {
                                           "initial": ""},
     "hph_src_opt_z1_mixing_valve":      {"name": "HeatPump Hero source — Zone 1 mixing valve (Optional PCB)",
                                           "icon": "mdi:valve",
+                                          "initial": ""},
+    # S0 pulse counter — HeishaMon built-in S0 input (instantaneous W from external kWh meter)
+    # Set hph_src_external_electrical_power = sensor.hph_source_s0_power to use S0 as
+    # the electrical metering source.
+    "hph_src_s0_power":                 {"name": "HeatPump Hero source — S0 pulse counter power (W)",
+                                          "icon": "mdi:flash-outline",
                                           "initial": ""},
     "hph_ctrl_write_powerful_mode": {"name": "Control write — powerful/boost mode select entity (vendor-specific)", "icon": "mdi:rocket-launch",
                                       "initial": ""},
