@@ -1019,8 +1019,10 @@ sensors:
   unit_of_measurement: °C
   device_class: temperature
   state_class: measurement
-  availability: '{% set ent = states(''text.hph_src_zone2_temp'') %} {{ ent
-    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  availability: >-
+    {% set ent = states('text.hph_src_zone2_temp') %}
+    {{ ent != '' and states(ent) not in ['unknown','unavailable','none','']
+       and states(ent) | float(0) != -128 }}
   state: '{{ states(states(''text.hph_src_zone2_temp'')) | float(0) }}'
   _source_package: hph_sources.yaml
 - name: HeatPump Hero Source DHW Temperature
@@ -1028,8 +1030,10 @@ sensors:
   unit_of_measurement: °C
   device_class: temperature
   state_class: measurement
-  availability: '{% set ent = states(''text.hph_src_dhw_temp'') %} {{ ent and
-    states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  availability: >-
+    {% set ent = states('text.hph_src_dhw_temp') %}
+    {{ ent != '' and states(ent) not in ['unknown','unavailable','none','']
+       and states(ent) | float(0) != -128 }}
   state: '{{ states(states(''text.hph_src_dhw_temp'')) | float(0) }}'
   _source_package: hph_sources.yaml
 - name: HeatPump Hero Source Buffer Temperature
@@ -1182,7 +1186,97 @@ sensors:
   state_class: measurement
   availability: '{% set ent = states(''text.hph_src_pump_duty'') %} {{ ent and
     states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
-  state: '{{ states(states(''text.hph_src_pump_duty'')) | float(0) }}'
+  state: '{{ (states(states(''text.hph_src_pump_duty'')) | float(0) / 254 * 100) | round(1) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Expansion Valve
+  unique_id: hph_source_expansion_valve
+  unit_of_measurement: '%'
+  state_class: measurement
+  icon: mdi:valve
+  availability: >-
+    {% set ent = states('text.hph_src_expansion_valve') %}
+    {{ ent != '' and states(ent) not in ['unknown','unavailable','none',''] }}
+  state: '{% set ent = states(''text.hph_src_expansion_valve'') %} {{ (states(ent)
+    | float(0) / states(''number.hph_model_expansion_valve_max_steps'') | float(500)
+    * 100) | round(1) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Evaporator Outlet Temperature
+  unique_id: hph_source_eva_outlet_temp
+  unit_of_measurement: °C
+  device_class: temperature
+  state_class: measurement
+  availability: '{% set ent = states(''text.hph_src_eva_outlet_temp'') %} {{ ent
+    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_eva_outlet_temp'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Inside Pipe Temperature
+  unique_id: hph_source_inside_pipe_temp
+  unit_of_measurement: °C
+  device_class: temperature
+  state_class: measurement
+  availability: '{% set ent = states(''text.hph_src_inside_pipe_temp'') %} {{ ent
+    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_inside_pipe_temp'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Bypass Outlet Temperature
+  unique_id: hph_source_bypass_outlet_temp
+  unit_of_measurement: °C
+  device_class: temperature
+  state_class: measurement
+  availability: '{% set ent = states(''text.hph_src_bypass_outlet_temp'') %} {{ ent
+    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_bypass_outlet_temp'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Defrost Temperature
+  unique_id: hph_source_defrost_temp
+  unit_of_measurement: °C
+  device_class: temperature
+  state_class: measurement
+  availability: '{% set ent = states(''text.hph_src_defrost_temp'') %} {{ ent
+    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_defrost_temp'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source DHW Thermal Power
+  unique_id: hph_source_dhw_power_thermal
+  unit_of_measurement: W
+  device_class: power
+  state_class: measurement
+  icon: mdi:water-boiler
+  availability: '{% set ent = states(''text.hph_src_dhw_power_thermal'') %} {{ ent
+    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_dhw_power_thermal'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source DHW Electrical Power
+  unique_id: hph_source_dhw_power_electrical
+  unit_of_measurement: W
+  device_class: power
+  state_class: measurement
+  icon: mdi:water-boiler-alert
+  availability: '{% set ent = states(''text.hph_src_dhw_power_electrical'') %} {{ ent
+    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_dhw_power_electrical'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Zone 1 Water Temperature
+  unique_id: hph_source_z1_water_temp
+  unit_of_measurement: °C
+  device_class: temperature
+  state_class: measurement
+  availability: >-
+    {% set ent = states('text.hph_src_z1_water_temp') %}
+    {{ ent != '' and states(ent) not in ['unknown','unavailable','none','']
+       and states(ent) | float(0) != -78 }}
+  state: '{{ states(states(''text.hph_src_z1_water_temp'')) | float(0) }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Zone 2 Water Temperature
+  unique_id: hph_source_z2_water_temp
+  unit_of_measurement: °C
+  device_class: temperature
+  state_class: measurement
+  availability: >-
+    {% set ent = states('text.hph_src_z2_water_temp') %}
+    {{ ent != '' and states(ent) not in ['unknown','unavailable','none','']
+       and states(ent) | float(0) != -78 }}
+  state: '{{ states(states(''text.hph_src_z2_water_temp'')) | float(0) }}'
   _source_package: hph_sources.yaml
 - name: HeatPump Hero Source Internal Thermal Power
   unique_id: hph_source_internal_thermal_power

@@ -1775,6 +1775,42 @@ views:
               tap_action:
                 action: none
 
+          # Force DHW — conditional: only when DHW is present and writer is configured
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: binary_sensor.hph_has_dhw
+                state: "on"
+              - condition: template
+                value_template: >-
+                  {% set ent = states('text.hph_ctrl_write_force_dhw') %}
+                  {{ ent != '' and states(ent) not in ['unavailable','unknown'] }}
+            card:
+              type: custom:mushroom-template-card
+              entity: button.hph_force_dhw
+              primary: Force DHW
+              secondary: Trigger one forced DHW cycle
+              icon: mdi:water-boiler-auto
+              icon_color: blue
+              tap_action:
+                action: toggle
+
+          # Schedule — conditional: only when writer is configured
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_ctrl_write_schedule
+                state_not: ""
+            card:
+              type: custom:mushroom-template-card
+              entity: switch.hph_schedule
+              primary: Schedule
+              secondary: "{{ 'Active' if is_state('switch.hph_schedule','on') else 'Inactive' }}"
+              icon: mdi:calendar-clock
+              icon_color: "{{ 'green' if is_state('switch.hph_schedule','on') else 'grey' }}"
+              tap_action:
+                action: toggle
+
       # ── Section 8: Heating curve — Zone 1 ───────────────────────────────
       - type: custom:mushroom-title-card
         title: Heating Curve — Zone 1

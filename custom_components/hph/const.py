@@ -57,7 +57,8 @@ VENDOR_PRESETS: Final[dict[str, dict[str, str]]] = {
         "hph_src_pump_pressure": "sensor.panasonic_heat_pump_main_water_pressure",
         "hph_src_internal_power": "sensor.panasonic_heat_pump_main_heat_power_consumption",
         "hph_src_internal_thermal_power": "sensor.panasonic_heat_pump_main_heat_power_production",
-        "hph_src_defrost_state": "binary_sensor.panasonic_heat_pump_main_defrosting_state",
+        "hph_src_defrost_state": "switch.panasonic_heat_pump_main_defrosting_state",
+        "hph_src_expansion_valve": "sensor.panasonic_heat_pump_main_expansion_valve",
         "hph_src_aux_heater_state": "binary_sensor.panasonic_heat_pump_main_room_heater_state",
         "hph_src_operating_mode": "select.panasonic_heat_pump_main_operating_mode_state",
         "hph_src_zone1_temp": "sensor.panasonic_heat_pump_main_z1_temp",
@@ -127,6 +128,23 @@ VENDOR_PRESETS: Final[dict[str, dict[str, str]]] = {
         "hph_src_force_heater": "binary_sensor.panasonic_heat_pump_main_force_heater_state",
         "hph_src_sterilization": "binary_sensor.panasonic_heat_pump_main_sterilization_state",
         "hph_src_quiet_schedule": "binary_sensor.panasonic_heat_pump_main_quiet_mode_schedule",
+        # Refrigerant circuit temperatures
+        "hph_src_eva_outlet_temp":      "sensor.panasonic_heat_pump_main_eva_outlet_temp",
+        "hph_src_inside_pipe_temp":     "sensor.panasonic_heat_pump_main_inside_pipe_temp",
+        "hph_src_bypass_outlet_temp":   "sensor.panasonic_heat_pump_main_bypass_outlet_temp",
+        "hph_src_defrost_temp":         "sensor.panasonic_heat_pump_main_defrost_temp",
+        # DHW power
+        "hph_src_dhw_power_thermal":    "sensor.panasonic_heat_pump_main_dhw_power_production",
+        "hph_src_dhw_power_electrical": "sensor.panasonic_heat_pump_main_dhw_power_consumption",
+        # Zone water temperatures
+        "hph_src_z1_water_temp":        "sensor.panasonic_heat_pump_main_z1_water_temp",
+        "hph_src_z2_water_temp":        "sensor.panasonic_heat_pump_main_z2_water_temp",
+        # Binary heater / protection states
+        "hph_src_internal_heater_state":"binary_sensor.panasonic_heat_pump_main_internal_heater_state",
+        "hph_src_dhw_heater_state":     "binary_sensor.panasonic_heat_pump_main_dhw_heater_state",
+        "hph_src_antifreeze_mode":      "binary_sensor.panasonic_heat_pump_main_anti_freeze_mode",
+        # Control switches
+        "hph_ctrl_write_schedule":      "switch.panasonic_heat_pump_main_main_schedule_state",
     },
     "panasonic_heishamon_aquarea": {
         # Bundled HeishaMon MQTT YAML naming (aquarea_*)
@@ -392,8 +410,36 @@ TEXT_HELPERS: Final[dict[str, dict[str, Any]]] = {
                                  "initial": ""},
     "hph_src_pump_duty": {"name": "HeatPump Hero source — pump duty cycle (%)", "icon": "mdi:pump",
                            "initial": ""},
-    "hph_src_defrost_state": {"name": "HeatPump Hero source — defrost state (binary)", "icon": "mdi:snowflake-melt",
-                               "initial": "binary_sensor.panasonic_heat_pump_main_defrost_state"},
+    "hph_src_expansion_valve": {"name": "HeatPump Hero source — expansion valve position (steps→%)", "icon": "mdi:valve",
+                                 "initial": ""},
+    # Refrigerant circuit temperatures
+    "hph_src_eva_outlet_temp":      {"name": "HeatPump Hero source — evaporator outlet temperature", "icon": "mdi:thermometer-low",
+                                      "initial": "sensor.panasonic_heat_pump_main_eva_outlet_temp"},
+    "hph_src_inside_pipe_temp":     {"name": "HeatPump Hero source — inside pipe temperature", "icon": "mdi:pipe",
+                                      "initial": "sensor.panasonic_heat_pump_main_inside_pipe_temp"},
+    "hph_src_bypass_outlet_temp":   {"name": "HeatPump Hero source — bypass outlet temperature", "icon": "mdi:pipe-valve",
+                                      "initial": "sensor.panasonic_heat_pump_main_bypass_outlet_temp"},
+    "hph_src_defrost_temp":         {"name": "HeatPump Hero source — defrost temperature", "icon": "mdi:snowflake-thermometer",
+                                      "initial": "sensor.panasonic_heat_pump_main_defrost_temp"},
+    # DHW power (W)
+    "hph_src_dhw_power_thermal":    {"name": "HeatPump Hero source — DHW thermal power (W)", "icon": "mdi:water-boiler",
+                                      "initial": "sensor.panasonic_heat_pump_main_dhw_power_production"},
+    "hph_src_dhw_power_electrical": {"name": "HeatPump Hero source — DHW electrical power (W)", "icon": "mdi:water-boiler-alert",
+                                      "initial": "sensor.panasonic_heat_pump_main_dhw_power_consumption"},
+    # Zone water temperatures (-78 = sensor not installed)
+    "hph_src_z1_water_temp":        {"name": "HeatPump Hero source — zone 1 water temperature", "icon": "mdi:thermometer-water",
+                                      "initial": "sensor.panasonic_heat_pump_main_z1_water_temp"},
+    "hph_src_z2_water_temp":        {"name": "HeatPump Hero source — zone 2 water temperature", "icon": "mdi:thermometer-water",
+                                      "initial": ""},
+    # Binary heater / protection states
+    "hph_src_internal_heater_state":{"name": "HeatPump Hero source — internal heater state", "icon": "mdi:heating-coil",
+                                      "initial": "binary_sensor.panasonic_heat_pump_main_internal_heater_state"},
+    "hph_src_dhw_heater_state":     {"name": "HeatPump Hero source — DHW heater state", "icon": "mdi:water-boiler-alert",
+                                      "initial": "binary_sensor.panasonic_heat_pump_main_dhw_heater_state"},
+    "hph_src_antifreeze_mode":      {"name": "HeatPump Hero source — anti-freeze mode active", "icon": "mdi:snowflake-alert",
+                                      "initial": "binary_sensor.panasonic_heat_pump_main_anti_freeze_mode"},
+    "hph_src_defrost_state": {"name": "HeatPump Hero source — defrost state (switch/binary)", "icon": "mdi:snowflake-melt",
+                               "initial": "switch.panasonic_heat_pump_main_defrosting_state"},
     "hph_src_aux_heater_state": {"name": "HeatPump Hero source — auxiliary heater state (binary)", "icon": "mdi:radiator-disabled",
                                   "initial": "binary_sensor.panasonic_heat_pump_main_heater_state"},
     "hph_src_operating_mode": {"name": "HeatPump Hero source — operating mode (select)", "icon": "mdi:fire",
@@ -451,6 +497,8 @@ TEXT_HELPERS: Final[dict[str, dict[str, Any]]] = {
     "hph_ctrl_write_holiday": {"name": "Control write — holiday mode switch entity", "icon": "mdi:beach",
                                 "initial": ""},
     "hph_ctrl_write_force_defrost": {"name": "Control write — force defrost switch entity", "icon": "mdi:snowflake-melt",
+                                      "initial": ""},
+    "hph_ctrl_write_schedule":      {"name": "Control write — main schedule", "icon": "mdi:calendar-clock",
                                       "initial": ""},
     "hph_ctrl_write_powerful_mode": {"name": "Control write — powerful/boost mode select entity (vendor-specific)", "icon": "mdi:rocket-launch",
                                       "initial": ""},
@@ -640,6 +688,9 @@ NUMBER_HELPERS: Final[dict[str, dict[str, Any]]] = {
     "hph_model_max_supply_c": {"name": "Model — maximum supply temperature (°C)",
                                  "icon": "mdi:thermometer-high", "min": 35, "max": 80,
                                  "step": 1, "initial": 55},
+    "hph_model_expansion_valve_max_steps": {"name": "Model — expansion valve maximum position (steps)",
+                                             "icon": "mdi:valve", "min": 100, "max": 1000,
+                                             "step": 10, "initial": 500},
     # Programs — screed
     "hph_prog_screed_day": {"name": "Screed dry-out — current day index (0 = not running)",
                               "icon": "mdi:calendar-today",
@@ -858,6 +909,10 @@ CTRL_FACADES: Final[dict[str, dict[str, Any]]] = {
     "hph_force_defrost": {
         "platform": "switch", "writer": "hph_ctrl_write_force_defrost",
         "name": "Force defrost", "icon": "mdi:snowflake-melt",
+    },
+    "hph_schedule": {
+        "platform": "switch", "writer": "hph_ctrl_write_schedule",
+        "name": "Schedule", "icon": "mdi:calendar-clock",
     },
     # Numbers (continuous values)
     "hph_z1_curve_high": {
