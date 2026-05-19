@@ -23,348 +23,506 @@ views:
         cards:
 
           # ── Row A: Status bar ───────────────────────────────────────────────
-          - type: custom:mushroom-chips-card
-            chips:
-              - type: template
-                icon: mdi:heat-pump
-                content: "{{ states('sensor.hph_operating_mode') | title }}"
-                icon_color: >-
-                  {{ 'green' if is_state('binary_sensor.hph_compressor_running','on') else 'grey' }}
-              - type: template
-                icon: mdi:thermometer
-                content: "{{ states('sensor.hph_source_outdoor_temp') }} °C"
-                icon_color: blue
-              - type: template
-                icon: mdi:water-thermometer
-                content: >-
-                  {{ states('sensor.hph_source_outlet_temp') }}°C
-                  / {{ states('sensor.hph_source_inlet_temp') }}°C
-                icon_color: red
-              - type: template
-                icon: mdi:sine-wave
-                content: "{{ states('sensor.hph_source_compressor_freq') }} Hz"
-                icon_color: >-
-                  {{ 'green' if is_state('binary_sensor.hph_compressor_running','on') else 'grey' }}
-              - type: template
-                icon: mdi:gauge
-                content: "{{ states('sensor.hph_source_pump_pressure') }} bar"
-              - type: template
-                icon: mdi:snowflake-melt
-                content: "{{ 'Defrost' if is_state('binary_sensor.hph_defrost_active','on') else '' }}"
-                icon_color: cyan
-                conditions:
-                  - condition: state
-                    entity: binary_sensor.hph_defrost_active
-                    state: "on"
-              - type: template
-                icon: mdi:database-alert
-                content: >-
-                  {% set h = states('sensor.hph_source_health') %}
-                  {% if h == 'thermal_stale' %}WMZ stale
-                  {% elif h == 'electrical_stale' %}Strom stale
-                  {% elif h == 'both_stale' %}Quellen stale
-                  {% else %}{% endif %}
-                icon_color: red
-                tap_action:
-                  action: navigate
-                  navigation_path: /hph/optimization
-                conditions:
-                  - condition: state
-                    entity: sensor.hph_source_health
-                    state:
-                      - thermal_stale
-                      - electrical_stale
-                      - both_stale
 
-          # ── Row B: Hero — operating mode + live COP (Panasonic-style) ─────
-          # Left border color follows active mode. Values are the headline;
-          # label is secondary. badge shows COP quality at a glance.
-          - type: custom:mushroom-template-card
-            primary: >-
-              {% set mode = states('sensor.hph_operating_mode') %}
-              {% set on = is_state('binary_sensor.hph_compressor_running','on') %}
-              {% if on %}
-                {% if mode == 'heating' %}Heating
-                {% elif mode == 'dhw' %}Hot Water
-                {% elif mode == 'cooling' %}Cooling
-                {% else %}Running{% endif %}
-              {% else %}
-                {% if mode == 'heating' %}Idle — Heating mode
-                {% elif mode == 'dhw' %}Idle — DHW mode
-                {% elif mode == 'cooling' %}Idle — Cooling mode
-                {% else %}Standby{% endif %}
-              {% endif %}
-              — COP live {{ states('sensor.hph_cop_live') | float(0) | round(2) }}
-              {%- if is_state('binary_sensor.hph_defrost_active','on') %} (×0 defrost){% endif %}
-            secondary: >-
-              {% set t = states('sensor.hph_thermal_power_active') | float(0) %}
-              {% set e = states('sensor.hph_electrical_power_active') | float(0) %}
-              Supply {{ states('sensor.hph_source_outlet_temp') }}°C → Return {{ states('sensor.hph_source_inlet_temp') }}°C
-              · Δ {{ states('sensor.hph_water_spread') | float(0) | round(1) }} K
-              · {{ states('sensor.hph_source_flow_rate') }} L/min
-              · Thermal {% if t >= 1000 %}{{ (t / 1000) | round(2) }} kW{% else %}{{ t | round(0) | int }} W{% endif %}
-              · Electrical {% if e >= 1000 %}{{ (e / 1000) | round(2) }} kW{% else %}{{ e | round(0) | int }} W{% endif %}
-            icon: >-
-              {% set mode = states('sensor.hph_operating_mode') %}
-              {% set on = is_state('binary_sensor.hph_compressor_running','on') %}
-              {% if mode == 'heating' %}{{ 'mdi:radiator' if on else 'mdi:radiator-off' }}
-              {% elif mode == 'dhw' %}{{ 'mdi:water-boiler' if on else 'mdi:water-boiler-off' }}
-              {% elif mode == 'cooling' %}{{ 'mdi:snowflake' if on else 'mdi:snowflake-off' }}
-              {% else %}mdi:heat-pump{% endif %}
-            icon_color: >-
-              {% set mode = states('sensor.hph_operating_mode') %}
-              {% set on = is_state('binary_sensor.hph_compressor_running','on') %}
-              {% if on and mode == 'heating' %}deep-orange
-              {% elif on and mode == 'dhw' %}light-blue
-              {% elif on and mode == 'cooling' %}cyan
-              {% else %}blue-grey{% endif %}
-            badge_icon: >-
-              {% set cop = states('sensor.hph_cop_live') | float(0) %}
-              {% if cop >= 3.5 %}mdi:star
-              {% elif cop >= 2.5 %}mdi:star-half-full
-              {% elif cop > 0 %}mdi:star-outline
-              {% else %}mdi:pause-circle-outline{% endif %}
-            badge_color: >-
-              {% set cop = states('sensor.hph_cop_live') | float(0) %}
-              {% if cop >= 3.5 %}green{% elif cop >= 2.5 %}amber{% elif cop > 0 %}red{% else %}grey{% endif %}
-            multiline_secondary: true
-            fill_container: true
-            card_mod:
-              style: >-
-                ha-card {
-                  border-left: 4px solid
+          # ── Mushroom style (default) ──────────────────────────────────────────
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: select.hph_ui_style
+                state: mushroom
+            card:
+              type: vertical-stack
+              cards:
+
+                - type: custom:mushroom-chips-card
+                  chips:
+                    - type: template
+                      icon: mdi:heat-pump
+                      content: "{{ states('sensor.hph_operating_mode') | title }}"
+                      icon_color: >-
+                        {{ 'green' if is_state('binary_sensor.hph_compressor_running','on') else 'grey' }}
+                    - type: template
+                      icon: mdi:thermometer
+                      content: "{{ states('sensor.hph_source_outdoor_temp') }} °C"
+                      icon_color: blue
+                    - type: template
+                      icon: mdi:water-thermometer
+                      content: >-
+                        {{ states('sensor.hph_source_outlet_temp') }}°C
+                        / {{ states('sensor.hph_source_inlet_temp') }}°C
+                      icon_color: red
+                    - type: template
+                      icon: mdi:sine-wave
+                      content: "{{ states('sensor.hph_source_compressor_freq') }} Hz"
+                      icon_color: >-
+                        {{ 'green' if is_state('binary_sensor.hph_compressor_running','on') else 'grey' }}
+                    - type: template
+                      icon: mdi:gauge
+                      content: "{{ states('sensor.hph_source_pump_pressure') }} bar"
+                    - type: template
+                      icon: mdi:snowflake-melt
+                      content: "{{ 'Defrost' if is_state('binary_sensor.hph_defrost_active','on') else '' }}"
+                      icon_color: cyan
+                      conditions:
+                        - condition: state
+                          entity: binary_sensor.hph_defrost_active
+                          state: "on"
+                    - type: template
+                      icon: mdi:database-alert
+                      content: >-
+                        {% set h = states('sensor.hph_source_health') %}
+                        {% if h == 'thermal_stale' %}WMZ stale
+                        {% elif h == 'electrical_stale' %}Strom stale
+                        {% elif h == 'both_stale' %}Quellen stale
+                        {% else %}{% endif %}
+                      icon_color: red
+                      tap_action:
+                        action: navigate
+                        navigation_path: /hph/optimization
+                      conditions:
+                        - condition: state
+                          entity: sensor.hph_source_health
+                          state:
+                            - thermal_stale
+                            - electrical_stale
+                            - both_stale
+
+                # ── Row B: Hero — operating mode + live COP (Panasonic-style) ─────
+                # Left border color follows active mode. Values are the headline;
+                # label is secondary. badge shows COP quality at a glance.
+                - type: custom:mushroom-template-card
+                  primary: >-
+                    {% set mode = states('sensor.hph_operating_mode') %}
                     {% set on = is_state('binary_sensor.hph_compressor_running','on') %}
-                    {% if on and is_state('sensor.hph_operating_mode','heating') %}#FF7043
-                    {% elif on and is_state('sensor.hph_operating_mode','dhw') %}#42A5F5
-                    {% elif on and is_state('sensor.hph_operating_mode','cooling') %}#64B5F6
-                    {% else %}#78909C{% endif %};
-                }
-
-          # ── Row C: Conditional active fault (only when present) ─────────────
-          - type: conditional
-            conditions:
-              - entity: sensor.hph_diagnostics_current_error
-                state_not: ok
-            card:
-              type: custom:mushroom-template-card
-              primary: |-
-                Fault: {{ states('sensor.hph_diagnostics_current_error') }}
-              secondary: >-
-                {{ state_attr('sensor.hph_diagnostics_current_error','message') }}
-              icon: mdi:alert-octagon
-              icon_color: red
-              multiline_secondary: true
-              fill_container: true
-              tap_action:
-                action: navigate
-                navigation_path: /hph/optimization
-
-          # ── Row D: KPI strip — values as primary (large), label as secondary ─
-          # COP cards are color-coded: ≥3.5 green, 2.5-3.49 amber, <2.5 red.
-          - type: grid
-            columns: 5
-            square: false
-            cards:
-              - type: custom:mushroom-template-card
-                primary: "{{ states('sensor.hph_cop_daily') | float(0) | round(2) }}"
-                secondary: COP today
-                icon: mdi:calendar-today
-                icon_color: >-
-                  {% set cop = states('sensor.hph_cop_daily') | float(0) %}
-                  {% if cop >= 3.5 %}green{% elif cop >= 2.5 %}amber{% elif cop > 0 %}red{% else %}grey{% endif %}
-                fill_container: true
-                tap_action:
-                  action: navigate
-                  navigation_path: /hph/efficiency
-              - type: custom:mushroom-template-card
-                primary: "{{ states('sensor.hph_cop_monthly') | float(0) | round(2) }}"
-                secondary: COP month
-                icon: mdi:calendar-month
-                icon_color: >-
-                  {% set cop = states('sensor.hph_cop_monthly') | float(0) %}
-                  {% if cop >= 3.5 %}green{% elif cop >= 2.5 %}amber{% elif cop > 0 %}red{% else %}grey{% endif %}
-                fill_container: true
-                tap_action:
-                  action: navigate
-                  navigation_path: /hph/efficiency
-              - type: custom:mushroom-template-card
-                primary: "{{ states('sensor.hph_scop') | float(0) | round(2) }}"
-                secondary: SCOP season
-                icon: mdi:calendar-star
-                icon_color: >-
-                  {% set cop = states('sensor.hph_scop') | float(0) %}
-                  {% if cop >= 3.5 %}green{% elif cop >= 2.5 %}amber{% elif cop > 0 %}red{% else %}grey{% endif %}
-                fill_container: true
-                tap_action:
-                  action: navigate
-                  navigation_path: /hph/efficiency
-              - type: custom:mushroom-template-card
-                primary: "{{ states('sensor.hph_cost_today') | float(0) | round(2) }} €"
-                secondary: Cost today
-                icon: mdi:currency-eur
-                icon_color: >-
-                  {% set v = states('sensor.hph_cost_today') | float(0) %}
-                  {% if v > 5 %}red{% elif v > 2 %}orange{% else %}green{% endif %}
-                fill_container: true
-              - type: custom:mushroom-template-card
-                primary: "{{ states('sensor.hph_cost_monthly') | float(0) | round(2) }} €"
-                secondary: Cost month
-                icon: mdi:currency-eur
-                fill_container: true
-                tap_action:
-                  action: navigate
-                  navigation_path: /hph/efficiency
-
-          # ── Row G: Conditional Screed running (only during program) ─────────
-          - type: conditional
-            conditions:
-              - entity: sensor.hph_prog_screed_status
-                state: running
-            card:
-              type: custom:mushroom-template-card
-              primary: Screed running
-              secondary: >-
-                Day {{ states('number.hph_prog_screed_day') }} —
-                target {{ states('sensor.hph_prog_screed_target') }} °C
-              icon: mdi:home-floor-a
-              icon_color: orange
-              fill_container: true
-              tap_action:
-                action: navigate
-                navigation_path: /hph/programs
-
-          # ── Live status panel (full width, 4-col grid) ───────────────────────
-          - type: grid
-            columns: 4
-            square: false
-            cards:
-              - type: custom:mushroom-template-card
-                primary: >-
-                  {{ states('sensor.hph_source_outlet_temp') }}°C → {{ states('sensor.hph_source_inlet_temp') }}°C
-                secondary: Supply / Return
-                icon: mdi:water-thermometer
-                icon_color: orange
-              - type: custom:mushroom-template-card
-                primary: >-
-                  Delta {{ states('sensor.hph_water_spread') | float(0) | round(1) }} K  |  {{ states('sensor.hph_source_flow_rate') }} L/min
-                secondary: Spread  |  Flow
-                icon: mdi:waves-arrow-right
-                icon_color: blue
-              - type: custom:mushroom-template-card
-                primary: "{{ states('sensor.hph_source_outdoor_temp') }}°C"
-                secondary: Outdoor temperature
-                icon: mdi:thermometer
-                icon_color: yellow
-              - type: custom:mushroom-template-card
-                primary: "{{ states('sensor.hph_source_compressor_freq') }} Hz"
-                secondary: Compressor frequency
-                icon: mdi:sine-wave
-                icon_color: >-
-                  {{ 'green' if is_state('binary_sensor.hph_compressor_running','on') else 'grey' }}
-              - type: custom:mushroom-template-card
-                primary: >-
-                  {% set s = states('sensor.hph_advisor_summary') %}
-                  {% if s == 'critical' %}Action required
-                  {% elif s == 'warn' %}Warnings present
-                  {% else %}All clear{% endif %}
-                secondary: Advisor
-                icon: mdi:lightbulb-on
-                icon_color: >-
-                  {% set s = states('sensor.hph_advisor_summary') %}
-                  {% if s == 'critical' %}red{% elif s == 'warn' %}amber{% else %}green{% endif %}
-                tap_action:
-                  action: navigate
-                  navigation_path: /hph/optimization
-              - type: custom:mushroom-template-card
-                primary: >-
-                  {{ states('sensor.hph_schema_variant_active') | replace('_',' ') | upper }}
-                secondary: Installation variant
-                icon: mdi:graph-outline
-                icon_color: blue
-              - type: custom:mushroom-template-card
-                primary: >-
-                  {{ states('sensor.hph_standby_electrical_daily') | float(0) | round(2) }} kWh standby today
-                secondary: >-
-                  Runtime {{ states('sensor.hph_electrical_runtime_daily') | float(0) | round(2) }} kWh
-                  / Total {{ states('sensor.hph_electrical_daily') | float(0) | round(2) }} kWh
-                icon: mdi:power-sleep
-                icon_color: >-
-                  {% set ratio = states('sensor.hph_standby_electrical_daily') | float(0)
-                               / [states('sensor.hph_electrical_daily') | float(0.001), 0.001] | max %}
-                  {% if ratio > 0.5 %}amber{% elif ratio > 0.3 %}yellow{% else %}grey{% endif %}
-                tap_action:
-                  action: navigate
-                  navigation_path: /hph/efficiency
-              - type: conditional
-                conditions:
-                  - entity: sensor.hph_source_target_supply_temp
-                    state_not: unavailable
-                card:
-                  type: custom:mushroom-template-card
-                  primary: >-
-                    {{ states('sensor.hph_source_target_supply_temp') | float(0) | round(1) }}°C
-                    → {{ states('sensor.hph_source_outlet_temp') | float(0) | round(1) }}°C
-                  secondary: Target / actual supply
-                  icon: mdi:thermometer-chevron-up
-                  icon_color: deep-orange
-              - type: conditional
-                conditions:
-                  - entity: sensor.hph_source_zone1_target_temp
-                    state_not: unavailable
-                card:
-                  type: custom:mushroom-template-card
-                  primary: >-
-                    Z1 {{ states('sensor.hph_source_zone1_temp') | float(0) | round(1) }}°C
-                    / set {{ states('sensor.hph_source_zone1_target_temp') | float(0) | round(1) }}°C
-                  secondary: Zone 1 actual / setpoint
-                  icon: mdi:thermostat
+                    {% if on %}
+                      {% if mode == 'heating' %}Heating
+                      {% elif mode == 'dhw' %}Hot Water
+                      {% elif mode == 'cooling' %}Cooling
+                      {% else %}Running{% endif %}
+                    {% else %}
+                      {% if mode == 'heating' %}Idle — Heating mode
+                      {% elif mode == 'dhw' %}Idle — DHW mode
+                      {% elif mode == 'cooling' %}Idle — Cooling mode
+                      {% else %}Standby{% endif %}
+                    {% endif %}
+                    — COP live {{ states('sensor.hph_cop_live') | float(0) | round(2) }}
+                    {%- if is_state('binary_sensor.hph_defrost_active','on') %} (×0 defrost){% endif %}
+                  secondary: >-
+                    {% set t = states('sensor.hph_thermal_power_active') | float(0) %}
+                    {% set e = states('sensor.hph_electrical_power_active') | float(0) %}
+                    Supply {{ states('sensor.hph_source_outlet_temp') }}°C → Return {{ states('sensor.hph_source_inlet_temp') }}°C
+                    · Δ {{ states('sensor.hph_water_spread') | float(0) | round(1) }} K
+                    · {{ states('sensor.hph_source_flow_rate') }} L/min
+                    · Thermal {% if t >= 1000 %}{{ (t / 1000) | round(2) }} kW{% else %}{{ t | round(0) | int }} W{% endif %}
+                    · Electrical {% if e >= 1000 %}{{ (e / 1000) | round(2) }} kW{% else %}{{ e | round(0) | int }} W{% endif %}
+                  icon: >-
+                    {% set mode = states('sensor.hph_operating_mode') %}
+                    {% set on = is_state('binary_sensor.hph_compressor_running','on') %}
+                    {% if mode == 'heating' %}{{ 'mdi:radiator' if on else 'mdi:radiator-off' }}
+                    {% elif mode == 'dhw' %}{{ 'mdi:water-boiler' if on else 'mdi:water-boiler-off' }}
+                    {% elif mode == 'cooling' %}{{ 'mdi:snowflake' if on else 'mdi:snowflake-off' }}
+                    {% else %}mdi:heat-pump{% endif %}
                   icon_color: >-
-                    {% set diff = (states('sensor.hph_source_zone1_temp') | float(0))
-                                - (states('sensor.hph_source_zone1_target_temp') | float(0)) %}
-                    {% if diff | abs > 3 %}red{% elif diff | abs > 1.5 %}amber{% else %}green{% endif %}
-              - type: conditional
-                conditions:
-                  - entity: sensor.hph_source_room_temp
-                    state_not: unavailable
-                card:
-                  type: custom:mushroom-template-card
-                  primary: "{{ states('sensor.hph_source_room_temp') | float(0) | round(1) }}°C"
-                  secondary: Zone 1 reference room temperature
-                  icon: mdi:home-thermometer
+                    {% set mode = states('sensor.hph_operating_mode') %}
+                    {% set on = is_state('binary_sensor.hph_compressor_running','on') %}
+                    {% if on and mode == 'heating' %}deep-orange
+                    {% elif on and mode == 'dhw' %}light-blue
+                    {% elif on and mode == 'cooling' %}cyan
+                    {% else %}blue-grey{% endif %}
+                  badge_icon: >-
+                    {% set cop = states('sensor.hph_cop_live') | float(0) %}
+                    {% if cop >= 3.5 %}mdi:star
+                    {% elif cop >= 2.5 %}mdi:star-half-full
+                    {% elif cop > 0 %}mdi:star-outline
+                    {% else %}mdi:pause-circle-outline{% endif %}
+                  badge_color: >-
+                    {% set cop = states('sensor.hph_cop_live') | float(0) %}
+                    {% if cop >= 3.5 %}green{% elif cop >= 2.5 %}amber{% elif cop > 0 %}red{% else %}grey{% endif %}
+                  multiline_secondary: true
+                  fill_container: true
+                  card_mod:
+                    style: >-
+                      ha-card {
+                        border-left: 4px solid
+                          {% set on = is_state('binary_sensor.hph_compressor_running','on') %}
+                          {% if on and is_state('sensor.hph_operating_mode','heating') %}#FF7043
+                          {% elif on and is_state('sensor.hph_operating_mode','dhw') %}#42A5F5
+                          {% elif on and is_state('sensor.hph_operating_mode','cooling') %}#64B5F6
+                          {% else %}#78909C{% endif %};
+                      }
+
+                # ── Row C: Conditional active fault (only when present) ─────────────
+                - type: conditional
+                  conditions:
+                    - entity: sensor.hph_diagnostics_current_error
+                      state_not: ok
+                  card:
+                    type: custom:mushroom-template-card
+                    primary: |-
+                      Fault: {{ states('sensor.hph_diagnostics_current_error') }}
+                    secondary: >-
+                      {{ state_attr('sensor.hph_diagnostics_current_error','message') }}
+                    icon: mdi:alert-octagon
+                    icon_color: red
+                    multiline_secondary: true
+                    fill_container: true
+                    tap_action:
+                      action: navigate
+                      navigation_path: /hph/optimization
+
+                # ── Row D: KPI strip — values as primary (large), label as secondary ─
+                # COP cards are color-coded: ≥3.5 green, 2.5-3.49 amber, <2.5 red.
+                - type: grid
+                  columns: 5
+                  square: false
+                  cards:
+                    - type: custom:mushroom-template-card
+                      primary: "{{ states('sensor.hph_cop_daily') | float(0) | round(2) }}"
+                      secondary: COP today
+                      icon: mdi:calendar-today
+                      icon_color: >-
+                        {% set cop = states('sensor.hph_cop_daily') | float(0) %}
+                        {% if cop >= 3.5 %}green{% elif cop >= 2.5 %}amber{% elif cop > 0 %}red{% else %}grey{% endif %}
+                      fill_container: true
+                      tap_action:
+                        action: navigate
+                        navigation_path: /hph/efficiency
+                    - type: custom:mushroom-template-card
+                      primary: "{{ states('sensor.hph_cop_monthly') | float(0) | round(2) }}"
+                      secondary: COP month
+                      icon: mdi:calendar-month
+                      icon_color: >-
+                        {% set cop = states('sensor.hph_cop_monthly') | float(0) %}
+                        {% if cop >= 3.5 %}green{% elif cop >= 2.5 %}amber{% elif cop > 0 %}red{% else %}grey{% endif %}
+                      fill_container: true
+                      tap_action:
+                        action: navigate
+                        navigation_path: /hph/efficiency
+                    - type: custom:mushroom-template-card
+                      primary: "{{ states('sensor.hph_scop') | float(0) | round(2) }}"
+                      secondary: SCOP season
+                      icon: mdi:calendar-star
+                      icon_color: >-
+                        {% set cop = states('sensor.hph_scop') | float(0) %}
+                        {% if cop >= 3.5 %}green{% elif cop >= 2.5 %}amber{% elif cop > 0 %}red{% else %}grey{% endif %}
+                      fill_container: true
+                      tap_action:
+                        action: navigate
+                        navigation_path: /hph/efficiency
+                    - type: custom:mushroom-template-card
+                      primary: "{{ states('sensor.hph_cost_today') | float(0) | round(2) }} €"
+                      secondary: Cost today
+                      icon: mdi:currency-eur
+                      icon_color: >-
+                        {% set v = states('sensor.hph_cost_today') | float(0) %}
+                        {% if v > 5 %}red{% elif v > 2 %}orange{% else %}green{% endif %}
+                      fill_container: true
+                    - type: custom:mushroom-template-card
+                      primary: "{{ states('sensor.hph_cost_monthly') | float(0) | round(2) }} €"
+                      secondary: Cost month
+                      icon: mdi:currency-eur
+                      fill_container: true
+                      tap_action:
+                        action: navigate
+                        navigation_path: /hph/efficiency
+
+                # ── Row G: Conditional Screed running (only during program) ─────────
+                - type: conditional
+                  conditions:
+                    - entity: sensor.hph_prog_screed_status
+                      state: running
+                  card:
+                    type: custom:mushroom-template-card
+                    primary: Screed running
+                    secondary: >-
+                      Day {{ states('number.hph_prog_screed_day') }} —
+                      target {{ states('sensor.hph_prog_screed_target') }} °C
+                    icon: mdi:home-floor-a
+                    icon_color: orange
+                    fill_container: true
+                    tap_action:
+                      action: navigate
+                      navigation_path: /hph/programs
+
+                # ── Live status panel (full width, 4-col grid) ───────────────────────
+                - type: grid
+                  columns: 4
+                  square: false
+                  cards:
+                    - type: custom:mushroom-template-card
+                      primary: >-
+                        {{ states('sensor.hph_source_outlet_temp') }}°C → {{ states('sensor.hph_source_inlet_temp') }}°C
+                      secondary: Supply / Return
+                      icon: mdi:water-thermometer
+                      icon_color: orange
+                    - type: custom:mushroom-template-card
+                      primary: >-
+                        Delta {{ states('sensor.hph_water_spread') | float(0) | round(1) }} K  |  {{ states('sensor.hph_source_flow_rate') }} L/min
+                      secondary: Spread  |  Flow
+                      icon: mdi:waves-arrow-right
+                      icon_color: blue
+                    - type: custom:mushroom-template-card
+                      primary: "{{ states('sensor.hph_source_outdoor_temp') }}°C"
+                      secondary: Outdoor temperature
+                      icon: mdi:thermometer
+                      icon_color: yellow
+                    - type: custom:mushroom-template-card
+                      primary: "{{ states('sensor.hph_source_compressor_freq') }} Hz"
+                      secondary: Compressor frequency
+                      icon: mdi:sine-wave
+                      icon_color: >-
+                        {{ 'green' if is_state('binary_sensor.hph_compressor_running','on') else 'grey' }}
+                    - type: custom:mushroom-template-card
+                      primary: >-
+                        {% set s = states('sensor.hph_advisor_summary') %}
+                        {% if s == 'critical' %}Action required
+                        {% elif s == 'warn' %}Warnings present
+                        {% else %}All clear{% endif %}
+                      secondary: Advisor
+                      icon: mdi:lightbulb-on
+                      icon_color: >-
+                        {% set s = states('sensor.hph_advisor_summary') %}
+                        {% if s == 'critical' %}red{% elif s == 'warn' %}amber{% else %}green{% endif %}
+                      tap_action:
+                        action: navigate
+                        navigation_path: /hph/optimization
+                    - type: custom:mushroom-template-card
+                      primary: >-
+                        {{ states('sensor.hph_schema_variant_active') | replace('_',' ') | upper }}
+                      secondary: Installation variant
+                      icon: mdi:graph-outline
+                      icon_color: blue
+                    - type: custom:mushroom-template-card
+                      primary: >-
+                        {{ states('sensor.hph_standby_electrical_daily') | float(0) | round(2) }} kWh standby today
+                      secondary: >-
+                        Runtime {{ states('sensor.hph_electrical_runtime_daily') | float(0) | round(2) }} kWh
+                        / Total {{ states('sensor.hph_electrical_daily') | float(0) | round(2) }} kWh
+                      icon: mdi:power-sleep
+                      icon_color: >-
+                        {% set ratio = states('sensor.hph_standby_electrical_daily') | float(0)
+                                     / [states('sensor.hph_electrical_daily') | float(0.001), 0.001] | max %}
+                        {% if ratio > 0.5 %}amber{% elif ratio > 0.3 %}yellow{% else %}grey{% endif %}
+                      tap_action:
+                        action: navigate
+                        navigation_path: /hph/efficiency
+                    - type: conditional
+                      conditions:
+                        - entity: sensor.hph_source_target_supply_temp
+                          state_not: unavailable
+                      card:
+                        type: custom:mushroom-template-card
+                        primary: >-
+                          {{ states('sensor.hph_source_target_supply_temp') | float(0) | round(1) }}°C
+                          → {{ states('sensor.hph_source_outlet_temp') | float(0) | round(1) }}°C
+                        secondary: Target / actual supply
+                        icon: mdi:thermometer-chevron-up
+                        icon_color: deep-orange
+                    - type: conditional
+                      conditions:
+                        - entity: sensor.hph_source_zone1_target_temp
+                          state_not: unavailable
+                      card:
+                        type: custom:mushroom-template-card
+                        primary: >-
+                          Z1 {{ states('sensor.hph_source_zone1_temp') | float(0) | round(1) }}°C
+                          / set {{ states('sensor.hph_source_zone1_target_temp') | float(0) | round(1) }}°C
+                        secondary: Zone 1 actual / setpoint
+                        icon: mdi:thermostat
+                        icon_color: >-
+                          {% set diff = (states('sensor.hph_source_zone1_temp') | float(0))
+                                      - (states('sensor.hph_source_zone1_target_temp') | float(0)) %}
+                          {% if diff | abs > 3 %}red{% elif diff | abs > 1.5 %}amber{% else %}green{% endif %}
+                    - type: conditional
+                      conditions:
+                        - entity: sensor.hph_source_room_temp
+                          state_not: unavailable
+                      card:
+                        type: custom:mushroom-template-card
+                        primary: "{{ states('sensor.hph_source_room_temp') | float(0) | round(1) }}°C"
+                        secondary: Zone 1 reference room temperature
+                        icon: mdi:home-thermometer
+                        icon_color: blue
+                    - type: conditional
+                      conditions:
+                        - entity: sensor.hph_source_pump_speed
+                          state_not: unavailable
+                      card:
+                        type: custom:mushroom-template-card
+                        primary: "{{ states('sensor.hph_source_pump_speed') | float(0) | round(0) | int }} rpm"
+                        secondary: Pump speed
+                        icon: mdi:pump
+                        icon_color: >-
+                          {{ 'green' if is_state('binary_sensor.hph_compressor_running','on') else 'grey' }}
+
+                # ── Row: Installation schematic (auto-detected variant) ──────────────
+                # Requires: Clooos/Bubble-Card >= 3.0; SVGs served from /hph_assets/schema_*.svg
+                - type: custom:mushroom-template-card
+                  primary: |-
+                    Installation: {{ states('sensor.hph_schema_variant_active') | replace('_',' ') | upper }}
+                  secondary: |-
+                    {% set src = state_attr('sensor.hph_schema_variant_active','source') %}
+                    {% set msg = state_attr('sensor.hph_schema_variant_detected','message') %}
+                    [{{ src }}] {{ msg }}
+                  icon: |-
+                    {% set v = states('sensor.hph_schema_variant_active') %}
+                    {% if 'buffer' in v %}mdi:propane-tank
+                    {% elif 'hk2' in v %}mdi:home-thermometer
+                    {% elif 'dhw' in v %}mdi:water-boiler
+                    {% else %}mdi:radiator{% endif %}
                   icon_color: blue
-              - type: conditional
-                conditions:
-                  - entity: sensor.hph_source_pump_speed
-                    state_not: unavailable
-                card:
-                  type: custom:mushroom-template-card
-                  primary: "{{ states('sensor.hph_source_pump_speed') | float(0) | round(0) | int }} rpm"
-                  secondary: Pump speed
-                  icon: mdi:pump
-                  icon_color: >-
-                    {{ 'green' if is_state('binary_sensor.hph_compressor_running','on') else 'grey' }}
+                  multiline_secondary: true
+                  fill_container: true
+                  tap_action:
+                    action: navigate
+                    navigation_path: /hph/config
 
-          # ── Row: Installation schematic (auto-detected variant) ──────────────
-          # Requires: Clooos/Bubble-Card >= 3.0; SVGs served from /hph_assets/schema_*.svg
-          - type: custom:mushroom-template-card
-            primary: |-
-              Installation: {{ states('sensor.hph_schema_variant_active') | replace('_',' ') | upper }}
-            secondary: |-
-              {% set src = state_attr('sensor.hph_schema_variant_active','source') %}
-              {% set msg = state_attr('sensor.hph_schema_variant_detected','message') %}
-              [{{ src }}] {{ msg }}
-            icon: |-
-              {% set v = states('sensor.hph_schema_variant_active') %}
-              {% if 'buffer' in v %}mdi:propane-tank
-              {% elif 'hk2' in v %}mdi:home-thermometer
-              {% elif 'dhw' in v %}mdi:water-boiler
-              {% else %}mdi:radiator{% endif %}
-            icon_color: blue
-            multiline_secondary: true
-            fill_container: true
-            tap_action:
-              action: navigate
-              navigation_path: /hph/config
+
+          # ── Classic style ─────────────────────────────────────────────────────
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: select.hph_ui_style
+                state: classic
+            card:
+              type: vertical-stack
+              cards:
+
+                # ── 3-column status grid ──────────────────────────────────────────
+                - type: grid
+                  columns: 3
+                  square: false
+                  cards:
+
+                    # System status
+                    - type: entities
+                      show_header_toggle: false
+                      state_color: false
+                      card_mod:
+                        style: |
+                          ha-card {
+                            background: #1a252f;
+                            border: 1px solid #3d5166;
+                            border-radius: 8px;
+                          }
+                          state-badge { display: none; }
+                      entities:
+                        - entity: sensor.hph_operating_mode
+                          name: Operating mode
+                        - entity: binary_sensor.hph_compressor_running
+                          name: Compressor running
+                        - entity: sensor.hph_source_compressor_freq
+                          name: Compressor frequency
+                        - entity: sensor.hph_source_outdoor_temp
+                          name: Outdoor temperature
+                        - entity: sensor.hph_source_outlet_temp
+                          name: Supply temperature
+                        - entity: sensor.hph_source_inlet_temp
+                          name: Return temperature
+                        - entity: sensor.hph_water_spread
+                          name: Spread (delta T)
+                        - entity: sensor.hph_source_flow_rate
+                          name: Flow rate
+                        - entity: sensor.hph_source_pump_pressure
+                          name: Pump pressure
+                        - entity: binary_sensor.hph_defrost_active
+                          name: Defrost active
+
+                    # Efficiency
+                    - type: entities
+                      show_header_toggle: false
+                      state_color: false
+                      card_mod:
+                        style: |
+                          ha-card {
+                            background: #1a252f;
+                            border: 1px solid #3d5166;
+                            border-radius: 8px;
+                          }
+                          state-badge { display: none; }
+                      entities:
+                        - entity: sensor.hph_cop_live
+                          name: COP live
+                        - entity: sensor.hph_cop_daily
+                          name: COP today
+                        - entity: sensor.hph_cop_monthly
+                          name: COP this month
+                        - entity: sensor.hph_scop
+                          name: SCOP (season)
+                        - entity: sensor.hph_thermal_power_active
+                          name: Thermal power
+                        - entity: sensor.hph_electrical_power_active
+                          name: Electrical power
+                        - entity: sensor.hph_electrical_daily
+                          name: Electrical today
+                        - entity: sensor.hph_standby_electrical_daily
+                          name: Standby today
+
+                    # Cost & energy
+                    - type: entities
+                      show_header_toggle: false
+                      state_color: false
+                      card_mod:
+                        style: |
+                          ha-card {
+                            background: #1a252f;
+                            border: 1px solid #3d5166;
+                            border-radius: 8px;
+                          }
+                          state-badge { display: none; }
+                      entities:
+                        - entity: sensor.hph_cost_today
+                          name: Cost today
+                        - entity: sensor.hph_cost_monthly
+                          name: Cost this month
+                        - entity: sensor.hph_cop_change_yoy_pct
+                          name: vs last year (COP %)
+                        - entity: sensor.hph_thermal_change_yoy_pct
+                          name: vs last year (thermal %)
+                        - entity: sensor.hph_advisor_summary
+                          name: Advisor status
+                        - entity: sensor.hph_schema_variant_active
+                          name: Installation variant
+
+                # ── Active fault (classic) ────────────────────────────────────────
+                - type: conditional
+                  conditions:
+                    - entity: sensor.hph_diagnostics_current_error
+                      state_not: ok
+                  card:
+                    type: entities
+                    show_header_toggle: false
+                    state_color: false
+                    card_mod:
+                      style: |
+                        ha-card {
+                          background: #1f1212;
+                          border: 1px solid #8b2020;
+                          border-radius: 8px;
+                        }
+                        state-badge { display: none; }
+                    entities:
+                      - entity: sensor.hph_diagnostics_current_error
+                        name: Active fault
+                      - entity: sensor.hph_diagnostics_recurrence
+                        name: Recurrence count
+
+                # ── Screed running (classic) ──────────────────────────────────────
+                - type: conditional
+                  conditions:
+                    - entity: sensor.hph_prog_screed_status
+                      state: running
+                  card:
+                    type: entities
+                    show_header_toggle: false
+                    state_color: false
+                    entities:
+                      - entity: sensor.hph_prog_screed_status
+                        name: Screed program
+                      - entity: number.hph_prog_screed_day
+                        name: Day
+                      - entity: sensor.hph_prog_screed_target
+                        name: Target temperature
 
           # ── Variant a2w_hk1 ──────────────────────────────────────────────────
           - type: conditional

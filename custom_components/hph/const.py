@@ -749,6 +749,10 @@ SELECT_HELPERS: Final[dict[str, dict[str, Any]]] = {
                              "icon": "mdi:home-search-outline",
                              "options": ["auto", "hk1", "hk1_dhw", "hk1_hk2_dhw", "hk1_hk2_dhw_buffer"],
                              "initial": "auto"},
+    "hph_ui_style": {"name": "HeatPump Hero — dashboard UI style",
+                      "icon": "mdi:palette-outline",
+                      "options": ["mushroom", "classic"],
+                      "initial": "mushroom"},
     # Models
     "hph_vendor_preset": {"name": "HeatPump Hero — vendor preset (auto-fills source helpers)",
                            "icon": "mdi:factory",
