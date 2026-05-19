@@ -662,11 +662,14 @@ _REQUIRED_FRONTEND_CARDS = [
 ]
 
 # Vendor presets that map to acceptable HA integration domains.
-# kamaradclimber/heishamon-homeassistant was renamed from panasonic_heat_pump → aquarea;
-# accept either so installs on older versions don't see a false-positive repair.
+# kamaradclimber/heishamon-homeassistant has domain "panasonic_heishamon"
+# (the HA manifest domain, registered in hass.config.components).
+# The entity-ID prefix "panasonic_heat_pump" and the older "aquarea" prefix are
+# entity naming conventions, NOT domain names — keep them here only for
+# backwards-compat with rare forks that actually registered under those domains.
 _VENDOR_INTEGRATION_MAP: dict[str, list[str]] = {
-    "panasonic_heishamon": ["aquarea", "panasonic_heat_pump"],
-    "panasonic_heishamon_aquarea": ["aquarea", "panasonic_heat_pump"],
+    "panasonic_heishamon": ["panasonic_heishamon", "aquarea", "panasonic_heat_pump"],
+    "panasonic_heishamon_aquarea": ["panasonic_heishamon", "aquarea", "panasonic_heat_pump"],
 }
 
 
