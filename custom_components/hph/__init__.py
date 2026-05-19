@@ -843,7 +843,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.warning("Dashboard auto-registration failed: %s", exc)
 
     # Surface missing prerequisites as HA Repairs entries.
-    hass.async_create_task(_async_check_prerequisites(hass, entry))
+    # Defer until EVENT_HOMEASSISTANT_STARTED on initial boot so that all
+    # vendor integrations have finished loading into hass.config.components.
+    # On reload (CoreState.running) all integrations are already present —
+    # run immediately.
+    from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
+    from homeassistant.core import CoreState
+
+    if hass.state is CoreState.running:
+        hass.async_create_task(_async_check_prerequisites(hass, entry))
+    else:
+        hass.bus.async_listen_once(
+            EVENT_HOMEASSISTANT_STARTED,
+            lambda _event: hass.async_create_task(
+                _async_check_prerequisites(hass, entry)
+            ),
+        )
 
     # Apply chosen vendor preset (one-shot on first install).
     preset = merged.get("vendor_preset")
