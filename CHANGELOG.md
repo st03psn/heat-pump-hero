@@ -7,6 +7,95 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
 
 ---
 
+## [0.9.0-rc7] — 2026-05-19
+
+### Added
+
+- **Inline help popup component (`<hph-help>`).** Custom element shipped as
+  a self-contained JS asset under `data/dashboards/assets/hph-help.js`,
+  mounted via `frontend.add_extra_js_url` (Quatt-style — no HACS dependency).
+  Renders an inline title + small "?" icon; clicking opens a modal with
+  the help body rendered as markdown. Closes on backdrop click, Esc, or
+  the X button.
+
+- **i18n for help texts (EN / DE / NL).** Help strings live in
+  `data/dashboards/assets/help_{en,de,nl}.json` and are fetched lazily
+  by `hph-help.js`. Language follows `hass.config.language` (Settings →
+  System → General); falls back to English on missing keys.
+
+- **11 inline help blocks across the dashboard:**
+  - Efficiency view: `efficiency_quality`
+  - Config view: `vendor_preset`, `model_thresholds`, `source_modes`,
+    `schema_variant`, `installation_context`, `electrical_metering`
+  - Optimization view: `advisor_thresholds`
+  - Control view: `control_ccc`, `control_solar_dhw`,
+    `control_adaptive_curve`
+
+- **Split monolithic Control-strategies card** into focused per-feature
+  cards (CCC, Solar-DHW, Night quiet, Adaptive curve, Price-DHW,
+  Forecast pre-heat) — each with its own help icon when applicable.
+
+- **Carnot efficiency sensor (`sensor.hph_carnot_efficiency_percent`).**
+  Live COP expressed as percent of the theoretical Carnot maximum given
+  current outlet and outdoor temperatures. Levels the playing field
+  across operating conditions. Pattern adopted from heatpumpmonitor.org's
+  `prc_carnot` aggregate metric.
+
+- **24 h heating-curve and data-quality sensors.**
+  - `sensor.hph_flowt_minus_outsidet_24h` — statistics-platform mean of
+    flow_T − outside_T over 24 h while the compressor is running.
+  - `sensor.hph_quality_24h_samples` — sample count of
+    `hph_thermal_power_active` over 24 h.
+
+- **Data-quality advisor (`sensor.hph_advisor_data_quality`).** Aggregated
+  into `sensor.hph_advisor_summary`. Default warn <200, critical <50.
+
+- **Installation-context helpers** for heatpumpmonitor.org submissions and
+  honest SCOP comparison: 5 text/select helpers + 4 metering-bilanzierung
+  switches (`hph_metering_includes_immersion / _circulation / _controls /
+  _brine`). Bookkeeping only — HPH behaviour unchanged.
+
+- **`text.hph_cycles_history`** — JSON ring buffer placeholder for future
+  per-cycle analytics.
+
+### Removed
+
+- Permanent markdown help blocks from the Config view (`## Source adapter`
+  preamble; the verbose Installation-context / Electrical-metering
+  intros). Their content lives in the help popups now; the dashboard
+  stays compact by default.
+
+### Changed
+
+- `__init__.py` mounts `hph-help.js` via `add_extra_js_url` on setup
+  (Quatt-style frontend module registration).
+- **`sensor.hph_thermal_power` cp now varies with mean water temperature.**
+  Replaced the fixed 4180 J/(kg·K) with a piecewise-linear `cp(T_mean)`
+  ramping from 4179 at ≤40 °C to 4196 at ≥80 °C. Effect on heating COP
+  <0.1 %; on DHW (60–70 °C) ~0.3 %. Pattern adopted from
+  `marcoboers/home-assistant-quatt`.
+
+### Fixed (merged from parallel session 2d54604)
+
+- Resolved multiple "Konfigurationsfehler" tiles on Control and Analysis
+  views — `condition: template` is not accepted by Lovelace's
+  conditional-card schema; replaced with `condition: state` with
+  `state_not: ""`.
+- `state_not` does not accept a list — split into separate conditions.
+- COP heatmap removed (apexcharts-card v2.x has no heatmap chart type).
+- Analysis view restructured into a panel layout with grid wrapper
+  at max-width 1100 px, plus `connectNulls` and `extend_to: now` for
+  smooth rendering across upstream MQTT glitches.
+
+### Docs
+
+- New [docs/heatpumpmonitor.md](docs/heatpumpmonitor.md) — how to feed
+  HPH data into [heatpumpmonitor.org](https://heatpumpmonitor.org) via
+  emoncms.org, including the required feed-name mapping table and the
+  meaning of the metering-bilanzierung flags.
+
+---
+
 ## [0.9.0-rc6] — 2026-05-19
 
 ### Added

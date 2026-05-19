@@ -4592,7 +4592,6 @@ views:
       - type: custom:hph-help
         translation_key: control_ccc
       - type: entities
-        title: Compressor Cycle Control (CCC)
         entities:
           - switch.hph_ctrl_ccc
           - number.hph_ctrl_ccc_min_pause_min
@@ -4602,7 +4601,6 @@ views:
       - type: custom:hph-help
         translation_key: control_solar_dhw
       - type: entities
-        title: Solar-DHW boost
         entities:
           - switch.hph_ctrl_solar_dhw
           - text.hph_ctrl_pv_surplus_entity
@@ -4617,7 +4615,6 @@ views:
       - type: custom:hph-help
         translation_key: control_adaptive_curve
       - type: entities
-        title: Adaptive heating curve (self-learning, weekly)
         entities:
           - switch.hph_ctrl_adaptive_curve
           - number.hph_ctrl_adaptive_max_step_k
@@ -4665,7 +4662,6 @@ views:
       - type: custom:hph-help
         translation_key: advisor_thresholds
       - type: entities
-        title: Advisor thresholds (power-user tweaks)
         entities:
           - number.hph_advisor_short_cycle_warn_pct
           - number.hph_advisor_short_cycle_crit_pct
@@ -4746,7 +4742,6 @@ views:
       - type: custom:hph-help
         translation_key: vendor_preset
       - type: entities
-        title: Vendor & model
         entities:
           - entity: select.hph_vendor_preset
             name: Vendor preset (auto-fills source helpers)
@@ -4762,7 +4757,6 @@ views:
       - type: custom:hph-help
         translation_key: model_thresholds
       - type: entities
-        title: Model thresholds (auto-set on model change, override OK)
         entities:
           - entity: number.hph_model_compressor_min_hz
             name: Compressor min Hz
@@ -4777,7 +4771,6 @@ views:
       - type: custom:hph-help
         translation_key: source_modes
       - type: entities
-        title: Source modes
         entities:
           - entity: select.hph_thermal_source
             name: Thermal source mode
@@ -4788,7 +4781,6 @@ views:
       - type: custom:hph-help
         translation_key: schema_variant
       - type: entities
-        title: Schematic variant
         entities:
           - entity: select.hph_schema_variant
             name: Schematic variant (auto / manual)
@@ -4807,7 +4799,6 @@ views:
       - type: custom:hph-help
         translation_key: installation_context
       - type: entities
-        title: Installation context
         entities:
           - entity: text.hph_install_heat_loss_kw
             name: Design heat loss (kW)
@@ -4824,7 +4815,6 @@ views:
       - type: custom:hph-help
         translation_key: electrical_metering
       - type: entities
-        title: Electrical metering — what is included?
         entities:
           - entity: switch.hph_metering_includes_immersion
             name: Includes immersion heater

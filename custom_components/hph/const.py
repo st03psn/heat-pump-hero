@@ -606,6 +606,20 @@ TEXT_HELPERS: Final[dict[str, dict[str, Any]]] = {
     "hph_electricity_price_entity": {"name": "Cost — electricity price sensor (entity-ID, optional)",
                                       "icon": "mdi:cash-multiple",
                                       "initial": ""},
+    # Installation context (for heatpumpmonitor.org submission + honest SCOP context).
+    # Free-text TEXT_HELPERS; corresponding categorical fields live in SELECT_HELPERS.
+    "hph_install_heat_loss_kw": {"name": "Installation — design heat loss (kW, e.g. 8.5)",
+                                   "icon": "mdi:home-thermometer-outline", "initial": ""},
+    "hph_install_design_flow_temp_c": {"name": "Installation — design supply temperature (°C, e.g. 35)",
+                                         "icon": "mdi:thermometer-high", "initial": ""},
+    "hph_install_year": {"name": "Installation — commissioning year (e.g. 2023)",
+                          "icon": "mdi:calendar-clock", "initial": ""},
+    # Compressor cycle history — JSON ring buffer used by future analytics.
+    # Reserved here so the helper exists at integration setup; not yet
+    # populated by a coordinator (the cycles coordinator already tracks
+    # cycles via number.hph_cycles_today). Placeholder for v0.11.
+    "hph_cycles_history": {"name": "HeatPump Hero — cycles history (JSON ring buffer)",
+                             "icon": "mdi:history", "initial": "[]"},
 }
 
 # ─── Number helpers ──────────────────────────────────────────────────────
@@ -791,6 +805,15 @@ SELECT_HELPERS: Final[dict[str, dict[str, Any]]] = {
                               "icon": "mdi:calendar-clock",
                               "options": ["off", "daily", "weekly", "monthly"],
                               "initial": "off"},
+    # Installation context — categorical fields (paired with TEXT_HELPERS install_*).
+    "hph_install_emitter_type": {"name": "Installation — heat emitter type",
+                                   "icon": "mdi:radiator",
+                                   "options": ["unknown", "radiators", "ufh", "mixed", "fan_coil"],
+                                   "initial": "unknown"},
+    "hph_install_refrigerant": {"name": "Installation — refrigerant",
+                                  "icon": "mdi:gas-cylinder",
+                                  "options": ["unknown", "R32", "R290", "R410A", "R454B", "R744"],
+                                  "initial": "unknown"},
 }
 
 # ─── Switch helpers (input_boolean) ──────────────────────────────────────
@@ -823,6 +846,18 @@ SWITCH_HELPERS: Final[dict[str, dict[str, Any]]] = {
     # Bridge
     "hph_bridge_enabled": {"name": "HPH Bridge — multi-platform read-only MQTT republisher",
                              "icon": "mdi:lan-connect", "initial": False},
+    # Metering-bilanzierung (heatpumpmonitor.org-style SCOP honesty flags).
+    # Indicate what is included in the electrical-energy measurement the
+    # user feeds into HPH. Default false (conservative — assume only the
+    # heat-pump main contactor is metered, no aux consumers).
+    "hph_metering_includes_immersion": {"name": "Metering — electrical measurement includes immersion heater",
+                                          "icon": "mdi:lightning-bolt", "initial": False},
+    "hph_metering_includes_circulation": {"name": "Metering — electrical measurement includes circulation pump",
+                                            "icon": "mdi:pump", "initial": False},
+    "hph_metering_includes_controls": {"name": "Metering — electrical measurement includes controls / standby",
+                                         "icon": "mdi:cog-outline", "initial": False},
+    "hph_metering_includes_brine": {"name": "Metering — electrical measurement includes brine pump (GSHP only)",
+                                      "icon": "mdi:pump", "initial": False},
 }
 
 # ─── Datetime helpers ────────────────────────────────────────────────────

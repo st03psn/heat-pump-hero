@@ -811,18 +811,50 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "data": merged,
     }
 
-    # Register the HPH assets static path so dashboard SVGs are served
+    # Register the HPH assets static path so dashboard SVGs and JS are served
     # directly from the integration data directory (no copy to <config>/www/hph/).
     # HA 2024.x+ uses async_register_static_paths(list[StaticPathConfig]).
+    # cache_headers=False: critical for the hph-help.js custom-card module —
+    # with the default 31-day Cache-Control, browsers serve a stale JS even
+    # when the cache-bust query (?v=<hash>) changes, because Service Workers
+    # match by URL path before query. SVG/JSON also load fresh on each visit;
+    # the bandwidth cost is negligible (<20 KB total per dashboard open).
     try:
         from homeassistant.components.http import StaticPathConfig as _SPC
         await hass.http.async_register_static_paths([
-            _SPC(ASSETS_URL_PATH, ASSETS_DIR_ABS, cache_headers=True)
+            _SPC(ASSETS_URL_PATH, ASSETS_DIR_ABS, cache_headers=False)
         ])
         _LOGGER.debug("HPH assets registered at %s from %s", ASSETS_URL_PATH, ASSETS_DIR_ABS)
     except Exception as _exc:  # noqa: BLE001
         # ValueError if already registered (reload), or API mismatch on old HA.
         _LOGGER.debug("HPH assets path registration skipped: %s", _exc)
+
+    # Register HPH-owned frontend modules (e.g. <hph-help> popup card).
+    # Pattern adopted from marcoboers/home-assistant-quatt: ship card assets
+    # with the integration and mount via add_extra_js_url, so users don't need
+    # to install a separate HACS frontend plugin (browser_mod etc.).
+    try:
+        from homeassistant.components.frontend import add_extra_js_url
+        # Cache-bust query — fingerprint the file content so the browser
+        # always loads the latest version across HPH updates. HA frontend
+        # and service workers cache aggressively; a stale JS leaves
+        # customElements.define('hph-help') stuck on the old version,
+        # which surfaces as "Konfigurationsfehler" on every hph-help card.
+        import hashlib
+        from pathlib import Path as _Path
+        _js_path = _Path(__file__).parent / "data" / "dashboards" / "assets" / "hph-help.js"
+        try:
+            _digest = hashlib.md5(_js_path.read_bytes()).hexdigest()[:10]
+        except OSError:
+            _digest = "dev"
+        _hph_module_url = f"{ASSETS_URL_PATH}/hph-help.js?v={_digest}"
+        # Default (es5=False): loaded via dynamic import() — same path that
+        # mushroom, bubble-card and the other HACS custom cards use. Async,
+        # but Lovelace's card-creation retries once the customElement registers.
+        add_extra_js_url(hass, _hph_module_url)
+        _LOGGER.info("HPH frontend module mounted: %s", _hph_module_url)
+    except Exception as _exc:  # noqa: BLE001
+        _LOGGER.warning("HPH frontend module mount failed: %s", _exc)
 
     # Deploy efficiency package; migrate old automation packages.
     # Dashboard is no longer copied to <config>/hph/ — served from integration dir.
