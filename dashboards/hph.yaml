@@ -22,8 +22,6 @@ views:
       - type: vertical-stack
         cards:
 
-          # ── Row A: Status bar ───────────────────────────────────────────────
-
           # ── Mushroom style (default) ──────────────────────────────────────────
           - type: conditional
             conditions:
