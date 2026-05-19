@@ -241,6 +241,40 @@ User-suggested features that don't yet have a target version.
       (DWD / OpenWeatherMap / Met.no / local weather station);
       `sensor.hph_scop_weather_adjusted`; DWD recipe for DE users.
 
+- [ ] **Outdoor-humidity source helper** — `text.hph_src_outdoor_humidity`
+      following the same source-adapter pattern as the existing
+      `hph_src_*` helpers. Configurable in the integration's options-flow
+      and the initial setup wizard. Default empty (humidity is not part
+      of the Heishamon MQTT stream — must come from a separate weather
+      integration such as `met.no` / `open-meteo` or a local hygrometer).
+      Prerequisite for the defrost-analytics item below.
+
+- [ ] **Per-defrost event log + Grafana analytics panel.**
+      What: capture one row per defrost cycle with start timestamp,
+      duration (s), outdoor temp at start, outdoor humidity at start
+      (if helper configured), thermal energy deficit during the cycle
+      (kWh), thermal energy recovered in the 30 min after end (kWh),
+      pre/post supply-temp drop (K). Persisted via HA recorder. New
+      Grafana panels on top of the existing `hph` board:
+        1. Column chart "Defrost cycles per day — last 30 days",
+           stacked by outdoor-temp bucket (≤-5 / -5–0 / 0–5 / 5–10 °C)
+        2. Scatter "Defrost duration vs outdoor temp"
+        3. Heatmap "Defrost frequency, outdoor temp × humidity"
+           (typical "Bereiftungsdreieck" at 0–5 °C high humidity)
+        4. Stacked bar "Defrost energy cost per day" — deficit vs
+           recovery effort, ratio = defrost efficiency
+      Why: cycling frequency and energy recovery cost are dominant
+      contributors to wintertime SCOP loss; the existing 24h KPIs
+      only surface "today unusual?" — multi-week trends need their
+      own home.
+      Why Grafana not HPH-Lovelace: apexcharts-card cannot do
+      scatter `Y(EntityA) vs X(EntityB)`, heatmaps, or grouping by
+      external dimensions — exactly the questions worth asking.
+      Dependencies: outdoor-humidity helper (above) for panel 3;
+      InfluxDB mirror already exists via HA's `influxdb:` integration.
+      Effort: ~3–4 h (event-log template-trigger sensor + 4 Grafana
+      panel JSONs).
+
 ## Out of scope
 
 - Cloud features (HeatPump Hero stays 100 % local)
