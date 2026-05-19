@@ -97,7 +97,7 @@ For detailed per-release changes, see [`CHANGELOG.md`](../CHANGELOG.md).
 
 ## ✅ v0.9 — Python custom integration (HACS plug-and-play)
 
-Released as v0.9.0-rc4. User testing phase (active).
+Active development. Current release: v0.9.0-rc6.
 
 ### ✅ Phase 1 — skeleton + config-flow + helpers + dashboard auto-register
 
@@ -143,7 +143,7 @@ Bootstrap now deploys only `hph_efficiency.yaml` (utility_meter +
 integration sensor platform config — HA limitation, no Python API for
 these) plus dashboard + assets. Migration removes old automation packages.
 
-### ⏳ Phase 4 — polish (active, post-rc4 user testing)
+### ⏳ Phase 4 — polish (active, post-rc6 user testing)
 
 **Dashboard — 8 views (current inventory)**
 
@@ -160,30 +160,25 @@ these) plus dashboard + assets. Migration removes old automation packages.
 
 All charts auto-scale (no fixed y-axis min/max as of this revision).
 
-**Open tasks:**
+**Completed in rc5/rc6:**
 
-- [ ] **View consolidation (long-term → Efficiency)** — move "COP last 30 days"
-      from Overview and "COP daily last 30 days" from Analysis into Efficiency;
-      replace in Overview/Analysis with shorter-window equivalents or remove.
-      Agreed direction; not yet implemented.
-- [ ] **Demo mode** — `switch.hph_demo_mode` + `hph.demo_seed_history` service
-      injects 13 months of synthetic statistics so all views can be reviewed
-      without real data
-- [ ] **OptionsFlow entity-pickers** — replace `text.hph_src_*` text-boxes
-      with HA-native entity selectors
-- [ ] **COP-live transparency** — show `thermal_w / electrical_w` inputs
-      alongside the COP value
-- [ ] **GitHub Release tag (v0.9.0)** so HACS shows update notifications
-- [ ] **Per-platform translations** `translations/{en,de,nl}.json`
-- [ ] **Repairs panel** for missing frontend cards (apexcharts, mushroom, …)
-- [ ] **pytest-based test suite** mocking HA core
-- [ ] **HACS-default-repository submission**
-- [ ] **PV self-consumption net cost sensor** (`hph_cost_today_net`)
-- [ ] **Recorder exclusions** — identify and exclude intermediate/instantaneous
-      HPH sensors from HA recorder LTS to reduce DB growth (standby power,
-      live COP, thermal power, etc.)
-- [ ] **COP by mode re-add** — per-mode COP cards (`sensor.hph_cop_monthly_heating`,
-      `_monthly_dhw`) on Efficiency view
+- [x] **HAL completion** — CTRL_FACADE proxy entities, typed read+write symmetry,
+      heating curve, DHW, advanced settings, vendor-agnostic Control tab
+- [x] **Model capability map** — `MODEL_CAPABILITIES` gates sensor helpers per model
+- [x] **Vendor-filtered model dropdown** in config flow
+- [x] **Auto-install of Lovelace frontend cards** via HACS on integration setup
+- [x] **14 new Heishamon monitoring facades** (eva outlet, inside/bypass pipe,
+      defrost, DHW power, zone water temps, heater states) + Machine Room tiles
+- [x] **Optional PCB sensors** — zone 1/2 pumps + mixing valve
+- [x] **HeishaMon restart button** (CTRL_FACADE proxy)
+- [x] **DHW COP direct** — via Heishamon `dhw_power_production`
+- [x] **S0-Watt facade** — HeishaMon S0 pulse counter as electrical source
+- [x] **Vendor-integration repair timing fix** — defer to `EVENT_HOMEASSISTANT_STARTED`
+- [x] **Konfigurationsfehler tiles fixed** — conditional wrappers on all bare
+      CTRL_FACADE tiles in Control tab sections 8, 8b, 9
+- [x] **Config tab completeness** — all ~60 src/ctrl_write helpers listed
+- [x] **Heating curve Config cards vendor-generic** — facade-based, not hardcoded
+- [x] **smoke.py: `test_const_consistency()`** — cross-checks preset↔helper drift
 - [x] **Vs-same-month-last-year comparison** — `hph_cop_change_yoy_pct` replacing
       previous-month comparison; thermal + electrical change-pct sensors added
 - [x] **Long-term export bugfix** — `hph.export_now` honours csv/json/xlsx selector,
@@ -192,8 +187,22 @@ All charts auto-scale (no fixed y-axis min/max as of this revision).
       imports Sensostar + Shelly history (monthly/daily/hourly) including
       daily COP, monthly COP, and seasonal SCOP into HA LTS
 - [x] **external_energy thermal power fix** — `hph_thermal_power_active` now
-      reads Sensostar power sensor in `external_energy` mode (was falling
-      through to calculated ΔT×flow)
+      reads Sensostar power sensor in `external_energy` mode
+
+**Open tasks — see [BACKLOG.md](../BACKLOG.md):**
+
+- [ ] View consolidation (COP charts)
+- [ ] Demo mode
+- [ ] OptionsFlow entity-pickers
+- [ ] COP-live transparency
+- [ ] GitHub Release tag
+- [ ] Per-platform translations
+- [ ] pytest-based test suite
+- [ ] HACS-default-repository submission
+- [ ] PV net cost sensor
+- [ ] Recorder exclusions
+- [ ] COP by mode on Efficiency view
+- [ ] Efficiency tab DHW-direct COP tiles (`hph_cop_monthly_dhw_direct`)
 
 ## v1.0 — stable
 

@@ -15,12 +15,12 @@ installation schematic with live hotspots, and proper efficiency metrics
 
 ## Status
 
-🟢 **v0.9.0-rc4 — install via HACS, configure via UI**
+🟢 **v0.9.0-rc6 — install via HACS, configure via UI**
 
 Since v0.9, HeatPump Hero ships as a proper HACS **Integration** (not a YAML
 package). Add it via Settings → Devices & Services — no YAML editing required.
-All ~80 entities, 23 control automations, and the dashboard are registered
-programmatically by the integration. See [CHANGELOG.md](CHANGELOG.md).
+All ~100 entities, 23 control automations, and the 8-view dashboard are
+registered programmatically by the integration. See [CHANGELOG.md](CHANGELOG.md).
 
 ## Screenshots
 
@@ -38,14 +38,17 @@ reference install is online — see [docs/screenshots/](docs/screenshots/).)*
 - ✅ Persistent notification on fault, dismissed automatically when cleared
 - ✅ Vendor preset selector — auto-fills all source helpers in one click for
   Heishamon / Heishamon MQTT / Daikin / MELCloud / Vaillant / Stiebel / generic
+- ✅ Non-selectable vendor presets (Daikin, Mitsubishi, Vaillant, …) visible but
+  labelled "Coming soon" — no accidental misconfiguration
 - ✅ Heat-pump model selector — Panasonic J / K / L / T-CAP / M (R290) plus
   other vendors — auto-sets compressor min/max Hz, minimum flow, maximum
-  supply temperature
+  supply temperature; model-capability gating hides sensors that don't exist
+  on the selected model (e.g. Fan 2 speed on single-fan J/K/L units)
 - ✅ Water-pressure trend advisor (slow-leak detection)
 
 **Visualization**
-- ✅ 7-view dashboard: Overview, Schematic, Analysis, Efficiency,
-  Optimization, Mobile, Configuration — auto-registered in sidebar
+- ✅ 8-view dashboard: Overview, Schematic, Control, Analysis, Efficiency,
+  Optimization, Programs, Configuration — auto-registered in sidebar
 - ✅ Bubble-Card SVG schematic with live hotspots — 4 variants:
   HK1, HK1+DHW, HK1+HK2+DHW, HK1+HK2+DHW+Buffer
 - ✅ ApexCharts: temperatures, compressor, COP, heatmap (day-of-week ×
@@ -62,11 +65,14 @@ reference install is online — see [docs/screenshots/](docs/screenshots/).)*
 **Source-adapter (universal)**
 - ✅ Every entity-ID is UI-configurable — swap heat pump or meter without
   YAML edits
+- ✅ ~60 source helpers + CTRL_FACADE proxy entities — full hardware
+  abstraction layer for both reads and writes
 - ✅ 3 thermal source modes: `calculated` / `external_power` / `external_energy`
 - ✅ 3 electrical source modes: `heat_pump_internal` / `external_power` /
-  `external_energy`
+  `external_energy` (S0 pulse counter supported via `hph_source_s0_power`)
 - ✅ Defaults match Heishamon out of the box; zone 2 / DHW / buffer /
   solar / pool optional with auto-hide
+- ✅ Optional PCB sensors: zone 1/2 water pump + zone 1 mixing valve
 
 **Cycle analysis & advisor**
 - ✅ Cycle tracking (starts/h, run/pause times)
@@ -156,7 +162,7 @@ See the migration notes in [installation.md](docs/installation.md).
                           ├─ coordinators/                   (23 automations)
                           └─ bootstrap.py                    (dashboard deploy)
                                          │
-                          <config>/hph/dashboard.yaml ─▶ Lovelace sidebar
+                          custom_components/hph/data/dashboards/ ─▶ Lovelace sidebar (direct, no copy)
                           <config>/packages/hph_efficiency.yaml ─▶ utility_meter
                                          │
                           HA Recorder + LTS ─▶ HA Energy Dashboard

@@ -5,7 +5,102 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
 
 ## [Unreleased]
 
+---
+
+## [0.9.0-rc6] — 2026-05-19
+
 ### Added
+
+- **14 additional Heishamon monitoring facade sensors (PR B).** New
+  `text.hph_src_*` helpers and `sensor.hph_source_*` facades for:
+  evaporator outlet temp (`hph_src_eva_outlet_temp`), inside pipe temp,
+  bypass outlet temp, defrost temp, DHW thermal power
+  (`hph_src_dhw_power_thermal`), DHW electrical power, zone 1 water temp
+  (`hph_src_z1_water_temp`), zone 2 water temp, internal heater state
+  (`hph_src_internal_heater_state`), DHW heater state, anti-freeze mode,
+  force heater state, sterilization state, quiet-mode schedule.
+  All facades default to empty; all prefilled in the `panasonic_heishamon`
+  vendor preset. Corresponding Machine Room tiles added to the Control tab.
+
+- **Optional PCB sensors (PR C).** Three new helpers and facades for
+  optional-PCB hardware: zone 1 water pump
+  (`binary_sensor.hph_source_opt_z1_pump`), zone 2 water pump, zone 1
+  mixing valve (`sensor.hph_source_opt_z1_mixing_valve`, enum:
+  Off/Decrease/Increase). All default to empty. Machine Room tiles hide
+  when helpers are blank.
+
+- **HeishaMon restart button (PR C).** `button.hph_restart_heishamon` CTRL_FACADE
+  proxies to `text.hph_ctrl_write_restart_heishamon`. For the
+  `panasonic_heishamon` preset the target is
+  `button.panasonic_heat_pump_ip`. Conditional card in Section 7 (Special
+  Functions) hides the tile when the helper is blank (non-HeishaMon installs).
+
+- **DHW COP split via direct Heishamon power measurement (PR C).**
+  New template sensor `sensor.hph_dhw_thermal_power_runtime` gates the
+  Heishamon `dhw_power_production` reading on compressor + DHW mode;
+  Riemann integration (`hph_dhw_thermal_energy_runtime`) and monthly/yearly
+  utility meters feed two new COP sensors:
+  `sensor.hph_cop_monthly_dhw_direct` and `sensor.hph_cop_yearly_dhw_direct`.
+  These supplement (not replace) the existing `heat_pump_internal`-mode DHW COP
+  sensors, giving Heishamon users a direct-measurement DHW efficiency track.
+
+- **S0-Watt facade (PR D consistency).** `text.hph_src_s0_power` + facade
+  `sensor.hph_source_s0_power` (W, power, measurement) exposes the HeishaMon
+  S0 pulse-counter instantaneous power. Set `select.hph_electrical_source =
+  external_power` and `text.hph_src_external_electrical_power =
+  sensor.hph_source_s0_power` to feed S0 into the electrical energy path.
+  Machine Room tile + Config tab entry added. Panasonic preset: `sensor.panasonic_heat_pump_s0_watt`.
+
+- **Config tab completeness.** The Configuration view now lists all ~60
+  `text.hph_src_*` and `text.hph_ctrl_write_*` helpers, grouped with
+  dividers: core sensors, Machine Room monitoring, refrigerant circuit temps,
+  DHW power + water temps, heater/protection states, Optional PCB, extended
+  control write targets, heating-curve reference points, DHW + advanced
+  settings.
+
+- **`test_const_consistency()` smoke test.** New section in `tests/smoke.py`
+  cross-checks that every VENDOR_PRESET key exists in TEXT_HELPERS and that
+  every TEXT_HELPER with a non-empty default is covered by the
+  `panasonic_heishamon` preset. Catches drift when new helpers are added.
+
+### Fixed
+
+- **`sensor.hph_source_zone1_setpoint` duplicate removed.** This facade was
+  identical to `sensor.hph_source_zone1_target_temp` (same source helper,
+  same unit). All three dashboard references updated; the duplicate entity
+  is cleaned from the registry on next HA restart.
+
+- **`hph_src_buffer_temp` and `hph_src_expansion_valve` missing from
+  `panasonic_heishamon` vendor preset.** Both helpers had non-empty initial
+  values but were absent from the preset dict, so applying the preset
+  silently left them at their stale previous value. Added.
+
+- **"Konfigurationsfehler" on 12 Control-tab tiles.** Sections 8, 8b
+  (heating-curve Zone 1/2) and Section 9 (bivalent/backup-heater inner
+  cards) contained bare `mushroom-template-card` tiles referencing CTRL_FACADE
+  proxy entities without any `conditional:` wrapper. On a fresh install
+  (before the vendor preset is applied) those proxies report `unavailable`
+  and mushroom rendered the red configuration-error badge. All 12 tiles
+  now wrap in `state_not: unavailable` conditionals, matching the Section 5
+  pattern already in use elsewhere.
+
+- **Heating-curve cards in Config tab were Heishamon-specific.** Two
+  `auto-entities` filter cards used `number.panasonic_heat_pump_main_z*_heat_curve_*`
+  directly. Replaced with conditional `entities:` cards referencing
+  `text.hph_ctrl_write_z*_outside_*` helpers — hidden for non-Panasonic
+  vendors where those helpers are blank.
+
+- **Vendor-integration repair fires false-positive on boot.** The
+  `_async_check_prerequisites` task was scheduled via
+  `hass.async_create_task()` during `async_setup_entry`, before the
+  `aquarea` domain entered `hass.config.components`. Fixed by deferring
+  to `EVENT_HOMEASSISTANT_STARTED` on initial boot; runs immediately when
+  `hass.state is CoreState.running` (integration reload case).
+
+### Changed
+
+- **Config tab "Control write targets" section renamed** from "v0.8 vendor
+  adapter" and expanded from 5 entries to all 35 extended helpers.
 
 - **HAL completion — heating curve, DHW, advanced settings.** Extended
   `CTRL_FACADES` with 15 additional proxy entities covering all remaining
