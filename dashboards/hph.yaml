@@ -1680,6 +1680,315 @@ views:
               tap_action:
                 action: none
 
+          # ── Refrigerant circuit temperatures (PR B / PR C) ───────────────
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_src_eva_outlet_temp
+                state_not: ""
+              - condition: state
+                entity: sensor.hph_source_eva_outlet_temp
+                state_not: "unavailable"
+              - condition: state
+                entity: sensor.hph_source_eva_outlet_temp
+                state_not: "unknown"
+            card:
+              type: custom:mushroom-template-card
+              primary: Eva Outlet
+              secondary: "{{ states('sensor.hph_source_eva_outlet_temp') }} °C"
+              icon: mdi:thermometer-low
+              icon_color: >-
+                {% set t = states('sensor.hph_source_eva_outlet_temp') | float(0) %}
+                {{ 'red' if t > 50 else ('orange' if t > 30 else 'grey') }}
+              tap_action:
+                action: none
+
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_src_inside_pipe_temp
+                state_not: ""
+              - condition: state
+                entity: sensor.hph_source_inside_pipe_temp
+                state_not: "unavailable"
+              - condition: state
+                entity: sensor.hph_source_inside_pipe_temp
+                state_not: "unknown"
+            card:
+              type: custom:mushroom-template-card
+              primary: Inside Pipe
+              secondary: "{{ states('sensor.hph_source_inside_pipe_temp') }} °C"
+              icon: mdi:pipe
+              icon_color: grey
+              tap_action:
+                action: none
+
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_src_bypass_outlet_temp
+                state_not: ""
+              - condition: state
+                entity: sensor.hph_source_bypass_outlet_temp
+                state_not: "unavailable"
+              - condition: state
+                entity: sensor.hph_source_bypass_outlet_temp
+                state_not: "unknown"
+            card:
+              type: custom:mushroom-template-card
+              primary: Bypass Outlet
+              secondary: "{{ states('sensor.hph_source_bypass_outlet_temp') }} °C"
+              icon: mdi:pipe-valve
+              icon_color: grey
+              tap_action:
+                action: none
+
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_src_defrost_temp
+                state_not: ""
+              - condition: state
+                entity: sensor.hph_source_defrost_temp
+                state_not: "unavailable"
+              - condition: state
+                entity: sensor.hph_source_defrost_temp
+                state_not: "unknown"
+            card:
+              type: custom:mushroom-template-card
+              primary: Defrost Temp
+              secondary: "{{ states('sensor.hph_source_defrost_temp') }} °C"
+              icon: mdi:snowflake-thermometer
+              icon_color: >-
+                {% set t = states('sensor.hph_source_defrost_temp') | float(0) %}
+                {{ 'blue' if t <= 0 else 'grey' }}
+              tap_action:
+                action: none
+
+          # ── Zone water temperatures ───────────────────────────────────────
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_src_z1_water_temp
+                state_not: ""
+              - condition: state
+                entity: sensor.hph_source_z1_water_temp
+                state_not: "unavailable"
+              - condition: state
+                entity: sensor.hph_source_z1_water_temp
+                state_not: "unknown"
+            card:
+              type: custom:mushroom-template-card
+              primary: Z1 Water Temp
+              secondary: "{{ states('sensor.hph_source_z1_water_temp') }} °C"
+              icon: mdi:thermometer-water
+              icon_color: >-
+                {% set t = states('sensor.hph_source_z1_water_temp') | float(0) %}
+                {{ 'orange' if t > 45 else 'grey' }}
+              tap_action:
+                action: none
+
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: binary_sensor.hph_has_hk2
+                state: "on"
+              - condition: state
+                entity: text.hph_src_z2_water_temp
+                state_not: ""
+              - condition: state
+                entity: sensor.hph_source_z2_water_temp
+                state_not: "unavailable"
+              - condition: state
+                entity: sensor.hph_source_z2_water_temp
+                state_not: "unknown"
+            card:
+              type: custom:mushroom-template-card
+              primary: Z2 Water Temp
+              secondary: "{{ states('sensor.hph_source_z2_water_temp') }} °C"
+              icon: mdi:thermometer-water
+              icon_color: >-
+                {% set t = states('sensor.hph_source_z2_water_temp') | float(0) %}
+                {{ 'orange' if t > 45 else 'grey' }}
+              tap_action:
+                action: none
+
+          # ── DHW power (hidden when no DHW tank) ───────────────────────────
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: binary_sensor.hph_has_dhw
+                state: "on"
+              - condition: state
+                entity: text.hph_src_dhw_power_thermal
+                state_not: ""
+              - condition: state
+                entity: sensor.hph_source_dhw_power_thermal
+                state_not: "unavailable"
+              - condition: state
+                entity: sensor.hph_source_dhw_power_thermal
+                state_not: "unknown"
+            card:
+              type: custom:mushroom-template-card
+              primary: DHW Thermal
+              secondary: "{{ states('sensor.hph_source_dhw_power_thermal') | float(0) | round(0) }} W"
+              icon: mdi:water-boiler
+              icon_color: >-
+                {{ 'orange' if states('sensor.hph_source_dhw_power_thermal') | float(0) > 0 else 'grey' }}
+              tap_action:
+                action: none
+
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: binary_sensor.hph_has_dhw
+                state: "on"
+              - condition: state
+                entity: text.hph_src_dhw_power_electrical
+                state_not: ""
+              - condition: state
+                entity: sensor.hph_source_dhw_power_electrical
+                state_not: "unavailable"
+              - condition: state
+                entity: sensor.hph_source_dhw_power_electrical
+                state_not: "unknown"
+            card:
+              type: custom:mushroom-template-card
+              primary: DHW Electrical
+              secondary: "{{ states('sensor.hph_source_dhw_power_electrical') | float(0) | round(0) }} W"
+              icon: mdi:water-boiler-alert
+              icon_color: >-
+                {{ 'orange' if states('sensor.hph_source_dhw_power_electrical') | float(0) > 0 else 'grey' }}
+              tap_action:
+                action: none
+
+          # ── Heater / protection binary states ─────────────────────────────
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_src_internal_heater_state
+                state_not: ""
+              - condition: state
+                entity: binary_sensor.hph_source_internal_heater
+                state_not: "unavailable"
+              - condition: state
+                entity: binary_sensor.hph_source_internal_heater
+                state_not: "unknown"
+            card:
+              type: custom:mushroom-template-card
+              primary: Internal Heater
+              secondary: "{{ 'Active' if is_state('binary_sensor.hph_source_internal_heater','on') else 'Idle' }}"
+              icon: mdi:heating-coil
+              icon_color: "{{ 'orange' if is_state('binary_sensor.hph_source_internal_heater','on') else 'grey' }}"
+              tap_action:
+                action: none
+
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: binary_sensor.hph_has_dhw
+                state: "on"
+              - condition: state
+                entity: text.hph_src_dhw_heater_state
+                state_not: ""
+              - condition: state
+                entity: binary_sensor.hph_source_dhw_heater
+                state_not: "unavailable"
+              - condition: state
+                entity: binary_sensor.hph_source_dhw_heater
+                state_not: "unknown"
+            card:
+              type: custom:mushroom-template-card
+              primary: DHW Heater
+              secondary: "{{ 'Active' if is_state('binary_sensor.hph_source_dhw_heater','on') else 'Idle' }}"
+              icon: mdi:water-boiler-alert
+              icon_color: "{{ 'orange' if is_state('binary_sensor.hph_source_dhw_heater','on') else 'grey' }}"
+              tap_action:
+                action: none
+
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_src_antifreeze_mode
+                state_not: ""
+              - condition: state
+                entity: binary_sensor.hph_source_antifreeze
+                state_not: "unavailable"
+              - condition: state
+                entity: binary_sensor.hph_source_antifreeze
+                state_not: "unknown"
+            card:
+              type: custom:mushroom-template-card
+              primary: Anti-Freeze
+              secondary: "{{ 'Active' if is_state('binary_sensor.hph_source_antifreeze','on') else 'Off' }}"
+              icon: mdi:snowflake-alert
+              icon_color: "{{ 'blue' if is_state('binary_sensor.hph_source_antifreeze','on') else 'grey' }}"
+              tap_action:
+                action: none
+
+          # ── Optional PCB: zone pumps + mixing valve ───────────────────────
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_src_opt_z1_pump
+                state_not: ""
+              - condition: state
+                entity: binary_sensor.hph_source_opt_z1_pump
+                state_not: "unavailable"
+              - condition: state
+                entity: binary_sensor.hph_source_opt_z1_pump
+                state_not: "unknown"
+            card:
+              type: custom:mushroom-template-card
+              primary: Z1 Pump
+              secondary: "{{ 'Running' if is_state('binary_sensor.hph_source_opt_z1_pump','on') else 'Stopped' }}"
+              icon: mdi:pump
+              icon_color: "{{ 'green' if is_state('binary_sensor.hph_source_opt_z1_pump','on') else 'grey' }}"
+              tap_action:
+                action: none
+
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_src_opt_z2_pump
+                state_not: ""
+              - condition: state
+                entity: binary_sensor.hph_source_opt_z2_pump
+                state_not: "unavailable"
+              - condition: state
+                entity: binary_sensor.hph_source_opt_z2_pump
+                state_not: "unknown"
+            card:
+              type: custom:mushroom-template-card
+              primary: Z2 Pump
+              secondary: "{{ 'Running' if is_state('binary_sensor.hph_source_opt_z2_pump','on') else 'Stopped' }}"
+              icon: mdi:pump
+              icon_color: "{{ 'green' if is_state('binary_sensor.hph_source_opt_z2_pump','on') else 'grey' }}"
+              tap_action:
+                action: none
+
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_src_opt_z1_mixing_valve
+                state_not: ""
+              - condition: state
+                entity: sensor.hph_source_opt_z1_mixing_valve
+                state_not: "unavailable"
+              - condition: state
+                entity: sensor.hph_source_opt_z1_mixing_valve
+                state_not: "unknown"
+            card:
+              type: custom:mushroom-template-card
+              primary: Z1 Mixing Valve
+              secondary: "{{ states('sensor.hph_source_opt_z1_mixing_valve') | title }}"
+              icon: mdi:valve
+              icon_color: >-
+                {% set v = states('sensor.hph_source_opt_z1_mixing_valve') | lower %}
+                {{ 'orange' if v == 'increase' else ('blue' if v == 'decrease' else 'grey') }}
+              tap_action:
+                action: none
+
           # Thermal Power always shown — hph_src_internal_thermal_power has
           # a non-empty default for all Panasonic models.
           - type: custom:mushroom-template-card
@@ -1810,6 +2119,24 @@ views:
               icon_color: "{{ 'green' if is_state('switch.hph_schedule','on') else 'grey' }}"
               tap_action:
                 action: toggle
+
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: text.hph_ctrl_write_restart_heishamon
+                state_not: ""
+            card:
+              type: custom:mushroom-template-card
+              entity: button.hph_restart_heishamon
+              primary: Restart HeishaMon
+              secondary: Press to reboot the HeishaMon device
+              icon: mdi:restart
+              icon_color: red
+              tap_action:
+                action: call-service
+                service: button.press
+                target:
+                  entity_id: button.hph_restart_heishamon
 
       # ── Section 8: Heating curve — Zone 1 ───────────────────────────────
       - type: custom:mushroom-title-card

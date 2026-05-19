@@ -164,6 +164,17 @@ sensor:
   unit_time: h
   method: left
   round: 2
+# DHW thermal energy from Heishamon's direct dhw_power_production measurement.
+# Only accumulates when hph_source_dhw_power_thermal is configured and compressor
+# is running in DHW mode. Feeds hph_cop_monthly_dhw_direct / _yearly_dhw_direct.
+- platform: integration
+  source: sensor.hph_dhw_thermal_power_runtime
+  name: HPH DHW Thermal Energy Runtime
+  unique_id: hph_dhw_thermal_energy_runtime
+  unit_prefix: k
+  unit_time: h
+  method: left
+  round: 2
 
 utility_meter:
   # ── Daily ───────────────────────────────────────────────────────────────
@@ -259,4 +270,11 @@ utility_meter:
     cron: "0 0 1 7 *"
   hph_electrical_cooling_runtime_yearly:
     source: sensor.hph_electrical_energy_cooling_runtime
+    cron: "0 0 1 7 *"
+  # Direct DHW thermal energy — from Heishamon dhw_power_production.
+  hph_thermal_dhw_runtime_monthly:
+    source: sensor.hph_dhw_thermal_energy_runtime
+    cycle: monthly
+  hph_thermal_dhw_runtime_yearly:
+    source: sensor.hph_dhw_thermal_energy_runtime
     cron: "0 0 1 7 *"

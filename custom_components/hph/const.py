@@ -145,6 +145,12 @@ VENDOR_PRESETS: Final[dict[str, dict[str, str]]] = {
         "hph_src_antifreeze_mode":      "binary_sensor.panasonic_heat_pump_main_anti_freeze_mode",
         # Control switches
         "hph_ctrl_write_schedule":      "switch.panasonic_heat_pump_main_main_schedule_state",
+        # HeishaMon control
+        "hph_ctrl_write_restart_heishamon": "button.panasonic_heat_pump_ip",
+        # Optional PCB
+        "hph_src_opt_z1_pump":              "binary_sensor.panasonic_heat_pump_optional_z1_water_pump",
+        "hph_src_opt_z2_pump":              "",
+        "hph_src_opt_z1_mixing_valve":      "sensor.panasonic_heat_pump_optional_z1_mixing_valve",
     },
     "panasonic_heishamon_aquarea": {
         # Bundled HeishaMon MQTT YAML naming (aquarea_*)
@@ -500,6 +506,19 @@ TEXT_HELPERS: Final[dict[str, dict[str, Any]]] = {
                                       "initial": ""},
     "hph_ctrl_write_schedule":      {"name": "Control write — main schedule", "icon": "mdi:calendar-clock",
                                       "initial": ""},
+    "hph_ctrl_write_restart_heishamon": {"name": "Control write — restart HeishaMon",
+                                          "icon": "mdi:restart",
+                                          "initial": ""},
+    # Optional PCB source helpers
+    "hph_src_opt_z1_pump":              {"name": "HeatPump Hero source — Zone 1 water pump (Optional PCB)",
+                                          "icon": "mdi:pump",
+                                          "initial": ""},
+    "hph_src_opt_z2_pump":              {"name": "HeatPump Hero source — Zone 2 water pump (Optional PCB)",
+                                          "icon": "mdi:pump",
+                                          "initial": ""},
+    "hph_src_opt_z1_mixing_valve":      {"name": "HeatPump Hero source — Zone 1 mixing valve (Optional PCB)",
+                                          "icon": "mdi:valve",
+                                          "initial": ""},
     "hph_ctrl_write_powerful_mode": {"name": "Control write — powerful/boost mode select entity (vendor-specific)", "icon": "mdi:rocket-launch",
                                       "initial": ""},
     "hph_ctrl_write_active_zones": {"name": "Control write — active zones select entity", "icon": "mdi:home-floor-a",
@@ -959,6 +978,10 @@ CTRL_FACADES: Final[dict[str, dict[str, Any]]] = {
     "hph_force_dhw": {
         "platform": "button", "writer": "hph_ctrl_write_force_dhw",
         "name": "Force DHW now", "icon": "mdi:water-boiler",
+    },
+    "hph_restart_heishamon": {
+        "platform": "button", "writer": "hph_ctrl_write_restart_heishamon",
+        "name": "Restart HeishaMon", "icon": "mdi:restart",
     },
     # Heating curve reference points (v0.9.1)
     "hph_z1_outside_low": {

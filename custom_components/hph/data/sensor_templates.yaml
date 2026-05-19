@@ -683,6 +683,31 @@ sensors:
     {% set e = states(''sensor.hph_electrical_yearly_split_dhw'') | float(0) %} {{
     (t / e) | round(2) if e > 0.1 else 0 }}'
   _source_package: hph_efficiency.yaml
+# DHW COP using direct Heishamon dhw_power_production measurement.
+# Only available when hph_src_dhw_power_thermal is configured (Heishamon users).
+# Additive — does not replace the tariff-split hph_cop_*_dhw sensors.
+- name: HeatPump Hero COP Monthly DHW Direct
+  unique_id: hph_cop_monthly_dhw_direct
+  unit_of_measurement: x
+  state_class: measurement
+  availability: >-
+    {{ states('sensor.hph_source_dhw_power_thermal') not in ['unavailable','unknown','none'] }}
+  state: >-
+    {% set t = states('sensor.hph_thermal_dhw_runtime_monthly') | float(0) %}
+    {% set e = states('sensor.hph_electrical_dhw_runtime_monthly') | float(0) %}
+    {{ (t / e) | round(2) if e > 0.1 else 0 }}
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero COP Yearly DHW Direct
+  unique_id: hph_cop_yearly_dhw_direct
+  unit_of_measurement: x
+  state_class: measurement
+  availability: >-
+    {{ states('sensor.hph_source_dhw_power_thermal') not in ['unavailable','unknown','none'] }}
+  state: >-
+    {% set t = states('sensor.hph_thermal_dhw_runtime_yearly') | float(0) %}
+    {% set e = states('sensor.hph_electrical_dhw_runtime_yearly') | float(0) %}
+    {{ (t / e) | round(2) if e > 0.1 else 0 }}
+  _source_package: hph_efficiency.yaml
 - name: HeatPump Hero COP Last Month
   unique_id: hph_cop_last_month
   unit_of_measurement: x
@@ -1278,6 +1303,13 @@ sensors:
        and states(ent) | float(0) != -78 }}
   state: '{{ states(states(''text.hph_src_z2_water_temp'')) | float(0) }}'
   _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Zone 1 Mixing Valve
+  unique_id: hph_source_opt_z1_mixing_valve
+  icon: mdi:valve
+  availability: '{% set ent = states(''text.hph_src_opt_z1_mixing_valve'') %} {{ ent
+    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{{ states(states(''text.hph_src_opt_z1_mixing_valve'')) }}'
+  _source_package: hph_sources.yaml
 - name: HeatPump Hero Source Internal Thermal Power
   unique_id: hph_source_internal_thermal_power
   unit_of_measurement: W
@@ -1398,6 +1430,18 @@ sensors:
     {% if is_state('binary_sensor.hph_compressor_running','on')
        and is_state('sensor.hph_operating_mode','dhw') %}
       {{ states('sensor.hph_electrical_power_active') | float(0) }}
+    {% else %}0{% endif %}
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero DHW Thermal Power Runtime
+  unique_id: hph_dhw_thermal_power_runtime
+  unit_of_measurement: W
+  device_class: power
+  state_class: measurement
+  state: >-
+    {% if is_state('binary_sensor.hph_compressor_running','on')
+       and is_state('sensor.hph_operating_mode','dhw')
+       and states('sensor.hph_source_dhw_power_thermal') not in ['unavailable','unknown','none'] %}
+      {{ states('sensor.hph_source_dhw_power_thermal') | float(0) }}
     {% else %}0{% endif %}
   _source_package: hph_efficiency.yaml
 - name: HeatPump Hero Electrical Power Cooling Runtime

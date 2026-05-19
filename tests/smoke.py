@@ -117,6 +117,9 @@ def test_source_facade_resolution() -> int:
 
     # Facade sensors can be defined in any HPH package (hph_sources is the
     # primary, but hph_analysis adds indoor temp facades, etc.)
+    # v0.9+: also scan the Python integration template files which define
+    # facades via sensor_templates.yaml / binary_sensor_templates.yaml
+    # (loaded at runtime by sensor.py / binary_sensor.py).
     facade_names: set[str] = set()
     for pkg in (ROOT / "packages").glob("hph_*.yaml"):
         d = load_yaml(pkg)
@@ -125,6 +128,17 @@ def test_source_facade_resolution() -> int:
                 facade_names.add(sensor["unique_id"])
             for sensor in block.get("binary_sensor", []) or []:
                 facade_names.add(sensor["unique_id"])
+    # v0.9 Python platform template files (top-level keys: sensors: / binary_sensors:)
+    for tmpl_file, key in [
+        (ROOT / "custom_components" / "hph" / "data" / "sensor_templates.yaml", "sensors"),
+        (ROOT / "custom_components" / "hph" / "data" / "binary_sensor_templates.yaml", "binary_sensors"),
+    ]:
+        if tmpl_file.exists():
+            data = yaml.safe_load(tmpl_file.read_text(encoding="utf-8"))
+            entries = data.get(key, []) if isinstance(data, dict) else (data if isinstance(data, list) else [])
+            for entry in (entries or []):
+                if isinstance(entry, dict) and "unique_id" in entry:
+                    facade_names.add(entry["unique_id"])
 
     if not facade_names:
         fail("no template facades found — refactor regression?")

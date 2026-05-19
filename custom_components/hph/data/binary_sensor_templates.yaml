@@ -54,6 +54,20 @@ binary_sensors:
   state: '{% set ent = states(''text.hph_src_antifreeze_mode'') %} {{ is_state(ent,
     ''on'') }}'
   _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Zone 1 Water Pump
+  unique_id: hph_source_opt_z1_pump
+  icon: mdi:pump
+  availability: '{% set ent = states(''text.hph_src_opt_z1_pump'') %} {{ ent
+    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{% set ent = states(''text.hph_src_opt_z1_pump'') %} {{ is_state(ent, ''on'') }}'
+  _source_package: hph_sources.yaml
+- name: HeatPump Hero Source Zone 2 Water Pump
+  unique_id: hph_source_opt_z2_pump
+  icon: mdi:pump
+  availability: '{% set ent = states(''text.hph_src_opt_z2_pump'') %} {{ ent
+    and states(ent) not in [''unknown'',''unavailable'',''none'',''''] }}'
+  state: '{% set ent = states(''text.hph_src_opt_z2_pump'') %} {{ is_state(ent, ''on'') }}'
+  _source_package: hph_sources.yaml
 - name: HeatPump Hero Has HK2
   unique_id: hph_has_hk2
   icon: mdi:home-thermometer-outline
