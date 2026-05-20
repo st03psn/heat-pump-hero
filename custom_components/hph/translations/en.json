@@ -85,15 +85,177 @@
     }
   },
   "entity": {
+    "text": {
+      "hph_src_inlet_temp": { "name": "Source — inlet (return) temperature" },
+      "hph_src_outlet_temp": { "name": "Source — outlet (supply) temperature" },
+      "hph_src_flow_rate": { "name": "Source — water flow rate" },
+      "hph_src_outdoor_temp": { "name": "Source — outdoor temperature" },
+      "hph_src_compressor_freq": { "name": "Source — compressor frequency" },
+      "hph_src_compressor_hours": { "name": "Source — compressor hours (lifetime)" },
+      "hph_src_compressor_starts": { "name": "Source — compressor starts (lifetime)" },
+      "hph_src_discharge_temp": { "name": "Source — discharge temperature" },
+      "hph_src_pump_pressure": { "name": "Source — water pressure" },
+      "hph_src_internal_power": { "name": "Source — internal power consumption" },
+      "hph_src_internal_thermal_power": { "name": "Source — internal thermal power" },
+      "hph_src_fan1_speed": { "name": "Source — fan 1 speed" },
+      "hph_src_fan2_speed": { "name": "Source — fan 2 speed" },
+      "hph_src_inverter_temp": { "name": "Source — inverter / IPM temperature" },
+      "hph_src_high_pressure": { "name": "Source — refrigerant high-side pressure" },
+      "hph_src_low_pressure": { "name": "Source — refrigerant low-side pressure" },
+      "hph_src_compressor_current": { "name": "Source — compressor current" },
+      "hph_src_outdoor_pipe_temp": { "name": "Source — outdoor pipe temperature" },
+      "hph_src_3way_valve": { "name": "Source — 3-way valve state" },
+      "hph_src_zone1_target_temp": { "name": "Source — zone 1 water target temperature" },
+      "hph_src_hex_outlet_temp": { "name": "Source — heat exchanger outlet temperature" },
+      "hph_src_pump_duty": { "name": "Source — pump duty cycle" },
+      "hph_src_expansion_valve": { "name": "Source — expansion valve position" },
+      "hph_src_eva_outlet_temp": { "name": "Source — evaporator outlet temperature" },
+      "hph_src_inside_pipe_temp": { "name": "Source — inside pipe temperature" },
+      "hph_src_bypass_outlet_temp": { "name": "Source — bypass outlet temperature" },
+      "hph_src_defrost_temp": { "name": "Source — defrost temperature" },
+      "hph_src_dhw_power_thermal": { "name": "Source — DHW thermal power" },
+      "hph_src_dhw_power_electrical": { "name": "Source — DHW electrical power" },
+      "hph_src_z1_water_temp": { "name": "Source — zone 1 water temperature" },
+      "hph_src_z2_water_temp": { "name": "Source — zone 2 water temperature" },
+      "hph_src_internal_heater_state": { "name": "Source — internal heater state" },
+      "hph_src_dhw_heater_state": { "name": "Source — DHW heater state" },
+      "hph_src_antifreeze_mode": { "name": "Source — anti-freeze mode" },
+      "hph_src_defrost_state": { "name": "Source — defrost state" },
+      "hph_src_aux_heater_state": { "name": "Source — auxiliary heater state" },
+      "hph_src_operating_mode": { "name": "Source — operating mode" },
+      "hph_src_error_code": { "name": "Source — error / fault code" },
+      "hph_src_zone1_temp": { "name": "Source — zone 1 temperature" },
+      "hph_src_zone2_temp": { "name": "Source — zone 2 temperature" },
+      "hph_src_dhw_temp": { "name": "Source — DHW tank temperature" },
+      "hph_src_buffer_temp": { "name": "Source — buffer tank temperature" },
+      "hph_src_dhw_target_temp": { "name": "Source — DHW target temperature" },
+      "hph_src_target_supply_temp": { "name": "Source — target supply temperature" },
+      "hph_src_room_temp": { "name": "Source — room thermostat temperature" },
+      "hph_src_pump_speed": { "name": "Source — pump speed" },
+      "hph_src_valve_state": { "name": "Source — two-way valve state" },
+      "hph_src_heater_state": { "name": "Source — external heater state" },
+      "hph_src_heater_hours": { "name": "Source — heater operations hours" },
+      "hph_src_external_thermal_power": { "name": "Source — external thermal power (W)" },
+      "hph_src_external_electrical_power": { "name": "Source — external electrical power (W)" },
+      "hph_src_external_thermal_energy": { "name": "Source — external thermal energy meter (kWh)" },
+      "hph_src_external_electrical_energy": { "name": "Source — external electrical energy meter (kWh)" },
+      "hph_src_opt_z1_pump": { "name": "Source — zone 1 water pump (Optional PCB)" },
+      "hph_src_opt_z2_pump": { "name": "Source — zone 2 water pump (Optional PCB)" },
+      "hph_src_opt_z1_mixing_valve": { "name": "Source — zone 1 mixing valve (Optional PCB)" },
+      "hph_src_s0_power": { "name": "Source — S0 pulse counter power (W)" },
+      "hph_src_force_heater": { "name": "Source — force heater state" },
+      "hph_src_sterilization": { "name": "Source — sterilization state" },
+      "hph_src_quiet_schedule": { "name": "Source — quiet mode schedule" },
+      "hph_ctrl_write_quiet_mode": { "name": "Control — quiet mode select entity" },
+      "hph_ctrl_write_force_dhw": { "name": "Control — force DHW button entity" },
+      "hph_ctrl_write_z1_curve_high": { "name": "Control — zone 1 heat-curve high point" },
+      "hph_ctrl_write_z1_curve_low": { "name": "Control — zone 1 heat-curve low point" },
+      "hph_ctrl_write_dhw_target": { "name": "Control — DHW target temperature" },
+      "hph_ctrl_write_operating_mode": { "name": "Control — operating mode select entity" },
+      "hph_ctrl_write_power": { "name": "Control — main power switch entity" },
+      "hph_ctrl_write_holiday": { "name": "Control — holiday mode switch entity" },
+      "hph_ctrl_write_force_defrost": { "name": "Control — force defrost switch entity" },
+      "hph_ctrl_write_schedule": { "name": "Control — main schedule entity" },
+      "hph_ctrl_write_restart_heishamon": { "name": "Control — restart HeishaMon entity" },
+      "hph_ctrl_write_powerful_mode": { "name": "Control — powerful / boost mode entity" },
+      "hph_ctrl_write_active_zones": { "name": "Control — active zones select entity" },
+      "hph_ctrl_write_bivalent_mode": { "name": "Control — bivalent mode select entity" },
+      "hph_ctrl_write_z1_heat_shift": { "name": "Control — zone 1 heat request shift" },
+      "hph_ctrl_write_z2_heat_shift": { "name": "Control — zone 2 heat request shift" },
+      "hph_ctrl_write_heating_cutoff": { "name": "Control — heating cutoff outdoor temperature" },
+      "hph_ctrl_write_max_pump_duty": { "name": "Control — maximum pump duty cycle" },
+      "hph_ctrl_write_room_heat_delta": { "name": "Control — room heating delta / hysteresis" },
+      "hph_ctrl_write_z1_climate": { "name": "Control — zone 1 climate entity" },
+      "hph_ctrl_write_z2_climate": { "name": "Control — zone 2 climate entity" },
+      "hph_ctrl_write_z1_outside_low": { "name": "Control — zone 1 heat-curve outside low" },
+      "hph_ctrl_write_z1_outside_high": { "name": "Control — zone 1 heat-curve outside high" },
+      "hph_ctrl_write_z2_outside_low": { "name": "Control — zone 2 heat-curve outside low" },
+      "hph_ctrl_write_z2_outside_high": { "name": "Control — zone 2 heat-curve outside high" },
+      "hph_ctrl_write_z2_curve_high": { "name": "Control — zone 2 heat-curve high point" },
+      "hph_ctrl_write_z2_curve_low": { "name": "Control — zone 2 heat-curve low point" },
+      "hph_ctrl_write_dhw_heat_delta": { "name": "Control — DHW heat delta" },
+      "hph_ctrl_write_smart_dhw": { "name": "Control — smart DHW select entity" },
+      "hph_ctrl_write_heating_control": { "name": "Control — heating control mode entity" },
+      "hph_ctrl_write_cool_delta": { "name": "Control — cooling delta" },
+      "hph_ctrl_write_dhw_sensor_selection": { "name": "Control — DHW sensor selection entity" },
+      "hph_ctrl_write_bivalent_start_temp": { "name": "Control — bivalent start temperature" },
+      "hph_ctrl_write_heater_delay_time": { "name": "Control — backup heater delay time" },
+      "hph_ctrl_write_heater_start_delta": { "name": "Control — backup heater start delta" },
+      "hph_ctrl_write_heater_stop_delta": { "name": "Control — backup heater stop delta" },
+      "hph_indoor_temp_entity": { "name": "Analysis — indoor reference temperature sensor" },
+      "hph_indoor_target_entity": { "name": "Analysis — indoor target temperature sensor" },
+      "hph_heating_curve_recommendation": { "name": "Analysis — heating curve recommendation" },
+      "hph_ctrl_pv_surplus_entity": { "name": "PV surplus sensor entity" },
+      "hph_ctrl_price_mean_entity": { "name": "Price-DHW — daily mean price sensor" },
+      "hph_ctrl_forecast_entity": { "name": "Forecast pre-heat — forecast temperature sensor" },
+      "hph_bridge_prefix": { "name": "Bridge — MQTT topic prefix" },
+      "hph_diag_error_history": { "name": "Diagnostics — error ring buffer" },
+      "hph_dhw_start_hours": { "name": "DHW start-hour ring buffer" },
+      "hph_export_target_path": { "name": "Export target directory" },
+      "hph_outdoor_temp_override_entity": { "name": "Outdoor temperature — override sensor entity" },
+      "hph_electricity_price_entity": { "name": "Cost — electricity price sensor entity" },
+      "hph_install_heat_loss_kw": { "name": "Installation — design heat loss (kW)" },
+      "hph_install_design_flow_temp_c": { "name": "Installation — design supply temperature (°C)" },
+      "hph_install_year": { "name": "Installation — commissioning year" },
+      "hph_cycles_history": { "name": "Cycles history ring buffer" }
+    },
+    "number": {
+      "hph_advisor_short_cycle_warn_pct": { "name": "Advisor — short-cycle warn threshold (%)" },
+      "hph_advisor_short_cycle_crit_pct": { "name": "Advisor — short-cycle critical threshold (%)" },
+      "hph_advisor_dt_target_k": { "name": "Advisor — target supply/return spread (K)" },
+      "hph_advisor_dhw_min_runtime_min": { "name": "Advisor — DHW minimum run time (min)" },
+      "hph_advisor_heating_limit_target_c": { "name": "Advisor — heating limit target (°C)" },
+      "hph_heating_limit_observed_c": { "name": "Heating limit — last observed (°C)" },
+      "hph_advisor_drift_warn_pct": { "name": "Advisor — efficiency drift warn threshold (% YoY)" },
+      "hph_advisor_drift_crit_pct": { "name": "Advisor — efficiency drift critical threshold (% YoY)" },
+      "hph_advisor_dhw_max_fires_per_day": { "name": "Advisor — DHW max fires per day" },
+      "hph_advisor_pump_spread_min_samples": { "name": "Advisor — pump-curve min samples (7d)" },
+      "hph_dhw_fires_yesterday": { "name": "DHW fires yesterday" },
+      "hph_thermal_runtime_today_kwh": { "name": "Thermal runtime kWh today" },
+      "hph_electrical_runtime_today_kwh": { "name": "Electrical runtime kWh today" },
+      "hph_electricity_price_ct_per_kwh": { "name": "Cost — electricity price (ct/kWh, manual)" },
+      "hph_indoor_target_default": { "name": "Analysis — fallback indoor target (°C)" },
+      "hph_analysis_window_days": { "name": "Analysis — observation window (days)" },
+      "hph_analysis_dead_band_k": { "name": "Analysis — dead band around target (K)" },
+      "hph_ctrl_ccc_min_pause_min": { "name": "CCC — minimum pause (minutes)" },
+      "hph_ctrl_ccc_min_runtime_min": { "name": "CCC — minimum runtime (minutes)" },
+      "hph_ctrl_solar_pv_threshold_w": { "name": "Solar-DHW — PV surplus threshold (W)" },
+      "hph_ctrl_adaptive_max_step_k": { "name": "Adaptive curve — max step per cycle (K)" },
+      "hph_ctrl_adaptive_supply_min_c": { "name": "Adaptive curve — supply lower bound (°C)" },
+      "hph_ctrl_adaptive_supply_max_c": { "name": "Adaptive curve — supply upper bound (°C)" },
+      "hph_ctrl_price_threshold_factor": { "name": "Price-DHW — fire threshold factor" },
+      "hph_ctrl_price_max_per_day": { "name": "Price-DHW — max boosts per day" },
+      "hph_ctrl_forecast_drop_threshold_k": { "name": "Forecast — temperature drop trigger (K)" },
+      "hph_ctrl_forecast_boost_k": { "name": "Forecast — curve boost (K)" },
+      "hph_cycle_short_threshold_min": { "name": "Short cycle threshold (minutes)" },
+      "hph_cycle_last_duration_min": { "name": "Last cycle duration (minutes)" },
+      "hph_cycle_last_pause_min": { "name": "Last pause (minutes)" },
+      "hph_model_compressor_min_hz": { "name": "Model — compressor minimum frequency (Hz)" },
+      "hph_model_compressor_max_hz": { "name": "Model — compressor maximum frequency (Hz)" },
+      "hph_model_min_flow_lpm": { "name": "Model — minimum water flow (L/min)" },
+      "hph_model_max_supply_c": { "name": "Model — maximum supply temperature (°C)" },
+      "hph_model_expansion_valve_max_steps": { "name": "Model — expansion valve max position (steps)" },
+      "hph_prog_screed_day": { "name": "Screed dry-out — current day index" },
+      "hph_prog_legionella_target_c": { "name": "Legionella — DHW target temperature (°C)" },
+      "hph_prog_legionella_hold_min": { "name": "Legionella — hold time at target (min)" },
+      "hph_prog_legionella_hour": { "name": "Legionella — start hour (0–23)" },
+      "hph_cycles_today": { "name": "Cycles today" },
+      "hph_short_cycles_today": { "name": "Short cycles today" },
+      "hph_dhw_fires_today": { "name": "DHW fires today" },
+      "hph_ctrl_price_dhw_fires_today": { "name": "Price-DHW — fires today" }
+    },
     "select": {
       "hph_thermal_source": {
+        "name": "Thermal energy source mode",
         "state": {
           "calculated": "Calculated (internal model)",
+          "heat_pump_internal": "Internal (heat pump sensor)",
           "external_power": "External power meter",
           "external_energy": "External energy meter"
         }
       },
       "hph_electrical_source": {
+        "name": "Electrical energy source mode",
         "state": {
           "heat_pump_internal": "Internal (heat pump sensor)",
           "external_power": "External power meter",
@@ -101,6 +263,7 @@
         }
       },
       "hph_schema_variant": {
+        "name": "Schematic variant",
         "state": {
           "auto": "Auto-detect",
           "hk1": "A2W — heating circuit only",
@@ -109,7 +272,52 @@
           "hk1_hk2_dhw_buffer": "A2W + 2 circuits + DHW + buffer"
         }
       },
+      "hph_ui_style": {
+        "name": "Dashboard UI style",
+        "state": {
+          "mushroom": "Mushroom",
+          "classic": "Classic"
+        }
+      },
+      "hph_vendor_preset": {
+        "name": "Vendor preset",
+        "state": {
+          "panasonic_heishamon": "Panasonic Heishamon",
+          "keep_current": "Keep current settings"
+        }
+      },
+      "hph_pump_model": {
+        "name": "Heat-pump model",
+        "state": {
+          "panasonic_j_aqj": "Panasonic J (AQJ)",
+          "panasonic_k_aqk": "Panasonic K (AQK)",
+          "panasonic_l_aql": "Panasonic L (AQL)",
+          "panasonic_tcap": "Panasonic T-CAP",
+          "panasonic_m_aqm": "Panasonic M (AQM)"
+        }
+      },
+      "hph_prog_screed_profile": {
+        "name": "Screed dry-out profile",
+        "state": {
+          "functional_3d": "Functional heating (3 days)",
+          "combined_10d": "Combined heating (10 days)",
+          "din_18560_28d": "DIN 18560-4 (28 days)"
+        }
+      },
+      "hph_prog_legionella_weekday": {
+        "name": "Legionella boost weekday",
+        "state": {
+          "mon": "Monday",
+          "tue": "Tuesday",
+          "wed": "Wednesday",
+          "thu": "Thursday",
+          "fri": "Friday",
+          "sat": "Saturday",
+          "sun": "Sunday"
+        }
+      },
       "hph_export_format": {
+        "name": "Export format",
         "state": {
           "csv": "CSV",
           "json": "JSON",
@@ -117,6 +325,7 @@
         }
       },
       "hph_export_period": {
+        "name": "Export period",
         "state": {
           "last_24h": "Last 24 hours",
           "last_7d": "Last 7 days",
@@ -129,13 +338,69 @@
         }
       },
       "hph_export_schedule": {
+        "name": "Export schedule",
         "state": {
           "off": "Off",
           "daily": "Daily",
           "weekly": "Weekly",
           "monthly": "Monthly"
         }
+      },
+      "hph_install_emitter_type": {
+        "name": "Heat emitter type",
+        "state": {
+          "unknown": "Unknown",
+          "radiators": "Radiators",
+          "ufh": "Underfloor heating",
+          "mixed": "Mixed",
+          "fan_coil": "Fan coils"
+        }
+      },
+      "hph_install_refrigerant": {
+        "name": "Refrigerant",
+        "state": {
+          "unknown": "Unknown",
+          "R32": "R32",
+          "R290": "R290 (propane)",
+          "R410A": "R410A",
+          "R454B": "R454B",
+          "R744": "R744 (CO₂)"
+        }
       }
+    },
+    "switch": {
+      "hph_ctrl_master": { "name": "Control — master switch" },
+      "hph_ctrl_ccc": { "name": "Compressor Cycle Control (CCC)" },
+      "hph_ctrl_solar_dhw": { "name": "Solar-DHW boost" },
+      "hph_ctrl_quiet_night": { "name": "Night quiet mode" },
+      "hph_ctrl_adaptive_curve": { "name": "Control — adaptive heating curve" },
+      "hph_ctrl_price_dhw": { "name": "Control — price-driven DHW" },
+      "hph_ctrl_forecast_preheat": { "name": "Control — forecast pre-heating" },
+      "hph_ctrl_forecast_preheat_active": { "name": "Control — forecast pre-heat active" },
+      "hph_prog_screed": { "name": "Program — screed dry-out" },
+      "hph_prog_screed_active": { "name": "Program — screed program running" },
+      "hph_prog_legionella": { "name": "Program — legionella protection schedule" },
+      "hph_bridge_enabled": { "name": "Bridge — MQTT republisher" },
+      "hph_metering_includes_immersion": { "name": "Metering — includes immersion heater" },
+      "hph_metering_includes_circulation": { "name": "Metering — includes circulation pump" },
+      "hph_metering_includes_controls": { "name": "Metering — includes controls / standby" },
+      "hph_metering_includes_brine": { "name": "Metering — includes brine pump (GSHP only)" }
+    },
+    "datetime": {
+      "hph_cycle_last_start": { "name": "Last cycle start" },
+      "hph_cycle_last_end": { "name": "Last cycle end" },
+      "hph_diag_last_error_time": { "name": "Last error timestamp" },
+      "hph_export_last_run": { "name": "Last export run" },
+      "hph_ctrl_adaptive_last_run": { "name": "Adaptive curve — last application" },
+      "hph_ctrl_price_dhw_last_fire": { "name": "Price-DHW — last boost timestamp" },
+      "hph_prog_screed_start": { "name": "Screed dry-out — program start" },
+      "hph_prog_legionella_last_run": { "name": "Legionella — last run timestamp" }
+    },
+    "button": {
+      "hph_export_now": { "name": "Export now (manual trigger)" },
+      "hph_run_legionella_now": { "name": "Run legionella program now" },
+      "hph_reset_cycles_today": { "name": "Reset cycles-today counter" },
+      "hph_reset_short_cycles_today": { "name": "Reset short-cycles-today counter" }
     }
   }
 }

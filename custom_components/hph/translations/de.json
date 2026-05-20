@@ -1,0 +1,406 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "HeatPump Hero — Hersteller",
+        "description": "Wähle die Integration, die deine Wärmepumpe bereits in Home Assistant bereitstellt. Die häufigste Wahl ist `panasonic_heishamon` (die kamaradclimber Custom-Integration). Verwende `keep_current`, wenn du die Quell-Helper bereits manuell konfiguriert hast und die automatische Voreinstellung überspringen möchtest.",
+        "data": {
+          "vendor_preset": "Hersteller-Preset"
+        }
+      },
+      "model": {
+        "title": "HeatPump Hero — Modell",
+        "description": "Wähle die Wärmepumpen-Generation. Dies füllt automatisch Verdichter-Min-/Maxfrequenz, minimalen Wasserdurchfluss und maximale Vorlauftemperatur mit empirisch validierten Werten. Power-User können diese Werte nachträglich überschreiben.",
+        "data": {
+          "pump_model": "Wärmepumpen-Modell"
+        }
+      },
+      "sensors": {
+        "title": "HeatPump Hero — optionale Sensoren",
+        "description": "Optional. Wenn du einen Shelly-/IoTaWatt-Leistungsmesser, einen MBus-Wärmemengenzähler oder einen dedizierten Raumtemperatursensor hast, weise HPH hier darauf hin. Du kannst diese Einstellungen später über die Integrationsoptionen nachholen.",
+        "data": {
+          "indoor_temp_entity": "Raumtemperatur-Referenzsensor",
+          "outdoor_temp_entity": "Außentemperatursensor Wetterstation (überschreibt Hersteller-Preset)",
+          "external_thermal_power": "Externe thermische Leistung (W)",
+          "external_electrical_power": "Externe elektrische Leistung (W)",
+          "external_thermal_energy": "Externer Wärmemengenzähler (kWh)",
+          "external_electrical_energy": "Externer Stromzähler (kWh)"
+        }
+      },
+      "confirm": {
+        "title": "HeatPump Hero — bestätigen",
+        "description": "Installation mit Hersteller `{vendor}` und Modell `{model}` wird vorbereitet. Bitte starte nach der Bestätigung **Home Assistant neu**, damit alle Helper und das Dashboard geladen werden. Das Dashboard erscheint automatisch in der Seitenleiste — kein manueller YAML-Import nötig."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "HeatPump Hero ist eine Einzel-Instanz-Integration — es kann nur einen Eintrag geben."
+    }
+  },
+  "issues": {
+    "missing_frontend_card": {
+      "title": "Fehlende Lovelace-Karte: {card_name}",
+      "description": "Das HeatPump-Hero-Dashboard erfordert die **{card_name}** Lovelace-Karte. Installiere `{hacs_repo}` via HACS → Frontend und lade dann den Browser-Tab neu."
+    },
+    "missing_vendor_integration": {
+      "title": "Hersteller-Integration nicht geladen: {vendor}",
+      "description": "HeatPump Hero ist für das Hersteller-Preset `{vendor}` konfiguriert, aber diese Integration ist nicht geladen. Stelle sicher, dass die `{vendor}` Custom-Integration installiert und eingerichtet ist, und starte dann Home Assistant neu."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "HeatPump Hero — Hersteller & Modell",
+        "description": "Hersteller-Preset oder Wärmepumpen-Modell ändern. Im nächsten Schritt können externe Sensoren aktualisiert werden.",
+        "data": {
+          "vendor_preset": "Hersteller-Preset",
+          "pump_model": "Wärmepumpen-Modell"
+        }
+      },
+      "sensors": {
+        "title": "HeatPump Hero — externe Sensoren",
+        "description": "Optional: Shelly-/IoTaWatt-Leistungsmesser, MBus-Wärmemengenzähler, Raumtemperaturreferenz. Leer lassen, um aktuelle Einstellungen zu behalten.",
+        "data": {
+          "indoor_temp_entity": "Raumtemperatur-Referenzsensor",
+          "outdoor_temp_entity": "Außentemperatursensor Wetterstation (überschreibt Hersteller-Preset)",
+          "external_thermal_power": "Externe thermische Leistung (W)",
+          "external_electrical_power": "Externe elektrische Leistung (W)",
+          "external_thermal_energy": "Externer Wärmemengenzähler (kWh)",
+          "external_electrical_energy": "Externer Stromzähler (kWh)",
+          "electricity_price_entity": "Strompreis-Sensor (€/kWh oder ct/kWh — z.B. Tibber, aWATTar)",
+          "ctrl_pv_surplus_entity": "PV-Überschuss-Sensor (W) — für Solar-Warmwasser-Boost",
+          "ctrl_price_entity": "Aktueller Strompreis-Sensor (für preisgeregeltes Warmwasser)",
+          "ctrl_forecast_entity": "Prognose-Temperatursensor (morgiges Minimum in °C)"
+        }
+      },
+      "programs": {
+        "title": "HeatPump Hero — Legionellen-Programm",
+        "description": "Wöchentlichen Legionellen-Schutz-WW-Boost konfigurieren. Nach dem Speichern über die Schalter-Entität aktivieren. Standard-Werte belassen, wenn die Wärmepumpensteuerung Legionellenschutz nativ übernimmt.",
+        "data": {
+          "prog_legionella_weekday": "Wochentag für wöchentlichen Boost",
+          "prog_legionella_hour": "Startstunde (0 = Mitternacht, 3 = 3 Uhr)",
+          "prog_legionella_target_c": "WW-Zieltemperatur (°C)",
+          "prog_legionella_hold_min": "Haltezeit bei Zieltemperatur (Minuten)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "text": {
+      "hph_src_inlet_temp": { "name": "Quelle — Rücklauftemperatur" },
+      "hph_src_outlet_temp": { "name": "Quelle — Vorlauftemperatur" },
+      "hph_src_flow_rate": { "name": "Quelle — Wasserdurchfluss" },
+      "hph_src_outdoor_temp": { "name": "Quelle — Außentemperatur" },
+      "hph_src_compressor_freq": { "name": "Quelle — Verdichterfrequenz" },
+      "hph_src_compressor_hours": { "name": "Quelle — Betriebsstunden Verdichter" },
+      "hph_src_compressor_starts": { "name": "Quelle — Anläufe Verdichter" },
+      "hph_src_discharge_temp": { "name": "Quelle — Druckgastemperatur" },
+      "hph_src_pump_pressure": { "name": "Quelle — Wasserdruck" },
+      "hph_src_internal_power": { "name": "Quelle — Elektrische Leistung intern" },
+      "hph_src_internal_thermal_power": { "name": "Quelle — Thermische Leistung intern" },
+      "hph_src_fan1_speed": { "name": "Quelle — Lüfter 1 Drehzahl" },
+      "hph_src_fan2_speed": { "name": "Quelle — Lüfter 2 Drehzahl" },
+      "hph_src_inverter_temp": { "name": "Quelle — Wechselrichter-/IPM-Temperatur" },
+      "hph_src_high_pressure": { "name": "Quelle — Hochdruck Kältemittel" },
+      "hph_src_low_pressure": { "name": "Quelle — Niederdruck Kältemittel" },
+      "hph_src_compressor_current": { "name": "Quelle — Verdichterstrom" },
+      "hph_src_outdoor_pipe_temp": { "name": "Quelle — Außenrohr-Temperatur" },
+      "hph_src_3way_valve": { "name": "Quelle — 3-Wege-Ventil" },
+      "hph_src_zone1_target_temp": { "name": "Quelle — Vorlauf-Solltemperatur HK1" },
+      "hph_src_hex_outlet_temp": { "name": "Quelle — Wärmetauscher-Ausgangstemperatur" },
+      "hph_src_pump_duty": { "name": "Quelle — Pumpen-Tastverhältnis" },
+      "hph_src_expansion_valve": { "name": "Quelle — Expansionsventil-Position" },
+      "hph_src_eva_outlet_temp": { "name": "Quelle — Verdampfer-Ausgangstemperatur" },
+      "hph_src_inside_pipe_temp": { "name": "Quelle — Innenrohr-Temperatur" },
+      "hph_src_bypass_outlet_temp": { "name": "Quelle — Bypass-Ausgangstemperatur" },
+      "hph_src_defrost_temp": { "name": "Quelle — Abtautemperatur" },
+      "hph_src_dhw_power_thermal": { "name": "Quelle — Thermische WW-Leistung" },
+      "hph_src_dhw_power_electrical": { "name": "Quelle — Elektrische WW-Leistung" },
+      "hph_src_z1_water_temp": { "name": "Quelle — Wassertemperatur HK1" },
+      "hph_src_z2_water_temp": { "name": "Quelle — Wassertemperatur HK2" },
+      "hph_src_internal_heater_state": { "name": "Quelle — Intern-Heizstab Status" },
+      "hph_src_dhw_heater_state": { "name": "Quelle — WW-Heizstab Status" },
+      "hph_src_antifreeze_mode": { "name": "Quelle — Frostschutz aktiv" },
+      "hph_src_defrost_state": { "name": "Quelle — Abtaubetrieb aktiv" },
+      "hph_src_aux_heater_state": { "name": "Quelle — Zusatzheizung Status" },
+      "hph_src_operating_mode": { "name": "Quelle — Betriebsart" },
+      "hph_src_error_code": { "name": "Quelle — Fehlercode" },
+      "hph_src_zone1_temp": { "name": "Quelle — HK1-Temperatur" },
+      "hph_src_zone2_temp": { "name": "Quelle — HK2-Temperatur" },
+      "hph_src_dhw_temp": { "name": "Quelle — Warmwasser-Temperatur" },
+      "hph_src_buffer_temp": { "name": "Quelle — Pufferspeicher-Temperatur" },
+      "hph_src_dhw_target_temp": { "name": "Quelle — Warmwasser-Solltemperatur" },
+      "hph_src_target_supply_temp": { "name": "Quelle — Vorlauf-Solltemperatur" },
+      "hph_src_room_temp": { "name": "Quelle — Raumtemperatur" },
+      "hph_src_pump_speed": { "name": "Quelle — Pumpendrehzahl" },
+      "hph_src_valve_state": { "name": "Quelle — 2-Wege-Ventil" },
+      "hph_src_heater_state": { "name": "Quelle — Externes Heizgerät Status" },
+      "hph_src_heater_hours": { "name": "Quelle — Betriebsstunden Heizgerät" },
+      "hph_src_external_thermal_power": { "name": "Quelle — Externe thermische Leistung (W)" },
+      "hph_src_external_electrical_power": { "name": "Quelle — Externe elektrische Leistung (W)" },
+      "hph_src_external_thermal_energy": { "name": "Quelle — Externer Wärmemengenzähler (kWh)" },
+      "hph_src_external_electrical_energy": { "name": "Quelle — Externer Energiezähler (kWh)" },
+      "hph_src_opt_z1_pump": { "name": "Quelle — HK1-Pumpe (Optional PCB)" },
+      "hph_src_opt_z2_pump": { "name": "Quelle — HK2-Pumpe (Optional PCB)" },
+      "hph_src_opt_z1_mixing_valve": { "name": "Quelle — HK1-Mischventil (Optional PCB)" },
+      "hph_src_s0_power": { "name": "Quelle — S0-Impulszähler Leistung (W)" },
+      "hph_src_force_heater": { "name": "Quelle — Zwangsheizung aktiv" },
+      "hph_src_sterilization": { "name": "Quelle — Sterilisationsbetrieb aktiv" },
+      "hph_src_quiet_schedule": { "name": "Quelle — Leise-Zeitplan" },
+      "hph_ctrl_write_quiet_mode": { "name": "Steuerung — Leise-Modus" },
+      "hph_ctrl_write_force_dhw": { "name": "Steuerung — Warmwasser erzwingen" },
+      "hph_ctrl_write_z1_curve_high": { "name": "Steuerung — HK1 Heizkurve oberer Punkt" },
+      "hph_ctrl_write_z1_curve_low": { "name": "Steuerung — HK1 Heizkurve unterer Punkt" },
+      "hph_ctrl_write_dhw_target": { "name": "Steuerung — Warmwasser-Solltemperatur" },
+      "hph_ctrl_write_operating_mode": { "name": "Steuerung — Betriebsart" },
+      "hph_ctrl_write_power": { "name": "Steuerung — Hauptschalter" },
+      "hph_ctrl_write_holiday": { "name": "Steuerung — Urlaubsmodus" },
+      "hph_ctrl_write_force_defrost": { "name": "Steuerung — Abtauen erzwingen" },
+      "hph_ctrl_write_schedule": { "name": "Steuerung — Wochenprogramm" },
+      "hph_ctrl_write_restart_heishamon": { "name": "Steuerung — HeishaMon Neustart" },
+      "hph_ctrl_write_powerful_mode": { "name": "Steuerung — Leistungsmodus" },
+      "hph_ctrl_write_active_zones": { "name": "Steuerung — Aktive Zonen" },
+      "hph_ctrl_write_bivalent_mode": { "name": "Steuerung — Bivalenz-Modus" },
+      "hph_ctrl_write_z1_heat_shift": { "name": "Steuerung — HK1 Heizkurvenverschiebung" },
+      "hph_ctrl_write_z2_heat_shift": { "name": "Steuerung — HK2 Heizkurvenverschiebung" },
+      "hph_ctrl_write_heating_cutoff": { "name": "Steuerung — Heizgrenze Außentemperatur" },
+      "hph_ctrl_write_max_pump_duty": { "name": "Steuerung — Max. Pumpen-Tastverhältnis" },
+      "hph_ctrl_write_room_heat_delta": { "name": "Steuerung — Raumheizungs-Hysterese" },
+      "hph_ctrl_write_z1_climate": { "name": "Steuerung — HK1 Klima-Entität" },
+      "hph_ctrl_write_z2_climate": { "name": "Steuerung — HK2 Klima-Entität" },
+      "hph_ctrl_write_z1_outside_low": { "name": "Steuerung — HK1 Heizkurve Außen-Minimum" },
+      "hph_ctrl_write_z1_outside_high": { "name": "Steuerung — HK1 Heizkurve Außen-Maximum" },
+      "hph_ctrl_write_z2_outside_low": { "name": "Steuerung — HK2 Heizkurve Außen-Minimum" },
+      "hph_ctrl_write_z2_outside_high": { "name": "Steuerung — HK2 Heizkurve Außen-Maximum" },
+      "hph_ctrl_write_z2_curve_high": { "name": "Steuerung — HK2 Heizkurve oberer Punkt" },
+      "hph_ctrl_write_z2_curve_low": { "name": "Steuerung — HK2 Heizkurve unterer Punkt" },
+      "hph_ctrl_write_dhw_heat_delta": { "name": "Steuerung — WW-Wärmedelta" },
+      "hph_ctrl_write_smart_dhw": { "name": "Steuerung — Smart Warmwasser" },
+      "hph_ctrl_write_heating_control": { "name": "Steuerung — Heizungsregelung Modus" },
+      "hph_ctrl_write_cool_delta": { "name": "Steuerung — Kühldelta" },
+      "hph_ctrl_write_dhw_sensor_selection": { "name": "Steuerung — WW-Sensor Auswahl" },
+      "hph_ctrl_write_bivalent_start_temp": { "name": "Steuerung — Bivalenzpunkt Temperatur" },
+      "hph_ctrl_write_heater_delay_time": { "name": "Steuerung — Heizstab Einschaltverzögerung" },
+      "hph_ctrl_write_heater_start_delta": { "name": "Steuerung — Heizstab Einschalt-Delta" },
+      "hph_ctrl_write_heater_stop_delta": { "name": "Steuerung — Heizstab Ausschalt-Delta" },
+      "hph_indoor_temp_entity": { "name": "Analyse — Raumtemperatur-Referenzsensor" },
+      "hph_indoor_target_entity": { "name": "Analyse — Raum-Solltemperatur-Sensor" },
+      "hph_heating_curve_recommendation": { "name": "Analyse — Heizkurven-Empfehlung" },
+      "hph_ctrl_pv_surplus_entity": { "name": "PV-Überschuss-Sensor" },
+      "hph_ctrl_price_mean_entity": { "name": "Preis-WW — Tagesdurchschnittspreis-Sensor" },
+      "hph_ctrl_forecast_entity": { "name": "Prognose-Vorheizung — Temperatursensor" },
+      "hph_bridge_prefix": { "name": "Bridge — MQTT-Thema-Präfix" },
+      "hph_diag_error_history": { "name": "Diagnose — Fehler-Ringpuffer" },
+      "hph_dhw_start_hours": { "name": "WW-Startzeiten Ringpuffer" },
+      "hph_export_target_path": { "name": "Export-Zielverzeichnis" },
+      "hph_outdoor_temp_override_entity": { "name": "Außentemperatur — Überschreib-Sensor" },
+      "hph_electricity_price_entity": { "name": "Kosten — Strompreis-Sensor" },
+      "hph_install_heat_loss_kw": { "name": "Installation — Auslegungsheizlast (kW)" },
+      "hph_install_design_flow_temp_c": { "name": "Installation — Auslegungs-Vorlauftemperatur (°C)" },
+      "hph_install_year": { "name": "Installation — Inbetriebnahmejahr" },
+      "hph_cycles_history": { "name": "Zyklen-Verlauf Ringpuffer" }
+    },
+    "number": {
+      "hph_advisor_short_cycle_warn_pct": { "name": "Advisor — Kurzzyklen Warnschwelle (%)" },
+      "hph_advisor_short_cycle_crit_pct": { "name": "Advisor — Kurzzyklen Kritisch-Schwelle (%)" },
+      "hph_advisor_dt_target_k": { "name": "Advisor — Ziel-Spreizung Vor-/Rücklauf (K)" },
+      "hph_advisor_dhw_min_runtime_min": { "name": "Advisor — WW Mindestlaufzeit (Min.)" },
+      "hph_advisor_heating_limit_target_c": { "name": "Advisor — Heizgrenze Ziel (°C)" },
+      "hph_heating_limit_observed_c": { "name": "Heizgrenze — zuletzt beobachtet (°C)" },
+      "hph_advisor_drift_warn_pct": { "name": "Advisor — Effizienz-Drift Warnschwelle (% JoJ)" },
+      "hph_advisor_drift_crit_pct": { "name": "Advisor — Effizienz-Drift Kritisch-Schwelle (% JoJ)" },
+      "hph_advisor_dhw_max_fires_per_day": { "name": "Advisor — Max. WW-Starts pro Tag" },
+      "hph_advisor_pump_spread_min_samples": { "name": "Advisor — Pumpenkurve Min. Stichproben (7 Tage)" },
+      "hph_dhw_fires_yesterday": { "name": "WW-Starts gestern" },
+      "hph_thermal_runtime_today_kwh": { "name": "Thermische Laufzeit kWh heute" },
+      "hph_electrical_runtime_today_kwh": { "name": "Elektrische Laufzeit kWh heute" },
+      "hph_electricity_price_ct_per_kwh": { "name": "Kosten — Strompreis (ct/kWh, manuell)" },
+      "hph_indoor_target_default": { "name": "Analyse — Fallback Raumsoll-Temperatur (°C)" },
+      "hph_analysis_window_days": { "name": "Analyse — Beobachtungsfenster (Tage)" },
+      "hph_analysis_dead_band_k": { "name": "Analyse — Totzone um Sollwert (K)" },
+      "hph_ctrl_ccc_min_pause_min": { "name": "CCC — Mindestpause (Minuten)" },
+      "hph_ctrl_ccc_min_runtime_min": { "name": "CCC — Mindestlaufzeit (Minuten)" },
+      "hph_ctrl_solar_pv_threshold_w": { "name": "Solar-WW — PV-Überschuss Schwelle (W)" },
+      "hph_ctrl_adaptive_max_step_k": { "name": "Adaptive Kurve — Max. Schritt pro Zyklus (K)" },
+      "hph_ctrl_adaptive_supply_min_c": { "name": "Adaptive Kurve — Vorlauf-Untergrenze (°C)" },
+      "hph_ctrl_adaptive_supply_max_c": { "name": "Adaptive Kurve — Vorlauf-Obergrenze (°C)" },
+      "hph_ctrl_price_threshold_factor": { "name": "Preis-WW — Einschalt-Schwellen-Faktor" },
+      "hph_ctrl_price_max_per_day": { "name": "Preis-WW — Max. WW-Boosts pro Tag" },
+      "hph_ctrl_forecast_drop_threshold_k": { "name": "Prognose — Temperaturabfall-Auslöser (K)" },
+      "hph_ctrl_forecast_boost_k": { "name": "Prognose — Kurvenanhebung (K)" },
+      "hph_cycle_short_threshold_min": { "name": "Kurzzyklen-Schwelle (Minuten)" },
+      "hph_cycle_last_duration_min": { "name": "Letzte Laufzeit (Minuten)" },
+      "hph_cycle_last_pause_min": { "name": "Letzte Pause (Minuten)" },
+      "hph_model_compressor_min_hz": { "name": "Modell — Verdichter Mindestfrequenz (Hz)" },
+      "hph_model_compressor_max_hz": { "name": "Modell — Verdichter Maximalfrequenz (Hz)" },
+      "hph_model_min_flow_lpm": { "name": "Modell — Mindest-Wasserdurchfluss (L/min)" },
+      "hph_model_max_supply_c": { "name": "Modell — Maximale Vorlauftemperatur (°C)" },
+      "hph_model_expansion_valve_max_steps": { "name": "Modell — Expansionsventil Max. Position (Schritte)" },
+      "hph_prog_screed_day": { "name": "Estrich-Trocknung — Aktueller Tag" },
+      "hph_prog_legionella_target_c": { "name": "Legionellen — WW-Solltemperatur (°C)" },
+      "hph_prog_legionella_hold_min": { "name": "Legionellen — Haltezeit bei Solltemperatur (Min.)" },
+      "hph_prog_legionella_hour": { "name": "Legionellen — Startstunde (0–23)" },
+      "hph_cycles_today": { "name": "Zyklen heute" },
+      "hph_short_cycles_today": { "name": "Kurzzyklen heute" },
+      "hph_dhw_fires_today": { "name": "WW-Starts heute" },
+      "hph_ctrl_price_dhw_fires_today": { "name": "Preis-WW — Starts heute" }
+    },
+    "select": {
+      "hph_thermal_source": {
+        "name": "Thermische Quell-Messung",
+        "state": {
+          "calculated": "Berechnet (internes Modell)",
+          "heat_pump_internal": "Intern (Wärmepumpen-Sensor)",
+          "external_power": "Externer Leistungsmesser",
+          "external_energy": "Externer Energiezähler"
+        }
+      },
+      "hph_electrical_source": {
+        "name": "Elektrische Quell-Messung",
+        "state": {
+          "heat_pump_internal": "Intern (Wärmepumpen-Sensor)",
+          "external_power": "Externer Leistungsmesser",
+          "external_energy": "Externer Energiezähler"
+        }
+      },
+      "hph_schema_variant": {
+        "name": "Schema-Variante",
+        "state": {
+          "auto": "Automatisch erkennen",
+          "hk1": "A2W — nur HK1",
+          "hk1_dhw": "A2W + Warmwasserspeicher",
+          "hk1_hk2_dhw": "A2W + HK1 + HK2 + WW",
+          "hk1_hk2_dhw_buffer": "A2W + HK1 + HK2 + WW + Puffer"
+        }
+      },
+      "hph_ui_style": {
+        "name": "Dashboard-Stil",
+        "state": {
+          "mushroom": "Mushroom",
+          "classic": "Klassisch"
+        }
+      },
+      "hph_vendor_preset": {
+        "name": "Hersteller-Preset",
+        "state": {
+          "panasonic_heishamon": "Panasonic Heishamon",
+          "keep_current": "Aktuelle Einstellungen beibehalten"
+        }
+      },
+      "hph_pump_model": {
+        "name": "Wärmepumpen-Modell",
+        "state": {
+          "panasonic_j_aqj": "Panasonic J (AQJ)",
+          "panasonic_k_aqk": "Panasonic K (AQK)",
+          "panasonic_l_aql": "Panasonic L (AQL)",
+          "panasonic_tcap": "Panasonic T-CAP",
+          "panasonic_m_aqm": "Panasonic M (AQM)"
+        }
+      },
+      "hph_prog_screed_profile": {
+        "name": "Estrich-Trocknungsprofil",
+        "state": {
+          "functional_3d": "Funktionsheizen (3 Tage)",
+          "combined_10d": "Kombiniertes Aufheizen (10 Tage)",
+          "din_18560_28d": "DIN 18560-4 (28 Tage)"
+        }
+      },
+      "hph_prog_legionella_weekday": {
+        "name": "Wochentag für Legionellen-Boost",
+        "state": {
+          "mon": "Montag",
+          "tue": "Dienstag",
+          "wed": "Mittwoch",
+          "thu": "Donnerstag",
+          "fri": "Freitag",
+          "sat": "Samstag",
+          "sun": "Sonntag"
+        }
+      },
+      "hph_export_format": {
+        "name": "Export-Format",
+        "state": {
+          "csv": "CSV",
+          "json": "JSON",
+          "xlsx": "Excel (xlsx)"
+        }
+      },
+      "hph_export_period": {
+        "name": "Export-Zeitraum",
+        "state": {
+          "last_24h": "Letzte 24 Stunden",
+          "last_7d": "Letzte 7 Tage",
+          "last_30d": "Letzte 30 Tage",
+          "this_month": "Aktueller Monat",
+          "last_month": "Letzter Monat",
+          "this_year": "Aktuelles Jahr",
+          "last_year": "Letztes Jahr",
+          "all": "Alle Daten"
+        }
+      },
+      "hph_export_schedule": {
+        "name": "Export-Zeitplan",
+        "state": {
+          "off": "Aus",
+          "daily": "Täglich",
+          "weekly": "Wöchentlich",
+          "monthly": "Monatlich"
+        }
+      },
+      "hph_install_emitter_type": {
+        "name": "Wärmeübergabesystem",
+        "state": {
+          "unknown": "Unbekannt",
+          "radiators": "Heizkörper",
+          "ufh": "Fußbodenheizung",
+          "mixed": "Gemischt",
+          "fan_coil": "Gebläsekonvektoren"
+        }
+      },
+      "hph_install_refrigerant": {
+        "name": "Kältemittel",
+        "state": {
+          "unknown": "Unbekannt",
+          "R32": "R32",
+          "R290": "R290 (Propan)",
+          "R410A": "R410A",
+          "R454B": "R454B",
+          "R744": "R744 (CO₂)"
+        }
+      }
+    },
+    "switch": {
+      "hph_ctrl_master": { "name": "Steuerung — Hauptschalter" },
+      "hph_ctrl_ccc": { "name": "Kompressor-Zyklussteuerung (CCC)" },
+      "hph_ctrl_solar_dhw": { "name": "Solar-Warmwasser Boost" },
+      "hph_ctrl_quiet_night": { "name": "Nacht-Leisebetrieb" },
+      "hph_ctrl_adaptive_curve": { "name": "Steuerung — Adaptive Heizkurve" },
+      "hph_ctrl_price_dhw": { "name": "Steuerung — Preis-gesteuertes Warmwasser" },
+      "hph_ctrl_forecast_preheat": { "name": "Steuerung — Prognose-Vorheizung" },
+      "hph_ctrl_forecast_preheat_active": { "name": "Steuerung — Prognose-Vorheizung aktiv" },
+      "hph_prog_screed": { "name": "Programm — Estrich-Trocknung" },
+      "hph_prog_screed_active": { "name": "Programm — Estrich-Programm läuft" },
+      "hph_prog_legionella": { "name": "Programm — Legionellen-Schutzprogramm" },
+      "hph_bridge_enabled": { "name": "Bridge — MQTT-Republisher" },
+      "hph_metering_includes_immersion": { "name": "Messung — inkl. Heizstab" },
+      "hph_metering_includes_circulation": { "name": "Messung — inkl. Umwälzpumpe" },
+      "hph_metering_includes_controls": { "name": "Messung — inkl. Regelung/Standby" },
+      "hph_metering_includes_brine": { "name": "Messung — inkl. Solepumpe (nur GSHP)" }
+    },
+    "datetime": {
+      "hph_cycle_last_start": { "name": "Letzter Zyklusstart" },
+      "hph_cycle_last_end": { "name": "Letztes Zyklusende" },
+      "hph_diag_last_error_time": { "name": "Letzter Fehlerzeitpunkt" },
+      "hph_export_last_run": { "name": "Letzter Export" },
+      "hph_ctrl_adaptive_last_run": { "name": "Adaptive Kurve — Letzte Anwendung" },
+      "hph_ctrl_price_dhw_last_fire": { "name": "Preis-WW — Letzter WW-Boost" },
+      "hph_prog_screed_start": { "name": "Estrich-Trocknung — Programmstart" },
+      "hph_prog_legionella_last_run": { "name": "Legionellen — Letzter Programmlauf" }
+    },
+    "button": {
+      "hph_export_now": { "name": "Export jetzt (manuell)" },
+      "hph_run_legionella_now": { "name": "Legionellenprogramm jetzt starten" },
+      "hph_reset_cycles_today": { "name": "Zyklen-Zähler zurücksetzen" },
+      "hph_reset_short_cycles_today": { "name": "Kurzzyklen-Zähler zurücksetzen" }
+    }
+  }
+}

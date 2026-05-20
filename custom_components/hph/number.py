@@ -54,6 +54,7 @@ class HphNumber(NumberEntity, RestoreEntity):
         self._attr_unique_id = unique_id
         self.entity_id = f"number.{unique_id}"
         self._attr_name = cfg.get("name", unique_id)
+        self._attr_translation_key = unique_id
         self._attr_icon = cfg.get("icon")
         self._attr_native_min_value = float(cfg.get("min", 0))
         self._attr_native_max_value = float(cfg.get("max", 100))

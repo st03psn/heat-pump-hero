@@ -39,6 +39,7 @@ class HphText(TextEntity, RestoreEntity):
         self._attr_unique_id = unique_id
         self.entity_id = f"text.{unique_id}"
         self._attr_name = cfg.get("name", unique_id)
+        self._attr_translation_key = unique_id
         self._attr_icon = cfg.get("icon")
         self._attr_native_max = int(cfg.get("max", 255))
         self._attr_native_min = 0

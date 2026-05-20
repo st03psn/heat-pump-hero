@@ -1,0 +1,406 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "HeatPump Hero — fabrikant",
+        "description": "Kies de integratie die je warmtepomp al beschikbaar stelt in Home Assistant. De meest voorkomende keuze is `panasonic_heishamon` (de kamaradclimber custom-integratie). Gebruik `keep_current` als je de bronhelpers al handmatig hebt ingesteld en de automatische voorinstelling wilt overslaan.",
+        "data": {
+          "vendor_preset": "Fabrikant-preset"
+        }
+      },
+      "model": {
+        "title": "HeatPump Hero — model",
+        "description": "Kies de warmtepomp-generatie. Dit vult automatisch compressor min-/maxfrequentie, minimaal waterdebiet en maximale aanvoertemperatuur in met empirisch gevalideerde waarden. Gebruikers kunnen deze waarden achteraf aanpassen.",
+        "data": {
+          "pump_model": "Warmtepomp-model"
+        }
+      },
+      "sensors": {
+        "title": "HeatPump Hero — optionele sensoren",
+        "description": "Optioneel. Als je een Shelly-/IoTaWatt-vermogensmeter, een MBus-warmtemeter of een toegewijde binnentemperatuursensor hebt, wijs HPH hier op. Je kunt deze instellingen later aanpassen via de integratie-opties.",
+        "data": {
+          "indoor_temp_entity": "Referentiesensor binnentemperatuur",
+          "outdoor_temp_entity": "Buitentemperatuursensor weerstation (overschrijft fabrikant-preset)",
+          "external_thermal_power": "Extern thermisch vermogen (W)",
+          "external_electrical_power": "Extern elektrisch vermogen (W)",
+          "external_thermal_energy": "Externe warmtemeter (kWh)",
+          "external_electrical_energy": "Externe elektriciteitsmeter (kWh)"
+        }
+      },
+      "confirm": {
+        "title": "HeatPump Hero — bevestigen",
+        "description": "Installatie met fabrikant `{vendor}` en model `{model}` wordt voorbereid. Start na het bevestigen **Home Assistant opnieuw op** zodat alle helpers en het dashboard worden geladen. Het dashboard verschijnt automatisch in de zijbalk — handmatige YAML-import is niet nodig."
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "HeatPump Hero is een integratie met één instantie — er kan maar één configuratie bestaan."
+    }
+  },
+  "issues": {
+    "missing_frontend_card": {
+      "title": "Ontbrekende Lovelace-kaart: {card_name}",
+      "description": "Het HeatPump Hero-dashboard vereist de **{card_name}** Lovelace-kaart. Installeer `{hacs_repo}` via HACS → Frontend en laad dan het browsertabblad opnieuw."
+    },
+    "missing_vendor_integration": {
+      "title": "Fabrikant-integratie niet geladen: {vendor}",
+      "description": "HeatPump Hero is geconfigureerd voor fabrikant-preset `{vendor}`, maar die integratie is niet geladen. Zorg dat de `{vendor}` custom-integratie is geïnstalleerd en geconfigureerd en start dan Home Assistant opnieuw."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "HeatPump Hero — fabrikant & model",
+        "description": "Fabrikant-preset of warmtepomp-model wijzigen. In de volgende stap kun je externe sensoren bijwerken.",
+        "data": {
+          "vendor_preset": "Fabrikant-preset",
+          "pump_model": "Warmtepomp-model"
+        }
+      },
+      "sensors": {
+        "title": "HeatPump Hero — externe sensoren",
+        "description": "Optioneel: Shelly-/IoTaWatt-vermogensmeter, MBus-warmtemeter, binnentemperatuurssensor. Leeg laten om huidige instellingen te behouden.",
+        "data": {
+          "indoor_temp_entity": "Referentiesensor binnentemperatuur",
+          "outdoor_temp_entity": "Buitentemperatuursensor weerstation (overschrijft fabrikant-preset)",
+          "external_thermal_power": "Extern thermisch vermogen (W)",
+          "external_electrical_power": "Extern elektrisch vermogen (W)",
+          "external_thermal_energy": "Externe warmtemeter (kWh)",
+          "external_electrical_energy": "Externe elektriciteitsmeter (kWh)",
+          "electricity_price_entity": "Stroomprijs-sensor (€/kWh of ct/kWh — bijv. Tibber, aWATTar)",
+          "ctrl_pv_surplus_entity": "PV-overschot-sensor (W) — voor solar-warmwater-boost",
+          "ctrl_price_entity": "Actuele stroomprijs-sensor (voor prijsgestuurd warmwater)",
+          "ctrl_forecast_entity": "Weersvoorspelling-sensor (morgen minimum °C)"
+        }
+      },
+      "programs": {
+        "title": "HeatPump Hero — legionellaprogramma",
+        "description": "Wekelijkse legionellabescherming configureren. Na het opslaan activeren via de schakelaarentiteit. Standaardwaarden behouden als de warmtepomp legionellabeveiliging zelf regelt.",
+        "data": {
+          "prog_legionella_weekday": "Weekdag voor wekelijkse boost",
+          "prog_legionella_hour": "Startuur (0 = middernacht, 3 = 3 uur)",
+          "prog_legionella_target_c": "Doeltemperatuur warmwater (°C)",
+          "prog_legionella_hold_min": "Wachttijd op doeltemperatuur (minuten)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "text": {
+      "hph_src_inlet_temp": { "name": "Bron — retourtemperatuur" },
+      "hph_src_outlet_temp": { "name": "Bron — aanvoertemperatuur" },
+      "hph_src_flow_rate": { "name": "Bron — waterdebiet" },
+      "hph_src_outdoor_temp": { "name": "Bron — buitentemperatuur" },
+      "hph_src_compressor_freq": { "name": "Bron — compressorfrequentie" },
+      "hph_src_compressor_hours": { "name": "Bron — bedrijfsuren compressor" },
+      "hph_src_compressor_starts": { "name": "Bron — starts compressor" },
+      "hph_src_discharge_temp": { "name": "Bron — perstemperatuur" },
+      "hph_src_pump_pressure": { "name": "Bron — waterdruk" },
+      "hph_src_internal_power": { "name": "Bron — intern elektrisch vermogen" },
+      "hph_src_internal_thermal_power": { "name": "Bron — intern thermisch vermogen" },
+      "hph_src_fan1_speed": { "name": "Bron — ventilatordraaisnelheid 1" },
+      "hph_src_fan2_speed": { "name": "Bron — ventilatordraaisnelheid 2" },
+      "hph_src_inverter_temp": { "name": "Bron — omvormer-/IPM-temperatuur" },
+      "hph_src_high_pressure": { "name": "Bron — hoge zijde koelmiddeldruk" },
+      "hph_src_low_pressure": { "name": "Bron — lage zijde koelmiddeldruk" },
+      "hph_src_compressor_current": { "name": "Bron — compressorstroom" },
+      "hph_src_outdoor_pipe_temp": { "name": "Bron — buitenpijptemperatuur" },
+      "hph_src_3way_valve": { "name": "Bron — 3-wegventiel" },
+      "hph_src_zone1_target_temp": { "name": "Bron — aanvoer-doeltemperatuur zone 1" },
+      "hph_src_hex_outlet_temp": { "name": "Bron — warmtewisselaar uitgangstemperatuur" },
+      "hph_src_pump_duty": { "name": "Bron — pomptaakverhouding" },
+      "hph_src_expansion_valve": { "name": "Bron — expansieventielpositie" },
+      "hph_src_eva_outlet_temp": { "name": "Bron — verdamper uitgangstemperatuur" },
+      "hph_src_inside_pipe_temp": { "name": "Bron — binnenpijptemperatuur" },
+      "hph_src_bypass_outlet_temp": { "name": "Bron — bypass uitgangstemperatuur" },
+      "hph_src_defrost_temp": { "name": "Bron — ontdooiingstemperatuur" },
+      "hph_src_dhw_power_thermal": { "name": "Bron — thermisch WW-vermogen" },
+      "hph_src_dhw_power_electrical": { "name": "Bron — elektrisch WW-vermogen" },
+      "hph_src_z1_water_temp": { "name": "Bron — watertemperatuur zone 1" },
+      "hph_src_z2_water_temp": { "name": "Bron — watertemperatuur zone 2" },
+      "hph_src_internal_heater_state": { "name": "Bron — intern verwarmingselement status" },
+      "hph_src_dhw_heater_state": { "name": "Bron — WW-verwarmingselement status" },
+      "hph_src_antifreeze_mode": { "name": "Bron — vorstbeveiliging actief" },
+      "hph_src_defrost_state": { "name": "Bron — ontdooiing actief" },
+      "hph_src_aux_heater_state": { "name": "Bron — hulpverwarming status" },
+      "hph_src_operating_mode": { "name": "Bron — bedrijfsmodus" },
+      "hph_src_error_code": { "name": "Bron — foutcode" },
+      "hph_src_zone1_temp": { "name": "Bron — temperatuur zone 1" },
+      "hph_src_zone2_temp": { "name": "Bron — temperatuur zone 2" },
+      "hph_src_dhw_temp": { "name": "Bron — warmwatertemperatuur" },
+      "hph_src_buffer_temp": { "name": "Bron — buffervattemperatuur" },
+      "hph_src_dhw_target_temp": { "name": "Bron — warmwater doeltemperatuur" },
+      "hph_src_target_supply_temp": { "name": "Bron — aanvoer doeltemperatuur" },
+      "hph_src_room_temp": { "name": "Bron — kamertemperatuur" },
+      "hph_src_pump_speed": { "name": "Bron — pompdraaisnelheid" },
+      "hph_src_valve_state": { "name": "Bron — 2-wegventiel" },
+      "hph_src_heater_state": { "name": "Bron — externe verwarming status" },
+      "hph_src_heater_hours": { "name": "Bron — bedrijfsuren verwarming" },
+      "hph_src_external_thermal_power": { "name": "Bron — extern thermisch vermogen (W)" },
+      "hph_src_external_electrical_power": { "name": "Bron — extern elektrisch vermogen (W)" },
+      "hph_src_external_thermal_energy": { "name": "Bron — externe warmtemeter (kWh)" },
+      "hph_src_external_electrical_energy": { "name": "Bron — externe elektriciteitsmeter (kWh)" },
+      "hph_src_opt_z1_pump": { "name": "Bron — waterpomp zone 1 (optionele PCB)" },
+      "hph_src_opt_z2_pump": { "name": "Bron — waterpomp zone 2 (optionele PCB)" },
+      "hph_src_opt_z1_mixing_valve": { "name": "Bron — mengventiel zone 1 (optionele PCB)" },
+      "hph_src_s0_power": { "name": "Bron — S0-pulsteller vermogen (W)" },
+      "hph_src_force_heater": { "name": "Bron — dwangverwarming actief" },
+      "hph_src_sterilization": { "name": "Bron — sterilisatiemodus actief" },
+      "hph_src_quiet_schedule": { "name": "Bron — stille modus tijdschema" },
+      "hph_ctrl_write_quiet_mode": { "name": "Regeling — stille modus" },
+      "hph_ctrl_write_force_dhw": { "name": "Regeling — warmwater forceren" },
+      "hph_ctrl_write_z1_curve_high": { "name": "Regeling — zone 1 stooklijn hoog punt" },
+      "hph_ctrl_write_z1_curve_low": { "name": "Regeling — zone 1 stooklijn laag punt" },
+      "hph_ctrl_write_dhw_target": { "name": "Regeling — warmwater doeltemperatuur" },
+      "hph_ctrl_write_operating_mode": { "name": "Regeling — bedrijfsmodus" },
+      "hph_ctrl_write_power": { "name": "Regeling — hoofdschakelaar" },
+      "hph_ctrl_write_holiday": { "name": "Regeling — vakantiemodus" },
+      "hph_ctrl_write_force_defrost": { "name": "Regeling — ontdooiing forceren" },
+      "hph_ctrl_write_schedule": { "name": "Regeling — weekprogramma" },
+      "hph_ctrl_write_restart_heishamon": { "name": "Regeling — HeishaMon herstarten" },
+      "hph_ctrl_write_powerful_mode": { "name": "Regeling — krachtige modus" },
+      "hph_ctrl_write_active_zones": { "name": "Regeling — actieve zones" },
+      "hph_ctrl_write_bivalent_mode": { "name": "Regeling — bivalente modus" },
+      "hph_ctrl_write_z1_heat_shift": { "name": "Regeling — zone 1 stooklijnverschuiving" },
+      "hph_ctrl_write_z2_heat_shift": { "name": "Regeling — zone 2 stooklijnverschuiving" },
+      "hph_ctrl_write_heating_cutoff": { "name": "Regeling — stookgrens buitentemperatuur" },
+      "hph_ctrl_write_max_pump_duty": { "name": "Regeling — max. pomptaakverhouding" },
+      "hph_ctrl_write_room_heat_delta": { "name": "Regeling — ruimteverwarming hysterese" },
+      "hph_ctrl_write_z1_climate": { "name": "Regeling — zone 1 klimaatentiteit" },
+      "hph_ctrl_write_z2_climate": { "name": "Regeling — zone 2 klimaatentiteit" },
+      "hph_ctrl_write_z1_outside_low": { "name": "Regeling — zone 1 stooklijn buiten minimum" },
+      "hph_ctrl_write_z1_outside_high": { "name": "Regeling — zone 1 stooklijn buiten maximum" },
+      "hph_ctrl_write_z2_outside_low": { "name": "Regeling — zone 2 stooklijn buiten minimum" },
+      "hph_ctrl_write_z2_outside_high": { "name": "Regeling — zone 2 stooklijn buiten maximum" },
+      "hph_ctrl_write_z2_curve_high": { "name": "Regeling — zone 2 stooklijn hoog punt" },
+      "hph_ctrl_write_z2_curve_low": { "name": "Regeling — zone 2 stooklijn laag punt" },
+      "hph_ctrl_write_dhw_heat_delta": { "name": "Regeling — warmwater warmtedelta" },
+      "hph_ctrl_write_smart_dhw": { "name": "Regeling — slim warmwater" },
+      "hph_ctrl_write_heating_control": { "name": "Regeling — verwarmingsregelingsmodus" },
+      "hph_ctrl_write_cool_delta": { "name": "Regeling — koeldelta" },
+      "hph_ctrl_write_dhw_sensor_selection": { "name": "Regeling — WW-sensorselectie" },
+      "hph_ctrl_write_bivalent_start_temp": { "name": "Regeling — bivalentiepunt temperatuur" },
+      "hph_ctrl_write_heater_delay_time": { "name": "Regeling — verwarmingselement inschakelvertraging" },
+      "hph_ctrl_write_heater_start_delta": { "name": "Regeling — verwarmingselement inschakeldelta" },
+      "hph_ctrl_write_heater_stop_delta": { "name": "Regeling — verwarmingselement uitschakeldelta" },
+      "hph_indoor_temp_entity": { "name": "Analyse — referentiesensor binnentemperatuur" },
+      "hph_indoor_target_entity": { "name": "Analyse — doeltemperatuursensor binnen" },
+      "hph_heating_curve_recommendation": { "name": "Analyse — stooklijn aanbeveling" },
+      "hph_ctrl_pv_surplus_entity": { "name": "PV-overschot-sensor" },
+      "hph_ctrl_price_mean_entity": { "name": "Prijs-WW — daggemiddelde prijssensor" },
+      "hph_ctrl_forecast_entity": { "name": "Prognose-voorverwarming — temperatuurprognose" },
+      "hph_bridge_prefix": { "name": "Bridge — MQTT-onderwerpprefix" },
+      "hph_diag_error_history": { "name": "Diagnose — foutringbuffer" },
+      "hph_dhw_start_hours": { "name": "WW-starturen ringbuffer" },
+      "hph_export_target_path": { "name": "Exportdoelmap" },
+      "hph_outdoor_temp_override_entity": { "name": "Buitentemperatuur — overschrijfsensor" },
+      "hph_electricity_price_entity": { "name": "Kosten — stroomprijssensor" },
+      "hph_install_heat_loss_kw": { "name": "Installatie — ontwerp warmteverlies (kW)" },
+      "hph_install_design_flow_temp_c": { "name": "Installatie — ontwerp aanvoertemperatuur (°C)" },
+      "hph_install_year": { "name": "Installatie — inbedrijfstellingsjaar" },
+      "hph_cycles_history": { "name": "Cyclusgeschiedenis ringbuffer" }
+    },
+    "number": {
+      "hph_advisor_short_cycle_warn_pct": { "name": "Advisor — korte cyclus waarschuwingsdrempel (%)" },
+      "hph_advisor_short_cycle_crit_pct": { "name": "Advisor — korte cyclus kritieke drempel (%)" },
+      "hph_advisor_dt_target_k": { "name": "Advisor — doel spreiding aanvoer/retour (K)" },
+      "hph_advisor_dhw_min_runtime_min": { "name": "Advisor — WW minimale looptijd (min.)" },
+      "hph_advisor_heating_limit_target_c": { "name": "Advisor — stookgrens doel (°C)" },
+      "hph_heating_limit_observed_c": { "name": "Stookgrens — laatst waargenomen (°C)" },
+      "hph_advisor_drift_warn_pct": { "name": "Advisor — efficiëntiedrift waarschuwingsdrempel (% JoJ)" },
+      "hph_advisor_drift_crit_pct": { "name": "Advisor — efficiëntiedrift kritieke drempel (% JoJ)" },
+      "hph_advisor_dhw_max_fires_per_day": { "name": "Advisor — max. WW-starts per dag" },
+      "hph_advisor_pump_spread_min_samples": { "name": "Advisor — pompkromme min. steekproeven (7d)" },
+      "hph_dhw_fires_yesterday": { "name": "WW-starts gisteren" },
+      "hph_thermal_runtime_today_kwh": { "name": "Thermische looptijd kWh vandaag" },
+      "hph_electrical_runtime_today_kwh": { "name": "Elektrische looptijd kWh vandaag" },
+      "hph_electricity_price_ct_per_kwh": { "name": "Kosten — stroomprijs (ct/kWh, handmatig)" },
+      "hph_indoor_target_default": { "name": "Analyse — standaard binnentemperatuur doel (°C)" },
+      "hph_analysis_window_days": { "name": "Analyse — observatievenster (dagen)" },
+      "hph_analysis_dead_band_k": { "name": "Analyse — dode zone rond doelwaarde (K)" },
+      "hph_ctrl_ccc_min_pause_min": { "name": "CCC — minimale pauze (minuten)" },
+      "hph_ctrl_ccc_min_runtime_min": { "name": "CCC — minimale looptijd (minuten)" },
+      "hph_ctrl_solar_pv_threshold_w": { "name": "Solar-WW — PV-overschot drempel (W)" },
+      "hph_ctrl_adaptive_max_step_k": { "name": "Adaptieve kromme — max. stap per cyclus (K)" },
+      "hph_ctrl_adaptive_supply_min_c": { "name": "Adaptieve kromme — aanvoer ondergrens (°C)" },
+      "hph_ctrl_adaptive_supply_max_c": { "name": "Adaptieve kromme — aanvoer bovengrens (°C)" },
+      "hph_ctrl_price_threshold_factor": { "name": "Prijs-WW — inschakeldrempelfactor" },
+      "hph_ctrl_price_max_per_day": { "name": "Prijs-WW — max. WW-boosts per dag" },
+      "hph_ctrl_forecast_drop_threshold_k": { "name": "Prognose — temperatuurdaling trigger (K)" },
+      "hph_ctrl_forecast_boost_k": { "name": "Prognose — stooklijnverhoging (K)" },
+      "hph_cycle_short_threshold_min": { "name": "Korte cyclus drempel (minuten)" },
+      "hph_cycle_last_duration_min": { "name": "Laatste looptijd (minuten)" },
+      "hph_cycle_last_pause_min": { "name": "Laatste pauze (minuten)" },
+      "hph_model_compressor_min_hz": { "name": "Model — compressor minimumfrequentie (Hz)" },
+      "hph_model_compressor_max_hz": { "name": "Model — compressor maximumfrequentie (Hz)" },
+      "hph_model_min_flow_lpm": { "name": "Model — minimaal waterdebiet (L/min)" },
+      "hph_model_max_supply_c": { "name": "Model — maximale aanvoertemperatuur (°C)" },
+      "hph_model_expansion_valve_max_steps": { "name": "Model — expansieventiel max. positie (stappen)" },
+      "hph_prog_screed_day": { "name": "Dekvloerdrooging — huidige dag" },
+      "hph_prog_legionella_target_c": { "name": "Legionella — WW doeltemperatuur (°C)" },
+      "hph_prog_legionella_hold_min": { "name": "Legionella — wachttijd op doeltemperatuur (min.)" },
+      "hph_prog_legionella_hour": { "name": "Legionella — startuur (0–23)" },
+      "hph_cycles_today": { "name": "Cycli vandaag" },
+      "hph_short_cycles_today": { "name": "Korte cycli vandaag" },
+      "hph_dhw_fires_today": { "name": "WW-starts vandaag" },
+      "hph_ctrl_price_dhw_fires_today": { "name": "Prijs-WW — starts vandaag" }
+    },
+    "select": {
+      "hph_thermal_source": {
+        "name": "Thermische bronmeting",
+        "state": {
+          "calculated": "Berekend (intern model)",
+          "heat_pump_internal": "Intern (warmtepompsensor)",
+          "external_power": "Externe vermogensmeter",
+          "external_energy": "Externe energiemeter"
+        }
+      },
+      "hph_electrical_source": {
+        "name": "Elektrische bronmeting",
+        "state": {
+          "heat_pump_internal": "Intern (warmtepompsensor)",
+          "external_power": "Externe vermogensmeter",
+          "external_energy": "Externe energiemeter"
+        }
+      },
+      "hph_schema_variant": {
+        "name": "Schema-variant",
+        "state": {
+          "auto": "Automatisch detecteren",
+          "hk1": "A2W — alleen verwarmingsgroep 1",
+          "hk1_dhw": "A2W + warmwatertank",
+          "hk1_hk2_dhw": "A2W + 2 groepen + WW",
+          "hk1_hk2_dhw_buffer": "A2W + 2 groepen + WW + buffer"
+        }
+      },
+      "hph_ui_style": {
+        "name": "Dashboard-stijl",
+        "state": {
+          "mushroom": "Mushroom",
+          "classic": "Klassiek"
+        }
+      },
+      "hph_vendor_preset": {
+        "name": "Fabrikant-preset",
+        "state": {
+          "panasonic_heishamon": "Panasonic Heishamon",
+          "keep_current": "Huidige instellingen behouden"
+        }
+      },
+      "hph_pump_model": {
+        "name": "Warmtepomp-model",
+        "state": {
+          "panasonic_j_aqj": "Panasonic J (AQJ)",
+          "panasonic_k_aqk": "Panasonic K (AQK)",
+          "panasonic_l_aql": "Panasonic L (AQL)",
+          "panasonic_tcap": "Panasonic T-CAP",
+          "panasonic_m_aqm": "Panasonic M (AQM)"
+        }
+      },
+      "hph_prog_screed_profile": {
+        "name": "Dekvloerdroogprofiel",
+        "state": {
+          "functional_3d": "Functioneel opwarmen (3 dagen)",
+          "combined_10d": "Gecombineerd opwarmen (10 dagen)",
+          "din_18560_28d": "DIN 18560-4 (28 dagen)"
+        }
+      },
+      "hph_prog_legionella_weekday": {
+        "name": "Weekdag legionella-boost",
+        "state": {
+          "mon": "Maandag",
+          "tue": "Dinsdag",
+          "wed": "Woensdag",
+          "thu": "Donderdag",
+          "fri": "Vrijdag",
+          "sat": "Zaterdag",
+          "sun": "Zondag"
+        }
+      },
+      "hph_export_format": {
+        "name": "Exportformaat",
+        "state": {
+          "csv": "CSV",
+          "json": "JSON",
+          "xlsx": "Excel (xlsx)"
+        }
+      },
+      "hph_export_period": {
+        "name": "Exportperiode",
+        "state": {
+          "last_24h": "Laatste 24 uur",
+          "last_7d": "Laatste 7 dagen",
+          "last_30d": "Laatste 30 dagen",
+          "this_month": "Deze maand",
+          "last_month": "Vorige maand",
+          "this_year": "Dit jaar",
+          "last_year": "Vorig jaar",
+          "all": "Alle gegevens"
+        }
+      },
+      "hph_export_schedule": {
+        "name": "Exportplanning",
+        "state": {
+          "off": "Uit",
+          "daily": "Dagelijks",
+          "weekly": "Wekelijks",
+          "monthly": "Maandelijks"
+        }
+      },
+      "hph_install_emitter_type": {
+        "name": "Warmteafgiftesysteem",
+        "state": {
+          "unknown": "Onbekend",
+          "radiators": "Radiatoren",
+          "ufh": "Vloerverwarming",
+          "mixed": "Gemengd",
+          "fan_coil": "Ventilatorsconvectoren"
+        }
+      },
+      "hph_install_refrigerant": {
+        "name": "Koelmiddel",
+        "state": {
+          "unknown": "Onbekend",
+          "R32": "R32",
+          "R290": "R290 (propaan)",
+          "R410A": "R410A",
+          "R454B": "R454B",
+          "R744": "R744 (CO₂)"
+        }
+      }
+    },
+    "switch": {
+      "hph_ctrl_master": { "name": "Regeling — hoofdschakelaar" },
+      "hph_ctrl_ccc": { "name": "Compressor-cyclusregeling (CCC)" },
+      "hph_ctrl_solar_dhw": { "name": "Solar-warmwater boost" },
+      "hph_ctrl_quiet_night": { "name": "Nacht stille modus" },
+      "hph_ctrl_adaptive_curve": { "name": "Regeling — adaptieve stooklijn" },
+      "hph_ctrl_price_dhw": { "name": "Regeling — prijsgestuurd warmwater" },
+      "hph_ctrl_forecast_preheat": { "name": "Regeling — prognose-voorverwarming" },
+      "hph_ctrl_forecast_preheat_active": { "name": "Regeling — prognose-voorverwarming actief" },
+      "hph_prog_screed": { "name": "Programma — dekvloerdrooging" },
+      "hph_prog_screed_active": { "name": "Programma — dekvloerprogramma actief" },
+      "hph_prog_legionella": { "name": "Programma — legionellabeschermingsprogramma" },
+      "hph_bridge_enabled": { "name": "Bridge — MQTT-republisher" },
+      "hph_metering_includes_immersion": { "name": "Meting — incl. elektrisch verwarmingselement" },
+      "hph_metering_includes_circulation": { "name": "Meting — incl. circulatiepomp" },
+      "hph_metering_includes_controls": { "name": "Meting — incl. regeling/stand-by" },
+      "hph_metering_includes_brine": { "name": "Meting — incl. bronpomp (alleen GSHP)" }
+    },
+    "datetime": {
+      "hph_cycle_last_start": { "name": "Laatste cyclusstart" },
+      "hph_cycle_last_end": { "name": "Laatste cyclus einde" },
+      "hph_diag_last_error_time": { "name": "Laatste fouttijdstip" },
+      "hph_export_last_run": { "name": "Laatste export" },
+      "hph_ctrl_adaptive_last_run": { "name": "Adaptieve kromme — laatste toepassing" },
+      "hph_ctrl_price_dhw_last_fire": { "name": "Prijs-WW — laatste WW-boost" },
+      "hph_prog_screed_start": { "name": "Dekvloerdrooging — programmastart" },
+      "hph_prog_legionella_last_run": { "name": "Legionella — laatste programma-uitvoering" }
+    },
+    "button": {
+      "hph_export_now": { "name": "Nu exporteren (handmatig)" },
+      "hph_run_legionella_now": { "name": "Legionellaprogramma nu uitvoeren" },
+      "hph_reset_cycles_today": { "name": "Cyclusteller resetten" },
+      "hph_reset_short_cycles_today": { "name": "Korte-cyclusteller resetten" }
+    }
+  }
+}
