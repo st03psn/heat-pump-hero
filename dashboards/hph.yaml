@@ -406,25 +406,25 @@ views:
                           state-badge { display: none; }
                       entities:
                         - entity: sensor.hph_operating_mode
-                          name: Operating mode
+                          name: Betriebsmodus
                         - entity: binary_sensor.hph_compressor_running
-                          name: Compressor running
+                          name: Verdichter läuft
                         - entity: sensor.hph_source_compressor_freq
-                          name: Compressor frequency
+                          name: Verdichterfrequenz
                         - entity: sensor.hph_source_outdoor_temp
-                          name: Outdoor temperature
+                          name: Außentemperatur
                         - entity: sensor.hph_source_outlet_temp
-                          name: Supply temperature
+                          name: Vorlauftemperatur
                         - entity: sensor.hph_source_inlet_temp
-                          name: Return temperature
+                          name: Rücklauftemperatur
                         - entity: sensor.hph_water_spread
-                          name: Spread (delta T)
+                          name: Spreizung (Delta T)
                         - entity: sensor.hph_source_flow_rate
-                          name: Flow rate
+                          name: Durchfluss
                         - entity: sensor.hph_source_pump_pressure
-                          name: Pump pressure
+                          name: Pumpendruck
                         - entity: binary_sensor.hph_defrost_active
-                          name: Defrost active
+                          name: Abtauung aktiv
 
                     # Efficiency
                     - type: entities
@@ -442,19 +442,19 @@ views:
                         - entity: sensor.hph_cop_live
                           name: COP live
                         - entity: sensor.hph_cop_daily
-                          name: COP today
+                          name: COP heute
                         - entity: sensor.hph_cop_monthly
-                          name: COP this month
+                          name: COP diesen Monat
                         - entity: sensor.hph_scop
-                          name: SCOP (season)
+                          name: SCOP (Saison)
                         - entity: sensor.hph_thermal_power_active
-                          name: Thermal power
+                          name: Thermische Leistung
                         - entity: sensor.hph_electrical_power_active
-                          name: Electrical power
+                          name: Elektrische Leistung
                         - entity: sensor.hph_electrical_daily
-                          name: Electrical today
+                          name: Strom heute
                         - entity: sensor.hph_standby_electrical_daily
-                          name: Standby today
+                          name: Standby heute
 
                     # Cost & energy
                     - type: entities
@@ -470,17 +470,17 @@ views:
                           state-badge { display: none; }
                       entities:
                         - entity: sensor.hph_cost_today
-                          name: Cost today
+                          name: Kosten heute
                         - entity: sensor.hph_cost_monthly
-                          name: Cost this month
+                          name: Kosten diesen Monat
                         - entity: sensor.hph_cop_change_yoy_pct
-                          name: vs last year (COP %)
+                          name: vs. Vorjahr (COP %)
                         - entity: sensor.hph_thermal_change_yoy_pct
-                          name: vs last year (thermal %)
+                          name: vs. Vorjahr (thermisch %)
                         - entity: sensor.hph_advisor_summary
-                          name: Advisor status
+                          name: Advisor-Status
                         - entity: sensor.hph_schema_variant_active
-                          name: Installation variant
+                          name: Anlagenvariante
 
                 # ── Active fault (classic) ────────────────────────────────────────
                 - type: conditional
@@ -501,9 +501,9 @@ views:
                         state-badge { display: none; }
                     entities:
                       - entity: sensor.hph_diagnostics_current_error
-                        name: Active fault
+                        name: Aktiver Fehler
                       - entity: sensor.hph_diagnostics_recurrence
-                        name: Recurrence count
+                        name: Häufigkeit
 
                 # ── Screed running (classic) ──────────────────────────────────────
                 - type: conditional
@@ -516,10 +516,10 @@ views:
                     state_color: false
                     entities:
                       - entity: sensor.hph_prog_screed_status
-                        name: Screed program
+                        name: Estrichprogramm
                       - entity: number.hph_prog_screed_day
                       - entity: sensor.hph_prog_screed_target
-                        name: Target temperature
+                        name: Solltemperatur
 
           # ── Variant a2w_hk1 ──────────────────────────────────────────────────
           - type: conditional
@@ -2772,7 +2772,7 @@ views:
                   state-badge { display: none; }
               entities:
                 - entity: binary_sensor.hph_compressor_running
-                  name: Compressor running
+                  name: Verdichter läuft
                 - entity: select.hph_ctrl_operating_mode
                 - entity: select.hph_quiet_mode
                 - entity: sensor.hph_cop_live
@@ -2848,7 +2848,7 @@ views:
                     state-badge { display: none; }
                 entities:
                   - entity: sensor.hph_source_dhw_temp
-                    name: DHW actual
+                    name: Brauchwasser Ist
                   - entity: number.hph_dhw_target
                   - entity: number.hph_dhw_heat_delta
                   - entity: select.hph_smart_dhw
@@ -2888,37 +2888,37 @@ views:
                   state-badge { display: none; }
               entities:
                 - entity: sensor.hph_source_inverter_temp
-                  name: Inverter temp
+                  name: Invertertemperatur
                 - entity: sensor.hph_source_high_pressure
-                  name: High pressure (kPa)
+                  name: Hochdruck (kPa)
                 - entity: sensor.hph_source_low_pressure
-                  name: Low pressure (kPa)
+                  name: Niederdruck (kPa)
                 - entity: sensor.hph_source_compressor_current
-                  name: Compressor current (A)
+                  name: Verdichterstrom (A)
                 - entity: sensor.hph_source_outdoor_pipe_temp
-                  name: Outdoor pipe temp
+                  name: Außenrohrtemperatur
                 - entity: sensor.hph_source_fan1_speed
-                  name: Fan 1 speed (R/min)
+                  name: Lüfter 1 Drehzahl (U/min)
                 - entity: sensor.hph_source_fan2_speed
-                  name: Fan 2 speed (R/min)
+                  name: Lüfter 2 Drehzahl (U/min)
                 - entity: sensor.hph_source_3way_valve
-                  name: 3-way valve
+                  name: 3-Wege-Ventil
                 - entity: sensor.hph_source_pump_duty
-                  name: Pump duty (%)
+                  name: Pumpenleistung (%)
                 - entity: sensor.hph_source_hex_outlet_temp
-                  name: HEX outlet temp
+                  name: Wärmetauscher-Austritt
                 - entity: sensor.hph_source_zone1_target_temp
-                  name: Zone 1 setpoint
+                  name: Zone 1 Sollwert
                 - entity: sensor.hph_source_eva_outlet_temp
-                  name: Eva outlet temp
+                  name: Verdampfer-Austritt
                 - entity: sensor.hph_source_inside_pipe_temp
-                  name: Inside pipe temp
+                  name: Innenrohrtemperatur
                 - entity: sensor.hph_source_bypass_outlet_temp
-                  name: Bypass outlet temp
+                  name: Bypass-Austrittstemperatur
                 - entity: sensor.hph_source_defrost_temp
-                  name: Defrost temp
+                  name: Abtautemperatur
                 - entity: sensor.hph_source_internal_thermal_power
-                  name: Thermal power (W)
+                  name: Thermische Leistung (W)
 
             # ── Special functions ─────────────────────────────────────────────────
             - type: entities
@@ -2954,11 +2954,11 @@ views:
                   state-badge { display: none; }
               entities:
                 - entity: sensor.hph_source_outlet_temp
-                  name: Z1 supply (live)
+                  name: Z1 Vorlauf (live)
                 - entity: sensor.hph_source_zone1_target_temp
-                  name: Z1 target
+                  name: Z1 Sollwert
                 - entity: sensor.hph_source_zone1_temp
-                  name: Z1 room
+                  name: Z1 Raum
                 - entity: number.hph_z1_outside_low
                 - entity: number.hph_z1_outside_high
                 - entity: number.hph_z1_curve_low
@@ -3170,13 +3170,13 @@ views:
                   state-badge { display: none; }
               entities:
                 - entity: sensor.hph_source_outlet_temp
-                  name: Supply (Vorlauf)
+                  name: Vorlauf
                 - entity: sensor.hph_source_inlet_temp
-                  name: Return (Rücklauf)
+                  name: Rücklauf
                 - entity: sensor.hph_source_outdoor_temp
-                  name: Outdoor
+                  name: Außen
                 - entity: sensor.hph_source_discharge_temp
-                  name: Discharge (Heißgas)
+                  name: Heißgas
 
             # ── Today's efficiency ────────────────────────────────────────────────
             - type: entities
@@ -3193,15 +3193,15 @@ views:
                   state-badge { display: none; }
               entities:
                 - entity: sensor.hph_thermal_power_active
-                  name: Thermal power
+                  name: Thermische Leistung
                 - entity: sensor.hph_electrical_power_active
-                  name: Electrical power
+                  name: Elektrische Leistung
                 - entity: sensor.hph_cop_live
                   name: COP live
                 - entity: sensor.hph_source_compressor_freq
-                  name: Compressor frequency
+                  name: Verdichterfrequenz
                 - entity: sensor.hph_source_flow_rate
-                  name: Water flow
+                  name: Wasserdurchfluss
 
       - type: custom:apexcharts-card
         header:
@@ -3234,7 +3234,7 @@ views:
         # Behebt die langen "Lücken" wenn Temperaturen sich nicht ändern.
         series:
           - entity: sensor.hph_source_outdoor_temp
-            name: Outdoor
+            name: Außen
             yaxis_id: temp
             color: "#e0a800"
             extend_to: now
@@ -3242,7 +3242,7 @@ views:
               type: mean
               period: 5minute
           - entity: sensor.hph_source_inlet_temp
-            name: Return
+            name: Rücklauf
             yaxis_id: temp
             color: "#7ec1ff"
             extend_to: now
@@ -3250,7 +3250,7 @@ views:
               type: mean
               period: 5minute
           - entity: sensor.hph_source_outlet_temp
-            name: Supply
+            name: Vorlauf
             yaxis_id: temp
             color: "#d62728"
             extend_to: now
@@ -3258,7 +3258,7 @@ views:
               type: mean
               period: 5minute
           - entity: sensor.hph_source_discharge_temp
-            name: Discharge
+            name: Heißgas
             yaxis_id: temp
             color: "#2ca02c"
             extend_to: now
@@ -3374,7 +3374,7 @@ views:
             text: "Noch keine Defrost-Daten — füllt sich nach 24 h Laufzeit."
         series:
           - entity: binary_sensor.hph_defrost_active
-            name: Defrost active
+            name: Abtauung aktiv
             type: area
             color: "#42a5f5"
             yaxis_id: state
@@ -3383,7 +3383,7 @@ views:
             transform: "return x === 'on' ? 1 : 0;"
             extend_to: now
           - entity: sensor.hph_source_defrost_temp
-            name: Defrost coil temp
+            name: Abtau-Spulentemperatur
             type: line
             color: "#fb8c00"
             yaxis_id: temp
@@ -3618,7 +3618,7 @@ views:
                   state-badge { display: none; }
               entities:
                 - entity: sensor.hph_efficiency_trend
-                  name: Trend verdict
+                  name: Trend-Bewertung
 
             # ── KPIs ──────────────────────────────────────────────────────────────
             - type: entities
@@ -3635,15 +3635,15 @@ views:
                   state-badge { display: none; }
               entities:
                 - entity: sensor.hph_cop_daily
-                  name: COP today
+                  name: COP heute
                 - entity: sensor.hph_cop_monthly
-                  name: COP this month
+                  name: COP diesen Monat
                 - entity: sensor.hph_scop
-                  name: SCOP season
+                  name: SCOP Saison
                 - entity: sensor.hph_cost_today
-                  name: Cost today (EUR)
+                  name: Kosten heute (EUR)
                 - entity: sensor.hph_cost_monthly
-                  name: Cost this month (EUR)
+                  name: Kosten diesen Monat (EUR)
 
             # ── Year-on-year comparison ───────────────────────────────────────────
             - type: entities
@@ -3660,13 +3660,13 @@ views:
                   state-badge { display: none; }
               entities:
                 - entity: sensor.hph_cop_change_yoy_pct
-                  name: COP change vs same month last year (%)
+                  name: COP-Änderung vs. Vorjahresmonat (%)
                 - entity: sensor.hph_thermal_change_yoy_pct
-                  name: Thermal energy change vs last year (%)
+                  name: Therm. Energie-Änderung vs. Vorjahr (%)
                 - entity: sensor.hph_electrical_change_yoy_pct
-                  name: Electrical energy change vs last year (%)
+                  name: Elektr. Energie-Änderung vs. Vorjahr (%)
                 - entity: sensor.hph_scop_change_year_pct
-                  name: SCOP change vs last year (%)
+                  name: SCOP-Änderung vs. Vorjahr (%)
 
       - type: custom:hph-help
         translation_key: section_comparisons
@@ -3674,27 +3674,27 @@ views:
       - type: entities
         entities:
           - entity: sensor.hph_cop_monthly
-            name: COP this month
+            name: COP diesen Monat
           - entity: sensor.hph_cop_same_month_last_year
-            name: COP same month last year
+            name: COP Vorjahresmonat
           - entity: sensor.hph_cop_change_yoy_pct
-            name: Change vs same month last year
+            name: Änderung vs. Vorjahresmonat
           - type: divider
           - entity: sensor.hph_scop
-            name: SCOP year to date
+            name: SCOP seit Jahresbeginn
           - entity: sensor.hph_cop_last_year
-            name: SCOP previous year
+            name: SCOP Vorjahr
           - entity: sensor.hph_scop_change_year_pct
-            name: Change vs last year
+            name: Änderung vs. Vorjahr
           - type: divider
           - entity: sensor.hph_thermal_last_month
-            name: Thermal — last month
+            name: Thermisch — letzter Monat
           - entity: sensor.hph_electrical_last_month
-            name: Electrical — last month
+            name: Elektrisch — letzter Monat
           - entity: sensor.hph_thermal_last_year
-            name: Thermal — last year
+            name: Thermisch — letztes Jahr
           - entity: sensor.hph_electrical_last_year
-            name: Electrical — last year
+            name: Elektrisch — letztes Jahr
 
       # ── Overall KPIs ──
       - type: custom:hph-help
@@ -3703,11 +3703,11 @@ views:
       - type: entities
         entities:
           - entity: sensor.hph_scop
-            name: SCOP (year to date)
+            name: SCOP (seit Jahresbeginn)
           - entity: sensor.hph_cop_monthly
-            name: COP this month
+            name: COP diesen Monat
           - entity: sensor.hph_cop_daily
-            name: COP today
+            name: COP heute
           - entity: sensor.hph_cop_live
             name: COP live
 
@@ -3754,14 +3754,14 @@ views:
       - type: entities
         entities:
           - entity: sensor.hph_cost_today
-            name: Cost today (€)
+            name: Kosten heute (€)
           - entity: sensor.hph_cost_monthly
-            name: Cost this month (€)
+            name: Kosten diesen Monat (€)
           - entity: sensor.hph_cost_seasonal
-            name: Cost this season (€)
+            name: Kosten diese Saison (€)
           - type: divider
           - entity: sensor.hph_electricity_price_effective
-            name: Effective price (ct/kWh)
+            name: Effektiver Preis (ct/kWh)
             secondary_info: last-changed
 
       # ── Runtime vs. standby breakdown ──
@@ -3888,17 +3888,17 @@ views:
               state-badge { display: none; }
           entities:
             - entity: sensor.hph_thermal_monthly_split_heating
-              name: Heating — thermal (kWh)
+              name: Heizung — thermisch (kWh)
             - entity: sensor.hph_electrical_monthly_split_heating
-              name: Heating — electrical (kWh)
+              name: Heizung — elektrisch (kWh)
             - entity: sensor.hph_thermal_monthly_split_dhw
-              name: Hot water — thermal (kWh)
+              name: Warmwasser — thermisch (kWh)
             - entity: sensor.hph_electrical_monthly_split_dhw
-              name: Hot water — electrical (kWh)
+              name: Warmwasser — elektrisch (kWh)
             - entity: sensor.hph_thermal_monthly_split_cooling
-              name: Cooling — thermal (kWh)
+              name: Kühlung — thermisch (kWh)
             - entity: sensor.hph_electrical_monthly_split_cooling
-              name: Cooling — electrical (kWh)
+              name: Kühlung — elektrisch (kWh)
 
       - type: grid
         columns: 2
@@ -3913,7 +3913,7 @@ views:
               end: day
             series:
               - entity: sensor.hph_thermal_daily
-                name: Thermal kWh
+                name: Thermisch kWh
                 type: column
                 color: "#ff7043"
                 statistics:
@@ -3921,7 +3921,7 @@ views:
                   period: day
                   align: start
               - entity: sensor.hph_electrical_daily
-                name: Electrical kWh
+                name: Elektrisch kWh
                 type: column
                 color: "#42a5f5"
                 statistics:
@@ -3985,7 +3985,7 @@ views:
             decimals: 1
         series:
           - entity: sensor.hph_thermal_daily
-            name: Thermal
+            name: Thermisch
             type: column
             color: "#d62728"
             yaxis_id: energy
@@ -3994,7 +3994,7 @@ views:
               period: day
               align: start
           - entity: sensor.hph_electrical_daily
-            name: Electrical
+            name: Elektrisch
             type: column
             color: "#bcbd22"
             yaxis_id: energy
@@ -4021,7 +4021,7 @@ views:
           - decimals: 1
         series:
           - entity: sensor.hph_cop_daily
-            name: COP daily
+            name: COP täglich
             type: line
             color: "#17a2b8"
             stroke_width: 2
@@ -4103,7 +4103,7 @@ views:
         cards:
           - type: gauge
             entity: sensor.hph_carnot_efficiency_percent
-            name: Carnot efficiency
+            name: Carnot-Wirkungsgrad
             unit: '%'
             min: 0
             max: 70
@@ -4114,7 +4114,7 @@ views:
             needle: true
           - type: gauge
             entity: sensor.hph_cycles_per_hour
-            name: Cycles per hour
+            name: Takte pro Stunde
             unit: '1/h'
             min: 0
             max: 6
@@ -4129,11 +4129,11 @@ views:
       - type: entities
         entities:
           - entity: sensor.hph_flowt_minus_outsidet_24h
-            name: Δ flow − outside (24 h mean)
+            name: Δ Vorlauf − Außen (24-h-Mittel)
           - entity: sensor.hph_quality_24h_samples
-            name: Samples / 24 h
+            name: Messwerte / 24 h
           - entity: sensor.hph_advisor_data_quality
-            name: Data-quality advisor
+            name: Datenqualitäts-Advisor
 
   # ════════════════════════════════════════════════════════════════════════
   # 5) OPTIMIZATION — cycle analysis + advisor + control switches
@@ -4188,7 +4188,7 @@ views:
                   state-badge { display: none; }
               entities:
                 - entity: sensor.hph_advisor_summary
-                  name: Aggregate verdict
+                  name: Gesamtbewertung
 
       - type: custom:hph-help
         translation_key: section_cycle_analysis
@@ -4237,32 +4237,32 @@ views:
       - type: entities
         entities:
           - entity: sensor.hph_advisor_short_cycle
-            name: Cycling
+            name: Taktung
             secondary_info: last-changed
           - entity: sensor.hph_advisor_spread
-            name: Supply/return spread
+            name: Vorlauf/Rücklauf-Spreizung
           - entity: sensor.hph_advisor_defrost
-            name: Defrost behaviour
+            name: Abtauverhalten
           - entity: sensor.hph_advisor_heat_curve
-            name: Heating curve / aux heater
+            name: Heizkurve / Zusatzheizung
           - entity: sensor.hph_advisor_dhw_runtime
-            name: DHW run length
+            name: Warmwasser-Laufzeit
           - entity: sensor.hph_advisor_heating_limit
-            name: Heating limit (auto-detected)
+            name: Heizgrenze (automatisch erkannt)
           - entity: sensor.hph_advisor_pressure_trend
-            name: Water pressure trend (leak detection)
+            name: Wasserdruck-Trend (Leckerkennung)
           - entity: sensor.hph_advisor_diagnostics
-            name: Diagnostics (active fault / recurrence)
+            name: Diagnose (aktiver Fehler / Häufigkeit)
           - entity: sensor.hph_advisor_analysis
-            name: Analysis (indoor temp deviation, curve recommendation)
+            name: Analyse (Raumtemp.-Abweichung, Kurvenempfehlung)
           - entity: sensor.hph_advisor_pump_curve
-            name: Pump curve (7-day spread mean / stdev)
+            name: Pumpenkurve (7-Tage-Spreizung Mittel / Stdabw.)
           - entity: sensor.hph_advisor_efficiency_drift
-            name: Efficiency drift (year-over-year SCOP)
+            name: Effizienz-Drift (SCOP-Jahresvergleich)
           - entity: sensor.hph_advisor_dhw_timing
-            name: DHW timing (fires per day)
+            name: Warmwasser-Timing (Starts pro Tag)
           - entity: sensor.hph_advisor_source_health
-            name: External source health (heat meter / power meter)
+            name: Externe Quellen-Gesundheit (Wärmemengen-/Stromzähler)
         state_color: true
 
       # ── Analysis recommendation card ──
@@ -4349,7 +4349,7 @@ views:
                   state-badge { display: none; }
               entities:
                 - entity: sensor.hph_advisor_analysis
-                  name: Analysis advisor
+                  name: Analyse-Advisor
                   secondary_info: last-changed
 
             # ── Active fault ──────────────────────────────────────────────────────
@@ -4367,9 +4367,9 @@ views:
                   state-badge { display: none; }
               entities:
                 - entity: sensor.hph_diagnostics_current_error
-                  name: Fault code
+                  name: Fehlercode
                 - entity: sensor.hph_diagnostics_recurrence
-                  name: Recurrences
+                  name: Wiederholungen
 
       - type: custom:hph-help
         translation_key: section_diagnostics_detail
@@ -4377,9 +4377,9 @@ views:
       - type: entities
         entities:
           - entity: sensor.hph_diagnostics_current_error
-            name: Active fault code
+            name: Aktiver Fehlercode
           - entity: sensor.hph_diagnostics_recurrence
-            name: Recurrences (last 5 events)
+            name: Wiederholungen (letzte 5 Ereignisse)
           - entity: datetime.hph_diag_last_error_time
           - entity: text.hph_diag_error_history
 
@@ -4399,7 +4399,7 @@ views:
           title: Heating limit — observed
           entities:
             - entity: sensor.hph_heating_limit_smoothed
-              name: Smoothed (7-day rolling avg)
+              name: Geglättet (7-Tage-Mittel)
             - entity: number.hph_heating_limit_observed_c
             - entity: number.hph_advisor_heating_limit_target_c
       - type: conditional
@@ -4679,7 +4679,7 @@ views:
       - type: entities
         entities:
           - type: call-service
-            name: Run legionella program now
+            name: Legionellenprogramm jetzt starten
             icon: mdi:water-boiler
             action_name: Trigger
             service: hph.run_legionella_now
@@ -4726,9 +4726,9 @@ views:
             secondary_info: last-changed
           - entity: select.hph_pump_model
           - entity: sensor.hph_model_description
-            name: Model description
+            name: Modellbeschreibung
           - entity: sensor.hph_model_refrigerant
-            name: Refrigerant
+            name: Kältemittel
 
       # ── Model thresholds (with inline help) ──
       - type: custom:hph-help
@@ -4755,9 +4755,9 @@ views:
         entities:
           - entity: select.hph_schema_variant
           - entity: sensor.hph_schema_variant_active
-            name: Schematic — active
+            name: Schema — aktiv
           - entity: sensor.hph_schema_variant_detected
-            name: Schematic — auto-detected
+            name: Schema — automatisch erkannt
 
       - type: custom:hph-help
         translation_key: section_dashboard_appearance
@@ -4802,7 +4802,7 @@ views:
           - entity: number.hph_analysis_window_days
           - entity: number.hph_analysis_dead_band_k
           - entity: sensor.hph_indoor_deviation_smoothed
-            name: Smoothed deviation
+            name: Geglättete Abweichung
           - entity: text.hph_heating_curve_recommendation
 
       - type: custom:hph-help
@@ -4818,11 +4818,11 @@ views:
           - entity: text.hph_src_error_code
           - type: divider
           - entity: binary_sensor.hph_has_hk2
-            name: HK2 detected
+            name: HK2 erkannt
           - entity: binary_sensor.hph_has_dhw
-            name: DHW detected
+            name: Brauchwasser erkannt
           - entity: binary_sensor.hph_has_buffer
-            name: Buffer detected
+            name: Pufferspeicher erkannt
 
       # ── Heat pump device entities (UI-configurable) ──
       - type: custom:hph-help
@@ -4954,7 +4954,7 @@ views:
           - entity: number.hph_electricity_price_ct_per_kwh
           - entity: text.hph_electricity_price_entity
           - entity: sensor.hph_electricity_price_effective
-            name: Effective price used (ct/kWh)
+            name: Verwendeter effektiver Preis (ct/kWh)
       - type: markdown
         content: |
           Set **Manual price** to your flat rate (e.g. 30 ct/kWh).
@@ -4987,7 +4987,7 @@ views:
           - entity: switch.hph_bridge_enabled
           - entity: text.hph_bridge_prefix
           - entity: sensor.hph_bridge_last_publish
-            name: Last publish
+            name: Letzte Veröffentlichung
       - type: markdown
         content: |
           When enabled, HeatPump Hero republishes ~50 derived sensors

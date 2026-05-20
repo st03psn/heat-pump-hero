@@ -33,6 +33,14 @@ GRAFANA_FILES = sorted((ROOT / "grafana").glob("*.json"))
 DASHBOARD_FILE = ROOT / "dashboards" / "hph.yaml"
 BLUEPRINT_FILE = ROOT / "blueprints" / "hph_setup.yaml"
 
+CC_DIR = ROOT / "custom_components" / "hph"
+TRANSLATION_FILES = {
+    "strings.json": CC_DIR / "strings.json",
+    "en.json": CC_DIR / "translations" / "en.json",
+    "de.json": CC_DIR / "translations" / "de.json",
+}
+NL_TRANSLATION_FILE = CC_DIR / "translations" / "nl.json"
+
 # Files allowed to contain hardcoded heat-pump entity references.
 ALLOWED_HARDCODE = {
     "packages/hph_sources.yaml": "default values for the source-adapter helpers",
@@ -660,6 +668,160 @@ def test_const_consistency() -> int:
     return failures
 
 
+def _collect_translatable_entities() -> set[tuple[str, str]]:
+    """Every (platform, unique_id) whose HPH entity class sets
+    ``_attr_translation_key = unique_id`` — i.e. its display name comes
+    from the translation files, not from ``_attr_name``.
+
+    Sources: const.py helper dicts, the CTRL_FACADES proxies (by their
+    ``platform`` field), and the template sensor / binary-sensor YAMLs.
+    Core-platform entities (utility_meter / integration in the efficiency
+    package) are excluded — they don't use our translation_key mechanism.
+    """
+    result: set[tuple[str, str]] = set()
+
+    for fname, platform in (
+        ("sensor_templates.yaml", "sensor"),
+        ("binary_sensor_templates.yaml", "binary_sensor"),
+    ):
+        path = CC_DIR / "data" / fname
+        if not path.is_file():
+            continue
+        data = load_yaml(path) or {}
+        items: list = []
+        if isinstance(data, list):
+            items = data
+        elif isinstance(data, dict):
+            for v in data.values():
+                if isinstance(v, list):
+                    items = v
+                    break
+        for item in items:
+            uid = item.get("unique_id") if isinstance(item, dict) else None
+            if uid:
+                result.add((platform, uid))
+
+    const_py = CC_DIR / "const.py"
+    text = const_py.read_text(encoding="utf-8")
+    helper_blocks = {
+        "TEXT_HELPERS": "text",
+        "NUMBER_HELPERS": "number",
+        "SELECT_HELPERS": "select",
+        "SWITCH_HELPERS": "switch",
+        "DATETIME_HELPERS": "datetime",
+        "COUNTER_HELPERS": "number",  # counters surface as number.*
+        "BUTTON_DEFS": "button",
+    }
+    for var, platform in helper_blocks.items():
+        m = re.search(rf"^{var}.*?=\s*\{{(.*?)^\}}", text, re.DOTALL | re.MULTILINE)
+        if not m:
+            continue
+        for key_match in re.finditer(r'^\s*"(hph_[a-z0-9_]+)":', m.group(1), re.MULTILINE):
+            result.add((platform, key_match.group(1)))
+
+    facades_match = re.search(r"^CTRL_FACADES.*?=\s*\{(.*?)^\}", text, re.DOTALL | re.MULTILINE)
+    if facades_match:
+        for entry in re.finditer(
+            r'"(hph_[a-z0-9_]+)":\s*\{[^}]*?"platform":\s*"(\w+)"',
+            facades_match.group(1), re.DOTALL,
+        ):
+            result.add((entry.group(2), entry.group(1)))
+
+    return result
+
+
+def _entity_name(data: dict, platform: str, uid: str) -> str | None:
+    entry = (((data.get("entity") or {}).get(platform) or {}).get(uid) or {})
+    return entry.get("name")
+
+
+def _entity_keys(data: dict) -> set[tuple[str, str]]:
+    out: set[tuple[str, str]] = set()
+    for platform, entries in (data.get("entity") or {}).items():
+        for uid in (entries or {}):
+            out.add((platform, uid))
+    return out
+
+
+def test_translation_completeness() -> int:
+    """Every entity whose name comes from translation_key must have a
+    non-empty name in strings.json, en.json AND de.json.
+
+    Removing the ``_attr_name`` override (rc9) means HA falls back to the
+    raw unique_id whenever a translation is missing — this test guards
+    against that, and against strings.json / en.json drifting apart.
+    """
+    section("Translation completeness — every translated entity has a name")
+    failures = 0
+
+    entities = _collect_translatable_entities()
+    if not entities:
+        fail("no translatable entities collected — extraction regression?")
+        return 1
+
+    trans: dict[str, dict] = {}
+    for label, path in TRANSLATION_FILES.items():
+        if not path.is_file():
+            fail(f"translation file missing: {path}")
+            return 1
+        try:
+            trans[label] = load_json(path)
+        except Exception as e:
+            fail(f"{label} broken JSON: {e}")
+            return 1
+
+    # 1. Forward: every translatable entity has a non-empty name everywhere.
+    for label, data in trans.items():
+        missing = [
+            f"{platform}.{uid}"
+            for platform, uid in sorted(entities)
+            if not (_entity_name(data, platform, uid) or "").strip()
+        ]
+        if missing:
+            for m in missing:
+                fail(f"{label}: missing/empty entity name for {m}")
+            failures += len(missing)
+        else:
+            ok(f"{label}: all {len(entities)} entity names present")
+
+    # 2. strings.json and en.json entity key-sets must be identical.
+    s_keys = _entity_keys(trans["strings.json"])
+    en_keys = _entity_keys(trans["en.json"])
+    if s_keys != en_keys:
+        for k in sorted(s_keys - en_keys):
+            fail(f"in strings.json but not en.json: {k[0]}.{k[1]}")
+        for k in sorted(en_keys - s_keys):
+            fail(f"in en.json but not strings.json: {k[0]}.{k[1]}")
+        failures += len(s_keys ^ en_keys)
+    else:
+        ok(f"strings.json and en.json entity key-sets match ({len(s_keys)} keys)")
+
+    # 3. Orphans — translation entries with no matching entity source (soft).
+    orphans = sorted(s_keys - set(entities))
+    if orphans:
+        for k in orphans:
+            print(f"  [WARN] strings.json defines {k[0]}.{k[1]} with no matching entity source")
+    else:
+        ok("no orphan entity translations in strings.json")
+
+    # 4. nl.json coverage (soft — non-blocking).
+    if NL_TRANSLATION_FILE.is_file():
+        try:
+            nl = load_json(NL_TRANSLATION_FILE)
+            nl_missing = [
+                f"{p}.{u}" for p, u in sorted(entities)
+                if not (_entity_name(nl, p, u) or "").strip()
+            ]
+            if nl_missing:
+                print(f"  [WARN] nl.json missing {len(nl_missing)} entity names (non-blocking)")
+            else:
+                ok("nl.json covers all entity names")
+        except Exception as e:
+            print(f"  [WARN] nl.json broken JSON: {e}")
+
+    return failures
+
+
 def main() -> int:
     print(f"HeatPump Hero smoke tests · root: {ROOT}")
     failures = 0
@@ -674,6 +836,7 @@ def main() -> int:
     failures += test_dashboard_no_templated_entity()
     failures += test_ctrl_facades_writer_consistency()
     failures += test_const_consistency()
+    failures += test_translation_completeness()
 
     print()
     if failures:

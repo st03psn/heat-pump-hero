@@ -5,6 +5,35 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Entity names now actually follow the HA language setting.** rc9 set
+  `_attr_name` on the template sensors, template binary sensors, and the
+  four facade proxy classes as an intended "fallback". In Home Assistant
+  `_attr_name` is an *override*, not a fallback — it suppresses
+  `_attr_translation_key` entirely, so 172 entities always rendered in
+  English regardless of the user's language. Removing the `_attr_name`
+  assignments lets HA resolve names through `translations/<lang>.json`.
+  Verified against a live instance with `scripts/verify_i18n.py`.
+
+### Changed
+
+- **Dashboard labels are now German.** All 142 hardcoded English `name:`
+  overrides in the bundled Lovelace dashboard (entity rows and apexcharts
+  series) were translated to German. Reverses the former "dashboard strings
+  English-only" policy. The canonical file and the CI copy
+  (`dashboards/hph.yaml`) were updated in lockstep.
+
+### Added
+
+- **`tests/smoke.py::test_translation_completeness`** — offline guard that
+  every entity using `translation_key` has a non-empty name in
+  `strings.json`, `en.json` and `de.json`, and that `strings.json` and
+  `en.json` entity key-sets match. Runs in CI.
+- **`scripts/verify_i18n.py`** — runtime check against a live HA: compares
+  every `hph_*` entity's `friendly_name` to the expected German name and
+  reports the `hph-help` asset / frontend-mount status (no manual testing).
+
 ---
 
 ## [0.9.0-rc9] — 2026-05-20
