@@ -18,6 +18,13 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
 
 ### Changed
 
+- **Entity names no longer prefixed with "HeatPump Hero".** The hub device
+  no longer carries a name, so `has_entity_name=True` entities show just
+  their (translated) name instead of "HeatPump Hero …". A one-time
+  idempotent migration clears the name from the existing hub device on
+  upgrade (respects a user-set name). Removed the now-unused
+  `INTEGRATION_NAME` import from the eight platform modules.
+
 - **Dashboard labels are now German.** All 142 hardcoded English `name:`
   overrides in the bundled Lovelace dashboard (entity rows and apexcharts
   series) were translated to German. Reverses the former "dashboard strings

@@ -16,7 +16,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import BUTTON_DEFS, CTRL_FACADES, DOMAIN, INTEGRATION_NAME
+from .const import BUTTON_DEFS, CTRL_FACADES, DOMAIN
 from .helpers.proxy import FacadeProxyMixin, call_domain_service
 
 _LOGGER = logging.getLogger(__name__)
@@ -70,7 +70,6 @@ class HphButton(ButtonEntity):
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, "hub")},
-            "name": INTEGRATION_NAME,
             "manufacturer": "HeatPump Hero",
             "model": "Bundle integration",
         }
@@ -116,7 +115,6 @@ class HphFacadeButton(FacadeProxyMixin, ButtonEntity):
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, "hub")},
-            "name": INTEGRATION_NAME,
             "manufacturer": "HeatPump Hero",
             "model": "Bundle integration",
         }

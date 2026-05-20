@@ -23,7 +23,7 @@ from homeassistant.helpers.event import (
 )
 from homeassistant.helpers.template import Template
 
-from .const import DOMAIN, INTEGRATION_NAME
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 _DATA_FILE = Path(__file__).parent / "data" / "binary_sensor_templates.yaml"
@@ -158,7 +158,6 @@ class HphTemplateBinarySensor(BinarySensorEntity):
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, "hub")},
-            "name": INTEGRATION_NAME,
             "manufacturer": "HeatPump Hero",
             "model": "Bundle integration",
         }

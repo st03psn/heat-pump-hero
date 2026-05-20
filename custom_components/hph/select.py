@@ -15,7 +15,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from .const import CTRL_FACADES, DOMAIN, INTEGRATION_NAME, SELECT_HELPERS
+from .const import CTRL_FACADES, DOMAIN, SELECT_HELPERS
 from .helpers.proxy import FacadeProxyMixin, call_domain_service
 
 
@@ -67,7 +67,6 @@ class HphSelect(SelectEntity, RestoreEntity):
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, "hub")},
-            "name": INTEGRATION_NAME,
             "manufacturer": "HeatPump Hero",
             "model": "Bundle integration",
         }
@@ -123,7 +122,6 @@ class HphFacadeSelect(FacadeProxyMixin, SelectEntity):
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, "hub")},
-            "name": INTEGRATION_NAME,
             "manufacturer": "HeatPump Hero",
             "model": "Bundle integration",
         }

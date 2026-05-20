@@ -17,7 +17,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.util import dt as dt_util
 
-from .const import DATETIME_HELPERS, DOMAIN, INTEGRATION_NAME
+from .const import DATETIME_HELPERS, DOMAIN
 
 
 async def async_setup_entry(
@@ -56,7 +56,6 @@ class HphDateTime(DateTimeEntity, RestoreEntity):
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, "hub")},
-            "name": INTEGRATION_NAME,
             "manufacturer": "HeatPump Hero",
             "model": "Bundle integration",
         }

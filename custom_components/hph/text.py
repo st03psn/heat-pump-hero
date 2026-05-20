@@ -16,7 +16,7 @@ from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from .const import DOMAIN, INTEGRATION_NAME, TEXT_HELPERS
+from .const import DOMAIN, TEXT_HELPERS
 
 
 async def async_setup_entry(
@@ -61,7 +61,6 @@ class HphText(TextEntity, RestoreEntity):
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, "hub")},
-            "name": INTEGRATION_NAME,
             "manufacturer": "HeatPump Hero",
             "model": "Bundle integration",
         }

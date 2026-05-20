@@ -39,7 +39,7 @@ from homeassistant.helpers.event import (
 )
 from homeassistant.helpers.template import Template
 
-from .const import DOMAIN, INTEGRATION_NAME
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 _DATA_FILE = Path(__file__).parent / "data" / "sensor_templates.yaml"
@@ -210,7 +210,6 @@ class HphTemplateSensor(SensorEntity):
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, "hub")},
-            "name": INTEGRATION_NAME,
             "manufacturer": "HeatPump Hero",
             "model": "Bundle integration",
         }

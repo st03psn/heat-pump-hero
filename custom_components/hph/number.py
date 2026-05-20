@@ -17,7 +17,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from .const import COUNTER_HELPERS, CTRL_FACADES, DOMAIN, INTEGRATION_NAME, NUMBER_HELPERS
+from .const import COUNTER_HELPERS, CTRL_FACADES, DOMAIN, NUMBER_HELPERS
 from .helpers.proxy import FacadeProxyMixin, call_domain_service
 
 
@@ -82,7 +82,6 @@ class HphNumber(NumberEntity, RestoreEntity):
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, "hub")},
-            "name": INTEGRATION_NAME,
             "manufacturer": "HeatPump Hero",
             "model": "Bundle integration",
         }
@@ -155,7 +154,6 @@ class HphFacadeNumber(FacadeProxyMixin, NumberEntity):
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, "hub")},
-            "name": INTEGRATION_NAME,
             "manufacturer": "HeatPump Hero",
             "model": "Bundle integration",
         }

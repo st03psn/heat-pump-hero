@@ -109,6 +109,28 @@ async def _migrate_entity_ids(hass: HomeAssistant) -> None:
             _LOGGER.warning("hph migration: price-sensor consolidation failed: %s", exc)
 
 
+async def _clear_hub_device_name(hass: HomeAssistant) -> None:
+    """Drop the 'HeatPump Hero' name from the hub device.
+
+    Entities use ``has_entity_name = True``, so HA composes their
+    friendly_name as ``{device name} {entity name}`` — which prefixed every
+    entity with 'HeatPump Hero'. The device_info no longer supplies a name,
+    but HA keeps the previously-persisted device name on upgrade, so we clear
+    it explicitly here. Idempotent and respects a user-chosen name_by_user.
+    """
+    from homeassistant.helpers import device_registry as dr
+
+    registry = dr.async_get(hass)
+    device = registry.async_get_device(identifiers={(DOMAIN, "hub")})
+    if device is None or device.name_by_user or device.name is None:
+        return
+    try:
+        registry.async_update_device(device.id, name=None)
+        _LOGGER.info("hph: cleared hub device name (entity names no longer prefixed)")
+    except Exception as exc:  # noqa: BLE001
+        _LOGGER.warning("hph: could not clear hub device name: %s", exc)
+
+
 async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
     """Set up the integration domain key. Registers bridge services."""
     hass.data.setdefault(DOMAIN, {})
@@ -870,6 +892,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Forward to platforms (text/number/select/switch/datetime/button/sensor/binary_sensor).
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    # Drop the hub device name so entity friendly_names aren't prefixed with
+    # 'HeatPump Hero' (runs after the device exists via the platform setup).
+    await _clear_hub_device_name(hass)
 
     # Auto-register the dashboard (idempotent).
     try:
