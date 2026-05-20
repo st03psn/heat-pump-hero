@@ -552,6 +552,66 @@
       },
       "hph_ctrl_price_dhw_fires_today": {
         "name": "Price-DHW — fires today"
+      },
+      "hph_z1_curve_high": {
+        "name": "Zone 1 Heat Curve — Outlet at Low Outdoor"
+      },
+      "hph_z1_curve_low": {
+        "name": "Zone 1 Heat Curve — Outlet at High Outdoor"
+      },
+      "hph_dhw_target": {
+        "name": "DHW Target Temperature"
+      },
+      "hph_z1_heat_shift": {
+        "name": "Zone 1 Heat Request Shift"
+      },
+      "hph_z2_heat_shift": {
+        "name": "Zone 2 Heat Request Shift"
+      },
+      "hph_heating_cutoff": {
+        "name": "Heating Cutoff Outdoor Temperature"
+      },
+      "hph_max_pump_duty": {
+        "name": "Maximum Pump Duty Cycle"
+      },
+      "hph_room_heat_delta": {
+        "name": "Room Heating Delta / Hysteresis"
+      },
+      "hph_z1_outside_low": {
+        "name": "Zone 1 Heat Curve — Outside Low"
+      },
+      "hph_z1_outside_high": {
+        "name": "Zone 1 Heat Curve — Outside High"
+      },
+      "hph_z2_outside_low": {
+        "name": "Zone 2 Heat Curve — Outside Low"
+      },
+      "hph_z2_outside_high": {
+        "name": "Zone 2 Heat Curve — Outside High"
+      },
+      "hph_z2_curve_high": {
+        "name": "Zone 2 Heat Curve — Outlet at Low Outdoor"
+      },
+      "hph_z2_curve_low": {
+        "name": "Zone 2 Heat Curve — Outlet at High Outdoor"
+      },
+      "hph_dhw_heat_delta": {
+        "name": "DHW Heat Delta"
+      },
+      "hph_cool_delta": {
+        "name": "Cooling Delta"
+      },
+      "hph_bivalent_start_temp": {
+        "name": "Bivalent Start Temperature"
+      },
+      "hph_heater_delay_time": {
+        "name": "Backup Heater Delay Time"
+      },
+      "hph_heater_start_delta": {
+        "name": "Backup Heater Start Delta"
+      },
+      "hph_heater_stop_delta": {
+        "name": "Backup Heater Stop Delta"
       }
     },
     "select": {
@@ -676,6 +736,30 @@
           "R454B": "R454B",
           "R744": "R744 (CO₂)"
         }
+      },
+      "hph_quiet_mode": {
+        "name": "Quiet Mode"
+      },
+      "hph_ctrl_operating_mode": {
+        "name": "Operating Mode"
+      },
+      "hph_powerful_mode": {
+        "name": "Powerful / Boost Mode"
+      },
+      "hph_active_zones": {
+        "name": "Active Zones"
+      },
+      "hph_bivalent_mode": {
+        "name": "Bivalent Mode"
+      },
+      "hph_smart_dhw": {
+        "name": "Smart DHW"
+      },
+      "hph_heating_control": {
+        "name": "Heating Control Mode"
+      },
+      "hph_dhw_sensor_selection": {
+        "name": "DHW Sensor Selection"
       }
     },
     "switch": {
@@ -726,6 +810,18 @@
       },
       "hph_metering_includes_brine": {
         "name": "Metering — includes brine pump (GSHP only)"
+      },
+      "hph_power": {
+        "name": "Main Power"
+      },
+      "hph_holiday": {
+        "name": "Holiday Mode"
+      },
+      "hph_force_defrost": {
+        "name": "Force Defrost"
+      },
+      "hph_schedule": {
+        "name": "Schedule"
       }
     },
     "datetime": {
@@ -766,6 +862,430 @@
       },
       "hph_reset_short_cycles_today": {
         "name": "Reset short-cycles-today counter"
+      },
+      "hph_force_dhw": {
+        "name": "Force DHW Now"
+      },
+      "hph_restart_heishamon": {
+        "name": "Restart HeishaMon"
+      }
+    },
+    "sensor": {
+      "hph_advisor_short_cycle": {
+        "name": "Advisor — Short Cycle"
+      },
+      "hph_advisor_spread": {
+        "name": "Advisor — Spread"
+      },
+      "hph_advisor_defrost": {
+        "name": "Advisor — Defrost"
+      },
+      "hph_advisor_heat_curve": {
+        "name": "Advisor — Heat Curve"
+      },
+      "hph_advisor_dhw_runtime": {
+        "name": "Advisor — DHW Runtime"
+      },
+      "hph_pressure_delta_7d": {
+        "name": "Pressure Delta (7d)"
+      },
+      "hph_advisor_diagnostics": {
+        "name": "Advisor — Diagnostics"
+      },
+      "hph_advisor_pressure_trend": {
+        "name": "Advisor — Pressure Trend"
+      },
+      "hph_advisor_heating_limit": {
+        "name": "Advisor — Heating Limit"
+      },
+      "hph_dhw_fires_yesterday": {
+        "name": "DHW Fires Yesterday"
+      },
+      "hph_advisor_pump_curve": {
+        "name": "Advisor — Pump Curve"
+      },
+      "hph_advisor_efficiency_drift": {
+        "name": "Advisor — Efficiency Drift"
+      },
+      "hph_advisor_dhw_timing": {
+        "name": "Advisor — DHW Timing"
+      },
+      "hph_source_health": {
+        "name": "Source Health"
+      },
+      "hph_advisor_source_health": {
+        "name": "Advisor — Source Health"
+      },
+      "hph_advisor_data_quality": {
+        "name": "Advisor — Data Quality"
+      },
+      "hph_advisor_summary": {
+        "name": "Advisor Summary"
+      },
+      "hph_source_indoor_temp": {
+        "name": "Source — Indoor Temperature"
+      },
+      "hph_source_indoor_target": {
+        "name": "Source — Indoor Target"
+      },
+      "hph_indoor_temp_deviation": {
+        "name": "Indoor Temperature Deviation"
+      },
+      "hph_advisor_analysis": {
+        "name": "Advisor — Analysis"
+      },
+      "hph_bridge_last_publish": {
+        "name": "Bridge — Last Publish"
+      },
+      "hph_thermal_power": {
+        "name": "Thermal Power"
+      },
+      "hph_operating_mode": {
+        "name": "Operating Mode"
+      },
+      "hph_avg_cycle_duration_24h": {
+        "name": "Average Cycle Duration (24h)"
+      },
+      "hph_short_cycle_ratio": {
+        "name": "Short Cycle Ratio"
+      },
+      "hph_cycles_per_hour": {
+        "name": "Cycles Per Hour"
+      },
+      "hph_diagnostics_current_error": {
+        "name": "Diagnostics — Current Error"
+      },
+      "hph_diagnostics_recurrence": {
+        "name": "Diagnostics — Recurrence"
+      },
+      "hph_cop_live": {
+        "name": "COP Live"
+      },
+      "hph_carnot_efficiency_percent": {
+        "name": "Carnot Efficiency (%)"
+      },
+      "hph_flowt_minus_outsidet_instant": {
+        "name": "Flow T Minus Outside T"
+      },
+      "hph_cop_daily": {
+        "name": "COP Daily"
+      },
+      "hph_cop_monthly": {
+        "name": "COP Monthly"
+      },
+      "hph_scop": {
+        "name": "SCOP"
+      },
+      "hph_standby_electrical_daily": {
+        "name": "Standby Electrical (Daily)"
+      },
+      "hph_cop_monthly_heating": {
+        "name": "COP Monthly — Heating"
+      },
+      "hph_cop_yearly_heating": {
+        "name": "COP Yearly — Heating"
+      },
+      "hph_cop_monthly_dhw": {
+        "name": "COP Monthly — DHW"
+      },
+      "hph_cop_yearly_dhw": {
+        "name": "COP Yearly — DHW"
+      },
+      "hph_cop_monthly_dhw_direct": {
+        "name": "COP Monthly — DHW Direct"
+      },
+      "hph_cop_yearly_dhw_direct": {
+        "name": "COP Yearly — DHW Direct"
+      },
+      "hph_cop_last_month": {
+        "name": "COP Last Month"
+      },
+      "hph_cop_last_year": {
+        "name": "COP Last Year"
+      },
+      "hph_thermal_last_month": {
+        "name": "Thermal Energy Last Month"
+      },
+      "hph_electrical_last_month": {
+        "name": "Electrical Energy Last Month"
+      },
+      "hph_thermal_last_year": {
+        "name": "Thermal Energy Last Year"
+      },
+      "hph_electrical_last_year": {
+        "name": "Electrical Energy Last Year"
+      },
+      "hph_thermal_same_month_last_year": {
+        "name": "Thermal Energy — Same Month Last Year"
+      },
+      "hph_electrical_same_month_last_year": {
+        "name": "Electrical Energy — Same Month Last Year"
+      },
+      "hph_cop_same_month_last_year": {
+        "name": "COP — Same Month Last Year"
+      },
+      "hph_cop_change_yoy_pct": {
+        "name": "COP Change YoY (%)"
+      },
+      "hph_scop_change_year_pct": {
+        "name": "SCOP Change Year-on-Year (%)"
+      },
+      "hph_thermal_change_yoy_pct": {
+        "name": "Thermal Energy Change YoY (%)"
+      },
+      "hph_electrical_change_yoy_pct": {
+        "name": "Electrical Energy Change YoY (%)"
+      },
+      "hph_model_refrigerant": {
+        "name": "Model — Refrigerant"
+      },
+      "hph_model_description": {
+        "name": "Model — Description"
+      },
+      "hph_prog_legionella_status": {
+        "name": "Legionella Program Status"
+      },
+      "hph_prog_screed_target": {
+        "name": "Screed Dry-Out Target"
+      },
+      "hph_prog_screed_status": {
+        "name": "Screed Dry-Out Status"
+      },
+      "hph_source_inlet_temp": {
+        "name": "Source — Inlet Temperature"
+      },
+      "hph_source_outlet_temp": {
+        "name": "Source — Outlet Temperature"
+      },
+      "hph_source_flow_rate": {
+        "name": "Source — Flow Rate"
+      },
+      "hph_source_outdoor_temp": {
+        "name": "Source — Outdoor Temperature"
+      },
+      "hph_source_compressor_freq": {
+        "name": "Source — Compressor Frequency"
+      },
+      "hph_source_operating_mode": {
+        "name": "Source — Operating Mode"
+      },
+      "hph_source_pump_pressure": {
+        "name": "Source — Pump Pressure"
+      },
+      "hph_source_compressor_hours": {
+        "name": "Source — Compressor Hours"
+      },
+      "hph_source_compressor_starts": {
+        "name": "Source — Compressor Starts"
+      },
+      "hph_source_discharge_temp": {
+        "name": "Source — Discharge Temperature"
+      },
+      "hph_source_error_code": {
+        "name": "Source — Error Code"
+      },
+      "hph_source_zone1_temp": {
+        "name": "Source — Zone 1 Temperature"
+      },
+      "hph_source_zone2_temp": {
+        "name": "Source — Zone 2 Temperature"
+      },
+      "hph_source_dhw_temp": {
+        "name": "Source — DHW Temperature"
+      },
+      "hph_source_buffer_temp": {
+        "name": "Source — Buffer Temperature"
+      },
+      "hph_source_target_supply_temp": {
+        "name": "Source — Target Supply Temperature"
+      },
+      "hph_source_room_temp": {
+        "name": "Source — Room Temperature"
+      },
+      "hph_source_pump_speed": {
+        "name": "Source — Pump Speed"
+      },
+      "hph_source_valve_state": {
+        "name": "Source — Valve State"
+      },
+      "hph_source_heater_hours": {
+        "name": "Source — Heater Hours"
+      },
+      "hph_source_fan1_speed": {
+        "name": "Source — Fan 1 Speed"
+      },
+      "hph_source_fan2_speed": {
+        "name": "Source — Fan 2 Speed"
+      },
+      "hph_source_inverter_temp": {
+        "name": "Source — Inverter Temperature"
+      },
+      "hph_source_high_pressure": {
+        "name": "Source — High Pressure"
+      },
+      "hph_source_low_pressure": {
+        "name": "Source — Low Pressure"
+      },
+      "hph_source_compressor_current": {
+        "name": "Source — Compressor Current"
+      },
+      "hph_source_outdoor_pipe_temp": {
+        "name": "Source — Outdoor Pipe Temperature"
+      },
+      "hph_source_3way_valve": {
+        "name": "Source — 3-Way Valve"
+      },
+      "hph_source_zone1_target_temp": {
+        "name": "Source — Zone 1 Target Temperature"
+      },
+      "hph_source_hex_outlet_temp": {
+        "name": "Source — Heat Exchanger Outlet Temperature"
+      },
+      "hph_source_pump_duty": {
+        "name": "Source — Pump Duty"
+      },
+      "hph_source_expansion_valve": {
+        "name": "Source — Expansion Valve"
+      },
+      "hph_source_eva_outlet_temp": {
+        "name": "Source — Evaporator Outlet Temperature"
+      },
+      "hph_source_inside_pipe_temp": {
+        "name": "Source — Inside Pipe Temperature"
+      },
+      "hph_source_bypass_outlet_temp": {
+        "name": "Source — Bypass Outlet Temperature"
+      },
+      "hph_source_defrost_temp": {
+        "name": "Source — Defrost Temperature"
+      },
+      "hph_source_dhw_power_thermal": {
+        "name": "Source — DHW Thermal Power"
+      },
+      "hph_source_dhw_power_electrical": {
+        "name": "Source — DHW Electrical Power"
+      },
+      "hph_source_z1_water_temp": {
+        "name": "Source — Zone 1 Water Temperature"
+      },
+      "hph_source_z2_water_temp": {
+        "name": "Source — Zone 2 Water Temperature"
+      },
+      "hph_source_opt_z1_mixing_valve": {
+        "name": "Source — Zone 1 Mixing Valve"
+      },
+      "hph_source_s0_power": {
+        "name": "Source — S0 Power"
+      },
+      "hph_source_internal_thermal_power": {
+        "name": "Source — Internal Thermal Power"
+      },
+      "hph_thermal_power_active": {
+        "name": "Thermal Power (Active)"
+      },
+      "hph_electrical_power_active": {
+        "name": "Electrical Power (Active)"
+      },
+      "hph_thermal_power_runtime": {
+        "name": "Thermal Power (Runtime)"
+      },
+      "hph_electrical_power_runtime": {
+        "name": "Electrical Power (Runtime)"
+      },
+      "hph_electrical_power_heating_runtime": {
+        "name": "Electrical Power — Heating (Runtime)"
+      },
+      "hph_electrical_power_dhw_runtime": {
+        "name": "Electrical Power — DHW (Runtime)"
+      },
+      "hph_dhw_thermal_power_runtime": {
+        "name": "DHW Thermal Power (Runtime)"
+      },
+      "hph_electrical_power_cooling_runtime": {
+        "name": "Electrical Power — Cooling (Runtime)"
+      },
+      "hph_thermal_energy_active": {
+        "name": "Thermal Energy (Active)"
+      },
+      "hph_electrical_energy_active": {
+        "name": "Electrical Energy (Active)"
+      },
+      "hph_schema_variant_detected": {
+        "name": "Schema Variant (Detected)"
+      },
+      "hph_schema_variant_active": {
+        "name": "Schema Variant (Active)"
+      },
+      "hph_water_spread": {
+        "name": "Water Spread"
+      },
+      "hph_electricity_price_effective": {
+        "name": "Electricity Price (Effective)"
+      },
+      "hph_cost_today": {
+        "name": "Cost Today"
+      },
+      "hph_cost_monthly": {
+        "name": "Cost This Month"
+      },
+      "hph_cost_seasonal": {
+        "name": "Cost This Season"
+      },
+      "hph_defrost_avg_duration_24h": {
+        "name": "Defrost Average Duration (24h)"
+      },
+      "hph_efficiency_trend": {
+        "name": "Efficiency Trend"
+      }
+    },
+    "binary_sensor": {
+      "hph_compressor_running": {
+        "name": "Compressor Running"
+      },
+      "hph_defrost_active": {
+        "name": "Defrost Active"
+      },
+      "hph_source_defrost": {
+        "name": "Source — Defrost"
+      },
+      "hph_source_aux_heater": {
+        "name": "Source — Auxiliary Heater"
+      },
+      "hph_source_heater_state": {
+        "name": "Source — Heater State"
+      },
+      "hph_source_internal_heater": {
+        "name": "Source — Internal Heater"
+      },
+      "hph_source_dhw_heater": {
+        "name": "Source — DHW Heater"
+      },
+      "hph_source_antifreeze": {
+        "name": "Source — Anti-Freeze Mode"
+      },
+      "hph_source_opt_z1_pump": {
+        "name": "Source — Zone 1 Water Pump"
+      },
+      "hph_source_opt_z2_pump": {
+        "name": "Source — Zone 2 Water Pump"
+      },
+      "hph_has_hk2": {
+        "name": "Has Zone 2 (HK2)"
+      },
+      "hph_has_dhw": {
+        "name": "Has DHW"
+      },
+      "hph_has_buffer": {
+        "name": "Has Buffer Tank"
+      },
+      "hph_has_native_dhw": {
+        "name": "Has Native DHW"
+      },
+      "hph_has_bivalent": {
+        "name": "Has Bivalent"
+      },
+      "hph_has_cooling": {
+        "name": "Has Cooling"
       }
     }
   }

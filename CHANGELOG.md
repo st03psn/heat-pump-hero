@@ -7,6 +7,27 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
 
 ---
 
+## [0.9.0-rc9] — 2026-05-20
+
+### Added
+
+- **Full i18n for template sensors and binary sensors (122 + 16 entities).**
+  `HphTemplateSensor` and `HphTemplateBinarySensor` now set
+  `_attr_has_entity_name = True` and `_attr_translation_key = unique_id`.
+  All 138 entities have English, German (DE), and Dutch (NL) name entries
+  in the translation files. `_attr_name` is set as a prefix-stripped
+  fallback for the rare case a translation key is missing.
+
+- **Full i18n for 34 facade proxy entities** (`HphFacadeSwitch`,
+  `HphFacadeSelect`, `HphFacadeNumber`, `HphFacadeButton`).
+  These control entities now follow HA's language setting instead of
+  always showing the hardcoded English name from `CTRL_FACADES`.
+
+- **172 new entity-name translation entries per language** (EN / DE / NL),
+  covering all sensor, binary_sensor, and facade platforms.
+
+---
+
 ## [0.9.0-rc8] — 2026-05-20
 
 ### Added

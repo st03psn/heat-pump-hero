@@ -88,7 +88,7 @@ class HphTemplateSensor(SensorEntity):
     templates loaded out of the integration's bundled data file.
     """
 
-    _attr_has_entity_name = False
+    _attr_has_entity_name = True
     _attr_should_poll = False
 
     def __init__(self, hass: HomeAssistant, definition: dict[str, Any]) -> None:
@@ -98,7 +98,9 @@ class HphTemplateSensor(SensorEntity):
         unique_id = definition.get("unique_id") or definition.get("name", "")
         self._attr_unique_id = unique_id
         self.entity_id = f"sensor.{unique_id}"
-        self._attr_name = definition.get("name", unique_id)
+        self._attr_translation_key = unique_id
+        raw = definition.get("name", unique_id)
+        self._attr_name = raw.removeprefix("HeatPump Hero ").removeprefix("HPH ")
         self._attr_icon = definition.get("icon")
 
         unit = definition.get("unit_of_measurement")

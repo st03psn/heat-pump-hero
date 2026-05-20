@@ -50,7 +50,7 @@ async def async_setup_entry(
 
 
 class HphTemplateBinarySensor(BinarySensorEntity):
-    _attr_has_entity_name = False
+    _attr_has_entity_name = True
     _attr_should_poll = False
 
     def __init__(self, hass: HomeAssistant, definition: dict[str, Any]) -> None:
@@ -60,7 +60,9 @@ class HphTemplateBinarySensor(BinarySensorEntity):
         unique_id = definition.get("unique_id") or definition.get("name", "")
         self._attr_unique_id = unique_id
         self.entity_id = f"binary_sensor.{unique_id}"
-        self._attr_name = definition.get("name", unique_id)
+        self._attr_translation_key = unique_id
+        raw = definition.get("name", unique_id)
+        self._attr_name = raw.removeprefix("HeatPump Hero ").removeprefix("HPH ")
         self._attr_icon = definition.get("icon")
 
         if "device_class" in definition:

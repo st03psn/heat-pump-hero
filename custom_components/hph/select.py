@@ -76,15 +76,15 @@ class HphSelect(SelectEntity, RestoreEntity):
 class HphFacadeSelect(FacadeProxyMixin, SelectEntity):
     """Proxy select: reads from / writes to a vendor select via writer helper."""
 
-    _attr_has_entity_name = False
+    _attr_has_entity_name = True
     _attr_should_poll = False
     _attr_assumed_state = False
 
     def __init__(self, hass: HomeAssistant, unique_id: str, cfg: dict[str, Any]) -> None:
         self.hass = hass
         self._attr_unique_id = unique_id
+        self._attr_translation_key = unique_id
         self.entity_id = f"select.{unique_id}"
-        self._attr_name = cfg.get("name", unique_id)
         self._attr_icon = cfg.get("icon")
         self._writer_id = f"text.{cfg['writer']}"
         self._fallback_options: list[str] = list(cfg.get("options", []))
