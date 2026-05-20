@@ -81,6 +81,7 @@ class HphFacadeSwitch(FacadeProxyMixin, SwitchEntity):
         self._attr_unique_id = unique_id
         self._attr_translation_key = unique_id
         self.entity_id = f"switch.{unique_id}"
+        self._attr_name = cfg.get("name", unique_id)
         self._attr_icon = cfg.get("icon")
         self._writer_id = f"text.{cfg['writer']}"
         self._attr_is_on: bool = False
