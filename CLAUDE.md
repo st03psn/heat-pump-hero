@@ -583,8 +583,13 @@ Before any commit:
 - **PATCH**: threshold default change, fault-code addition, dashboard
   polish, doc fixes
 
-User-facing dashboard strings are English-only. Advisor messages and
-notification bodies are English (see Advisor design above).
+User-facing dashboard strings are localised to German. Entity names resolve
+through `translations/<lang>.json` (HA's native i18n — never set `_attr_name`,
+it overrides the `translation_key`; and the hub device carries no name so
+entities aren't prefixed with "HeatPump Hero"). Hardcoded Lovelace `name:`
+overrides in the bundled dashboard, and the HA-core-platform sensor names in
+`data/packages/hph_efficiency.yaml`, are kept in German. Advisor messages and
+notification bodies remain English (see Advisor design above).
 
 Architecture/code rules: this file. Contributor process (release flow,
 translation conventions, line endings, DCO): see [CONTRIBUTING.md](CONTRIBUTING.md).
