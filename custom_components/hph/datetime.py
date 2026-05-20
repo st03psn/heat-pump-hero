@@ -28,7 +28,7 @@ async def async_setup_entry(
 
 
 class HphDateTime(DateTimeEntity, RestoreEntity):
-    _attr_has_entity_name = False
+    _attr_has_entity_name = True
     _attr_should_poll = False
     _attr_entity_category = EntityCategory.CONFIG
 

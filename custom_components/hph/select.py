@@ -32,7 +32,7 @@ async def async_setup_entry(
 
 
 class HphSelect(SelectEntity, RestoreEntity):
-    _attr_has_entity_name = False
+    _attr_has_entity_name = True
     _attr_should_poll = False
 
     def __init__(self, unique_id: str, cfg: dict[str, Any]) -> None:

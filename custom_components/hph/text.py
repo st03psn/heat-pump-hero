@@ -30,7 +30,7 @@ async def async_setup_entry(
 class HphText(TextEntity, RestoreEntity):
     """A user-editable text helper, persisted across HA restarts."""
 
-    _attr_has_entity_name = False
+    _attr_has_entity_name = True
     _attr_should_poll = False
     _attr_mode = TextMode.TEXT
     _attr_entity_category = EntityCategory.CONFIG

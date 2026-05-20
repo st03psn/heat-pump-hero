@@ -35,7 +35,7 @@ async def async_setup_entry(
 
 
 class HphButton(ButtonEntity):
-    _attr_has_entity_name = False
+    _attr_has_entity_name = True
     _attr_should_poll = False
     _attr_entity_category = EntityCategory.CONFIG
 

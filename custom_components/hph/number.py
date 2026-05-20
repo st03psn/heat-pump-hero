@@ -46,7 +46,7 @@ async def async_setup_entry(
 class HphNumber(NumberEntity, RestoreEntity):
     """A user-editable number helper, persisted across HA restarts."""
 
-    _attr_has_entity_name = False
+    _attr_has_entity_name = True
     _attr_should_poll = False
     _attr_mode = NumberMode.AUTO
 
