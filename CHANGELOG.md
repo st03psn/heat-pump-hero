@@ -31,6 +31,12 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
   English-only" policy. The canonical file and the CI copy
   (`dashboards/hph.yaml`) were updated in lockstep.
 
+- **Efficiency-package sensor names are German.** The 18 statistics /
+  integration / history_stats sensors in `data/packages/hph_efficiency.yaml`
+  (HA core platforms — no `translation_key` support) had their hardcoded
+  English "HPH …" names translated (e.g. "HPH Electrical Energy" →
+  "Elektrische Energie").
+
 ### Added
 
 - **`tests/smoke.py::test_translation_completeness`** — offline guard that
