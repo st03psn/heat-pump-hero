@@ -7,6 +7,30 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
 
 ---
 
+## [0.9.0-rc8] — 2026-05-20
+
+### Added
+
+- **Full German (DE) and Dutch (NL) translations.** Config/options flow,
+  all ~160 entity names across six platforms (text, select, switch, number,
+  button, datetime), and all select option labels are now translated.
+  Fallback is always English.
+
+- **`_attr_translation_key` on all Python platforms.** Entity display names
+  in HA's entity list, automation editor, and area cards now follow the
+  user's HA language setting (Settings → Profile → Language).
+
+- **`button: false` mode for `hph-help` card.** Heading-only variant that
+  renders a translated `<h3>` section title without the "?" popup button —
+  for sections that have no additional help content to show.
+
+- **26 translated section headings (EN / DE / NL).** All 26 dashboard
+  section titles previously hardcoded as `title:` in entities/markdown/
+  statistics-graph cards are now rendered via `custom:hph-help` with
+  `button: false`. Section headings follow the HA display language.
+
+---
+
 ## [0.9.0-rc7] — 2026-05-19
 
 ### Added

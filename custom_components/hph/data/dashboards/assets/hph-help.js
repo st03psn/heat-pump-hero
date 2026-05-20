@@ -12,6 +12,11 @@
  *   - type: custom:hph-help
  *     translation_key: efficiency_quality
  *
+ *   # Heading-only (no "?" button) — for section titles without help content:
+ *   - type: custom:hph-help
+ *     translation_key: section_my_section
+ *     button: false
+ *
  * Renders as a heading + small "?" icon button. Click opens a modal with the
  * title and markdown content. Closes on backdrop click, Esc, or close button.
  *
@@ -89,6 +94,9 @@ class HphHelpCard extends HTMLElement {
       // next to the help button. Set heading: false to render the button
       // alone (e.g. when the title is already provided by a sibling card).
       heading: config.heading !== false,
+      // When false, the "?" button is suppressed — useful for heading-only
+      // section titles that have no help content to show.
+      button: config.button !== false,
     };
     // Render immediately with placeholder; resolve translations async.
     // Lovelace's setConfig contract is synchronous — we must not await here.
@@ -124,8 +132,10 @@ class HphHelpCard extends HTMLElement {
     // Update inline heading text in-place after async translation resolution.
     const heading = this.querySelector("h3");
     if (heading && this._config.title) heading.textContent = this._config.title;
-    const btn = this.querySelector("button");
-    if (btn) btn.title = this._config.title || "Help";
+    if (this._config.button) {
+      const btn = this.querySelector("button");
+      if (btn) btn.title = this._config.title || "Help";
+    }
   }
 
   set hass(_hass) {
@@ -205,7 +215,9 @@ class HphHelpCard extends HTMLElement {
       btn.style.background = "transparent";
     });
 
-    card.appendChild(btn);
+    if (this._config.button) {
+      card.appendChild(btn);
+    }
     this.appendChild(card);
   }
 

@@ -3705,8 +3705,10 @@ views:
                 - entity: sensor.hph_scop_change_year_pct
                   name: SCOP change vs last year (%)
 
+      - type: custom:hph-help
+        translation_key: section_comparisons
+        button: false
       - type: entities
-        title: Comparisons — detail
         entities:
           - entity: sensor.hph_cop_monthly
             name: COP this month
@@ -3732,8 +3734,10 @@ views:
             name: Electrical — last year
 
       # ── Overall KPIs ──
+      - type: custom:hph-help
+        translation_key: section_cop_scop
+        button: false
       - type: entities
-        title: Overall COP / SCOP
         entities:
           - entity: sensor.hph_scop
             name: SCOP (year to date)
@@ -3768,8 +3772,10 @@ views:
       # HA renders Jinja first, then markdown — pipes inside {{...}}
       # are Jinja filters, pipes outside are table separators. They
       # don't collide and must NOT be escaped. ──
+      - type: custom:hph-help
+        translation_key: section_energy_totals
+        button: false
       - type: markdown
-        title: Energy totals
         content: |
           |   | Thermal | Electrical |
           |---|---:|---:|
@@ -3779,8 +3785,10 @@ views:
 
       # ── Cost overview (values only — price settings live in
       # Configuration → Electricity cost) ──
+      - type: custom:hph-help
+        translation_key: section_electricity_costs
+        button: false
       - type: entities
-        title: Electricity costs
         entities:
           - entity: sensor.hph_cost_today
             name: Cost today (€)
@@ -3801,8 +3809,10 @@ views:
       # from the configured external meters via utility_meter daily
       # cycle. Standby = total − runtime; shows "—" until the runtime
       # accumulator has had a full day to fill (first-day-after-install).
+      - type: custom:hph-help
+        translation_key: section_runtime_standby
+        button: false
       - type: markdown
-        title: Runtime vs. standby (today)
         content: |
           {% set t_run = states('number.hph_thermal_runtime_today_kwh') %}
           {% set e_run = states('number.hph_electrical_runtime_today_kwh') %}
@@ -4100,8 +4110,10 @@ views:
             text: "Sammele Daten — SCOP-Trend füllt sich nach der ersten kompletten Heizsaison."
 
       # ── Statistics graph (built-in) ──
+      - type: custom:hph-help
+        translation_key: section_cumulative_energy
+        button: false
       - type: statistics-graph
-        title: Cumulative energy (30 days)
         days_to_show: 30
         stat_types:
           - sum
@@ -4150,8 +4162,10 @@ views:
               yellow: 3
               red: 4
             needle: true
+      - type: custom:hph-help
+        translation_key: section_heating_curve_obs
+        button: false
       - type: entities
-        title: Heating-curve and data-quality observations
         entities:
           - entity: sensor.hph_flowt_minus_outsidet_24h
             name: Δ flow − outside (24 h mean)
@@ -4215,8 +4229,10 @@ views:
                 - entity: sensor.hph_advisor_summary
                   name: Aggregate verdict
 
+      - type: custom:hph-help
+        translation_key: section_cycle_analysis
+        button: false
       - type: entities
-        title: Cycle analysis (today)
         entities:
           - sensor.hph_cycles_per_hour
           - number.hph_cycles_today
@@ -4256,8 +4272,10 @@ views:
           noData:
             text: "Sammele Daten — Tageswerte erscheinen, sobald der Kompressor läuft."
 
+      - type: custom:hph-help
+        translation_key: section_advisor_recommendations
+        button: false
       - type: entities
-        title: Advisor — recommendations
         entities:
           - entity: sensor.hph_advisor_short_cycle
             name: Cycling
@@ -4394,8 +4412,10 @@ views:
                 - entity: sensor.hph_diagnostics_recurrence
                   name: Recurrences
 
+      - type: custom:hph-help
+        translation_key: section_diagnostics_detail
+        button: false
       - type: entities
-        title: Diagnostics — detail
         entities:
           - entity: sensor.hph_diagnostics_current_error
             name: Active fault code
@@ -4445,8 +4465,10 @@ views:
 
             **Zielwert:** {{ states('number.hph_advisor_heating_limit_target_c') }} °C
 
+      - type: custom:hph-help
+        translation_key: section_recommendation_detail
+        button: false
       - type: markdown
-        title: Recommendation detail
         content: |
           ### Cycling
           {{ state_attr('sensor.hph_advisor_short_cycle','message') }}
@@ -4583,8 +4605,10 @@ views:
                   - entity: number.hph_z2_curve_high
                     name: Z2 target high
 
+      - type: custom:hph-help
+        translation_key: section_control_master
+        button: false
       - type: entities
-        title: Control master
         entities:
           - switch.hph_ctrl_master
 
@@ -4606,8 +4630,10 @@ views:
           - text.hph_ctrl_pv_surplus_entity
           - number.hph_ctrl_solar_pv_threshold_w
 
+      - type: custom:hph-help
+        translation_key: section_night_quiet
+        button: false
       - type: entities
-        title: Night quiet mode
         entities:
           - switch.hph_ctrl_quiet_night
 
@@ -4622,8 +4648,10 @@ views:
           - number.hph_ctrl_adaptive_supply_max_c
           - datetime.hph_ctrl_adaptive_last_run
 
+      - type: custom:hph-help
+        translation_key: section_price_dhw
+        button: false
       - type: entities
-        title: Price-driven DHW (Tibber / aWATTar)
         entities:
           - switch.hph_ctrl_price_dhw
           - entity: text.hph_electricity_price_entity
@@ -4634,8 +4662,10 @@ views:
           - number.hph_ctrl_price_dhw_fires_today
           - datetime.hph_ctrl_price_dhw_last_fire
 
+      - type: custom:hph-help
+        translation_key: section_forecast_preheat
+        button: false
       - type: entities
-        title: Weather-forecast pre-heating
         entities:
           - switch.hph_ctrl_forecast_preheat
           - entity: text.hph_ctrl_forecast_entity
@@ -4694,8 +4724,10 @@ views:
           can call.
 
       # ── One-off legionella trigger ──
+      - type: custom:hph-help
+        translation_key: section_legionella
+        button: false
       - type: entities
-        title: Legionella — one-off boost
         entities:
           - type: call-service
             name: Run legionella program now
@@ -4789,8 +4821,10 @@ views:
           - entity: sensor.hph_schema_variant_detected
             name: Schematic — auto-detected
 
+      - type: custom:hph-help
+        translation_key: section_dashboard_appearance
+        button: false
       - type: entities
-        title: Dashboard appearance
         entities:
           - entity: select.hph_ui_style
             name: UI style (mushroom / classic)
@@ -4829,8 +4863,10 @@ views:
       # Set the entity-ID to point at the right sensor, or leave blank to
       # mark the component as definitely absent. Detection follows.
       # ── Analysis sources (KI-Modul Layer 1) ──
+      - type: custom:hph-help
+        translation_key: section_analysis_config
+        button: false
       - type: entities
-        title: Analysis (recommendations from observation)
         entities:
           - entity: text.hph_indoor_temp_entity
             name: Indoor reference sensor (entity-ID)
@@ -4847,8 +4883,10 @@ views:
           - entity: text.hph_heating_curve_recommendation
             name: Heating-curve script output
 
+      - type: custom:hph-help
+        translation_key: section_optional_components
+        button: false
       - type: entities
-        title: Optional components
         entities:
           - entity: text.hph_src_zone1_temp
             name: Zone 1 temperature
@@ -4871,8 +4909,10 @@ views:
             name: Buffer detected
 
       # ── Heat pump device entities (UI-configurable) ──
+      - type: custom:hph-help
+        translation_key: section_hp_entities
+        button: false
       - type: entities
-        title: Heat pump entities (configurable)
         entities:
           - entity: text.hph_src_inlet_temp
             name: Inlet (return) T°
@@ -4957,8 +4997,10 @@ views:
             name: Quiet mode schedule
 
       # ── Optional PCB components ──
+      - type: custom:hph-help
+        translation_key: section_optional_pcb
+        button: false
       - type: entities
-        title: Optional PCB components
         entities:
           - entity: text.hph_src_opt_z1_pump
             name: Zone 1 water pump (Optional PCB)
@@ -4972,8 +5014,10 @@ views:
       # your install uses non-standard entity-IDs (e.g. renamed entities,
       # second heat-pump unit). All control automations and programs
       # write through these helpers.
+      - type: custom:hph-help
+        translation_key: section_ctrl_write_targets
+        button: false
       - type: entities
-        title: Control write targets
         entities:
           - entity: text.hph_ctrl_write_quiet_mode
             name: Quiet-mode select
@@ -5052,8 +5096,10 @@ views:
             name: Heater stop delta (number)
 
       # ── External meter entities (optional) ──
+      - type: custom:hph-help
+        translation_key: section_external_meters
+        button: false
       - type: entities
-        title: External meters (optional)
         entities:
           - entity: text.hph_src_external_thermal_power
             name: External thermal power (W)
@@ -5067,8 +5113,10 @@ views:
             name: External electricity meter (kWh, total_increasing)
 
       # ── Electricity cost settings ──
+      - type: custom:hph-help
+        translation_key: section_electricity_cost_config
+        button: false
       - type: entities
-        title: Electricity cost
         entities:
           - entity: number.hph_electricity_price_ct_per_kwh
             name: Manual price (ct/kWh)
@@ -5087,8 +5135,10 @@ views:
           estimates; only a flat rate gives exact figures.
 
       # ── Export / scheduled task ──
+      - type: custom:hph-help
+        translation_key: section_export
+        button: false
       - type: entities
-        title: Export (long-term values for external analysis)
         entities:
           - entity: select.hph_export_format
             name: Format
@@ -5104,8 +5154,10 @@ views:
             name: ▶ Export now (manual)
 
       # ── Multi-platform bridge (read-only) ──
+      - type: custom:hph-help
+        translation_key: section_multiplatform
+        button: false
       - type: entities
-        title: Multi-platform bridge (read-only)
         entities:
           - entity: switch.hph_bridge_enabled
             name: Bridge enabled
