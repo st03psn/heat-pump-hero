@@ -53,7 +53,6 @@ class HphNumber(NumberEntity, RestoreEntity):
     def __init__(self, unique_id: str, cfg: dict[str, Any]) -> None:
         self._attr_unique_id = unique_id
         self.entity_id = f"number.{unique_id}"
-        self._attr_name = cfg.get("name", unique_id)
         self._attr_translation_key = unique_id
         self._attr_icon = cfg.get("icon")
         self._attr_native_min_value = float(cfg.get("min", 0))

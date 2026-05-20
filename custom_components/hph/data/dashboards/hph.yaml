@@ -518,7 +518,6 @@ views:
                       - entity: sensor.hph_prog_screed_status
                         name: Screed program
                       - entity: number.hph_prog_screed_day
-                        name: Day
                       - entity: sensor.hph_prog_screed_target
                         name: Target temperature
 
@@ -2775,13 +2774,10 @@ views:
                 - entity: binary_sensor.hph_compressor_running
                   name: Compressor running
                 - entity: select.hph_ctrl_operating_mode
-                  name: Operating mode
                 - entity: select.hph_quiet_mode
-                  name: Quiet mode
                 - entity: sensor.hph_cop_live
                   name: COP live
                 - entity: switch.hph_power
-                  name: Power
 
             # ── Zone 1 heating ────────────────────────────────────────────────────
             - type: conditional
@@ -2804,13 +2800,9 @@ views:
                     state-badge { display: none; }
                 entities:
                   - entity: text.hph_ctrl_write_z1_climate
-                    name: Climate setpoint entity
                   - entity: number.hph_z1_heat_shift
-                    name: Heat shift HK1
                   - entity: number.hph_z1_curve_high
-                    name: Curve high point
                   - entity: number.hph_z1_curve_low
-                    name: Curve low point
 
             # ── Zone 2 heating (conditional) ─────────────────────────────────────
             - type: conditional
@@ -2833,9 +2825,7 @@ views:
                     state-badge { display: none; }
                 entities:
                   - entity: text.hph_ctrl_write_z2_climate
-                    name: Climate setpoint entity
                   - entity: number.hph_z2_heat_shift
-                    name: Heat shift HK2
 
             # ── Hot water (conditional) ───────────────────────────────────────────
             - type: conditional
@@ -2860,11 +2850,8 @@ views:
                   - entity: sensor.hph_source_dhw_temp
                     name: DHW actual
                   - entity: number.hph_dhw_target
-                    name: DHW target
                   - entity: number.hph_dhw_heat_delta
-                    name: DHW heat delta
                   - entity: select.hph_smart_dhw
-                    name: Smart DHW
 
             # ── System & thresholds ───────────────────────────────────────────────
             - type: entities
@@ -2881,15 +2868,10 @@ views:
                   state-badge { display: none; }
               entities:
                 - entity: number.hph_heating_cutoff
-                  name: Heating cutoff
                 - entity: number.hph_room_heat_delta
-                  name: Heat hysteresis
                 - entity: number.hph_max_pump_duty
-                  name: Max pump duty
                 - entity: select.hph_active_zones
-                  name: Active zones
                 - entity: select.hph_bivalent_mode
-                  name: Bivalent mode
 
             # ── Machine room (read-only monitoring) ──────────────────────────────
             - type: entities
@@ -2953,13 +2935,9 @@ views:
                   state-badge { display: none; }
               entities:
                 - entity: switch.hph_holiday
-                  name: Holiday mode
                 - entity: switch.hph_force_defrost
-                  name: Force defrost
                 - entity: select.hph_powerful_mode
-                  name: Boost mode
                 - entity: switch.hph_schedule
-                  name: Schedule
 
             # ── Heating curve — Zone 1 ────────────────────────────────────────────
             - type: entities
@@ -2982,13 +2960,9 @@ views:
                 - entity: sensor.hph_source_zone1_temp
                   name: Z1 room
                 - entity: number.hph_z1_outside_low
-                  name: Outside low
                 - entity: number.hph_z1_outside_high
-                  name: Outside high
                 - entity: number.hph_z1_curve_low
-                  name: Target low
                 - entity: number.hph_z1_curve_high
-                  name: Target high
 
             # ── Heating curve — Zone 2 (conditional) ─────────────────────────────
             - type: conditional
@@ -3011,13 +2985,9 @@ views:
                     state-badge { display: none; }
                 entities:
                   - entity: number.hph_z2_outside_low
-                    name: Z2 outside low
                   - entity: number.hph_z2_outside_high
-                    name: Z2 outside high
                   - entity: number.hph_z2_curve_low
-                    name: Z2 target low
                   - entity: number.hph_z2_curve_high
-                    name: Z2 target high
 
             # ── Advanced settings ─────────────────────────────────────────────────
             - type: entities
@@ -3034,11 +3004,8 @@ views:
                   state-badge { display: none; }
               entities:
                 - entity: select.hph_heating_control
-                  name: Heating control
                 - entity: number.hph_cool_delta
-                  name: Cool delta
                 - entity: select.hph_dhw_sensor_selection
-                  name: DHW sensor
 
             # ── Bivalent / Aux heater (conditional) ──────────────────────────────
             - type: conditional
@@ -3061,13 +3028,9 @@ views:
                     state-badge { display: none; }
                 entities:
                   - entity: number.hph_bivalent_start_temp
-                    name: Bivalent start temp
                   - entity: number.hph_heater_delay_time
-                    name: Heater delay (min)
                   - entity: number.hph_heater_start_delta
-                    name: Heater start delta (K)
                   - entity: number.hph_heater_stop_delta
-                    name: Heater stop delta (K)
 
   # ════════════════════════════════════════════════════════════════════════
   # 3) ANALYSIS — ApexCharts (Service-Cloud-style)
@@ -3987,7 +3950,6 @@ views:
               end: day
             series:
               - entity: number.hph_cycles_today
-                name: Cycles/day
                 type: column
                 color: "#66bb6a"
                 group_by:
@@ -3995,7 +3957,6 @@ views:
                   duration: 1d
                   start_with_last: false
               - entity: number.hph_short_cycles_today
-                name: Short cycles/day
                 type: column
                 color: "#d62728"
                 group_by:
@@ -4252,14 +4213,12 @@ views:
           end: day
         series:
           - entity: number.hph_cycles_today
-            name: Cycles/day
             type: column
             group_by:
               func: max
               duration: 1d
               start_with_last: false
           - entity: number.hph_short_cycles_today
-            name: Short cycles/day
             type: column
             color: "#d62728"
             group_by:
@@ -4422,9 +4381,7 @@ views:
           - entity: sensor.hph_diagnostics_recurrence
             name: Recurrences (last 5 events)
           - entity: datetime.hph_diag_last_error_time
-            name: Last error timestamp
           - entity: text.hph_diag_error_history
-            name: Recent error history (JSON)
 
       # Heating limit — observed.
       # The smoothed sensor is a platform:statistics sensor that needs the
@@ -4444,9 +4401,7 @@ views:
             - entity: sensor.hph_heating_limit_smoothed
               name: Smoothed (7-day rolling avg)
             - entity: number.hph_heating_limit_observed_c
-              name: Last observation
             - entity: number.hph_advisor_heating_limit_target_c
-              name: Target setpoint
       - type: conditional
         conditions:
           - entity: sensor.hph_heating_limit_smoothed
@@ -4597,13 +4552,9 @@ views:
                     state-badge { display: none; }
                 entities:
                   - entity: number.hph_z2_outside_low
-                    name: Z2 outside low
                   - entity: number.hph_z2_outside_high
-                    name: Z2 outside high
                   - entity: number.hph_z2_curve_low
-                    name: Z2 target low
                   - entity: number.hph_z2_curve_high
-                    name: Z2 target high
 
       - type: custom:hph-help
         translation_key: section_control_master
@@ -4655,7 +4606,6 @@ views:
         entities:
           - switch.hph_ctrl_price_dhw
           - entity: text.hph_electricity_price_entity
-            name: Current price sensor (shared with cost calc)
           - text.hph_ctrl_price_mean_entity
           - number.hph_ctrl_price_threshold_factor
           - number.hph_ctrl_price_max_per_day
@@ -4669,7 +4619,6 @@ views:
         entities:
           - switch.hph_ctrl_forecast_preheat
           - entity: text.hph_ctrl_forecast_entity
-            name: Forecast sensor (tomorrow's minimum outdoor T° in °C)
           - number.hph_ctrl_forecast_drop_threshold_k
           - number.hph_ctrl_forecast_boost_k
           - switch.hph_ctrl_forecast_preheat_active
@@ -4736,9 +4685,7 @@ views:
             service: hph.run_legionella_now
           - type: divider
           - entity: number.hph_prog_legionella_target_c
-            name: Target temperature (°C)
           - entity: number.hph_prog_legionella_hold_min
-            name: Hold duration (min)
         footer:
           type: graph
           entity: sensor.hph_source_dhw_temp
@@ -4776,10 +4723,8 @@ views:
       - type: entities
         entities:
           - entity: select.hph_vendor_preset
-            name: Vendor preset (auto-fills source helpers)
             secondary_info: last-changed
           - entity: select.hph_pump_model
-            name: Heat-pump model
           - entity: sensor.hph_model_description
             name: Model description
           - entity: sensor.hph_model_refrigerant
@@ -4791,13 +4736,9 @@ views:
       - type: entities
         entities:
           - entity: number.hph_model_compressor_min_hz
-            name: Compressor min Hz
           - entity: number.hph_model_compressor_max_hz
-            name: Compressor max Hz
           - entity: number.hph_model_min_flow_lpm
-            name: Minimum water flow (L/min)
           - entity: number.hph_model_max_supply_c
-            name: Maximum supply temperature (°C)
 
       # ── Source modes (with inline help) ──
       - type: custom:hph-help
@@ -4805,9 +4746,7 @@ views:
       - type: entities
         entities:
           - entity: select.hph_thermal_source
-            name: Thermal source mode
           - entity: select.hph_electrical_source
-            name: Electrical source mode
 
       # ── Schema variant (with inline help) ──
       - type: custom:hph-help
@@ -4815,7 +4754,6 @@ views:
       - type: entities
         entities:
           - entity: select.hph_schema_variant
-            name: Schematic variant (auto / manual)
           - entity: sensor.hph_schema_variant_active
             name: Schematic — active
           - entity: sensor.hph_schema_variant_detected
@@ -4827,7 +4765,6 @@ views:
       - type: entities
         entities:
           - entity: select.hph_ui_style
-            name: UI style (mushroom / classic)
 
       # ── Installation context (with inline help) ──
       - type: custom:hph-help
@@ -4835,15 +4772,10 @@ views:
       - type: entities
         entities:
           - entity: text.hph_install_heat_loss_kw
-            name: Design heat loss (kW)
           - entity: select.hph_install_emitter_type
-            name: Heat emitter type
           - entity: text.hph_install_design_flow_temp_c
-            name: Design supply temperature (°C)
           - entity: select.hph_install_refrigerant
-            name: Refrigerant
           - entity: text.hph_install_year
-            name: Commissioning year
 
       # ── Electrical metering (with inline help) ──
       - type: custom:hph-help
@@ -4851,13 +4783,9 @@ views:
       - type: entities
         entities:
           - entity: switch.hph_metering_includes_immersion
-            name: Includes immersion heater
           - entity: switch.hph_metering_includes_circulation
-            name: Includes circulation pump
           - entity: switch.hph_metering_includes_controls
-            name: Includes controls / standby
           - entity: switch.hph_metering_includes_brine
-            name: Includes brine pump (GSHP only)
 
       # ── Optional-component sources (zone 2 / DHW / buffer) ──
       # Set the entity-ID to point at the right sensor, or leave blank to
@@ -4869,19 +4797,13 @@ views:
       - type: entities
         entities:
           - entity: text.hph_indoor_temp_entity
-            name: Indoor reference sensor (entity-ID)
           - entity: text.hph_indoor_target_entity
-            name: Indoor target sensor (entity-ID, optional)
           - entity: number.hph_indoor_target_default
-            name: Fallback indoor target (°C)
           - entity: number.hph_analysis_window_days
-            name: Observation window (days)
           - entity: number.hph_analysis_dead_band_k
-            name: Dead band (K)
           - entity: sensor.hph_indoor_deviation_smoothed
             name: Smoothed deviation
           - entity: text.hph_heating_curve_recommendation
-            name: Heating-curve script output
 
       - type: custom:hph-help
         translation_key: section_optional_components
@@ -4889,17 +4811,11 @@ views:
       - type: entities
         entities:
           - entity: text.hph_src_zone1_temp
-            name: Zone 1 temperature
           - entity: text.hph_src_zone2_temp
-            name: Zone 2 temperature (blank if absent)
           - entity: text.hph_src_dhw_temp
-            name: DHW tank temperature (blank if absent)
           - entity: text.hph_src_dhw_target_temp
-            name: DHW target temperature
           - entity: text.hph_src_buffer_temp
-            name: Buffer tank temperature (blank if absent)
           - entity: text.hph_src_error_code
-            name: Error / fault code source
           - type: divider
           - entity: binary_sensor.hph_has_hk2
             name: HK2 detected
@@ -4915,86 +4831,47 @@ views:
       - type: entities
         entities:
           - entity: text.hph_src_inlet_temp
-            name: Inlet (return) T°
           - entity: text.hph_src_outlet_temp
-            name: Outlet (supply) T°
           - entity: text.hph_src_flow_rate
-            name: Water flow rate
           - entity: text.hph_src_outdoor_temp
-            name: Outdoor T°
           - entity: text.hph_src_compressor_freq
-            name: Compressor frequency
           - entity: text.hph_src_compressor_hours
-            name: Compressor hours (lifetime)
           - entity: text.hph_src_compressor_starts
-            name: Compressor starts (lifetime)
           - entity: text.hph_src_discharge_temp
-            name: Discharge T°
           - entity: text.hph_src_pump_pressure
-            name: Water pressure
           - entity: text.hph_src_defrost_state
-            name: Defrost state (binary)
           - entity: text.hph_src_aux_heater_state
-            name: Aux heater state (binary)
           - entity: text.hph_src_operating_mode
-            name: Operating mode (select)
           - entity: text.hph_src_internal_power
-            name: Internal power consumption (W)
           - type: divider
           - entity: text.hph_src_fan1_speed
-            name: Fan 1 speed (R/min)
           - entity: text.hph_src_fan2_speed
-            name: Fan 2 speed (R/min)
           - entity: text.hph_src_inverter_temp
-            name: Inverter / IPM temperature
           - entity: text.hph_src_high_pressure
-            name: Refrigerant high-side pressure
           - entity: text.hph_src_low_pressure
-            name: Refrigerant low-side pressure
           - entity: text.hph_src_compressor_current
-            name: Compressor current (A)
           - entity: text.hph_src_outdoor_pipe_temp
-            name: Outdoor pipe temperature
           - entity: text.hph_src_3way_valve
-            name: 3-way valve state
           - entity: text.hph_src_zone1_target_temp
-            name: Zone 1 water target temperature
           - entity: text.hph_src_hex_outlet_temp
-            name: Main HEX outlet temperature
           - entity: text.hph_src_pump_duty
-            name: Pump duty cycle (%)
           - entity: text.hph_src_expansion_valve
-            name: Expansion valve position
           - type: divider
           - entity: text.hph_src_eva_outlet_temp
-            name: Eva outlet temperature
           - entity: text.hph_src_inside_pipe_temp
-            name: Inside pipe temperature
           - entity: text.hph_src_bypass_outlet_temp
-            name: Bypass outlet temperature
           - entity: text.hph_src_defrost_temp
-            name: Defrost temperature
           - type: divider
           - entity: text.hph_src_dhw_power_thermal
-            name: DHW thermal power (W)
           - entity: text.hph_src_dhw_power_electrical
-            name: DHW electrical power (W)
           - entity: text.hph_src_z1_water_temp
-            name: Zone 1 water temperature
           - entity: text.hph_src_z2_water_temp
-            name: Zone 2 water temperature
           - entity: text.hph_src_internal_heater_state
-            name: Internal heater state
           - entity: text.hph_src_dhw_heater_state
-            name: DHW heater state
           - entity: text.hph_src_antifreeze_mode
-            name: Anti-freeze mode
           - entity: text.hph_src_force_heater
-            name: Force heater state
           - entity: text.hph_src_sterilization
-            name: Sterilization state
           - entity: text.hph_src_quiet_schedule
-            name: Quiet mode schedule
 
       # ── Optional PCB components ──
       - type: custom:hph-help
@@ -5003,11 +4880,8 @@ views:
       - type: entities
         entities:
           - entity: text.hph_src_opt_z1_pump
-            name: Zone 1 water pump (Optional PCB)
           - entity: text.hph_src_opt_z2_pump
-            name: Zone 2 water pump (Optional PCB)
           - entity: text.hph_src_opt_z1_mixing_valve
-            name: Zone 1 mixing valve (Optional PCB)
 
       # ── Control write targets (v0.9 vendor adapter) ──
       # Auto-filled by the vendor preset above; override here only if
@@ -5020,80 +4894,44 @@ views:
       - type: entities
         entities:
           - entity: text.hph_ctrl_write_quiet_mode
-            name: Quiet-mode select
           - entity: text.hph_ctrl_write_force_dhw
-            name: Force-DHW button
           - entity: text.hph_ctrl_write_z1_curve_high
-            name: Z1 heat-curve target_high (number)
           - entity: text.hph_ctrl_write_z1_curve_low
-            name: Z1 heat-curve target_low (number)
           - entity: text.hph_ctrl_write_dhw_target
-            name: DHW target temperature (number)
           - type: divider
           - entity: text.hph_ctrl_write_operating_mode
-            name: Operating mode (select)
           - entity: text.hph_ctrl_write_power
-            name: Main power (switch)
           - entity: text.hph_ctrl_write_holiday
-            name: Holiday mode (switch)
           - entity: text.hph_ctrl_write_force_defrost
-            name: Force defrost (switch)
           - entity: text.hph_ctrl_write_schedule
-            name: Schedule (switch)
           - entity: text.hph_ctrl_write_restart_heishamon
-            name: Restart HeishaMon (button)
           - entity: text.hph_ctrl_write_powerful_mode
-            name: Powerful / boost mode (select)
           - entity: text.hph_ctrl_write_active_zones
-            name: Active zones (select)
           - entity: text.hph_ctrl_write_bivalent_mode
-            name: Bivalent mode (select)
           - entity: text.hph_ctrl_write_z1_heat_shift
-            name: Zone 1 heat request shift (number)
           - entity: text.hph_ctrl_write_z2_heat_shift
-            name: Zone 2 heat request shift (number)
           - entity: text.hph_ctrl_write_heating_cutoff
-            name: Heating cutoff outdoor T° (number)
           - entity: text.hph_ctrl_write_max_pump_duty
-            name: Max pump duty cycle (number)
           - entity: text.hph_ctrl_write_room_heat_delta
-            name: Room heating delta (number)
           - entity: text.hph_ctrl_write_z1_climate
-            name: Zone 1 climate entity
           - entity: text.hph_ctrl_write_z2_climate
-            name: Zone 2 climate entity
           - type: divider
           - entity: text.hph_ctrl_write_z1_outside_low
-            name: Z1 heat-curve outside low
           - entity: text.hph_ctrl_write_z1_outside_high
-            name: Z1 heat-curve outside high
           - entity: text.hph_ctrl_write_z2_outside_low
-            name: Z2 heat-curve outside low
           - entity: text.hph_ctrl_write_z2_outside_high
-            name: Z2 heat-curve outside high
           - entity: text.hph_ctrl_write_z2_curve_high
-            name: Z2 heat-curve target_high
           - entity: text.hph_ctrl_write_z2_curve_low
-            name: Z2 heat-curve target_low
           - type: divider
           - entity: text.hph_ctrl_write_dhw_heat_delta
-            name: DHW heat delta (number)
           - entity: text.hph_ctrl_write_smart_dhw
-            name: Smart DHW (select)
           - entity: text.hph_ctrl_write_heating_control
-            name: Heating control (select)
           - entity: text.hph_ctrl_write_cool_delta
-            name: Cooling delta (number)
           - entity: text.hph_ctrl_write_dhw_sensor_selection
-            name: DHW sensor selection (select)
           - entity: text.hph_ctrl_write_bivalent_start_temp
-            name: Bivalent start temperature (number)
           - entity: text.hph_ctrl_write_heater_delay_time
-            name: Heater delay time (number)
           - entity: text.hph_ctrl_write_heater_start_delta
-            name: Heater start delta (number)
           - entity: text.hph_ctrl_write_heater_stop_delta
-            name: Heater stop delta (number)
 
       # ── External meter entities (optional) ──
       - type: custom:hph-help
@@ -5102,15 +4940,10 @@ views:
       - type: entities
         entities:
           - entity: text.hph_src_external_thermal_power
-            name: External thermal power (W)
           - entity: text.hph_src_external_thermal_energy
-            name: External heat meter (kWh, total_increasing)
           - entity: text.hph_src_s0_power
-            name: S0 pulse power (W) — HeishaMon S0 input → set electrical source to sensor.hph_source_s0_power to use it
           - entity: text.hph_src_external_electrical_power
-            name: External electrical power (W)
           - entity: text.hph_src_external_electrical_energy
-            name: External electricity meter (kWh, total_increasing)
 
       # ── Electricity cost settings ──
       - type: custom:hph-help
@@ -5119,9 +4952,7 @@ views:
       - type: entities
         entities:
           - entity: number.hph_electricity_price_ct_per_kwh
-            name: Manual price (ct/kWh)
           - entity: text.hph_electricity_price_entity
-            name: Live price sensor (entity-ID, optional)
           - entity: sensor.hph_electricity_price_effective
             name: Effective price used (ct/kWh)
       - type: markdown
@@ -5141,17 +4972,11 @@ views:
       - type: entities
         entities:
           - entity: select.hph_export_format
-            name: Format
           - entity: select.hph_export_period
-            name: Period
           - entity: text.hph_export_target_path
-            name: Target directory
           - entity: select.hph_export_schedule
-            name: Schedule
           - entity: datetime.hph_export_last_run
-            name: Last run
           - entity: button.hph_export_now
-            name: ▶ Export now (manual)
 
       # ── Multi-platform bridge (read-only) ──
       - type: custom:hph-help
@@ -5160,9 +4985,7 @@ views:
       - type: entities
         entities:
           - entity: switch.hph_bridge_enabled
-            name: Bridge enabled
           - entity: text.hph_bridge_prefix
-            name: MQTT topic prefix
           - entity: sensor.hph_bridge_last_publish
             name: Last publish
       - type: markdown
@@ -5189,13 +5012,9 @@ views:
           title: Heating curve — zone 1 (write targets)
           entities:
             - entity: text.hph_ctrl_write_z1_outside_low
-              name: Outside low entity
             - entity: text.hph_ctrl_write_z1_outside_high
-              name: Outside high entity
             - entity: text.hph_ctrl_write_z1_curve_low
-              name: Target low entity
             - entity: text.hph_ctrl_write_z1_curve_high
-              name: Target high entity
       - type: conditional
         conditions:
           - condition: state
@@ -5206,10 +5025,6 @@ views:
           title: Heating curve — zone 2 (write targets, if configured)
           entities:
             - entity: text.hph_ctrl_write_z2_outside_low
-              name: Outside low entity
             - entity: text.hph_ctrl_write_z2_outside_high
-              name: Outside high entity
             - entity: text.hph_ctrl_write_z2_curve_low
-              name: Target low entity
             - entity: text.hph_ctrl_write_z2_curve_high
-              name: Target high entity
