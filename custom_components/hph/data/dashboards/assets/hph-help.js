@@ -34,12 +34,11 @@
 (function () {
 "use strict";
 
-// If the custom element is already registered (previous load of this script),
-// bail out cleanly — re-registering would throw.
-if (customElements.get("hph-help")) {
-  console.info("[hph-help] already registered, skipping re-init");
-  return;
-}
+// NOTE: do NOT early-return when hph-help is already registered — this file
+// also defines <hph-tile>, and an early return after a stale load of an older
+// version (which only had hph-help) would leave hph-tile undefined and every
+// hph-tile card would show "Configuration error". Each customElements.define
+// below is guarded individually instead, so re-running is always safe.
 
 // Module-level i18n cache: { lang: { key: {title, content} } }
 const __HPH_HELP_STRINGS__ = {};
@@ -343,7 +342,9 @@ class HphHelpCard extends HTMLElement {
   }
 }
 
-customElements.define("hph-help", HphHelpCard);
+if (!customElements.get("hph-help")) {
+  customElements.define("hph-help", HphHelpCard);
+}
 
 window.customCards = window.customCards || [];
 if (!window.customCards.find((c) => c.type === "hph-help")) {
@@ -506,7 +507,10 @@ class HphTileCard extends HTMLElement {
   }
 }
 
-customElements.define("hph-tile", HphTileCard);
+if (!customElements.get("hph-tile")) {
+  customElements.define("hph-tile", HphTileCard);
+}
+window.customCards = window.customCards || [];
 if (!window.customCards.find((c) => c.type === "hph-tile")) {
   window.customCards.push({
     type: "hph-tile",
