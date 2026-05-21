@@ -85,6 +85,7 @@ class HphHelpCard extends HTMLElement {
     if (!config) throw new Error("hph-help: config required");
     this._config = {
       title: config.title || "",
+      subtitle: config.subtitle || "",
       content: config.content || "",
       icon: config.icon || "mdi:help-circle-outline",
       label: config.label || "",
@@ -116,12 +117,14 @@ class HphHelpCard extends HTMLElement {
     const entry = strings[this._config.translation_key];
     if (entry) {
       if (!this._config.title) this._config.title = entry.title || "";
+      if (!this._config.subtitle) this._config.subtitle = entry.subtitle || "";
       if (!this._config.content) this._config.content = entry.content || "";
     } else if (lang !== "en") {
       const en = await __hphLoadHelpStrings("en");
       const enEntry = en[this._config.translation_key];
       if (enEntry) {
         if (!this._config.title) this._config.title = enEntry.title || "";
+        if (!this._config.subtitle) this._config.subtitle = enEntry.subtitle || "";
         if (!this._config.content) this._config.content = enEntry.content || "";
       }
     }
@@ -132,6 +135,8 @@ class HphHelpCard extends HTMLElement {
     // Update inline heading text in-place after async translation resolution.
     const heading = this.querySelector("h3");
     if (heading && this._config.title) heading.textContent = this._config.title;
+    const sub = this.querySelector(".hph-subtitle");
+    if (sub && this._config.subtitle) sub.textContent = this._config.subtitle;
     if (this._config.button) {
       const btn = this.querySelector("button");
       if (btn) btn.title = this._config.title || "Help";
@@ -166,7 +171,12 @@ class HphHelpCard extends HTMLElement {
       border: none;
     `;
 
+    this._titleRow = null;
     if (this._config.heading) {
+      const headWrap = document.createElement("div");
+      headWrap.style.cssText = "display:flex; flex-direction:column; gap:2px; flex:1;";
+      const titleRow = document.createElement("div");
+      titleRow.style.cssText = "display:flex; align-items:center; gap:8px;";
       const h = document.createElement("h3");
       h.textContent = this._config.title;
       h.style.cssText = `
@@ -175,7 +185,20 @@ class HphHelpCard extends HTMLElement {
         font-weight: 500;
         color: var(--primary-text-color, inherit);
       `;
-      card.appendChild(h);
+      titleRow.appendChild(h);
+      headWrap.appendChild(titleRow);
+      if (this._config.subtitle) {
+        const sub = document.createElement("div");
+        sub.className = "hph-subtitle";
+        sub.textContent = this._config.subtitle;
+        sub.style.cssText = `
+          font-size: 0.85em;
+          color: var(--secondary-text-color, #8a8a8a);
+        `;
+        headWrap.appendChild(sub);
+      }
+      this._titleRow = titleRow;
+      card.appendChild(headWrap);
     }
 
     const btn = document.createElement("button");
@@ -216,7 +239,7 @@ class HphHelpCard extends HTMLElement {
     });
 
     if (this._config.button) {
-      card.appendChild(btn);
+      (this._titleRow || card).appendChild(btn);
     }
     this.appendChild(card);
   }

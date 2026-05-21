@@ -39,34 +39,125 @@
     "title": "Solar-DHW boost",
     "content": "**Risk-level: low.** When your PV surplus exceeds a threshold (`hph_ctrl_solar_pv_threshold_w`, default 1500 W), Solar-DHW triggers an extra DHW heating cycle. The idea: store free electricity as hot water rather than feed it back to the grid for a low export tariff.\n\n**Requires:**\n\n- A power sensor exposing your live PV surplus (export-after-self-consumption).\n- Configure the sensor via the vendor preset or manually via the source helpers.\n\n**Tuning:**\n\n- Threshold too low → DHW fires constantly on mild days.\n- Threshold too high → never triggers.\n- Start with 1500 W; adjust based on observed `sensor.hph_dhw_fires_today` over a week.\n\nGated by both `hph_ctrl_master` and `hph_ctrl_solar_dhw`."
   },
-  "section_comparisons": { "title": "Comparisons — detail" },
-  "section_cop_scop": { "title": "Overall COP / SCOP" },
-  "section_energy_totals": { "title": "Energy totals" },
-  "section_electricity_costs": { "title": "Electricity costs" },
-  "section_runtime_standby": { "title": "Runtime vs. standby (today)" },
-  "section_cumulative_energy": { "title": "Cumulative energy (30 days)" },
-  "section_heating_curve_obs": { "title": "Heating-curve and data-quality observations" },
-  "section_cycle_analysis": { "title": "Cycle analysis (today)" },
-  "section_advisor_recommendations": { "title": "Advisor — recommendations" },
-  "section_diagnostics_detail": { "title": "Diagnostics — detail" },
-  "section_recommendation_detail": { "title": "Recommendation detail" },
-  "section_control_master": { "title": "Control master" },
-  "section_night_quiet": { "title": "Night quiet mode" },
-  "section_price_dhw": { "title": "Price-driven DHW" },
-  "section_forecast_preheat": { "title": "Weather-forecast pre-heating" },
-  "section_legionella": { "title": "Legionella — one-off boost" },
-  "section_dashboard_appearance": { "title": "Dashboard appearance" },
-  "section_analysis_config": { "title": "Analysis (recommendations from observation)" },
-  "section_optional_components": { "title": "Optional components" },
-  "section_hp_entities": { "title": "Heat pump entities (configurable)" },
-  "section_optional_pcb": { "title": "Optional PCB components" },
-  "section_ctrl_write_targets": { "title": "Control write targets" },
-  "section_external_meters": { "title": "External meters (optional)" },
-  "section_electricity_cost_config": { "title": "Electricity cost" },
-  "section_export": { "title": "Export (long-term values)" },
-  "section_multiplatform": { "title": "Multi-platform bridge (read-only)" },
+  "section_comparisons": {
+    "title": "Comparisons — detail"
+  },
+  "section_cop_scop": {
+    "title": "Overall COP / SCOP"
+  },
+  "section_energy_totals": {
+    "title": "Energy totals"
+  },
+  "section_electricity_costs": {
+    "title": "Electricity costs"
+  },
+  "section_runtime_standby": {
+    "title": "Runtime vs. standby (today)"
+  },
+  "section_cumulative_energy": {
+    "title": "Cumulative energy (30 days)"
+  },
+  "section_heating_curve_obs": {
+    "title": "Heating-curve and data-quality observations"
+  },
+  "section_cycle_analysis": {
+    "title": "Cycle analysis (today)"
+  },
+  "section_advisor_recommendations": {
+    "title": "Advisor — recommendations"
+  },
+  "section_diagnostics_detail": {
+    "title": "Diagnostics — detail"
+  },
+  "section_recommendation_detail": {
+    "title": "Recommendation detail"
+  },
+  "section_control_master": {
+    "title": "Control master"
+  },
+  "section_night_quiet": {
+    "title": "Night quiet mode"
+  },
+  "section_price_dhw": {
+    "title": "Price-driven DHW"
+  },
+  "section_forecast_preheat": {
+    "title": "Weather-forecast pre-heating"
+  },
+  "section_legionella": {
+    "title": "Legionella — one-off boost"
+  },
+  "section_dashboard_appearance": {
+    "title": "Dashboard appearance"
+  },
+  "section_analysis_config": {
+    "title": "Analysis (recommendations from observation)"
+  },
+  "section_optional_components": {
+    "title": "Optional components"
+  },
+  "section_hp_entities": {
+    "title": "Heat pump entities (configurable)"
+  },
+  "section_optional_pcb": {
+    "title": "Optional PCB components"
+  },
+  "section_ctrl_write_targets": {
+    "title": "Control write targets"
+  },
+  "section_external_meters": {
+    "title": "External meters (optional)"
+  },
+  "section_electricity_cost_config": {
+    "title": "Electricity cost"
+  },
+  "section_export": {
+    "title": "Export (long-term values)"
+  },
+  "section_multiplatform": {
+    "title": "Multi-platform bridge (read-only)"
+  },
   "control_adaptive_curve": {
     "title": "Adaptive heating curve",
     "content": "**Risk-level: medium-high.** A self-learning automation that adjusts your heating-curve offset based on indoor temperature deviation from target. Walks the curve in small steps (`hph_ctrl_adaptive_max_step_k`, default 0.5 K) per cycle, bounded by absolute supply limits.\n\n**When to enable:** after the heat pump has been running for at least 2 weeks at fixed curve, and you've observed a consistent indoor temperature offset (e.g. always 0.5 K cool in evenings).\n\n**When NOT to enable:**\n\n- Within 2 weeks of a major change (insulation, new windows, screed dry-out).\n- If your indoor sensor sits in an unrepresentative spot (sunlit corner, hallway near outside door).\n- If you run HeishaMoNR or any other writer to `text.hph_ctrl_write_*` entities.\n\n**How it learns:**\n\n- Reads `sensor.hph_indoor_temp_deviation` (current − target).\n- Adjusts the supply offset by ±max_step_k once per heating cycle.\n- Hard-clamped to `supply_min_c` and `supply_max_c`.\n\nWatch `datetime.hph_ctrl_adaptive_last_run` to confirm it's actually applying. Disable if you see oscillation."
+  },
+  "ctrl_zone1": {
+    "title": "Zone 1 — Heating",
+    "subtitle": "Setpoint · heat shift · heating curve"
+  },
+  "ctrl_zone2": {
+    "title": "Zone 2 — Heating",
+    "subtitle": "Setpoint · heat shift"
+  },
+  "ctrl_dhw": {
+    "title": "Hot Water",
+    "subtitle": "Target temperature · force charge"
+  },
+  "ctrl_system": {
+    "title": "System & Thresholds",
+    "subtitle": "Limits · zone config · bivalence"
+  },
+  "ctrl_machine_room": {
+    "title": "Machine Room",
+    "subtitle": "Diagnostics — refrigerant · electrical · airside"
+  },
+  "ctrl_special": {
+    "title": "Special Functions",
+    "subtitle": "One-time / override operations"
+  },
+  "ctrl_curve_z1": {
+    "title": "Heating Curve — Zone 1",
+    "subtitle": "Outside-temp axis vs. supply-target axis. Tap any point to adjust."
+  },
+  "ctrl_curve_z2": {
+    "title": "Heating Curve — Zone 2"
+  },
+  "ctrl_advanced": {
+    "title": "Advanced Settings",
+    "subtitle": "Less-frequent tweaks — only shown when the heat pump exposes them"
+  },
+  "ctrl_bivalent": {
+    "title": "Bivalent / Aux Heater",
+    "subtitle": "Extra detail — bivalent mode is in Section 5"
   }
 }

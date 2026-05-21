@@ -39,34 +39,125 @@
     "title": "Solar-DHW-boost",
     "content": "**Risiconiveau: laag.** Wanneer je PV-overschot een drempel overschrijdt (`hph_ctrl_solar_pv_threshold_w`, default 1500 W), triggert Solar-DHW een extra DHW-verwarmings­cyclus. Het idee: gratis stroom als warm water opslaan in plaats van tegen lage teruglever­vergoeding naar het net sturen.\n\n**Vereist:**\n\n- Een vermogens­sensor die je live PV-overschot (export-na-eigenverbruik) toont.\n- De sensor via vendor-preset of handmatig in de source-helpers invoeren.\n\n**Tuning:**\n\n- Drempel te laag → DHW draait op milde dagen constant.\n- Drempel te hoog → triggert nooit.\n- Start met 1500 W; pas aan op basis van `sensor.hph_dhw_fires_today` over een week.\n\nGated door zowel `hph_ctrl_master` als `hph_ctrl_solar_dhw`."
   },
-  "section_comparisons": { "title": "Vergelijkingen — detail" },
-  "section_cop_scop": { "title": "Totale COP / SCOP" },
-  "section_energy_totals": { "title": "Energietotalen" },
-  "section_electricity_costs": { "title": "Elektriciteitskosten" },
-  "section_runtime_standby": { "title": "Looptijd vs. standby (vandaag)" },
-  "section_cumulative_energy": { "title": "Cumulatieve energie (30 dagen)" },
-  "section_heating_curve_obs": { "title": "Stooklijn- en datakwaliteits-observaties" },
-  "section_cycle_analysis": { "title": "Cyclusanalyse (vandaag)" },
-  "section_advisor_recommendations": { "title": "Adviseur — aanbevelingen" },
-  "section_diagnostics_detail": { "title": "Diagnostiek — details" },
-  "section_recommendation_detail": { "title": "Aanbevelingsdetail" },
-  "section_control_master": { "title": "Regeling — Hoofdschakelaar" },
-  "section_night_quiet": { "title": "Nacht stille modus" },
-  "section_price_dhw": { "title": "Prijsgestuurd warmwater" },
-  "section_forecast_preheat": { "title": "Weersvoorspelling voorverwarming" },
-  "section_legionella": { "title": "Legionella — éénmalige boost" },
-  "section_dashboard_appearance": { "title": "Dashboard weergave" },
-  "section_analysis_config": { "title": "Analyse (aanbevelingen uit observatie)" },
-  "section_optional_components": { "title": "Optionele componenten" },
-  "section_hp_entities": { "title": "Warmtepomp entiteiten (configureerbaar)" },
-  "section_optional_pcb": { "title": "Optionele PCB-componenten" },
-  "section_ctrl_write_targets": { "title": "Regeling — schrijfdoelen" },
-  "section_external_meters": { "title": "Externe meters (optioneel)" },
-  "section_electricity_cost_config": { "title": "Elektriciteitskosten (configuratie)" },
-  "section_export": { "title": "Export (langetermijnwaarden)" },
-  "section_multiplatform": { "title": "Multi-platform brug (alleen lezen)" },
+  "section_comparisons": {
+    "title": "Vergelijkingen — detail"
+  },
+  "section_cop_scop": {
+    "title": "Totale COP / SCOP"
+  },
+  "section_energy_totals": {
+    "title": "Energietotalen"
+  },
+  "section_electricity_costs": {
+    "title": "Elektriciteitskosten"
+  },
+  "section_runtime_standby": {
+    "title": "Looptijd vs. standby (vandaag)"
+  },
+  "section_cumulative_energy": {
+    "title": "Cumulatieve energie (30 dagen)"
+  },
+  "section_heating_curve_obs": {
+    "title": "Stooklijn- en datakwaliteits-observaties"
+  },
+  "section_cycle_analysis": {
+    "title": "Cyclusanalyse (vandaag)"
+  },
+  "section_advisor_recommendations": {
+    "title": "Adviseur — aanbevelingen"
+  },
+  "section_diagnostics_detail": {
+    "title": "Diagnostiek — details"
+  },
+  "section_recommendation_detail": {
+    "title": "Aanbevelingsdetail"
+  },
+  "section_control_master": {
+    "title": "Regeling — Hoofdschakelaar"
+  },
+  "section_night_quiet": {
+    "title": "Nacht stille modus"
+  },
+  "section_price_dhw": {
+    "title": "Prijsgestuurd warmwater"
+  },
+  "section_forecast_preheat": {
+    "title": "Weersvoorspelling voorverwarming"
+  },
+  "section_legionella": {
+    "title": "Legionella — éénmalige boost"
+  },
+  "section_dashboard_appearance": {
+    "title": "Dashboard weergave"
+  },
+  "section_analysis_config": {
+    "title": "Analyse (aanbevelingen uit observatie)"
+  },
+  "section_optional_components": {
+    "title": "Optionele componenten"
+  },
+  "section_hp_entities": {
+    "title": "Warmtepomp entiteiten (configureerbaar)"
+  },
+  "section_optional_pcb": {
+    "title": "Optionele PCB-componenten"
+  },
+  "section_ctrl_write_targets": {
+    "title": "Regeling — schrijfdoelen"
+  },
+  "section_external_meters": {
+    "title": "Externe meters (optioneel)"
+  },
+  "section_electricity_cost_config": {
+    "title": "Elektriciteitskosten (configuratie)"
+  },
+  "section_export": {
+    "title": "Export (langetermijnwaarden)"
+  },
+  "section_multiplatform": {
+    "title": "Multi-platform brug (alleen lezen)"
+  },
   "control_adaptive_curve": {
     "title": "Adaptieve stooklijn",
     "content": "**Risiconiveau: middel-hoog.** Een zelflerend automatisering die je stooklijn-offset aanpast op basis van afwijking binnen­tempera­tuur t.o.v. setpoint. Wandelt de curve in kleine stappen (`hph_ctrl_adaptive_max_step_k`, default 0,5 K) per cyclus, begrensd door absolute aanvoer­limieten.\n\n**Wanneer activeren:** nadat de WP minimaal 2 weken op vaste curve gedraaid heeft en je een consistente binnen­tempera­tuur-offset hebt waar­genomen (bv. 's avonds altijd 0,5 K te koel).\n\n**Wanneer NIET activeren:**\n\n- Binnen 2 weken na een grote wijziging (isolatie, nieuwe ramen, dekvloer drogen).\n- Als je binnensensor onrepresentatief staat (zonbeschenen hoek, gang bij buitendeur).\n- Als je HeishaMoNR of een andere schrijver naar `text.hph_ctrl_write_*` entities draait.\n\n**Hoe het leert:**\n\n- Leest `sensor.hph_indoor_temp_deviation` (huidig − setpoint).\n- Past de aanvoer-offset aan met ±max_step_k één keer per verwarmings­cyclus.\n- Hard geklemd op `supply_min_c` en `supply_max_c`.\n\nHou `datetime.hph_ctrl_adaptive_last_run` in de gaten om te bevestigen dat het echt toepast. Uitschakelen als je oscillatie ziet."
+  },
+  "ctrl_zone1": {
+    "title": "Zone 1 — Verwarming",
+    "subtitle": "Streefwaarde · stookcurve-verschuiving · stookcurve"
+  },
+  "ctrl_zone2": {
+    "title": "Zone 2 — Verwarming",
+    "subtitle": "Streefwaarde · stookcurve-verschuiving"
+  },
+  "ctrl_dhw": {
+    "title": "Warm water",
+    "subtitle": "Streeftemperatuur · geforceerd laden"
+  },
+  "ctrl_system": {
+    "title": "Systeem & drempels",
+    "subtitle": "Grenzen · zoneconfiguratie · bivalentie"
+  },
+  "ctrl_machine_room": {
+    "title": "Machinekamer",
+    "subtitle": "Diagnostiek — koudemiddel · elektrisch · luchtzijde"
+  },
+  "ctrl_special": {
+    "title": "Speciale functies",
+    "subtitle": "Eenmalige / overrule-acties"
+  },
+  "ctrl_curve_z1": {
+    "title": "Stookcurve — Zone 1",
+    "subtitle": "Buitentemperatuur-as vs. aanvoer-streefas. Tik op een punt om aan te passen."
+  },
+  "ctrl_curve_z2": {
+    "title": "Stookcurve — Zone 2"
+  },
+  "ctrl_advanced": {
+    "title": "Geavanceerde instellingen",
+    "subtitle": "Minder vaak gebruikte instellingen — alleen zichtbaar als de warmtepomp ze aanbiedt"
+  },
+  "ctrl_bivalent": {
+    "title": "Bivalent / bijverwarming",
+    "subtitle": "Extra details — bivalente modus staat in sectie 5"
   }
 }

@@ -1314,9 +1314,9 @@ views:
             entity: select.hph_ui_style
             state: mushroom
         card:
-          type: custom:mushroom-title-card
-          title: Zone 1 — Heizung
-          subtitle: Sollwert · Heizkurven-Verschiebung · Heizkurve
+          type: custom:hph-help
+          translation_key: ctrl_zone1
+          button: false
 
       - type: conditional
         conditions:
@@ -1412,9 +1412,9 @@ views:
           card:
             type: vertical-stack
             cards:
-              - type: custom:mushroom-title-card
-                title: Zone 2 — Heizung
-                subtitle: Sollwert · Heizkurven-Verschiebung
+              - type: custom:hph-help
+                translation_key: ctrl_zone2
+                button: false
 
               - type: grid
                 columns: 2
@@ -1458,9 +1458,9 @@ views:
           card:
             type: vertical-stack
             cards:
-              - type: custom:mushroom-title-card
-                title: Warmwasser
-                subtitle: Solltemperatur · Zwangsladung
+              - type: custom:hph-help
+                translation_key: ctrl_dhw
+                button: false
 
               - type: grid
                 columns: 3
@@ -1523,9 +1523,9 @@ views:
             entity: select.hph_ui_style
             state: mushroom
         card:
-          type: custom:mushroom-title-card
-          title: System & Schwellwerte
-          subtitle: Grenzen · Zonen-Konfiguration · Bivalenz
+          type: custom:hph-help
+          translation_key: ctrl_system
+          button: false
 
       - type: conditional
         conditions:
@@ -1622,9 +1622,9 @@ views:
             entity: select.hph_ui_style
             state: mushroom
         card:
-          type: custom:mushroom-title-card
-          title: Maschinenraum
-          subtitle: Diagnose — Kältemittel · Elektrik · Luftseite
+          type: custom:hph-help
+          translation_key: ctrl_machine_room
+          button: false
 
       - type: conditional
         conditions:
@@ -2218,9 +2218,9 @@ views:
             entity: select.hph_ui_style
             state: mushroom
         card:
-          type: custom:mushroom-title-card
-          title: Sonderfunktionen
-          subtitle: Einmalige / Übersteuerungs-Aktionen
+          type: custom:hph-help
+          translation_key: ctrl_special
+          button: false
 
       - type: conditional
         conditions:
@@ -2368,9 +2368,9 @@ views:
             entity: select.hph_ui_style
             state: mushroom
         card:
-          type: custom:mushroom-title-card
-          title: Heizkurve — Zone 1
-          subtitle: Außentemperatur-Achse vs. Vorlauf-Soll-Achse. Punkt antippen zum Anpassen.
+          type: custom:hph-help
+          translation_key: ctrl_curve_z1
+          button: false
 
       - type: conditional
         conditions:
@@ -2484,8 +2484,9 @@ views:
           card:
             type: vertical-stack
             cards:
-              - type: custom:mushroom-title-card
-                title: Heizkurve — Zone 2
+              - type: custom:hph-help
+                translation_key: ctrl_curve_z2
+                button: false
               - type: grid
                 columns: 4
                 square: false
@@ -2558,9 +2559,9 @@ views:
             entity: select.hph_ui_style
             state: mushroom
         card:
-          type: custom:mushroom-title-card
-          title: Erweiterte Einstellungen
-          subtitle: Seltenere Einstellungen — nur sichtbar, wenn die Wärmepumpe sie bereitstellt
+          type: custom:hph-help
+          translation_key: ctrl_advanced
+          button: false
 
       - type: conditional
         conditions:
@@ -2657,9 +2658,9 @@ views:
           card:
             type: vertical-stack
             cards:
-              - type: custom:mushroom-title-card
-                title: Bivalent / Zusatzheizung
-                subtitle: Zusatzdetails — Bivalenzmodus siehe Abschnitt 5
+              - type: custom:hph-help
+                translation_key: ctrl_bivalent
+                button: false
               - type: grid
                 columns: 3
                 square: false
