@@ -222,5 +222,20 @@
   },
   "ov_pump_speed": {
     "title": "Pompsnelheid"
+  },
+  "adv_critical": {
+    "title": "Actie vereist"
+  },
+  "adv_warn": {
+    "title": "Waarschuwingen aanwezig"
+  },
+  "adv_ok": {
+    "title": "Alles in orde"
+  },
+  "ov_advisor": {
+    "title": "Advisor"
+  },
+  "ov_installation": {
+    "title": "Installatie"
   }
 }

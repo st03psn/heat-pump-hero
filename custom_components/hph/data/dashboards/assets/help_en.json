@@ -222,5 +222,20 @@
   },
   "ov_pump_speed": {
     "title": "Pump speed"
+  },
+  "adv_critical": {
+    "title": "Action required"
+  },
+  "adv_warn": {
+    "title": "Warnings present"
+  },
+  "adv_ok": {
+    "title": "All clear"
+  },
+  "ov_advisor": {
+    "title": "Advisor"
+  },
+  "ov_installation": {
+    "title": "Installation"
   }
 }

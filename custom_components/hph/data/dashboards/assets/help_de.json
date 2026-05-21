@@ -222,5 +222,20 @@
   },
   "ov_pump_speed": {
     "title": "Pumpendrehzahl"
+  },
+  "adv_critical": {
+    "title": "Handlung erforderlich"
+  },
+  "adv_warn": {
+    "title": "Warnungen vorhanden"
+  },
+  "adv_ok": {
+    "title": "Alles in Ordnung"
+  },
+  "ov_advisor": {
+    "title": "Advisor"
+  },
+  "ov_installation": {
+    "title": "Anlage"
   }
 }

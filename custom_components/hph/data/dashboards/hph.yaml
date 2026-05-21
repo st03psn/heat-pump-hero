@@ -205,20 +205,24 @@ views:
                       label_key: ov_compressor_freq
                       icon: mdi:sine-wave
                       icon_color: blue
-                    - type: custom:mushroom-template-card
-                      primary: >-
-                        {% set s = states('sensor.hph_advisor_summary') %}
-                        {% if s == 'critical' %}Handlung erforderlich
-                        {% elif s == 'warn' %}Warnungen vorhanden
-                        {% else %}Alles in Ordnung{% endif %}
-                      secondary: Advisor
+                    - type: custom:hph-tile
+                      entity: sensor.hph_advisor_summary
+                      label_key: ov_advisor
+                      state_map:
+                        critical: adv_critical
+                        warn: adv_warn
+                        ok: adv_ok
+                        info: adv_ok
+                        none: adv_ok
+                      color_state_map:
+                        critical: red
+                        warn: amber
+                        ok: green
+                        info: green
+                        none: green
+                      color_else: green
                       icon: mdi:lightbulb-on
-                      icon_color: >-
-                        {% set s = states('sensor.hph_advisor_summary') %}
-                        {% if s == 'critical' %}red{% elif s == 'warn' %}amber{% else %}green{% endif %}
-                      tap_action:
-                        action: navigate
-                        navigation_path: /hph/optimization
+                      navigate: /hph/optimization
                     - type: custom:hph-tile
                       primary: "{sensor.hph_schema_variant_active}"
                       upper: true
@@ -277,25 +281,13 @@ views:
 
                 # ── Row: Installation schematic (auto-detected variant) ──────────────
                 # Requires: Clooos/Bubble-Card >= 3.0; SVGs served from /hph_assets/schema_*.svg
-                - type: custom:mushroom-template-card
-                  primary: |-
-                    Anlage: {{ states('sensor.hph_schema_variant_active') | replace('_',' ') | upper }}
-                  secondary: |-
-                    {% set src = state_attr('sensor.hph_schema_variant_active','source') %}
-                    {% set msg = state_attr('sensor.hph_schema_variant_detected','message') %}
-                    [{{ src }}] {{ msg }}
-                  icon: |-
-                    {% set v = states('sensor.hph_schema_variant_active') %}
-                    {% if 'buffer' in v %}mdi:propane-tank
-                    {% elif 'hk2' in v %}mdi:home-thermometer
-                    {% elif 'dhw' in v %}mdi:water-boiler
-                    {% else %}mdi:radiator{% endif %}
+                - type: custom:hph-tile
+                  primary: "{sensor.hph_schema_variant_active}"
+                  upper: true
+                  label_key: ov_installation
+                  icon: mdi:graph-outline
                   icon_color: blue
-                  multiline_secondary: true
-                  fill_container: true
-                  tap_action:
-                    action: navigate
-                    navigation_path: /hph/config
+                  navigate: /hph/config
 
 
           # ── Classic style ─────────────────────────────────────────────────────

@@ -403,25 +403,39 @@ class HphTileCard extends HTMLElement {
       color_entity: config.color_entity || config.entity || null,
       color_thresholds: config.color_thresholds || null,
       color_else: config.color_else || "grey",
+      // state_map: { entityState: help_key } — primary text resolved from the
+      // entity's current state (for computed-state cards like the advisor).
+      state_map: config.state_map || null,
+      color_state_map: config.color_state_map || null,
       navigate: config.navigate || null,
       more_info: config.more_info === true,
     };
+    this._stateLabels = {};
     this._built = false;
     this._render();
-    if (this._cfg.label_key) {
+    if (this._cfg.label_key || this._cfg.state_map) {
       this._resolveLabel().then(() => this._update()).catch(() => {});
     }
   }
 
   async _resolveLabel() {
     const lang = __hphCurrentLang();
-    let strings = await __hphLoadHelpStrings(lang);
-    let entry = strings[this._cfg.label_key];
-    if (!entry && lang !== "en") {
-      strings = await __hphLoadHelpStrings("en");
-      entry = strings[this._cfg.label_key];
+    const strings = await __hphLoadHelpStrings(lang);
+    const en = lang !== "en" ? await __hphLoadHelpStrings("en") : null;
+    const resolve = (key) => {
+      const t = (strings[key] && strings[key].title) || (en && en[key] && en[key].title);
+      return t || null;
+    };
+    if (this._cfg.label_key) {
+      const t = resolve(this._cfg.label_key);
+      if (t) this._cfg.label = t;
     }
-    if (entry && entry.title) this._cfg.label = entry.title;
+    if (this._cfg.state_map) {
+      for (const [stateVal, key] of Object.entries(this._cfg.state_map)) {
+        const t = resolve(key);
+        if (t) this._stateLabels[stateVal] = t;
+      }
+    }
   }
 
   set hass(hass) {
@@ -498,6 +512,18 @@ class HphTileCard extends HTMLElement {
   _update() {
     if (!this._els || !this._hass) return;
     let text = "—";
+    if (this._cfg.state_map) {
+      const s = this._stState(this._cfg.entity);
+      text = (s && this._stateLabels[s]) || s || "—";
+      this._els.primary.textContent = text;
+      if (this._cfg.label) this._els.secondary.textContent = this._cfg.label;
+      const col = __hphColor(
+        (this._cfg.color_state_map && this._cfg.color_state_map[s]) || this._cfg.color_else
+      );
+      this._els.icon.style.color = col;
+      this._els.iconWrap.style.background = col + "22";
+      return;
+    }
     if (this._cfg.primary) {
       // composite: substitute {entity_id} / {entity_id:dec} with state values
       text = this._cfg.primary.replace(/\{([a-z0-9_.]+)(?::(\d+))?\}/gi, (m, eid, dec) => {
