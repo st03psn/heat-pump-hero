@@ -192,5 +192,35 @@
   },
   "kpi_cost_month": {
     "title": "Kosten Monat"
+  },
+  "ov_supply_return": {
+    "title": "Vorlauf / Rücklauf"
+  },
+  "ov_spread_flow": {
+    "title": "Spreizung | Durchfluss"
+  },
+  "ov_outdoor": {
+    "title": "Außentemperatur"
+  },
+  "ov_compressor_freq": {
+    "title": "Verdichterfrequenz"
+  },
+  "ov_variant": {
+    "title": "Anlagenvariante"
+  },
+  "ov_standby_today": {
+    "title": "Standby heute"
+  },
+  "ov_target_actual": {
+    "title": "Soll / Ist Vorlauf"
+  },
+  "ov_zone1_actual_set": {
+    "title": "Zone 1 Ist / Sollwert"
+  },
+  "ov_zone1_room": {
+    "title": "Zone 1 Referenz-Raumtemperatur"
+  },
+  "ov_pump_speed": {
+    "title": "Pumpendrehzahl"
   }
 }

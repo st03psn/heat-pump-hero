@@ -383,16 +383,24 @@ function __hphColor(name) {
 
 class HphTileCard extends HTMLElement {
   setConfig(config) {
-    if (!config || !config.entity) throw new Error("hph-tile: 'entity' required");
+    if (!config || (!config.entity && !config.primary)) {
+      throw new Error("hph-tile: 'entity' or 'primary' required");
+    }
     this._cfg = {
-      entity: config.entity,
+      entity: config.entity || null,
+      // primary: optional template string with {entity_id} or {entity_id:dec}
+      // placeholders (language-neutral values + units). When set, it overrides
+      // the single-entity value rendering — used for composite tiles.
+      primary: config.primary || null,
       label_key: config.label_key || null,
       label: config.label || "",
       decimals: config.decimals,
       suffix: config.suffix || "",
       use_unit: config.use_unit !== false,
       icon: config.icon || "mdi:gauge",
+      upper: config.upper === true,
       icon_color: config.icon_color || null,
+      color_entity: config.color_entity || config.entity || null,
       color_thresholds: config.color_thresholds || null,
       color_else: config.color_else || "grey",
       navigate: config.navigate || null,
@@ -482,28 +490,42 @@ class HphTileCard extends HTMLElement {
     }
   }
 
+  _stState(id) {
+    const st = this._hass && this._hass.states[id];
+    return st ? st.state : null;
+  }
+
   _update() {
-    if (!this._els) return;
-    const st = this._hass && this._hass.states[this._cfg.entity];
-    let valNum = null, text = "—";
-    if (st && st.state !== "unavailable" && st.state !== "unknown") {
-      valNum = parseFloat(st.state);
-      if (!isNaN(valNum)) {
+    if (!this._els || !this._hass) return;
+    let text = "—";
+    if (this._cfg.primary) {
+      // composite: substitute {entity_id} / {entity_id:dec} with state values
+      text = this._cfg.primary.replace(/\{([a-z0-9_.]+)(?::(\d+))?\}/gi, (m, eid, dec) => {
+        const s = this._stState(eid);
+        if (s === null || s === "unavailable" || s === "unknown") return "—";
+        if (dec !== undefined) { const n = parseFloat(s); return isNaN(n) ? s : n.toFixed(+dec); }
+        return s;
+      });
+    } else {
+      const st = this._hass.states[this._cfg.entity];
+      if (st && st.state !== "unavailable" && st.state !== "unknown") {
+        const valNum = parseFloat(st.state);
         const dec = this._cfg.decimals;
-        text = dec === undefined ? String(st.state) : valNum.toFixed(dec);
-      } else {
-        text = st.state;
-      }
-      if (this._cfg.suffix) text += this._cfg.suffix;
-      else if (this._cfg.use_unit && st.attributes && st.attributes.unit_of_measurement) {
-        text += " " + st.attributes.unit_of_measurement;
+        text = !isNaN(valNum) && dec !== undefined ? valNum.toFixed(dec) : String(st.state);
+        if (this._cfg.suffix) text += this._cfg.suffix;
+        else if (this._cfg.use_unit && st.attributes && st.attributes.unit_of_measurement) {
+          text += " " + st.attributes.unit_of_measurement;
+        }
       }
     }
+    if (this._cfg.upper && text) text = text.replace(/_/g, " ").toUpperCase();
     this._els.primary.textContent = text;
     if (this._cfg.label) this._els.secondary.textContent = this._cfg.label;
-    const col = this._color(valNum);
+    // colour from the configured color entity's value (defaults to entity)
+    const cv = this._cfg.color_entity ? parseFloat(this._stState(this._cfg.color_entity)) : NaN;
+    const col = this._color(isNaN(cv) ? null : cv);
     this._els.icon.style.color = col;
-    this._els.iconWrap.style.background = col + "22"; // ~13% alpha tint
+    this._els.iconWrap.style.background = col + "22";
   }
 }
 

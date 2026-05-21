@@ -192,5 +192,35 @@
   },
   "kpi_cost_month": {
     "title": "Cost month"
+  },
+  "ov_supply_return": {
+    "title": "Supply / Return"
+  },
+  "ov_spread_flow": {
+    "title": "Spread | Flow"
+  },
+  "ov_outdoor": {
+    "title": "Outdoor temperature"
+  },
+  "ov_compressor_freq": {
+    "title": "Compressor frequency"
+  },
+  "ov_variant": {
+    "title": "Installation variant"
+  },
+  "ov_standby_today": {
+    "title": "Standby today"
+  },
+  "ov_target_actual": {
+    "title": "Target / actual supply"
+  },
+  "ov_zone1_actual_set": {
+    "title": "Zone 1 actual / setpoint"
+  },
+  "ov_zone1_room": {
+    "title": "Zone 1 reference room temperature"
+  },
+  "ov_pump_speed": {
+    "title": "Pump speed"
   }
 }

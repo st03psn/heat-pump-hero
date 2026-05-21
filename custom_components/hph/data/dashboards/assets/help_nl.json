@@ -192,5 +192,35 @@
   },
   "kpi_cost_month": {
     "title": "Kosten maand"
+  },
+  "ov_supply_return": {
+    "title": "Aanvoer / Retour"
+  },
+  "ov_spread_flow": {
+    "title": "Spreiding | Debiet"
+  },
+  "ov_outdoor": {
+    "title": "Buitentemperatuur"
+  },
+  "ov_compressor_freq": {
+    "title": "Compressorfrequentie"
+  },
+  "ov_variant": {
+    "title": "Installatievariant"
+  },
+  "ov_standby_today": {
+    "title": "Stand-by vandaag"
+  },
+  "ov_target_actual": {
+    "title": "Streef / actuele aanvoer"
+  },
+  "ov_zone1_actual_set": {
+    "title": "Zone 1 actueel / streefwaarde"
+  },
+  "ov_zone1_room": {
+    "title": "Zone 1 referentie-ruimtetemperatuur"
+  },
+  "ov_pump_speed": {
+    "title": "Pompsnelheid"
   }
 }
