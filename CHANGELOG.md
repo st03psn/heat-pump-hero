@@ -39,6 +39,14 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
   on/off, active/idle), markdown help blocks, table headers, and section
   headings. Advisor/diagnostic message bodies stay English by design.
 
+- **All non-translatable dashboard strings are now English.** Every static
+  string that cannot be made language-following (apexcharts series names,
+  `noData` placeholder texts, classic-style card titles, view navigation
+  titles, mushroom `primary:`/`secondary:` labels, button action names,
+  markdown table headers) has been translated from German to English
+  (~163 replacements). Policy: language-following via hph-tile/hph-help →
+  preferred; unavoidably static → English; never hardcoded German.
+
 - **Dashboard status tiles now follow the per-user UI language (B2–B4
   complete).** All static-label status tiles in the Analysis view
   (temperature strip, power/COP strip, defrost KPI strip) and the

@@ -14,7 +14,7 @@ views:
   #    Row D: 7-day energy chart (thermal vs electrical)
   #    Row E: 7-day cycling chart
   # ════════════════════════════════════════════════════════════════════════
-  - title: Übersicht
+  - title: Overview
     path: overview
     icon: mdi:view-dashboard
     type: panel
@@ -59,7 +59,7 @@ views:
                       content: "{{ states('sensor.hph_source_pump_pressure') }} bar"
                     - type: template
                       icon: mdi:snowflake-melt
-                      content: "{{ 'Abtauung' if is_state('binary_sensor.hph_defrost_active','on') else '' }}"
+                      content: "{{ 'Defrost' if is_state('binary_sensor.hph_defrost_active','on') else '' }}"
                       icon_color: cyan
                       conditions:
                         - condition: state
@@ -165,7 +165,7 @@ views:
                       state: running
                   card:
                     type: custom:mushroom-template-card
-                    primary: Estrich läuft
+                    primary: Screed running
                     secondary: >-
                       Day {{ states('number.hph_prog_screed_day') }} —
                       target {{ states('sensor.hph_prog_screed_target') }} °C
@@ -1172,7 +1172,7 @@ views:
   #    Vendor-specific features (boost mode) always render; they show '—'
   #    when the helper is empty so non-Panasonic users know it is not set up.
   # ════════════════════════════════════════════════════════════════════════
-  - title: Steuerung
+  - title: Control
     path: control
     icon: mdi:thermostat
     cards:
@@ -1250,7 +1250,7 @@ views:
               card:
                 type: custom:mushroom-template-card
                 entity: text.hph_ctrl_write_z1_climate
-                primary: Klima-Sollwert
+                primary: Climate target
                 secondary: >-
                   {% set e = states('text.hph_ctrl_write_z1_climate') %}
                   Soll {{ state_attr(e,'temperature') | float(0) | round(1) }}°C
@@ -1270,7 +1270,7 @@ views:
               card:
                 type: custom:mushroom-template-card
                 entity: number.hph_z1_heat_shift
-                primary: Heizkurven-Verschiebung HK1
+                primary: Curve offset HK1
                 secondary: "{{ states('number.hph_z1_heat_shift') | float(0) | round(1) }} K offset"
                 icon: mdi:plus-minus
                 icon_color: grey
@@ -1295,7 +1295,7 @@ views:
             cards:
               - type: custom:mushroom-template-card
                 entity: number.hph_z1_curve_high
-                primary: Kurve oberer Punkt
+                primary: Curve high point
                 secondary: "{{ states('number.hph_z1_curve_high') | float(0) | round(1) }}°C supply @ cold outdoor"
                 icon: mdi:chart-bell-curve
                 icon_color: red
@@ -1304,7 +1304,7 @@ views:
 
               - type: custom:mushroom-template-card
                 entity: number.hph_z1_curve_low
-                primary: Kurve unterer Punkt
+                primary: Curve low point
                 secondary: "{{ states('number.hph_z1_curve_low') | float(0) | round(1) }}°C supply @ warm outdoor"
                 icon: mdi:chart-bell-curve-cumulative
                 icon_color: green
@@ -1336,7 +1336,7 @@ views:
                 cards:
                   - type: custom:mushroom-template-card
                     entity: text.hph_ctrl_write_z2_climate
-                    primary: Klima-Sollwert
+                    primary: Climate target
                     secondary: >-
                       {% set e = states('text.hph_ctrl_write_z2_climate') %}
                       Soll {{ state_attr(e,'temperature') | float(0) | round(1) }}°C
@@ -1350,7 +1350,7 @@ views:
 
                   - type: custom:mushroom-template-card
                     entity: number.hph_z2_heat_shift
-                    primary: Heizkurven-Verschiebung HK2
+                    primary: Curve offset HK2
                     secondary: "{{ states('number.hph_z2_heat_shift') | float(0) | round(1) }} K offset"
                     icon: mdi:plus-minus
                     icon_color: grey
@@ -1381,7 +1381,7 @@ views:
                 square: false
                 cards:
                   - type: custom:mushroom-template-card
-                    primary: Brauchwasser Ist
+                    primary: DHW actual
                     secondary: "{{ states('sensor.hph_source_dhw_temp') }} °C"
                     icon: mdi:water-thermometer
                     icon_color: orange
@@ -1390,7 +1390,7 @@ views:
 
                   - type: custom:mushroom-template-card
                     entity: number.hph_dhw_target
-                    primary: Brauchwasser Soll
+                    primary: DHW target
                     secondary: "{{ states('number.hph_dhw_target') | float(0) | round(1) }} °C"
                     icon: mdi:water-thermometer-outline
                     icon_color: orange
@@ -1398,10 +1398,10 @@ views:
                       action: more-info
 
                   - type: custom:mushroom-template-card
-                    primary: Brauchwasser erzwingen
+                    primary: Force DHW
                     secondary: >-
                       {% set e = states('text.hph_ctrl_write_force_dhw') %}
-                      {{ 'Lädt' if e and is_state(e,'on') else 'Inaktiv' }}
+                      {{ 'Loading' if e and is_state(e,'on') else 'Inactive' }}
                     icon: >-
                       {% set e = states('text.hph_ctrl_write_force_dhw') %}
                       {{ 'mdi:water-boiler' if e and is_state(e,'on') else 'mdi:water-boiler-off' }}
@@ -1416,7 +1416,7 @@ views:
 
                   - type: custom:mushroom-template-card
                     entity: number.hph_dhw_heat_delta
-                    primary: Brauchwasser Heiz-Δ
+                    primary: DHW heat Δ
                     secondary: "{{ states('number.hph_dhw_heat_delta') | float(0) | round(1) }} K"
                     icon: mdi:delta
                     tap_action:
@@ -1424,7 +1424,7 @@ views:
 
                   - type: custom:mushroom-template-card
                     entity: select.hph_smart_dhw
-                    primary: Smartes Brauchwasser
+                    primary: Smart DHW
                     secondary: "{{ states('select.hph_smart_dhw') | title }}"
                     icon: mdi:auto-fix
                     tap_action:
@@ -1459,7 +1459,7 @@ views:
               card:
                 type: custom:mushroom-template-card
                 entity: number.hph_heating_cutoff
-                primary: Heizgrenze
+                primary: Heating threshold
                 secondary: "≤ {{ states('number.hph_heating_cutoff') | float(0) | round(1) }} °C outdoor"
                 icon: mdi:thermometer-off
                 icon_color: blue
@@ -1474,7 +1474,7 @@ views:
               card:
                 type: custom:mushroom-template-card
                 entity: number.hph_room_heat_delta
-                primary: Heiz-Hysterese
+                primary: Heating hysteresis
                 secondary: "± {{ states('number.hph_room_heat_delta') | float(0) | round(1) }} K"
                 icon: mdi:delta
                 icon_color: grey
@@ -1489,7 +1489,7 @@ views:
               card:
                 type: custom:mushroom-template-card
                 entity: number.hph_max_pump_duty
-                primary: Max. Pumpenleistung
+                primary: Max. pump power
                 secondary: "{{ states('number.hph_max_pump_duty') | int(0) }} %"
                 icon: mdi:pump
                 icon_color: grey
@@ -1504,7 +1504,7 @@ views:
               card:
                 type: custom:mushroom-template-card
                 entity: select.hph_active_zones
-                primary: Aktive Zonen
+                primary: Active zones
                 secondary: "{{ states('select.hph_active_zones') | title }}"
                 icon: mdi:home-floor-1
                 icon_color: blue
@@ -1522,7 +1522,7 @@ views:
               card:
                 type: custom:mushroom-template-card
                 entity: select.hph_bivalent_mode
-                primary: Bivalenzmodus
+                primary: Bivalence mode
                 secondary: "{{ states('select.hph_bivalent_mode') | title }}"
                 icon: mdi:electric-switch
                 icon_color: grey
@@ -1566,7 +1566,7 @@ views:
                   state_not: "unknown"
               card:
                 type: custom:mushroom-template-card
-                primary: Invertertemperatur
+                primary: Inverter temp
                 secondary: "{{ states('sensor.hph_source_inverter_temp') }} °C"
                 icon: mdi:chip
                 icon_color: >-
@@ -1588,7 +1588,7 @@ views:
                   state_not: "unknown"
               card:
                 type: custom:mushroom-template-card
-                primary: Hochdruck
+                primary: High pressure
                 secondary: "{{ states('sensor.hph_source_high_pressure') }} kPa"
                 icon: mdi:gauge-full
                 icon_color: >-
@@ -1610,7 +1610,7 @@ views:
                   state_not: "unknown"
               card:
                 type: custom:mushroom-template-card
-                primary: Niederdruck
+                primary: Low pressure
                 secondary: "{{ states('sensor.hph_source_low_pressure') }} kPa"
                 icon: mdi:gauge-low
                 icon_color: >-
@@ -1632,7 +1632,7 @@ views:
                   state_not: "unknown"
               card:
                 type: custom:mushroom-template-card
-                primary: Verdichter (A)
+                primary: Compressor (A)
                 secondary: "{{ states('sensor.hph_source_compressor_current') }} A"
                 icon: mdi:current-ac
                 icon_color: grey
@@ -1652,7 +1652,7 @@ views:
                   state_not: "unknown"
               card:
                 type: custom:mushroom-template-card
-                primary: Außenrohr
+                primary: Outdoor pipe temp
                 secondary: "{{ states('sensor.hph_source_outdoor_pipe_temp') }} °C"
                 icon: mdi:pipe
                 icon_color: blue
@@ -1672,7 +1672,7 @@ views:
                   state_not: "unknown"
               card:
                 type: custom:mushroom-template-card
-                primary: Lüfter 1
+                primary: Fan 1
                 secondary: "{{ states('sensor.hph_source_fan1_speed') }} R/min"
                 icon: mdi:fan
                 icon_color: >-
@@ -1694,7 +1694,7 @@ views:
                   state_not: "unknown"
               card:
                 type: custom:mushroom-template-card
-                primary: Lüfter 2
+                primary: Fan 2
                 secondary: "{{ states('sensor.hph_source_fan2_speed') }} R/min"
                 icon: mdi:fan
                 icon_color: >-
@@ -1716,7 +1716,7 @@ views:
                   state_not: "unknown"
               card:
                 type: custom:mushroom-template-card
-                primary: 3-Wege-Ventil
+                primary: 3-way valve
                 secondary: "{{ states('sensor.hph_source_3way_valve') | title }}"
                 icon: mdi:valve
                 icon_color: >-
@@ -1738,7 +1738,7 @@ views:
                   state_not: "unknown"
               card:
                 type: custom:mushroom-template-card
-                primary: Pumpenleistung
+                primary: Pump duty
                 secondary: "{{ states('sensor.hph_source_pump_duty') }} %"
                 icon: mdi:pump
                 icon_color: grey
@@ -1758,7 +1758,7 @@ views:
                   state_not: "unknown"
               card:
                 type: custom:mushroom-template-card
-                primary: Wärmetauscher-Austritt
+                primary: HEX outlet temp
                 secondary: "{{ states('sensor.hph_source_hex_outlet_temp') }} °C"
                 icon: mdi:heat-exchanger
                 icon_color: red
@@ -1778,7 +1778,7 @@ views:
                   state_not: "unknown"
               card:
                 type: custom:mushroom-template-card
-                primary: Zone 1 Sollwert
+                primary: Zone 1 setpoint
                 secondary: "{{ states('sensor.hph_source_zone1_target_temp') }} °C"
                 icon: mdi:thermometer-chevron-up
                 icon_color: orange
@@ -1799,7 +1799,7 @@ views:
                   state_not: "unknown"
               card:
                 type: custom:mushroom-template-card
-                primary: Verdampfer-Austritt
+                primary: Evaporator outlet
                 secondary: "{{ states('sensor.hph_source_eva_outlet_temp') }} °C"
                 icon: mdi:thermometer-low
                 icon_color: >-
@@ -1821,7 +1821,7 @@ views:
                   state_not: "unknown"
               card:
                 type: custom:mushroom-template-card
-                primary: Innenrohr
+                primary: Indoor pipe temp
                 secondary: "{{ states('sensor.hph_source_inside_pipe_temp') }} °C"
                 icon: mdi:pipe
                 icon_color: grey
@@ -1841,7 +1841,7 @@ views:
                   state_not: "unknown"
               card:
                 type: custom:mushroom-template-card
-                primary: Bypass-Austritt
+                primary: Bypass outlet
                 secondary: "{{ states('sensor.hph_source_bypass_outlet_temp') }} °C"
                 icon: mdi:pipe-valve
                 icon_color: grey
@@ -1861,7 +1861,7 @@ views:
                   state_not: "unknown"
               card:
                 type: custom:mushroom-template-card
-                primary: Abtautemperatur
+                primary: Defrost temp
                 secondary: "{{ states('sensor.hph_source_defrost_temp') }} °C"
                 icon: mdi:snowflake-thermometer
                 icon_color: >-
@@ -1884,7 +1884,7 @@ views:
                   state_not: "unknown"
               card:
                 type: custom:mushroom-template-card
-                primary: Z1 Wassertemperatur
+                primary: Z1 water temp
                 secondary: "{{ states('sensor.hph_source_z1_water_temp') }} °C"
                 icon: mdi:thermometer-water
                 icon_color: >-
@@ -1909,7 +1909,7 @@ views:
                   state_not: "unknown"
               card:
                 type: custom:mushroom-template-card
-                primary: Z2 Wassertemperatur
+                primary: Z2 water temp
                 secondary: "{{ states('sensor.hph_source_z2_water_temp') }} °C"
                 icon: mdi:thermometer-water
                 icon_color: >-
@@ -1935,7 +1935,7 @@ views:
                   state_not: "unknown"
               card:
                 type: custom:mushroom-template-card
-                primary: Brauchwasser thermisch
+                primary: DHW thermal
                 secondary: "{{ states('sensor.hph_source_dhw_power_thermal') | float(0) | round(0) }} W"
                 icon: mdi:water-boiler
                 icon_color: >-
@@ -1959,7 +1959,7 @@ views:
                   state_not: "unknown"
               card:
                 type: custom:mushroom-template-card
-                primary: Brauchwasser elektrisch
+                primary: DHW electrical
                 secondary: "{{ states('sensor.hph_source_dhw_power_electrical') | float(0) | round(0) }} W"
                 icon: mdi:water-boiler-alert
                 icon_color: >-
@@ -1981,8 +1981,8 @@ views:
                   state_not: "unknown"
               card:
                 type: custom:mushroom-template-card
-                primary: Interne Heizung
-                secondary: "{{ 'Aktiv' if is_state('binary_sensor.hph_source_internal_heater','on') else 'Bereit' }}"
+                primary: Internal heater
+                secondary: "{{ 'Active' if is_state('binary_sensor.hph_source_internal_heater','on') else 'Bereit' }}"
                 icon: mdi:heating-coil
                 icon_color: "{{ 'orange' if is_state('binary_sensor.hph_source_internal_heater','on') else 'grey' }}"
                 tap_action:
@@ -2004,8 +2004,8 @@ views:
                   state_not: "unknown"
               card:
                 type: custom:mushroom-template-card
-                primary: Brauchwasser-Heizung
-                secondary: "{{ 'Aktiv' if is_state('binary_sensor.hph_source_dhw_heater','on') else 'Bereit' }}"
+                primary: DHW heater
+                secondary: "{{ 'Active' if is_state('binary_sensor.hph_source_dhw_heater','on') else 'Bereit' }}"
                 icon: mdi:water-boiler-alert
                 icon_color: "{{ 'orange' if is_state('binary_sensor.hph_source_dhw_heater','on') else 'grey' }}"
                 tap_action:
@@ -2024,8 +2024,8 @@ views:
                   state_not: "unknown"
               card:
                 type: custom:mushroom-template-card
-                primary: Frostschutz
-                secondary: "{{ 'Aktiv' if is_state('binary_sensor.hph_source_antifreeze','on') else 'Aus' }}"
+                primary: Frost protection
+                secondary: "{{ 'Active' if is_state('binary_sensor.hph_source_antifreeze','on') else 'Aus' }}"
                 icon: mdi:snowflake-alert
                 icon_color: "{{ 'blue' if is_state('binary_sensor.hph_source_antifreeze','on') else 'grey' }}"
                 tap_action:
@@ -2045,8 +2045,8 @@ views:
                   state_not: "unknown"
               card:
                 type: custom:mushroom-template-card
-                primary: Z1 Pumpe
-                secondary: "{{ 'Läuft' if is_state('binary_sensor.hph_source_opt_z1_pump','on') else 'Gestoppt' }}"
+                primary: Z1 pump
+                secondary: "{{ 'Running' if is_state('binary_sensor.hph_source_opt_z1_pump','on') else 'Stopped' }}"
                 icon: mdi:pump
                 icon_color: "{{ 'green' if is_state('binary_sensor.hph_source_opt_z1_pump','on') else 'grey' }}"
                 tap_action:
@@ -2065,8 +2065,8 @@ views:
                   state_not: "unknown"
               card:
                 type: custom:mushroom-template-card
-                primary: Z2 Pumpe
-                secondary: "{{ 'Läuft' if is_state('binary_sensor.hph_source_opt_z2_pump','on') else 'Gestoppt' }}"
+                primary: Z2 pump
+                secondary: "{{ 'Running' if is_state('binary_sensor.hph_source_opt_z2_pump','on') else 'Stopped' }}"
                 icon: mdi:pump
                 icon_color: "{{ 'green' if is_state('binary_sensor.hph_source_opt_z2_pump','on') else 'grey' }}"
                 tap_action:
@@ -2085,7 +2085,7 @@ views:
                   state_not: "unknown"
               card:
                 type: custom:mushroom-template-card
-                primary: Z1 Mischventil
+                primary: Z1 mixing valve
                 secondary: "{{ states('sensor.hph_source_opt_z1_mixing_valve') | title }}"
                 icon: mdi:valve
                 icon_color: >-
@@ -2107,7 +2107,7 @@ views:
                   state_not: "unknown"
               card:
                 type: custom:mushroom-template-card
-                primary: S0 Leistung
+                primary: S0 power
                 secondary: "{{ states('sensor.hph_source_s0_power') | float(0) | round(0) }} W"
                 icon: mdi:flash-outline
                 icon_color: >-
@@ -2118,7 +2118,7 @@ views:
             # Thermal Power always shown — hph_src_internal_thermal_power has
             # a non-empty default for all Panasonic models.
             - type: custom:mushroom-template-card
-              primary: Thermische Leistung
+              primary: Thermal power
               secondary: "{{ states('sensor.hph_source_internal_thermal_power') | float(0) | round(0) }} W"
               icon: mdi:radiator
               icon_color: orange
@@ -2148,8 +2148,8 @@ views:
           cards:
             - type: custom:mushroom-template-card
               entity: switch.hph_holiday
-              primary: Urlaubsmodus
-              secondary: "{{ 'Aktiv' if is_state('switch.hph_holiday','on') else 'Inaktiv' }}"
+              primary: Holiday mode
+              secondary: "{{ 'Active' if is_state('switch.hph_holiday','on') else 'Inactive' }}"
               icon: mdi:airplane-takeoff
               icon_color: "{{ 'blue' if is_state('switch.hph_holiday','on') else 'grey' }}"
               tap_action:
@@ -2157,8 +2157,8 @@ views:
 
             - type: custom:mushroom-template-card
               entity: switch.hph_force_defrost
-              primary: Abtauung erzwingen
-              secondary: "{{ 'Aktiv' if is_state('switch.hph_force_defrost','on') else 'Inaktiv' }}"
+              primary: Force defrost
+              secondary: "{{ 'Active' if is_state('switch.hph_force_defrost','on') else 'Inactive' }}"
               icon: mdi:snowflake-melt
               icon_color: "{{ 'cyan' if is_state('switch.hph_force_defrost','on') else 'grey' }}"
               tap_action:
@@ -2168,7 +2168,7 @@ views:
             # Shows '—' when proxy is unavailable (writer empty / vendor not configured)
             - type: custom:mushroom-template-card
               entity: select.hph_powerful_mode
-              primary: Boost-Modus
+              primary: Boost mode
               secondary: >-
                 {% if is_state('select.hph_powerful_mode','unavailable') %}— (vendor-specific, not configured)
                 {% else %}{{ states('select.hph_powerful_mode') | title }}{% endif %}
@@ -2188,10 +2188,10 @@ views:
               card:
                 type: custom:mushroom-template-card
                 entity: text.hph_src_force_heater
-                primary: Heizung erzwingen
+                primary: Force heating
                 secondary: >-
                   {% set ent = states('text.hph_src_force_heater') %}
-                  {{ 'ein' if ent and is_state(ent,'on') else 'aus' }}
+                  {{ 'ein' if ent and is_state(ent,'on') else 'off' }}
                 icon: mdi:radiator-disabled
                 icon_color: >-
                   {% set ent = states('text.hph_src_force_heater') %}
@@ -2214,7 +2214,7 @@ views:
                 primary: Sterilisation
                 secondary: >-
                   {% set ent = states('text.hph_src_sterilization') %}
-                  {{ 'läuft' if ent and is_state(ent,'on') else 'aus' }}
+                  {{ 'running' if ent and is_state(ent,'on') else 'off' }}
                 icon: mdi:bacteria-outline
                 icon_color: >-
                   {% set ent = states('text.hph_src_sterilization') %}
@@ -2234,8 +2234,8 @@ views:
               card:
                 type: custom:mushroom-template-card
                 entity: button.hph_force_dhw
-                primary: Brauchwasser erzwingen
-                secondary: Einen erzwungenen Brauchwasser-Zyklus auslösen
+                primary: Force DHW
+                secondary: Trigger a forced DHW cycle
                 icon: mdi:water-boiler-auto
                 icon_color: blue
                 tap_action:
@@ -2250,8 +2250,8 @@ views:
               card:
                 type: custom:mushroom-template-card
                 entity: switch.hph_schedule
-                primary: Zeitplan
-                secondary: "{{ 'Aktiv' if is_state('switch.hph_schedule','on') else 'Inaktiv' }}"
+                primary: Schedule
+                secondary: "{{ 'Active' if is_state('switch.hph_schedule','on') else 'Inactive' }}"
                 icon: mdi:calendar-clock
                 icon_color: "{{ 'green' if is_state('switch.hph_schedule','on') else 'grey' }}"
                 tap_action:
@@ -2265,8 +2265,8 @@ views:
               card:
                 type: custom:mushroom-template-card
                 entity: button.hph_restart_heishamon
-                primary: HeishaMon neu starten
-                secondary: Zum Neustart des HeishaMon-Geräts drücken
+                primary: Restart HeishaMon
+                secondary: Press to restart the HeishaMon device
                 icon: mdi:restart
                 icon_color: red
                 tap_action:
@@ -2297,7 +2297,7 @@ views:
           square: false
           cards:
             - type: custom:mushroom-template-card
-              primary: Z1 Vorlauf (live)
+              primary: Z1 supply (live)
               secondary: >-
                 {{ states('sensor.hph_source_outlet_temp') | float(0) | round(1) }} °C
                 → {{ states('sensor.hph_source_zone1_target_temp') | float(0) | round(1) }} °C target
@@ -2308,7 +2308,7 @@ views:
                 action: more-info
                 entity: sensor.hph_source_zone1_target_temp
             - type: custom:mushroom-template-card
-              primary: Z1 Raum
+              primary: Z1 room temp
               secondary: "{{ states('sensor.hph_source_zone1_temp') }} °C"
               icon: mdi:home-thermometer
               icon_color: orange
@@ -2334,7 +2334,7 @@ views:
               card:
                 type: custom:mushroom-template-card
                 entity: number.hph_z1_outside_low
-                primary: Außen niedrig
+                primary: Outdoor low
                 secondary: "{{ states('number.hph_z1_outside_low') | float(0) | round(1) }} °C"
                 icon: mdi:snowflake
                 icon_color: blue
@@ -2348,7 +2348,7 @@ views:
               card:
                 type: custom:mushroom-template-card
                 entity: number.hph_z1_outside_high
-                primary: Außen hoch
+                primary: Outdoor high
                 secondary: "{{ states('number.hph_z1_outside_high') | float(0) | round(1) }} °C"
                 icon: mdi:white-balance-sunny
                 icon_color: yellow
@@ -2362,7 +2362,7 @@ views:
               card:
                 type: custom:mushroom-template-card
                 entity: number.hph_z1_curve_low
-                primary: Soll niedrig
+                primary: Target low
                 secondary: "{{ states('number.hph_z1_curve_low') | float(0) | round(1) }} °C"
                 icon: mdi:water-thermometer
                 icon_color: orange
@@ -2376,7 +2376,7 @@ views:
               card:
                 type: custom:mushroom-template-card
                 entity: number.hph_z1_curve_high
-                primary: Soll hoch
+                primary: Target high
                 secondary: "{{ states('number.hph_z1_curve_high') | float(0) | round(1) }} °C"
                 icon: mdi:fire
                 icon_color: red
@@ -2413,7 +2413,7 @@ views:
                     card:
                       type: custom:mushroom-template-card
                       entity: number.hph_z2_outside_low
-                      primary: Z2 Außen niedrig
+                      primary: Z2 outdoor low
                       secondary: "{{ states('number.hph_z2_outside_low') | float(0) | round(1) }} °C"
                       icon: mdi:snowflake
                       icon_color: blue
@@ -2427,7 +2427,7 @@ views:
                     card:
                       type: custom:mushroom-template-card
                       entity: number.hph_z2_outside_high
-                      primary: Z2 Außen hoch
+                      primary: Z2 outdoor high
                       secondary: "{{ states('number.hph_z2_outside_high') | float(0) | round(1) }} °C"
                       icon: mdi:white-balance-sunny
                       icon_color: yellow
@@ -2441,7 +2441,7 @@ views:
                     card:
                       type: custom:mushroom-template-card
                       entity: number.hph_z2_curve_low
-                      primary: Z2 Soll niedrig
+                      primary: Z2 target low
                       secondary: "{{ states('number.hph_z2_curve_low') | float(0) | round(1) }} °C"
                       icon: mdi:water-thermometer
                       icon_color: orange
@@ -2455,7 +2455,7 @@ views:
                     card:
                       type: custom:mushroom-template-card
                       entity: number.hph_z2_curve_high
-                      primary: Z2 Soll hoch
+                      primary: Z2 target high
                       secondary: "{{ states('number.hph_z2_curve_high') | float(0) | round(1) }} °C"
                       icon: mdi:fire
                       icon_color: red
@@ -2498,7 +2498,7 @@ views:
               card:
                 type: custom:mushroom-template-card
                 entity: select.hph_heating_control
-                primary: Heizungssteuerung
+                primary: Heating control
                 secondary: "{{ states('select.hph_heating_control') | title }}"
                 icon: mdi:home-thermometer
                 tap_action:
@@ -2517,7 +2517,7 @@ views:
               card:
                 type: custom:mushroom-template-card
                 entity: number.hph_cool_delta
-                primary: Kühl-Δ
+                primary: Cooling Δ
                 secondary: "{{ states('number.hph_cool_delta') | float(0) | round(1) }} K"
                 icon: mdi:snowflake
                 icon_color: blue
@@ -2534,7 +2534,7 @@ views:
               card:
                 type: custom:mushroom-template-card
                 entity: select.hph_dhw_sensor_selection
-                primary: Brauchwasser-Sensor
+                primary: DHW sensor
                 secondary: "{{ states('select.hph_dhw_sensor_selection') | title }}"
                 icon: mdi:format-list-bulleted-type
                 tap_action:
@@ -2547,7 +2547,7 @@ views:
               card:
                 type: custom:mushroom-template-card
                 entity: text.hph_src_quiet_schedule
-                primary: Ruhe-Zeitplan
+                primary: Quiet schedule
                 secondary: >-
                   {% set ent = states('text.hph_src_quiet_schedule') %}
                   {{ 'aktiv' if ent and is_state(ent,'on') else 'bereit' }}
@@ -2587,7 +2587,7 @@ views:
                     card:
                       type: custom:mushroom-template-card
                       entity: number.hph_bivalent_start_temp
-                      primary: Bivalenz-Start
+                      primary: Bivalence start
                       secondary: "{{ states('number.hph_bivalent_start_temp') | float(0) | round(1) }} °C"
                       icon: mdi:thermometer-low
                       tap_action:
@@ -2600,7 +2600,7 @@ views:
                     card:
                       type: custom:mushroom-template-card
                       entity: number.hph_heater_delay_time
-                      primary: Heizung Verzögerung
+                      primary: Heating delay
                       secondary: "{{ states('number.hph_heater_delay_time') | int(0) }} min"
                       icon: mdi:timer-sand
                       tap_action:
@@ -2613,7 +2613,7 @@ views:
                     card:
                       type: custom:mushroom-template-card
                       entity: number.hph_heater_start_delta
-                      primary: Heizung Start-Δ
+                      primary: Heating start Δ
                       secondary: "{{ states('number.hph_heater_start_delta') | float(0) | round(1) }} K"
                       icon: mdi:arrow-up-bold-circle
                       tap_action:
@@ -2626,7 +2626,7 @@ views:
                     card:
                       type: custom:mushroom-template-card
                       entity: number.hph_heater_stop_delta
-                      primary: Heizung Stop-Δ
+                      primary: Heating stop Δ
                       secondary: "{{ states('number.hph_heater_stop_delta') | float(0) | round(1) }} K"
                       icon: mdi:arrow-down-bold-circle
                       tap_action:
@@ -2672,7 +2672,7 @@ views:
                   state_not: ""
               card:
                 type: entities
-                title: "Zone 1 — Heizung"
+                title: "Zone 1 — Heating"
                 show_header_toggle: false
                 state_color: false
                 card_mod:
@@ -2697,7 +2697,7 @@ views:
                   state: "on"
               card:
                 type: entities
-                title: "Zone 2 — Heizung"
+                title: "Zone 2 — Heating"
                 show_header_toggle: false
                 state_color: false
                 card_mod:
@@ -2720,7 +2720,7 @@ views:
                   state: "on"
               card:
                 type: entities
-                title: "Warmwasser"
+                title: "Hot water"
                 show_header_toggle: false
                 state_color: false
                 card_mod:
@@ -2739,7 +2739,7 @@ views:
 
             # ── System & thresholds ───────────────────────────────────────────────
             - type: entities
-              title: "System & Schwellwerte"
+              title: "System & thresholds"
               show_header_toggle: false
               state_color: false
               card_mod:
@@ -2759,7 +2759,7 @@ views:
 
             # ── Machine room (read-only monitoring) ──────────────────────────────
             - type: entities
-              title: "Maschinenraum"
+              title: "Machine room"
               show_header_toggle: false
               state_color: false
               card_mod:
@@ -2790,7 +2790,7 @@ views:
 
             # ── Special functions ─────────────────────────────────────────────────
             - type: entities
-              title: "Sonderfunktionen"
+              title: "Special functions"
               show_header_toggle: false
               state_color: false
               card_mod:
@@ -2809,7 +2809,7 @@ views:
 
             # ── Heating curve — Zone 1 ────────────────────────────────────────────
             - type: entities
-              title: "Heizkurve — Zone 1"
+              title: "Heating curve — Zone 1"
               show_header_toggle: false
               state_color: false
               card_mod:
@@ -2837,7 +2837,7 @@ views:
                   state: "on"
               card:
                 type: entities
-                title: "Heizkurve — Zone 2"
+                title: "Heating curve — Zone 2"
                 show_header_toggle: false
                 state_color: false
                 card_mod:
@@ -2856,7 +2856,7 @@ views:
 
             # ── Advanced settings ─────────────────────────────────────────────────
             - type: entities
-              title: "Erweiterte Einstellungen"
+              title: "Advanced settings"
               show_header_toggle: false
               state_color: false
               card_mod:
@@ -2880,7 +2880,7 @@ views:
                   state: "on"
               card:
                 type: entities
-                title: "Bivalent / Zusatzheizung"
+                title: "Bivalent / Auxiliary heat"
                 show_header_toggle: false
                 state_color: false
                 card_mod:
@@ -2900,7 +2900,7 @@ views:
   # ════════════════════════════════════════════════════════════════════════
   # 3) ANALYSIS — ApexCharts (Service-Cloud-style)
   # ════════════════════════════════════════════════════════════════════════
-  - title: Analyse
+  - title: Analysis
     path: analysis
     icon: mdi:chart-multiline
     panel: true
@@ -3026,7 +3026,7 @@ views:
 
             # ── Current readings ──────────────────────────────────────────────────
             - type: entities
-              title: "Aktuelle Messwerte"
+              title: "Current readings"
               show_header_toggle: false
               state_color: false
               card_mod:
@@ -3045,7 +3045,7 @@ views:
 
             # ── Today's efficiency ────────────────────────────────────────────────
             - type: entities
-              title: "Effizienz heute"
+              title: "Today's efficiency"
               show_header_toggle: false
               state_color: false
               card_mod:
@@ -3096,7 +3096,7 @@ views:
         # Behebt die langen "Lücken" wenn Temperaturen sich nicht ändern.
         series:
           - entity: sensor.hph_source_outdoor_temp
-            name: Außen
+            name: Outdoor
             yaxis_id: temp
             color: "#e0a800"
             extend_to: now
@@ -3104,7 +3104,7 @@ views:
               type: mean
               period: 5minute
           - entity: sensor.hph_source_inlet_temp
-            name: Rücklauf
+            name: Return
             yaxis_id: temp
             color: "#7ec1ff"
             extend_to: now
@@ -3112,7 +3112,7 @@ views:
               type: mean
               period: 5minute
           - entity: sensor.hph_source_outlet_temp
-            name: Vorlauf
+            name: Supply
             yaxis_id: temp
             color: "#d62728"
             extend_to: now
@@ -3120,7 +3120,7 @@ views:
               type: mean
               period: 5minute
           - entity: sensor.hph_source_discharge_temp
-            name: Heißgas
+            name: Hot gas
             yaxis_id: temp
             color: "#2ca02c"
             extend_to: now
@@ -3169,7 +3169,7 @@ views:
             curve: smooth
             width: 2
           noData:
-            text: "Sammele Daten — der Trend füllt sich, sobald der Kompressor läuft."
+            text: "Collecting data — trend fills once the compressor runs."
 
       # ── Defrost-KPIs (numerisch) + Cycle-Chart ──
       # Step-Chart der Defrost-Aktivität + Defrost-Coil-Temperatur als Overlay.
@@ -3235,10 +3235,10 @@ views:
           legend:
             show: true
           noData:
-            text: "Noch keine Defrost-Daten — füllt sich nach 24 h Laufzeit."
+            text: "No defrost data yet — fills after 24 h of operation."
         series:
           - entity: binary_sensor.hph_defrost_active
-            name: Abtauung aktiv
+            name: Defrost active
             type: area
             color: "#42a5f5"
             yaxis_id: state
@@ -3247,7 +3247,7 @@ views:
             transform: "return x === 'on' ? 1 : 0;"
             extend_to: now
           - entity: sensor.hph_source_defrost_temp
-            name: Abtau-Spulentemperatur
+            name: Defrost coil temp
             type: line
             color: "#fb8c00"
             yaxis_id: temp
@@ -3266,7 +3266,7 @@ views:
   # ════════════════════════════════════════════════════════════════════════
   # 4) EFFICIENCY — period KPIs, comparisons, tariff splits, multi-year trend
   # ════════════════════════════════════════════════════════════════════════
-  - title: Effizienz
+  - title: Efficiency
     path: efficiency
     icon: mdi:chart-bar
     cards:
@@ -3379,7 +3379,7 @@ views:
           type: horizontal-stack
           cards:
             - type: custom:mushroom-template-card
-              primary: vs. Vorjahresmonat
+              primary: vs. same month last year
               secondary: |-
                 {% set p = states('sensor.hph_cop_change_yoy_pct') | float(0) %}
                 {% set cur = states('sensor.hph_cop_monthly') %}
@@ -3403,7 +3403,7 @@ views:
               fill_container: true
 
             - type: custom:mushroom-template-card
-              primary: vs. Vorjahr
+              primary: vs. last year
               secondary: |-
                 {% set p = states('sensor.hph_scop_change_year_pct') | float(0) %}
                 {% set cur = states('sensor.hph_scop') %}
@@ -3436,7 +3436,7 @@ views:
           type: horizontal-stack
           cards:
             - type: custom:mushroom-template-card
-              primary: Thermische Energie diesen Monat
+              primary: Thermal energy this month
               secondary: |-
                 {% set cur = states('sensor.hph_thermal_monthly') | float(0) %}
                 {% set prev = states('sensor.hph_thermal_same_month_last_year') | float(0) %}
@@ -3448,7 +3448,7 @@ views:
               fill_container: true
 
             - type: custom:mushroom-template-card
-              primary: Elektrische Energie diesen Monat
+              primary: Electrical energy this month
               secondary: |-
                 {% set cur = states('sensor.hph_electrical_monthly') | float(0) %}
                 {% set prev = states('sensor.hph_electrical_same_month_last_year') | float(0) %}
@@ -3474,7 +3474,7 @@ views:
 
             # ── Efficiency trend ──────────────────────────────────────────────────
             - type: entities
-              title: "Effizienz-Verlauf"
+              title: "Efficiency trend"
               show_header_toggle: false
               state_color: false
               card_mod:
@@ -3490,7 +3490,7 @@ views:
 
             # ── KPIs ──────────────────────────────────────────────────────────────
             - type: entities
-              title: "Kennzahlen"
+              title: "Key metrics"
               show_header_toggle: false
               state_color: false
               card_mod:
@@ -3510,7 +3510,7 @@ views:
 
             # ── Year-on-year comparison ───────────────────────────────────────────
             - type: entities
-              title: "Jahresvergleich"
+              title: "Year-on-year"
               show_header_toggle: false
               state_color: false
               card_mod:
@@ -3580,11 +3580,11 @@ views:
         button: false
       - type: markdown
         content: |
-          |   | Thermisch | Elektrisch |
+          |   | Thermal | Electrical |
           |---|---:|---:|
-          | **Jahr** | {{ states('sensor.hph_thermal_yearly') | float(0) | round(2) }} kWh | {{ states('sensor.hph_electrical_yearly') | float(0) | round(2) }} kWh |
-          | **Monat** | {{ states('sensor.hph_thermal_monthly') | float(0) | round(2) }} kWh | {{ states('sensor.hph_electrical_monthly') | float(0) | round(2) }} kWh |
-          | **Heute** | {{ states('sensor.hph_thermal_daily') | float(0) | round(2) }} kWh | {{ states('sensor.hph_electrical_daily') | float(0) | round(2) }} kWh |
+          | **Year** | {{ states('sensor.hph_thermal_yearly') | float(0) | round(2) }} kWh | {{ states('sensor.hph_electrical_yearly') | float(0) | round(2) }} kWh |
+          | **Month** | {{ states('sensor.hph_thermal_monthly') | float(0) | round(2) }} kWh | {{ states('sensor.hph_electrical_monthly') | float(0) | round(2) }} kWh |
+          | **Today** | {{ states('sensor.hph_thermal_daily') | float(0) | round(2) }} kWh | {{ states('sensor.hph_electrical_daily') | float(0) | round(2) }} kWh |
 
       # ── Cost overview (values only — price settings live in
       # Configuration → Electricity cost) ──
@@ -3622,15 +3622,14 @@ views:
           {% macro fmt(s) -%}
             {%- if s in bad -%}—{%- else -%}{{ s | float(0) | round(2) }} kWh{%- endif -%}
           {%- endmacro %}
-          | | Thermisch | Elektrisch |
+          | | Thermal | Electrical |
           |---|---:|---:|
-          | **Verdichter-Laufzeit** | {{ fmt(t_run) }} | {{ fmt(e_run) }} |
-          | **Standby-Verluste** | — | {{ fmt(e_standby) }} |
-          | **Gesamt (Energie-Dashboard)** | {{ fmt(t_total) }} | {{ fmt(e_total) }} |
+          | **Compressor runtime** | {{ fmt(t_run) }} | {{ fmt(e_run) }} |
+          | **Standby losses** | — | {{ fmt(e_standby) }} |
+          | **Total (energy dashboard)** | {{ fmt(t_total) }} | {{ fmt(e_total) }} |
 
-          *Laufzeit wird bei Verdichter-Übergängen aus den externen Zählern
-          erfasst. Die Gesamtwerte fließen ins HA-Energie-Dashboard und in die
-          Kostenberechnung.*
+          *Runtime is captured at compressor transitions from the external counters.
+          Totals flow into the HA Energy Dashboard and cost calculation.*
 
       # ── Tariff breakdown — visual progress bars (this month) ─────────────
       # card-mod background gradient simulates a proportional progress bar.
@@ -3648,14 +3647,14 @@ views:
             - type: vertical-stack
               cards:
                 - type: markdown
-                  content: "**Energie nach Modus — dieser Monat**"
+                  content: "**Energy by mode — this month**"
                 - type: custom:mushroom-template-card
                   primary: >-
-                    Heizung — {{ states('sensor.hph_thermal_monthly_split_heating') | float(0) | round(1) }} kWh thermisch / {{ states('sensor.hph_electrical_monthly_split_heating') | float(0) | round(1) }} kWh elektrisch
+                    Heating — {{ states('sensor.hph_thermal_monthly_split_heating') | float(0) | round(1) }} kWh thermal / {{ states('sensor.hph_electrical_monthly_split_heating') | float(0) | round(1) }} kWh electrical
                   secondary: >-
                     {% set tot = states('sensor.hph_thermal_monthly') | float(1) %}
                     {% set h = states('sensor.hph_thermal_monthly_split_heating') | float(0) %}
-                    {{ (h / tot * 100) | round(0) }}% der thermischen Energie
+                    {{ (h / tot * 100) | round(0) }}% of thermal energy
                   icon: mdi:radiator
                   icon_color: deep-orange
                   fill_container: true
@@ -3668,11 +3667,11 @@ views:
                       }
                 - type: custom:mushroom-template-card
                   primary: >-
-                    Warmwasser — {{ states('sensor.hph_thermal_monthly_split_dhw') | float(0) | round(1) }} kWh thermisch / {{ states('sensor.hph_electrical_monthly_split_dhw') | float(0) | round(1) }} kWh elektrisch
+                    Hot water — {{ states('sensor.hph_thermal_monthly_split_dhw') | float(0) | round(1) }} kWh thermal / {{ states('sensor.hph_electrical_monthly_split_dhw') | float(0) | round(1) }} kWh electrical
                   secondary: >-
                     {% set tot = states('sensor.hph_thermal_monthly') | float(1) %}
                     {% set d = states('sensor.hph_thermal_monthly_split_dhw') | float(0) %}
-                    {{ (d / tot * 100) | round(0) }}% der thermischen Energie
+                    {{ (d / tot * 100) | round(0) }}% of thermal energy
                   icon: mdi:water-boiler
                   icon_color: light-blue
                   fill_container: true
@@ -3685,11 +3684,11 @@ views:
                       }
                 - type: custom:mushroom-template-card
                   primary: >-
-                    Kühlung — {{ states('sensor.hph_thermal_monthly_split_cooling') | float(0) | round(1) }} kWh thermisch / {{ states('sensor.hph_electrical_monthly_split_cooling') | float(0) | round(1) }} kWh elektrisch
+                    Cooling — {{ states('sensor.hph_thermal_monthly_split_cooling') | float(0) | round(1) }} kWh thermal / {{ states('sensor.hph_electrical_monthly_split_cooling') | float(0) | round(1) }} kWh electrical
                   secondary: >-
                     {% set tot = states('sensor.hph_thermal_monthly') | float(1) %}
                     {% set c = states('sensor.hph_thermal_monthly_split_cooling') | float(0) %}
-                    {{ (c / tot * 100) | round(0) }}% der thermischen Energie
+                    {{ (c / tot * 100) | round(0) }}% of thermal energy
                   icon: mdi:snowflake
                   icon_color: cyan
                   fill_container: true
@@ -3711,7 +3710,7 @@ views:
             state: classic
         card:
           type: entities
-          title: "Energie nach Modus — dieser Monat"
+          title: "Energy by mode — this month"
           show_header_toggle: false
           state_color: false
           card_mod:
@@ -3748,7 +3747,7 @@ views:
               end: day
             series:
               - entity: sensor.hph_thermal_daily
-                name: Thermisch kWh
+                name: Thermal kWh
                 type: column
                 color: "#ff7043"
                 statistics:
@@ -3756,7 +3755,7 @@ views:
                   period: day
                   align: start
               - entity: sensor.hph_electrical_daily
-                name: Elektrisch kWh
+                name: Electrical kWh
                 type: column
                 color: "#42a5f5"
                 statistics:
@@ -3774,7 +3773,7 @@ views:
                 title:
                   text: "kWh"
               noData:
-                text: "Sammele Daten — Werte erscheinen nach dem ersten vollen Tag."
+                text: "Collecting data — values appear after the first full day."
 
           - type: custom:apexcharts-card
             header:
@@ -3805,7 +3804,7 @@ views:
               grid:
                 borderColor: var(--divider-color)
               noData:
-                text: "Sammele Daten — Tageswerte erscheinen, sobald der Kompressor läuft."
+                text: "Collecting data — daily values appear once the compressor runs."
 
       # ── 30-day bar chart ──
       - type: custom:hph-help
@@ -3821,7 +3820,7 @@ views:
             decimals: 1
         series:
           - entity: sensor.hph_thermal_daily
-            name: Thermisch
+            name: Thermal
             type: column
             color: "#d62728"
             yaxis_id: energy
@@ -3830,7 +3829,7 @@ views:
               period: day
               align: start
           - entity: sensor.hph_electrical_daily
-            name: Elektrisch
+            name: Electrical
             type: column
             color: "#bcbd22"
             yaxis_id: energy
@@ -3845,7 +3844,7 @@ views:
             title:
               text: "kWh"
           noData:
-            text: "Sammele Daten — Tageswerte erscheinen nach dem ersten vollen Tag."
+            text: "Collecting data — daily values appear after the first full day."
 
       # ── COP trend (30 days) ──
       - type: custom:hph-help
@@ -3859,7 +3858,7 @@ views:
           - decimals: 1
         series:
           - entity: sensor.hph_cop_daily
-            name: COP täglich
+            name: Daily COP
             type: line
             color: "#17a2b8"
             stroke_width: 2
@@ -3872,7 +3871,7 @@ views:
           markers:
             size: 4
           noData:
-            text: "Sammele Daten — der 30-Tage-Trend füllt sich nach mehreren Tagen Betrieb."
+            text: "Collecting data — 30-day trend fills after several days of operation."
 
       # ── SCOP per heating season (Jul 1 – Jun 30, up to 10 seasons) ──
       # One LTS entry per season → one bar per season.
@@ -3908,7 +3907,7 @@ views:
             labels:
               format: "yyyy"
           noData:
-            text: "Sammele Daten — SCOP-Trend füllt sich nach der ersten kompletten Heizsaison."
+            text: "Collecting data — SCOP trend fills after the first complete heating season."
 
       # ── Statistics graph (built-in) ──
       - type: custom:hph-help
@@ -3924,15 +3923,15 @@ views:
 
       - type: markdown
         content: |
-          **HA-Energie-Dashboard:** füge `sensor.hph_thermal_energy_active`
-          und `sensor.hph_electrical_energy_active` als *einzelne Geräte*
-          unter Einstellungen → Energie hinzu. Sie folgen deiner gewählten
-          Quelle (berechnet / externe Leistung / externer Energiezähler), sodass
-          das Energie-Dashboard immer den korrekten Zähler zeigt.
+          **HA Energy Dashboard:** add `sensor.hph_thermal_energy_active`
+          and `sensor.hph_electrical_energy_active` as *individual devices*
+          under Settings → Energy. They follow your chosen source
+          (calculated / external power / external energy meter), so the
+          Energy Dashboard always shows the correct counter.
 
-          **Mehrjahresvergleich:** importiere das Grafana-Dashboard
-          `efficiency_jaz_maz.json` für jahresübergreifende SCOP/MAZ-Diagramme
-          (siehe [docs/installation.md](/local/hph/installation.md)).
+          **Multi-year comparison:** import the Grafana dashboard
+          `efficiency_jaz_maz.json` for cross-year SCOP/MAZ charts
+          (see [docs/installation.md](/local/hph/installation.md)).
 
       # ── Efficiency-quality block — i18n via help_<lang>.json ──
       - type: custom:hph-help
@@ -3943,7 +3942,7 @@ views:
         cards:
           - type: gauge
             entity: sensor.hph_carnot_efficiency_percent
-            name: Carnot-Wirkungsgrad
+            name: Carnot efficiency
             unit: '%'
             min: 0
             max: 70
@@ -3954,7 +3953,7 @@ views:
             needle: true
           - type: gauge
             entity: sensor.hph_cycles_per_hour
-            name: Takte pro Stunde
+            name: Cycles per hour
             unit: '1/h'
             min: 0
             max: 6
@@ -3975,7 +3974,7 @@ views:
   # ════════════════════════════════════════════════════════════════════════
   # 5) OPTIMIZATION — cycle analysis + advisor + control switches
   # ════════════════════════════════════════════════════════════════════════
-  - title: Optimierung
+  - title: Optimization
     path: optimization
     icon: mdi:tune-vertical
     cards:
@@ -3987,7 +3986,7 @@ views:
             state: mushroom
         card:
           type: custom:mushroom-template-card
-          primary: Gesamtbewertung
+          primary: Overall assessment
           secondary: >-
             {% set s = states('sensor.hph_advisor_summary') %}
             {% if s == 'critical' %}🔴 Action required
@@ -4012,7 +4011,7 @@ views:
 
             # ── Advisor summary ───────────────────────────────────────────────────
             - type: entities
-              title: "Advisor-Übersicht"
+              title: "Advisor summary"
               show_header_toggle: false
               state_color: true
               card_mod:
@@ -4067,7 +4066,7 @@ views:
           chart:
             height: 260
           noData:
-            text: "Sammele Daten — Tageswerte erscheinen, sobald der Kompressor läuft."
+            text: "Collecting data — daily values appear once the compressor runs."
 
       - type: custom:hph-help
         translation_key: section_advisor_recommendations
@@ -4104,9 +4103,9 @@ views:
             - type: custom:mushroom-template-card
               primary: |-
                 {% set rec = state_attr('sensor.hph_advisor_analysis','recommendation_k') | float(0) %}
-                {% if rec == 0 %}Heizkurve im Sollbereich
-                {% elif rec > 0 %}Heizkurve empfohlen +{{ rec }} K
-                {% else %}Heizkurve empfohlen {{ rec }} K{% endif %}
+                {% if rec == 0 %}Heating curve in target range
+                {% elif rec > 0 %}Heating curve recommended +{{ rec }} K
+                {% else %}Heating curve recommended {{ rec }} K{% endif %}
               secondary: >-
                 {{ state_attr('sensor.hph_advisor_analysis','message') }}
               icon: |-
@@ -4161,7 +4160,7 @@ views:
 
             # ── Analysis recommendation ───────────────────────────────────────────
             - type: entities
-              title: "Analyse-Empfehlung"
+              title: "Analysis recommendation"
               show_header_toggle: false
               state_color: true
               card_mod:
@@ -4178,7 +4177,7 @@ views:
 
             # ── Active fault ──────────────────────────────────────────────────────
             - type: entities
-              title: "Aktiver Fehler"
+              title: "Active fault"
               show_header_toggle: false
               state_color: true
               card_mod:
@@ -4216,7 +4215,7 @@ views:
             state_not: unknown
         card:
           type: entities
-          title: Heizgrenze — beobachtet
+          title: Heating limit — observed
           entities:
             - entity: sensor.hph_heating_limit_smoothed
             - entity: number.hph_heating_limit_observed_c
@@ -4229,13 +4228,13 @@ views:
               - unknown
         card:
           type: markdown
-          title: Heizgrenze — beobachtet
+          title: Heating limit — observed
           content: |
-            Wird verfügbar, sobald der erste **Kompressorlauf ≥ 30 min**
-            mit anschließendem Stopp aufgezeichnet wurde. Der Wert ist ein
-            7-Tage-rollierender Durchschnitt der Außentemperatur beim
-            Stoppen — er zeigt, ab welcher Außentemperatur deine
-            Heizung aufhört zu laufen.
+            Becomes available once the first **compressor run ≥ 30 min**
+            followed by a stop has been recorded. The value is a
+            7-day rolling average of the outdoor temperature at
+            shutdown — it shows at what outdoor temperature your
+            heating stops running.
 
             **Zielwert:** {{ states('number.hph_advisor_heating_limit_target_c') }} °C
 
@@ -4244,37 +4243,37 @@ views:
         button: false
       - type: markdown
         content: |
-          ### Taktung
+          ### Short-cycling
           {{ state_attr('sensor.hph_advisor_short_cycle','message') }}
 
-          ### Spreizung
+          ### Spread
           {{ state_attr('sensor.hph_advisor_spread','message') }}
 
-          ### Abtauung
+          ### Defrost
           {{ state_attr('sensor.hph_advisor_defrost','message') }}
 
-          ### Heizkurve / Zusatzheizung
+          ### Heating curve / Aux heater
           {{ state_attr('sensor.hph_advisor_heat_curve','message') }}
 
-          ### Warmwasser
+          ### Hot water
           {{ state_attr('sensor.hph_advisor_dhw_runtime','message') }}
 
-          ### Heizgrenze
+          ### Heating limit
           {{ state_attr('sensor.hph_advisor_heating_limit','message') }}
 
-          ### Diagnose
+          ### Diagnostics
           {{ state_attr('sensor.hph_advisor_diagnostics','message') }}
 
-          ### Wasserdruck-Trend
+          ### Water pressure trend
           {{ state_attr('sensor.hph_advisor_pressure_trend','message') }}
 
-          ### Pumpenkurve (v0.8)
+          ### Pump curve (v0.8)
           {{ state_attr('sensor.hph_advisor_pump_curve','message') }}
 
-          ### Effizienz-Drift (v0.8)
+          ### Efficiency drift (v0.8)
           {{ state_attr('sensor.hph_advisor_efficiency_drift','message') }}
 
-          ### Warmwasser-Timing (v0.8)
+          ### Hot water timing (v0.8)
           {{ state_attr('sensor.hph_advisor_dhw_timing','message') }}
 
 
@@ -4285,7 +4284,7 @@ views:
   # Conditional rendering hides anything the user disabled in the
   # kamaradclimber integration (heat-only / no-DHW / no-bivalent).
   # ════════════════════════════════════════════════════════════════════════
-  - title: Wärmepumpe
+  - title: Heat pump
     path: heatpump
     icon: mdi:heat-pump
     cards:
@@ -4308,14 +4307,14 @@ views:
                 type: vertical-stack
                 cards:
                   - type: markdown
-                    content: "## Heizkurve — Zone 2 (Referenz)"
+                    content: "## Heating curve — Zone 2 (reference)"
                   - type: grid
                     columns: 4
                     square: false
                     cards:
                       - type: custom:mushroom-template-card
                         entity: number.hph_z2_outside_low
-                        primary: Z2 Außen niedrig
+                        primary: Z2 outdoor low
                         secondary: "{{ states('number.hph_z2_outside_low') | float(0) | round(1) }} °C"
                         icon: mdi:snowflake
                         icon_color: blue
@@ -4324,7 +4323,7 @@ views:
                           action: more-info
                       - type: custom:mushroom-template-card
                         entity: number.hph_z2_outside_high
-                        primary: Z2 Außen hoch
+                        primary: Z2 outdoor high
                         secondary: "{{ states('number.hph_z2_outside_high') | float(0) | round(1) }} °C"
                         icon: mdi:white-balance-sunny
                         icon_color: yellow
@@ -4333,7 +4332,7 @@ views:
                           action: more-info
                       - type: custom:mushroom-template-card
                         entity: number.hph_z2_curve_low
-                        primary: Z2 Soll niedrig
+                        primary: Z2 target low
                         secondary: "{{ states('number.hph_z2_curve_low') | float(0) | round(1) }} °C"
                         icon: mdi:water-thermometer
                         icon_color: orange
@@ -4342,7 +4341,7 @@ views:
                           action: more-info
                       - type: custom:mushroom-template-card
                         entity: number.hph_z2_curve_high
-                        primary: Z2 Soll hoch
+                        primary: Z2 target high
                         secondary: "{{ states('number.hph_z2_curve_high') | float(0) | round(1) }} °C"
                         icon: mdi:fire
                         icon_color: red
@@ -4358,7 +4357,7 @@ views:
                   state: classic
               card:
                 type: entities
-                title: "Heizkurve — Zone 2 (Referenz)"
+                title: "Heating curve — Zone 2 (reference)"
                 show_header_toggle: false
                 state_color: false
                 card_mod:
@@ -4443,18 +4442,18 @@ views:
           - switch.hph_ctrl_forecast_preheat_active
       - type: markdown
         content: |
-          **Prognose-Sensor:** ein HA-Sensor, der die **minimale**
-          Außentemperatur von morgen in °C veröffentlicht. Liegt das Minimum
-          von morgen mehr als `drop_threshold_k` unter dem heutigen Wert, wird
-          das adaptive Kurvenziel für die Nacht um `boost_k` angehoben, um die
-          thermische Masse des Gebäudes vorzuheizen. Gängige Quellen:
-          - **Met.no** → Template-Sensor, der die Vorhersage-Attribute von
-            `weather.home` ausliest
-          - **DWD Weather Warnings**-Add-on → `sensor.dwd_weather_*_temperature_min_d_1`
+          **Forecast sensor:** a HA sensor that publishes the **minimum**
+          outdoor temperature for tomorrow in °C. If tomorrow's minimum
+          is more than `drop_threshold_k` below today's value, the
+          adaptive curve target is raised for the night by `boost_k`
+          to pre-heat the thermal mass of the building. Common sources:
+          - **Met.no** → template sensor reading the forecast attributes of
+            `weather.home`
+          - **DWD Weather Warnings** add-on → `sensor.dwd_weather_*_temperature_min_d_1`
           - **OpenWeatherMap** → `sensor.openweathermap_forecast_temperature_low`
-          - jeder eigene Template-Sensor mit `state_attr('weather.x','forecast')[0].templow`
+          - any custom template sensor using `state_attr('weather.x','forecast')[0].templow`
 
-          Leer lassen, um das Prognose-Vorheizen zu deaktivieren.
+          Leave empty to disable forecast pre-heating.
 
       # ── Advisor thresholds (with inline help) ──
       - type: custom:hph-help
@@ -4475,21 +4474,20 @@ views:
   # ════════════════════════════════════════════════════════════════════════
   # 5c) PROGRAMS — service programs (legionella one-shot, etc.)
   # ════════════════════════════════════════════════════════════════════════
-  - title: Programme
+  - title: Programs
     path: programs
     icon: mdi:calendar-clock
     cards:
       - type: markdown
         content: |
-          ## Serviceprogramme
+          ## Service programs
 
-          Die meisten modernen A2W-Wärmepumpen (inkl. aller Panasonic-Aquarea-
-          Generationen) erledigen **Legionellenschutz** und **Estrich-
-          Austrocknung** in ihrem eigenen Regler — stelle diese Programme dort
-          ein, nicht hier. HeatPump Hero bietet nur einen einmaligen
-          Legionellen-Auslöser für Installationen, deren Regler keine manuelle
-          Boost-Option hat, plus einen Dienst, den Automatisierungen aufrufen
-          können.
+          Most modern A2W heat pumps (including all Panasonic Aquarea
+          generations) handle **legionella protection** and **screed
+          drying** in their own controller — configure those programs
+          there, not here. HeatPump Hero only provides a one-shot
+          legionella trigger for installations whose controller has no
+          manual boost option, plus a service that automations can call.
 
       # ── One-off legionella trigger ──
       - type: custom:hph-help
@@ -4498,9 +4496,9 @@ views:
       - type: entities
         entities:
           - type: call-service
-            name: Legionellenprogramm jetzt starten
+            name: Start legionella program
             icon: mdi:water-boiler
-            action_name: Auslösen
+            action_name: Trigger
             service: hph.run_legionella_now
           - type: divider
           - entity: number.hph_prog_legionella_target_c
@@ -4513,18 +4511,19 @@ views:
 
       - type: markdown
         content: |
-          **Legionellenprogramm jetzt starten** hebt das Brauchwasser auf die
-          Zieltemperatur und hält sie für die eingestellte Dauer. Ziel/Haltezeit
-          ändern über *Einstellungen → Geräte & Dienste → HeatPump Hero →
-          Konfigurieren → Programme*.
+          **Start legionella program** raises the domestic hot water to the
+          target temperature and holds it for the configured duration.
+          Change target/hold time via *Settings → Devices & Services →
+          HeatPump Hero → Configure → Programs*.
 
-          Für wöchentliche Wiederholung: nutze den eingebauten Legionellen-
-          Zeitplan deines Wärmepumpenreglers — er ist mit den Sicherheits-
-          verriegelungen verzahnt und übersteht Stromausfälle.
+          For weekly repetition: use the built-in legionella schedule
+          of your heat pump controller — it is interlocked with safety
+          logic and survives power outages.
 
-          **Estrich-Austrocknung:** nutze *Installateur-Einstellungen →
-          Fußbodenheizung* an einem Panasonic-Regler. HeatPump Hero bietet kein
-          Estrichprogramm — der reglereigene Estrichmodus ist sicherer.
+          **Screed drying:** use *Installer settings →
+          Underfloor heating* on a Panasonic controller. HeatPump Hero
+          does not provide a screed program — the controller's built-in
+          screed mode is safer.
 
   # ════════════════════════════════════════════════════════════════════════
   # 6) CONFIGURATION
@@ -4533,7 +4532,7 @@ views:
   # merged into the Overview view. Default Lovelace masonry handles
   # responsive layout on phones automatically.)
   # ════════════════════════════════════════════════════════════════════════
-  - title: Konfiguration
+  - title: Configuration
     path: config
     icon: mdi:cog
     cards:
@@ -4768,13 +4767,13 @@ views:
           - entity: sensor.hph_electricity_price_effective
       - type: markdown
         content: |
-          Setze **Manueller Preis** auf deinen Pauschaltarif (z.B. 30 ct/kWh).
-          Optional kannst du die Entity-ID eines Live-Preis-Sensors angeben
-          (z.B. `sensor.tibber_current_price` aus der Tibber-Integration —
-          Einheit muss **€/kWh** sein). Ist ein Live-Sensor gesetzt und gültig,
-          hat er Vorrang vor dem manuellen Preis.
-          Hinweis: Tages-/Monatskosten aus einem Spotpreis sind Schätzungen;
-          nur ein Pauschaltarif liefert exakte Werte.
+          Set **Manual price** to your flat-rate tariff (e.g. 30 ct/kWh).
+          Optionally enter the entity-ID of a live price sensor
+          (e.g. `sensor.tibber_current_price` from the Tibber integration —
+          unit must be **€/kWh**). If a live sensor is set and valid,
+          it takes precedence over the manual price.
+          Note: daily/monthly costs from a spot price are estimates;
+          only a flat-rate tariff gives exact values.
 
       # ── Export / scheduled task ──
       - type: custom:hph-help
@@ -4800,11 +4799,11 @@ views:
           - entity: sensor.hph_bridge_last_publish
       - type: markdown
         content: |
-          Wenn aktiviert, veröffentlicht HeatPump Hero ~50 abgeleitete Sensoren
-          (COP / SCOP / Advisor / Diagnose) erneut auf MQTT unter
-          `<prefix>/<domain>/<entity_id>/state` und `/attributes`, sodass
-          ioBroker / openHAB / Node-RED sie lesen können. Schreibgeschützt —
-          die Steuerung bleibt in HA. Siehe
+          When enabled, HeatPump Hero re-publishes ~50 derived sensors
+          (COP / SCOP / Advisor / Diagnostics) on MQTT under
+          `<prefix>/<domain>/<entity_id>/state` and `/attributes`, so
+          ioBroker / openHAB / Node-RED can read them. Read-only —
+          control stays in HA. See
           [docs/multivendor_bridge.md](https://github.com/st03psn/heat-pump-hero/blob/main/docs/multivendor_bridge.md)
           for the topic schema and per-platform recipes.
 
@@ -4819,7 +4818,7 @@ views:
             state_not: ""
         card:
           type: entities
-          title: Heizkurve — Zone 1 (Schreibziele)
+          title: Heating curve — Zone 1 (write targets)
           entities:
             - entity: text.hph_ctrl_write_z1_outside_low
             - entity: text.hph_ctrl_write_z1_outside_high
@@ -4832,7 +4831,7 @@ views:
             state_not: ""
         card:
           type: entities
-          title: Heizkurve — Zone 2 (Schreibziele, falls konfiguriert)
+          title: Heating curve — Zone 2 (write targets, if configured)
           entities:
             - entity: text.hph_ctrl_write_z2_outside_low
             - entity: text.hph_ctrl_write_z2_outside_high
