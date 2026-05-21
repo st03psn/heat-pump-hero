@@ -39,6 +39,19 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
   on/off, active/idle), markdown help blocks, table headers, and section
   headings. Advisor/diagnostic message bodies stay English by design.
 
+- **Dashboard status tiles now follow the per-user UI language (B2–B4
+  complete).** All static-label status tiles in the Analysis view
+  (temperature strip, power/COP strip, defrost KPI strip) and the
+  Efficiency view KPI strip have been converted from `mushroom-template-card`
+  with hardcoded German `secondary:` to `custom:hph-tile` with `label_key:`
+  pointing to `help_<lang>.json` (13 new `ana_*` keys). Six grid-embedded
+  apexcharts chart titles (Abtauzyklen, Energie/Taktung 7 Tage) are now
+  rendered via language-following `custom:hph-help` heading cards. The
+  inline markdown "COP nach Modus" explanation was replaced by an
+  `hph-help` popup (`eff_cop_mode_note`). The six full-width chart titles
+  (B4a) and the ten Control section headers (B2a) were already done in
+  prior commits.
+
 - **Efficiency-package sensor names are German.** The 18 statistics /
   integration / history_stats sensors in `data/packages/hph_efficiency.yaml`
   (HA core platforms — no `translation_key` support) had their hardcoded

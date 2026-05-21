@@ -113,9 +113,11 @@ def check_entity_names(base: str, token: str) -> int:
 
 
 def check_help_asset(base: str, token: str) -> None:
-    print("\n=== 2. hph-help custom card asset ===")
+    print("\n=== 2. hph-cards custom card asset ===")
+    # File was renamed hph-help.js → hph-cards.js when the tile/hero cards
+    # were added alongside hph-help (commit 98a8460).
     try:
-        status, body = _get(base, token, "/hph_assets/hph-help.js", raw=True)
+        status, body = _get(base, token, "/hph_assets/hph-cards.js", raw=True)
         defines = "customElements.define(\"hph-help\"" in body or \
                   "customElements.define('hph-help'" in body
         print(f"  HTTP {status}, {len(body)} bytes, defines hph-help: {defines}")
@@ -125,8 +127,8 @@ def check_help_asset(base: str, token: str) -> None:
         else:
             print("  [WARN] asset reachable but unexpected content")
     except urllib.error.HTTPError as e:
-        print(f"  [FAIL] HTTP {e.code} for /hph_assets/hph-help.js — static path "
-              "not registered (check __init__.py async_register_static_paths)")
+        print(f"  [FAIL] HTTP {e.code} for /hph_assets/hph-cards.js — static path "
+              "not registered or integration not reloaded after rename")
     except urllib.error.URLError as e:
         print(f"  [FAIL] cannot reach asset: {e}")
 

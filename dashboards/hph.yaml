@@ -2939,24 +2939,32 @@ views:
           columns: 2
           square: false
           cards:
-            - type: custom:mushroom-template-card
-              primary: "{{ states('sensor.hph_source_outlet_temp') }}°C"
-              secondary: Vorlauf
+            - type: custom:hph-tile
+              entity: sensor.hph_source_outlet_temp
+              suffix: "°C"
+              use_unit: false
+              label_key: ana_outlet
               icon: mdi:water-thermometer
               icon_color: red
-            - type: custom:mushroom-template-card
-              primary: "{{ states('sensor.hph_source_inlet_temp') }}°C"
-              secondary: Rücklauf
+            - type: custom:hph-tile
+              entity: sensor.hph_source_inlet_temp
+              suffix: "°C"
+              use_unit: false
+              label_key: ana_inlet
               icon: mdi:water-thermometer-outline
               icon_color: blue
-            - type: custom:mushroom-template-card
-              primary: "{{ states('sensor.hph_source_outdoor_temp') }}°C"
-              secondary: Außen
+            - type: custom:hph-tile
+              entity: sensor.hph_source_outdoor_temp
+              suffix: "°C"
+              use_unit: false
+              label_key: ana_outdoor
               icon: mdi:thermometer
               icon_color: yellow
-            - type: custom:mushroom-template-card
-              primary: "{{ states('sensor.hph_source_discharge_temp') }}°C"
-              secondary: Heißgas
+            - type: custom:hph-tile
+              entity: sensor.hph_source_discharge_temp
+              suffix: "°C"
+              use_unit: false
+              label_key: ana_discharge
               icon: mdi:thermometer-high
               icon_color: deep-orange
 
@@ -2971,40 +2979,36 @@ views:
           columns: 2
           square: false
           cards:
-            - type: custom:mushroom-template-card
-              primary: >-
-                {% set w = states('sensor.hph_thermal_power_active') | float(0) %}
-                {% if w >= 1000 %}{{ (w / 1000) | round(2) }} kW{% else %}{{ w | round(0) | int }} W{% endif %}
-              secondary: Thermische Leistung
+            - type: custom:hph-tile
+              entity: sensor.hph_thermal_power_active
+              label_key: ana_thermal_power
               icon: mdi:fire
               icon_color: red
-            - type: custom:mushroom-template-card
-              primary: >-
-                {% set w = states('sensor.hph_electrical_power_active') | float(0) %}
-                {% if w >= 1000 %}{{ (w / 1000) | round(2) }} kW{% else %}{{ w | round(0) | int }} W{% endif %}
-              secondary: Elektrische Leistung
+            - type: custom:hph-tile
+              entity: sensor.hph_electrical_power_active
+              label_key: ana_electrical_power
               icon: mdi:flash
               icon_color: yellow
-            - type: custom:mushroom-template-card
-              primary: "{{ states('sensor.hph_cop_live') | float(0) | round(2) }}"
-              secondary: >-
-                COP live · {{ states('sensor.hph_thermal_power_active') | float(0) | round(0) | int }} W
-                / {{ states('sensor.hph_electrical_power_active') | float(0) | round(0) | int }} W
-                {%- if is_state('binary_sensor.hph_defrost_active','on') %} · ×0 defrost{% endif %}
+            - type: custom:hph-tile
+              entity: sensor.hph_cop_live
+              decimals: 2
+              label_key: ana_cop_live
               icon: mdi:speedometer
-              icon_color: >-
-                {% set cop = states('sensor.hph_cop_live') | float(0) %}
-                {% if cop >= 3.5 %}green{% elif cop >= 2.5 %}amber{% elif cop > 0 %}red{% else %}grey{% endif %}
-              multiline_secondary: false
-            - type: custom:mushroom-template-card
-              primary: "{{ states('sensor.hph_source_compressor_freq') }} Hz"
-              secondary: Verdichterfrequenz
+              color_thresholds: [[3.5, "green"], [2.5, "amber"], [0.0001, "red"]]
+              color_else: grey
+            - type: custom:hph-tile
+              entity: sensor.hph_source_compressor_freq
+              suffix: " Hz"
+              use_unit: false
+              label_key: ov_compressor_freq
               icon: mdi:sine-wave
-              icon_color: >-
-                {{ 'green' if is_state('binary_sensor.hph_compressor_running','on') else 'grey' }}
-            - type: custom:mushroom-template-card
-              primary: "{{ states('sensor.hph_source_flow_rate') }} L/min"
-              secondary: Wasserdurchfluss
+              color_entity: binary_sensor.hph_compressor_running
+              color_state_map:
+                "on": green
+              color_else: grey
+            - type: custom:hph-tile
+              entity: sensor.hph_source_flow_rate
+              label_key: ana_flow_rate
               icon: mdi:waves-arrow-right
               icon_color: blue
 
@@ -3174,32 +3178,32 @@ views:
         columns: 3
         square: false
         cards:
-          - type: custom:mushroom-template-card
+          - type: custom:hph-tile
             entity: sensor.hph_defrost_count_24h
-            primary: "{{ states('sensor.hph_defrost_count_24h') | int(0) }}"
-            secondary: Abtauzyklen (24 h)
+            decimals: 0
+            use_unit: false
+            label_key: ana_defrost_count
             icon: mdi:counter
             icon_color: blue
-          - type: custom:mushroom-template-card
+          - type: custom:hph-tile
             entity: sensor.hph_defrost_duration_24h
-            primary: >-
-              {% set h = states('sensor.hph_defrost_duration_24h') | float(0) %}
-              {% if h >= 1 %}{{ h | round(2) }} h
-              {% else %}{{ (h * 60) | round(0) | int }} min{% endif %}
-            secondary: Gesamte Abtauzeit (24 h)
+            decimals: 2
+            label_key: ana_defrost_duration
             icon: mdi:timer-sand
             icon_color: cyan
-          - type: custom:mushroom-template-card
+          - type: custom:hph-tile
             entity: sensor.hph_defrost_avg_duration_24h
-            primary: "{{ states('sensor.hph_defrost_avg_duration_24h') | float(0) | round(1) }} min"
-            secondary: Mittl. Taktdauer
+            decimals: 1
+            label_key: ana_defrost_avg
             icon: mdi:chart-bell-curve
             icon_color: indigo
 
+      - type: custom:hph-help
+        translation_key: ana_defrost_24h
+        button: false
       - type: custom:apexcharts-card
         header:
           show: true
-          title: Abtauzyklen — letzte 24 h
           show_states: true
         graph_span: 24h
         span:
@@ -3322,43 +3326,48 @@ views:
           columns: 5
           square: false
           cards:
-            - type: custom:mushroom-template-card
-              primary: "{{ states('sensor.hph_cop_daily') | float(0) | round(2) }}"
-              secondary: COP heute
+            - type: custom:hph-tile
+              entity: sensor.hph_cop_daily
+              decimals: 2
+              label_key: kpi_cop_today
               icon: mdi:calendar-today
-              icon_color: >-
-                {% set cop = states('sensor.hph_cop_daily') | float(0) %}
-                {% if cop >= 3.5 %}green{% elif cop >= 2.5 %}amber{% elif cop > 0 %}red{% else %}grey{% endif %}
-              fill_container: true
-            - type: custom:mushroom-template-card
-              primary: "{{ states('sensor.hph_cop_monthly') | float(0) | round(2) }}"
-              secondary: COP Monat
+              color_thresholds: [[3.5, "green"], [2.5, "amber"], [0.0001, "red"]]
+              color_else: grey
+              navigate: /hph/efficiency
+            - type: custom:hph-tile
+              entity: sensor.hph_cop_monthly
+              decimals: 2
+              label_key: kpi_cop_month
               icon: mdi:calendar-month
-              icon_color: >-
-                {% set cop = states('sensor.hph_cop_monthly') | float(0) %}
-                {% if cop >= 3.5 %}green{% elif cop >= 2.5 %}amber{% elif cop > 0 %}red{% else %}grey{% endif %}
-              fill_container: true
-            - type: custom:mushroom-template-card
-              primary: "{{ states('sensor.hph_scop') | float(0) | round(2) }}"
-              secondary: SCOP Saison
+              color_thresholds: [[3.5, "green"], [2.5, "amber"], [0.0001, "red"]]
+              color_else: grey
+              navigate: /hph/efficiency
+            - type: custom:hph-tile
+              entity: sensor.hph_scop
+              decimals: 2
+              label_key: kpi_scop_season
               icon: mdi:calendar-star
-              icon_color: >-
-                {% set cop = states('sensor.hph_scop') | float(0) %}
-                {% if cop >= 3.5 %}green{% elif cop >= 2.5 %}amber{% elif cop > 0 %}red{% else %}grey{% endif %}
-              fill_container: true
-            - type: custom:mushroom-template-card
-              primary: "{{ states('sensor.hph_cost_today') | float(0) | round(2) }} €"
-              secondary: Kosten heute
+              color_thresholds: [[3.5, "green"], [2.5, "amber"], [0.0001, "red"]]
+              color_else: grey
+              navigate: /hph/efficiency
+            - type: custom:hph-tile
+              entity: sensor.hph_cost_today
+              decimals: 2
+              suffix: " €"
+              use_unit: false
+              label_key: kpi_cost_today
               icon: mdi:currency-eur
-              icon_color: >-
-                {% set v = states('sensor.hph_cost_today') | float(0) %}
-                {% if v > 5 %}red{% elif v > 2 %}orange{% else %}green{% endif %}
-              fill_container: true
-            - type: custom:mushroom-template-card
-              primary: "{{ states('sensor.hph_cost_monthly') | float(0) | round(2) }} €"
-              secondary: Kosten Monat
+              color_thresholds: [[5, "red"], [2, "orange"]]
+              color_else: green
+            - type: custom:hph-tile
+              entity: sensor.hph_cost_monthly
+              decimals: 2
+              suffix: " €"
+              use_unit: false
+              label_key: kpi_cost_month
               icon: mdi:currency-eur
-              fill_container: true
+              color_else: grey
+              navigate: /hph/efficiency
 
         # ── Side-by-side comparison cards (month / year) ──
       - type: conditional
@@ -3556,15 +3565,9 @@ views:
       # informative. Mode-energy percentages are shown in the progress bars
       # below; per-mode COP requires runtime-gated per-mode meters (not yet
       # implemented — roadmap v1.0).
-      - type: markdown
-        content: >
-          **COP nach Modus** wird hier nicht gezeigt. Standby-Strom wird immer
-          dem aktiven Tarif (meist Heizung) zugerechnet, wodurch die
-          modusbezogenen Stromsummen höher ausfallen als der tatsächliche
-          Verdichterverbrauch. Das würde einen irreführend niedrigen
-          modusbezogenen COP (z.B. 1.0) zeigen, während der laufzeitbasierte
-          Gesamt-COP (oben) korrekt ist. Die Energieaufteilung nach Modus zeigen
-          die Balken unten.
+      - type: custom:hph-help
+        translation_key: eff_cop_mode_note
+        icon: mdi:information-outline
 
       # ── Energy totals (markdown for 2-decimal display — utility_meter
       # accumulates with float precision, has no round option, and the
@@ -3731,10 +3734,15 @@ views:
         columns: 2
         square: false
         cards:
+          - type: custom:hph-help
+            translation_key: eff_energy_7d
+            button: false
+          - type: custom:hph-help
+            translation_key: cycling_7d
+            button: false
           - type: custom:apexcharts-card
             header:
-              show: true
-              title: Energie — letzte 7 Tage (kWh)
+              show: false
             graph_span: 7d
             span:
               end: day
@@ -3770,8 +3778,7 @@ views:
 
           - type: custom:apexcharts-card
             header:
-              show: true
-              title: Taktung — letzte 7 Tage
+              show: false
             graph_span: 7d
             span:
               end: day
