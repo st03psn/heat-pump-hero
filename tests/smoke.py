@@ -830,6 +830,18 @@ _DISPLAY_FIELD_RE = re.compile(
     r"^\s+(primary|secondary|title|name|action_name|content|text)\s*:\s*(.+)"
 )
 _GERMAN_RE = re.compile(r"[äöüÄÖÜß]")
+# Extended German detection used for package YAML files (hph_efficiency.yaml
+# uses HA-core platforms that don't support translation_key — names must be English).
+_GERMAN_WORD_RE = re.compile(
+    r"(?<![a-zA-Z_])("
+    r"Heizen|Kühlen|Warmwasser|Heizung|Kühlung|Bereit|Betrieb|"
+    r"Fehler|WMZ|veraltet|aktiv(?!ate)|bereit|Abtauung|Abtaudauer|Abtau(?![\w])|"
+    r"Spreizung|Heizgrenze|Vorlauf|Rücklauf|Brauchwasser|"
+    r"Laufzeit|Datenqualität|Raumtemperatur|"
+    r"Thermisch\w*|Elektrisch\w*|Druck(?=\s)"
+    r")(?![a-zA-Z_])",
+    re.IGNORECASE,
+)
 _JINJA_RE = re.compile(r"\{\{|\{%")
 
 # German words that can appear as string literals inside Jinja expressions
@@ -850,62 +862,87 @@ _JINJA_BRANCH_RE = re.compile(r"^\s*\{[%{].*[%}]\}?\s*$")
 
 
 def test_dashboard_no_hardcoded_german() -> int:
-    """Dashboard display strings must not contain German text.
+    """Dashboard + package display strings must not contain German text.
 
     Policy (rc9): any string that cannot be made language-following via
     ``custom:hph-tile`` / ``custom:hph-help`` must be English so the UI is
     consistently English when the user selects English in HA.  German text
     is only delivered at runtime through the ``help_<lang>.json`` assets.
 
-    Checks every ``primary:``, ``secondary:``, ``title:``, ``name:``,
-    ``action_name:``, ``content:`` and ``text:`` value in
-    ``dashboards/hph.yaml`` — skipping comment lines and Jinja blocks.
+    Checks:
+    - ``dashboards/hph.yaml``: ``primary:``, ``secondary:``, ``title:``,
+      ``name:``, ``action_name:``, ``content:``, ``text:`` values (incl.
+      Jinja string literals).
+    - ``custom_components/hph/data/packages/hph_efficiency.yaml``: ``name:``
+      fields (HA-core platforms like statistics/integration/history_stats
+      don't support ``translation_key`` — must stay English permanently).
     """
-    section("Dashboard — no hardcoded German display strings")
+    section("Dashboard + packages — no hardcoded German display strings")
     failures = 0
 
+    # ── 1. Lovelace dashboard ────────────────────────────────────────────────
     if not DASHBOARD_FILE.is_file():
         fail(f"dashboard not found: {DASHBOARD_FILE}")
-        return 1
-
-    lines = DASHBOARD_FILE.read_text(encoding="utf-8").splitlines()
-    violations: list[tuple[int, str, str]] = []
-
-    for lineno, raw in enumerate(lines, 1):
-        stripped = raw.strip()
-        # Skip YAML comments and blank lines.
-        if not stripped or stripped.startswith("#"):
-            continue
-
-        if _JINJA_RE.search(raw):
-            # Line contains a Jinja expression.  Check whether any single-
-            # quoted string literals inside it contain German text — these
-            # are state-display strings that bypass the static-field check.
-            for lit in _JINJA_STRINGS_RE.findall(raw):
-                if _JINJA_GERMAN_RE.search(lit):
-                    violations.append((lineno, "jinja-literal", lit[:100]))
-            continue
-
-        m = _DISPLAY_FIELD_RE.match(raw)
-        if not m:
-            continue
-
-        field = m.group(1)
-        value = m.group(2).strip().strip("\"'")
-
-        # Value is a Jinja expression — checked above.
-        if _JINJA_RE.search(value):
-            continue
-
-        if _GERMAN_RE.search(value):
-            violations.append((lineno, field, value[:100]))
-
-    if violations:
-        for lineno, field, value in violations:
-            fail(f"L{lineno} {field}: German text in dashboard: {value!r}")
-        failures += len(violations)
+        failures += 1
     else:
-        ok(f"no hardcoded German text in {len(lines)} dashboard lines")
+        lines = DASHBOARD_FILE.read_text(encoding="utf-8").splitlines()
+        violations: list[tuple[int, str, str]] = []
+
+        for lineno, raw in enumerate(lines, 1):
+            stripped = raw.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+
+            if _JINJA_RE.search(raw):
+                for lit in _JINJA_STRINGS_RE.findall(raw):
+                    if _JINJA_GERMAN_RE.search(lit):
+                        violations.append((lineno, "jinja-literal", lit[:100]))
+                continue
+
+            m = _DISPLAY_FIELD_RE.match(raw)
+            if not m:
+                continue
+
+            field = m.group(1)
+            value = m.group(2).strip().strip("\"'")
+            if _JINJA_RE.search(value):
+                continue
+            if _GERMAN_RE.search(value):
+                violations.append((lineno, field, value[:100]))
+
+        if violations:
+            for lineno, field, value in violations:
+                fail(f"L{lineno} {field}: German text in dashboard: {value!r}")
+            failures += len(violations)
+        else:
+            ok(f"no hardcoded German text in {len(lines)} dashboard lines")
+
+    # ── 2. hph_efficiency.yaml (HA-core platforms, no translation_key) ───────
+    efficiency_file = (
+        CC_DIR / "data" / "packages" / "hph_efficiency.yaml"
+    )
+    if not efficiency_file.is_file():
+        fail(f"efficiency package not found: {efficiency_file}")
+        failures += 1
+    else:
+        eff_lines = efficiency_file.read_text(encoding="utf-8").splitlines()
+        name_re = re.compile(r"^\s+name\s*:\s*(.+)")
+        eff_violations: list[tuple[int, str]] = []
+
+        for lineno, raw in enumerate(eff_lines, 1):
+            m = name_re.match(raw)
+            if not m:
+                continue
+            value = m.group(1).strip().strip("\"'")
+            if _GERMAN_RE.search(value) or _GERMAN_WORD_RE.search(value):
+                eff_violations.append((lineno, value[:100]))
+
+        if eff_violations:
+            for lineno, value in eff_violations:
+                fail(f"hph_efficiency.yaml L{lineno} name: German text: {value!r}")
+            failures += len(eff_violations)
+        else:
+            ok(f"no hardcoded German text in {len(eff_lines)} hph_efficiency.yaml lines")
 
     return failures
 

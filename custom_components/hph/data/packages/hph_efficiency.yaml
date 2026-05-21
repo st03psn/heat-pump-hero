@@ -35,7 +35,7 @@ sensor:
 # stop after ≥30-min run). Used by the advisor and the Optimization dashboard.
 # platform: statistics cannot be registered via Python API — stays in YAML.
 - platform: statistics
-  name: "Heizgrenze (geglättet)"
+  name: "Heating limit (smoothed)"
   unique_id: hph_heating_limit_smoothed
   entity_id: number.hph_heating_limit_observed_c
   state_characteristic: average_linear
@@ -46,7 +46,7 @@ sensor:
   precision: 1
 
 - platform: statistics
-  name: "Spreizung 7-Tage-Mittel"
+  name: "Spread 7-day mean"
   unique_id: hph_spread_7d_mean
   entity_id: sensor.hph_water_spread
   state_characteristic: mean
@@ -57,7 +57,7 @@ sensor:
   precision: 2
 
 - platform: statistics
-  name: "Spreizung 7-Tage-Stdabw."
+  name: "Spread 7-day std dev"
   unique_id: hph_spread_7d_stdev
   entity_id: sensor.hph_water_spread
   state_characteristic: standard_deviation
@@ -68,7 +68,7 @@ sensor:
   precision: 2
 
 - platform: statistics
-  name: "Brauchwasser-Starts 7-Tage-Mittel"
+  name: "DHW fires 7-day mean"
   unique_id: hph_dhw_fires_7d_mean
   entity_id: number.hph_dhw_fires_yesterday
   state_characteristic: mean
@@ -79,7 +79,7 @@ sensor:
   precision: 2
 
 - platform: statistics
-  name: "Druck 7-Tage-Mittel"
+  name: "Pressure 7-day mean"
   unique_id: hph_pressure_7d_mean
   entity_id: sensor.hph_source_pump_pressure
   state_characteristic: mean
@@ -90,7 +90,7 @@ sensor:
   precision: 2
 
 - platform: statistics
-  name: "Raumtemperatur-Abweichung (geglättet)"
+  name: "Room deviation (smoothed)"
   unique_id: hph_indoor_deviation_smoothed
   entity_id: sensor.hph_indoor_temp_deviation
   state_characteristic: average_linear
@@ -105,7 +105,7 @@ sensor:
 # theoretical setpoint). Source sensor only emits when compressor is on,
 # so the mean reflects active-heating conditions, not standby.
 - platform: statistics
-  name: "Vorlauf − Außen (24 h)"
+  name: "Supply − Outdoor (24 h)"
   unique_id: hph_flowt_minus_outsidet_24h
   entity_id: sensor.hph_flowt_minus_outsidet_instant
   state_characteristic: mean
@@ -119,7 +119,7 @@ sensor:
 # data-quality advisor — low sample count → source entity throttled or
 # offline, SCOP confidence degraded.
 - platform: statistics
-  name: "Datenqualität 24-h-Messwerte"
+  name: "Data quality 24h samples"
   unique_id: hph_quality_24h_samples
   entity_id: sensor.hph_thermal_power_active
   state_characteristic: count
@@ -130,7 +130,7 @@ sensor:
 
 - platform: integration
   source: sensor.hph_thermal_power_active
-  name: Thermische Energie
+  name: Thermal Energy
   unique_id: hph_thermal_energy
   unit_prefix: k
   unit_time: h
@@ -138,7 +138,7 @@ sensor:
   round: 2
 - platform: integration
   source: sensor.hph_electrical_power_active
-  name: Elektrische Energie
+  name: Electrical Energy
   unique_id: hph_electrical_energy
   unit_prefix: k
   unit_time: h
@@ -151,7 +151,7 @@ sensor:
 # doesn't poison the integral COP.
 - platform: integration
   source: sensor.hph_thermal_power_runtime
-  name: Thermische Energie (Laufzeit)
+  name: Thermal Energy (runtime)
   unique_id: hph_thermal_energy_runtime
   unit_prefix: k
   unit_time: h
@@ -159,7 +159,7 @@ sensor:
   round: 2
 - platform: integration
   source: sensor.hph_electrical_power_runtime
-  name: Elektrische Energie (Laufzeit)
+  name: Electrical Energy (runtime)
   unique_id: hph_electrical_energy_runtime
   unit_prefix: k
   unit_time: h
@@ -170,7 +170,7 @@ sensor:
 # per-mode COP so standby power is never included.
 - platform: integration
   source: sensor.hph_electrical_power_heating_runtime
-  name: Elektrische Energie Heizen (Laufzeit)
+  name: Electrical Energy Heating (runtime)
   unique_id: hph_electrical_energy_heating_runtime
   unit_prefix: k
   unit_time: h
@@ -178,7 +178,7 @@ sensor:
   round: 2
 - platform: integration
   source: sensor.hph_electrical_power_dhw_runtime
-  name: Elektrische Energie Brauchwasser (Laufzeit)
+  name: Electrical Energy DHW (runtime)
   unique_id: hph_electrical_energy_dhw_runtime
   unit_prefix: k
   unit_time: h
@@ -186,7 +186,7 @@ sensor:
   round: 2
 - platform: integration
   source: sensor.hph_electrical_power_cooling_runtime
-  name: Elektrische Energie Kühlen (Laufzeit)
+  name: Electrical Energy Cooling (runtime)
   unique_id: hph_electrical_energy_cooling_runtime
   unit_prefix: k
   unit_time: h
@@ -197,7 +197,7 @@ sensor:
 # is running in DHW mode. Feeds hph_cop_monthly_dhw_direct / _yearly_dhw_direct.
 - platform: integration
   source: sensor.hph_dhw_thermal_power_runtime
-  name: Thermische Energie Brauchwasser (Laufzeit)
+  name: Thermal Energy DHW (runtime)
   unique_id: hph_dhw_thermal_energy_runtime
   unit_prefix: k
   unit_time: h
@@ -209,7 +209,7 @@ sensor:
 # registriert werden. Beide Sensoren laufen auf rollendem 24h-Fenster
 # (nicht Mitternachts-Reset), passend zum 24h-Chart auf der Analysis-View.
 - platform: history_stats
-  name: Abtauungen (24 h)
+  name: Defrost cycles (24 h)
   unique_id: hph_defrost_count_24h
   entity_id: binary_sensor.hph_defrost_active
   state: "on"
@@ -219,7 +219,7 @@ sensor:
     hours: 24
 
 - platform: history_stats
-  name: Abtaudauer (24 h)
+  name: Defrost duration (24 h)
   unique_id: hph_defrost_duration_24h
   entity_id: binary_sensor.hph_defrost_active
   state: "on"

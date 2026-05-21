@@ -74,11 +74,12 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
   (B4a) and the ten Control section headers (B2a) were already done in
   prior commits.
 
-- **Efficiency-package sensor names are German.** The 18 statistics /
-  integration / history_stats sensors in `data/packages/hph_efficiency.yaml`
-  (HA core platforms — no `translation_key` support) had their hardcoded
-  English "HPH …" names translated (e.g. "HPH Electrical Energy" →
-  "Elektrische Energie").
+- **Efficiency-package sensor names are now English** (reverted from German).
+  The 18 statistics / integration / history_stats sensors in
+  `data/packages/hph_efficiency.yaml` use HA core platforms that don't support
+  `translation_key` — hardcoded names are permanent, so policy requires English.
+  All 18 names translated to English (e.g. "Thermische Energie" →
+  "Thermal Energy", "Heizgrenze (geglättet)" → "Heating limit (smoothed)").
 
 ### Added
 
@@ -89,12 +90,22 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
 - **`tests/smoke.py::test_dashboard_no_hardcoded_german`** — offline guard
   that no display field (`primary:`, `secondary:`, `title:`, `name:`,
   `action_name:`, `content:`, `text:`) in `dashboards/hph.yaml` contains
-  German characters (äöüÄÖÜß). Catches regressions against the
-  "static strings must be English" policy. Runs in CI.
+  German characters (äöüÄÖÜß), and that `name:` fields in
+  `hph_efficiency.yaml` contain no German words or umlauts. Catches
+  regressions against the "static strings must be English" policy.
+  Runs in CI.
+- **`scripts/audit_german.py`** — autonomous detect-and-fix script.
+  Builds an "intentional German" set from `translations/de.json`,
+  `help_de.json`, and the `__HPH_HERO_I18N.de` block in `hph-cards.js`;
+  flags every other German string across all YAML + JS source files;
+  auto-translates known strings with `--fix`; optionally checks live HA
+  entity states with `--live`. Exit 0 = clean. Covers the regression that
+  the smoke test caught only `dashboards/hph.yaml`.
 - **`scripts/verify_i18n.py`** — runtime check against a live HA: compares
   every `hph_*` entity's `friendly_name` to the expected German name and
   reports the `hph-help` asset / frontend-mount status (no manual testing).
-  The static dashboard-German scan (check 4) now runs without `HA_TOKEN`.
+  Static check #4 (dashboard German scan) and new check #5 (full
+  `audit_german` across all source files) both run without `HA_TOKEN`.
 
 ---
 

@@ -186,6 +186,44 @@ def check_dashboard_german(base: str, token: str) -> int:  # noqa: ARG001
     return 0
 
 
+def check_static_audit() -> int:
+    """Run the full offline audit_german scan across all YAML + JS files.
+
+    Imports ``scripts/audit_german.py`` at runtime so this script doesn't
+    carry a duplicate copy of the detection logic.
+    """
+    print("\n=== 5. Static audit — all source files (audit_german) ===")
+    import importlib.util
+    audit_path = ROOT / "scripts" / "audit_german.py"
+    if not audit_path.is_file():
+        print(f"  [WARN] {audit_path} not found — skipping")
+        return 0
+    spec = importlib.util.spec_from_file_location("audit_german", audit_path)
+    ag = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ag)
+
+    intentional = ag._load_intentional_german()
+    all_findings: list = []
+    for fpath in ag.YAML_TARGETS:
+        all_findings.extend(ag._scan_yaml_file(fpath, intentional))
+    for fpath in ag.JS_TARGETS:
+        if fpath.is_file():
+            all_findings.extend(ag._scan_js_file(fpath, intentional))
+
+    if all_findings:
+        print(f"  [FAIL] {len(all_findings)} unintentional German string(s):")
+        for f in all_findings[:30]:
+            tag = "[FIX?]" if f.fixable else "[REVIEW]"
+            print(f"         {tag} {f.file}:{f.lineno}  {f.key}: {f.value!r}")
+        if len(all_findings) > 30:
+            print(f"         ... and {len(all_findings) - 30} more")
+        return 1
+
+    total = len(ag.YAML_TARGETS) + len(ag.JS_TARGETS)
+    print(f"  [ OK ] clean — 0 findings across {total} file(s)")
+    return 0
+
+
 def check_error_log(base: str, token: str) -> None:
     print("\n=== 3. Frontend module mount (/api/error_log) ===")
     try:
@@ -209,6 +247,7 @@ def main() -> int:
 
     # Static checks — no HA connection required.
     rc = check_dashboard_german(base, token)
+    rc += check_static_audit()
 
     # Live checks — require HA_TOKEN and a running instance.
     if not token:
