@@ -174,55 +174,48 @@ views:
                   columns: 5
                   square: false
                   cards:
-                    - type: custom:mushroom-template-card
-                      primary: "{{ states('sensor.hph_cop_daily') | float(0) | round(2) }}"
-                      secondary: COP heute
+                    - type: custom:hph-tile
+                      entity: sensor.hph_cop_daily
+                      decimals: 2
+                      label_key: kpi_cop_today
                       icon: mdi:calendar-today
-                      icon_color: >-
-                        {% set cop = states('sensor.hph_cop_daily') | float(0) %}
-                        {% if cop >= 3.5 %}green{% elif cop >= 2.5 %}amber{% elif cop > 0 %}red{% else %}grey{% endif %}
-                      fill_container: true
-                      tap_action:
-                        action: navigate
-                        navigation_path: /hph/efficiency
-                    - type: custom:mushroom-template-card
-                      primary: "{{ states('sensor.hph_cop_monthly') | float(0) | round(2) }}"
-                      secondary: COP Monat
+                      color_thresholds: [[3.5, "green"], [2.5, "amber"], [0.0001, "red"]]
+                      color_else: grey
+                      navigate: /hph/efficiency
+                    - type: custom:hph-tile
+                      entity: sensor.hph_cop_monthly
+                      decimals: 2
+                      label_key: kpi_cop_month
                       icon: mdi:calendar-month
-                      icon_color: >-
-                        {% set cop = states('sensor.hph_cop_monthly') | float(0) %}
-                        {% if cop >= 3.5 %}green{% elif cop >= 2.5 %}amber{% elif cop > 0 %}red{% else %}grey{% endif %}
-                      fill_container: true
-                      tap_action:
-                        action: navigate
-                        navigation_path: /hph/efficiency
-                    - type: custom:mushroom-template-card
-                      primary: "{{ states('sensor.hph_scop') | float(0) | round(2) }}"
-                      secondary: SCOP Saison
+                      color_thresholds: [[3.5, "green"], [2.5, "amber"], [0.0001, "red"]]
+                      color_else: grey
+                      navigate: /hph/efficiency
+                    - type: custom:hph-tile
+                      entity: sensor.hph_scop
+                      decimals: 2
+                      label_key: kpi_scop_season
                       icon: mdi:calendar-star
-                      icon_color: >-
-                        {% set cop = states('sensor.hph_scop') | float(0) %}
-                        {% if cop >= 3.5 %}green{% elif cop >= 2.5 %}amber{% elif cop > 0 %}red{% else %}grey{% endif %}
-                      fill_container: true
-                      tap_action:
-                        action: navigate
-                        navigation_path: /hph/efficiency
-                    - type: custom:mushroom-template-card
-                      primary: "{{ states('sensor.hph_cost_today') | float(0) | round(2) }} €"
-                      secondary: Kosten heute
+                      color_thresholds: [[3.5, "green"], [2.5, "amber"], [0.0001, "red"]]
+                      color_else: grey
+                      navigate: /hph/efficiency
+                    - type: custom:hph-tile
+                      entity: sensor.hph_cost_today
+                      decimals: 2
+                      suffix: " €"
+                      use_unit: false
+                      label_key: kpi_cost_today
                       icon: mdi:currency-eur
-                      icon_color: >-
-                        {% set v = states('sensor.hph_cost_today') | float(0) %}
-                        {% if v > 5 %}red{% elif v > 2 %}orange{% else %}green{% endif %}
-                      fill_container: true
-                    - type: custom:mushroom-template-card
-                      primary: "{{ states('sensor.hph_cost_monthly') | float(0) | round(2) }} €"
-                      secondary: Kosten Monat
+                      color_thresholds: [[5, "red"], [2, "orange"]]
+                      color_else: green
+                    - type: custom:hph-tile
+                      entity: sensor.hph_cost_monthly
+                      decimals: 2
+                      suffix: " €"
+                      use_unit: false
+                      label_key: kpi_cost_month
                       icon: mdi:currency-eur
-                      fill_container: true
-                      tap_action:
-                        action: navigate
-                        navigation_path: /hph/efficiency
+                      color_else: grey
+                      navigate: /hph/efficiency
 
                 # ── Row G: Conditional Screed running (only during program) ─────────
                 - type: conditional

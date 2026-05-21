@@ -354,6 +354,167 @@ if (!window.customCards.find((c) => c.type === "hph-help")) {
   });
 }
 
+// ──────────────────────────────────────────────────────────────────────────
+// <hph-tile> — language-following value tile (mushroom-like look).
+// Renders a colored icon + a value (from an entity, formatted) + a translated
+// secondary label (from help_<lang>.json via label_key). Solves the problem
+// that mushroom-template-card text is server-rendered and can't follow the
+// per-user UI language.
+//
+//   - type: custom:hph-tile
+//     entity: sensor.hph_cop_daily
+//     label_key: kpi_cop_today        # secondary label, per-user language
+//     decimals: 2
+//     icon: mdi:calendar-today
+//     color_thresholds: [[3.5,"green"],[2.5,"amber"],[0.0001,"red"]]
+//     color_else: grey
+//     navigate: /hph/efficiency        # or more_info: true
+// ──────────────────────────────────────────────────────────────────────────
+const __HPH_COLORS = {
+  green: "#43a047", amber: "#ffa726", orange: "#fb8c00", red: "#e53935",
+  grey: "#78909c", blue: "#2196f3", "light-blue": "#03a9f4", cyan: "#00bcd4",
+  teal: "#009688", yellow: "#fdd835", "deep-orange": "#ff7043",
+  "blue-grey": "#78909c", purple: "#ab47bc",
+};
+function __hphColor(name) {
+  return __HPH_COLORS[name] || name || "var(--secondary-text-color)";
+}
+
+class HphTileCard extends HTMLElement {
+  setConfig(config) {
+    if (!config || !config.entity) throw new Error("hph-tile: 'entity' required");
+    this._cfg = {
+      entity: config.entity,
+      label_key: config.label_key || null,
+      label: config.label || "",
+      decimals: config.decimals,
+      suffix: config.suffix || "",
+      use_unit: config.use_unit !== false,
+      icon: config.icon || "mdi:gauge",
+      icon_color: config.icon_color || null,
+      color_thresholds: config.color_thresholds || null,
+      color_else: config.color_else || "grey",
+      navigate: config.navigate || null,
+      more_info: config.more_info === true,
+    };
+    this._built = false;
+    this._render();
+    if (this._cfg.label_key) {
+      this._resolveLabel().then(() => this._update()).catch(() => {});
+    }
+  }
+
+  async _resolveLabel() {
+    const lang = __hphCurrentLang();
+    let strings = await __hphLoadHelpStrings(lang);
+    let entry = strings[this._cfg.label_key];
+    if (!entry && lang !== "en") {
+      strings = await __hphLoadHelpStrings("en");
+      entry = strings[this._cfg.label_key];
+    }
+    if (entry && entry.title) this._cfg.label = entry.title;
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    this._update();
+  }
+
+  getCardSize() { return 1; }
+
+  _color(value) {
+    if (this._cfg.icon_color) return __hphColor(this._cfg.icon_color);
+    if (this._cfg.color_thresholds && value !== null && !isNaN(value)) {
+      for (const [min, col] of this._cfg.color_thresholds) {
+        if (value >= min) return __hphColor(col);
+      }
+    }
+    return __hphColor(this._cfg.color_else);
+  }
+
+  _render() {
+    if (this._built) return;
+    this._built = true;
+    this.style.display = "block";
+    const card = document.createElement("ha-card");
+    card.style.cssText =
+      "display:flex; align-items:center; gap:12px; padding:12px 16px; height:100%; box-sizing:border-box;";
+    const iconWrap = document.createElement("div");
+    iconWrap.className = "hph-tile-iconwrap";
+    iconWrap.style.cssText =
+      "flex:0 0 auto; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center;";
+    const icon = document.createElement("ha-icon");
+    icon.setAttribute("icon", this._cfg.icon);
+    icon.className = "hph-tile-icon";
+    iconWrap.appendChild(icon);
+    const textWrap = document.createElement("div");
+    textWrap.style.cssText = "display:flex; flex-direction:column; min-width:0;";
+    const primary = document.createElement("span");
+    primary.className = "hph-tile-primary";
+    primary.style.cssText =
+      "font-size:1.05em; font-weight:600; color:var(--primary-text-color); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;";
+    const secondary = document.createElement("span");
+    secondary.className = "hph-tile-secondary";
+    secondary.style.cssText =
+      "font-size:0.85em; color:var(--secondary-text-color); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;";
+    secondary.textContent = this._cfg.label || "";
+    textWrap.appendChild(primary);
+    textWrap.appendChild(secondary);
+    card.appendChild(iconWrap);
+    card.appendChild(textWrap);
+    if (this._cfg.navigate || this._cfg.more_info) {
+      card.style.cursor = "pointer";
+      card.addEventListener("click", () => this._onTap());
+    }
+    this.appendChild(card);
+    this._els = { primary, secondary, iconWrap, icon };
+  }
+
+  _onTap() {
+    if (this._cfg.navigate) {
+      history.pushState(null, "", this._cfg.navigate);
+      window.dispatchEvent(new CustomEvent("location-changed"));
+    } else if (this._cfg.more_info) {
+      this.dispatchEvent(new CustomEvent("hass-more-info", {
+        bubbles: true, composed: true, detail: { entityId: this._cfg.entity },
+      }));
+    }
+  }
+
+  _update() {
+    if (!this._els) return;
+    const st = this._hass && this._hass.states[this._cfg.entity];
+    let valNum = null, text = "—";
+    if (st && st.state !== "unavailable" && st.state !== "unknown") {
+      valNum = parseFloat(st.state);
+      if (!isNaN(valNum)) {
+        const dec = this._cfg.decimals;
+        text = dec === undefined ? String(st.state) : valNum.toFixed(dec);
+      } else {
+        text = st.state;
+      }
+      if (this._cfg.suffix) text += this._cfg.suffix;
+      else if (this._cfg.use_unit && st.attributes && st.attributes.unit_of_measurement) {
+        text += " " + st.attributes.unit_of_measurement;
+      }
+    }
+    this._els.primary.textContent = text;
+    if (this._cfg.label) this._els.secondary.textContent = this._cfg.label;
+    const col = this._color(valNum);
+    this._els.icon.style.color = col;
+    this._els.iconWrap.style.background = col + "22"; // ~13% alpha tint
+  }
+}
+
+customElements.define("hph-tile", HphTileCard);
+if (!window.customCards.find((c) => c.type === "hph-tile")) {
+  window.customCards.push({
+    type: "hph-tile",
+    name: "HPH Tile",
+    description: "Language-following value tile for HeatPump Hero dashboards",
+  });
+}
+
 console.info(
   "%c HPH-HELP %c loaded ",
   "color: white; background: #0277bd; padding: 2px 6px; border-radius: 3px;",

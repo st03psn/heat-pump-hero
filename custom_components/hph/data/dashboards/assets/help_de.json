@@ -177,5 +177,20 @@
   },
   "cycling_7d": {
     "title": "Taktung — letzte 7 Tage"
+  },
+  "kpi_cop_today": {
+    "title": "COP heute"
+  },
+  "kpi_cop_month": {
+    "title": "COP Monat"
+  },
+  "kpi_scop_season": {
+    "title": "SCOP Saison"
+  },
+  "kpi_cost_today": {
+    "title": "Kosten heute"
+  },
+  "kpi_cost_month": {
+    "title": "Kosten Monat"
   }
 }

@@ -177,5 +177,20 @@
   },
   "cycling_7d": {
     "title": "Pendelen — laatste 7 dagen"
+  },
+  "kpi_cop_today": {
+    "title": "COP vandaag"
+  },
+  "kpi_cop_month": {
+    "title": "COP maand"
+  },
+  "kpi_scop_season": {
+    "title": "SCOP seizoen"
+  },
+  "kpi_cost_today": {
+    "title": "Kosten vandaag"
+  },
+  "kpi_cost_month": {
+    "title": "Kosten maand"
   }
 }
