@@ -822,6 +822,73 @@ def test_translation_completeness() -> int:
     return failures
 
 
+# ─── Test 13: no hardcoded German text in the bundled dashboard ─────────────
+
+# Fields that display as UI text and must not contain German after the
+# "all static strings → English" policy (rc9).
+_DISPLAY_FIELD_RE = re.compile(
+    r"^\s+(primary|secondary|title|name|action_name|content|text)\s*:\s*(.+)"
+)
+_GERMAN_RE = re.compile(r"[äöüÄÖÜß]")
+_JINJA_RE = re.compile(r"\{\{|\{%")
+
+
+def test_dashboard_no_hardcoded_german() -> int:
+    """Dashboard display strings must not contain German text.
+
+    Policy (rc9): any string that cannot be made language-following via
+    ``custom:hph-tile`` / ``custom:hph-help`` must be English so the UI is
+    consistently English when the user selects English in HA.  German text
+    is only delivered at runtime through the ``help_<lang>.json`` assets.
+
+    Checks every ``primary:``, ``secondary:``, ``title:``, ``name:``,
+    ``action_name:``, ``content:`` and ``text:`` value in
+    ``dashboards/hph.yaml`` — skipping comment lines and Jinja blocks.
+    """
+    section("Dashboard — no hardcoded German display strings")
+    failures = 0
+
+    if not DASHBOARD_FILE.is_file():
+        fail(f"dashboard not found: {DASHBOARD_FILE}")
+        return 1
+
+    lines = DASHBOARD_FILE.read_text(encoding="utf-8").splitlines()
+    violations: list[tuple[int, str, str]] = []
+
+    for lineno, raw in enumerate(lines, 1):
+        stripped = raw.strip()
+        # Skip YAML comments and blank lines.
+        if not stripped or stripped.startswith("#"):
+            continue
+        # Skip lines that are entirely inside a Jinja block — the translated
+        # text lives in help_<lang>.json, not in the YAML template.
+        if _JINJA_RE.search(raw):
+            continue
+
+        m = _DISPLAY_FIELD_RE.match(raw)
+        if not m:
+            continue
+
+        field = m.group(1)
+        value = m.group(2).strip().strip("\"'")
+
+        # Value is a Jinja expression — language-following, skip.
+        if _JINJA_RE.search(value):
+            continue
+
+        if _GERMAN_RE.search(value):
+            violations.append((lineno, field, value[:100]))
+
+    if violations:
+        for lineno, field, value in violations:
+            fail(f"L{lineno} {field}: German text in dashboard: {value!r}")
+        failures += len(violations)
+    else:
+        ok(f"no hardcoded German text in {len(lines)} dashboard lines")
+
+    return failures
+
+
 def main() -> int:
     print(f"HeatPump Hero smoke tests · root: {ROOT}")
     failures = 0
@@ -837,6 +904,7 @@ def main() -> int:
     failures += test_ctrl_facades_writer_consistency()
     failures += test_const_consistency()
     failures += test_translation_completeness()
+    failures += test_dashboard_no_hardcoded_german()
 
     print()
     if failures:

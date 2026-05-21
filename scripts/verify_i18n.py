@@ -38,6 +38,8 @@ except Exception:  # noqa: BLE001
 
 ROOT = Path(__file__).resolve().parent.parent
 DE_JSON = ROOT / "custom_components" / "hph" / "translations" / "de.json"
+EN_JSON = ROOT / "custom_components" / "hph" / "translations" / "en.json"
+DASHBOARD_FILE = ROOT / "dashboards" / "hph.yaml"
 
 # Test instance default base. The token must come from the HA_TOKEN env var —
 # never hardcode a long-lived token here (it would leak into git history).
@@ -133,6 +135,57 @@ def check_help_asset(base: str, token: str) -> None:
         print(f"  [FAIL] cannot reach asset: {e}")
 
 
+def check_dashboard_german(base: str, token: str) -> int:  # noqa: ARG001
+    """Static scan of the bundled dashboard for hardcoded German display strings.
+
+    Mirrors the offline ``test_dashboard_no_hardcoded_german`` smoke test so
+    the same regression is also caught by the runtime verify script (no HA
+    connection needed — the ``base``/``token`` args are accepted for API
+    uniformity but not used).
+    """
+    print("\n=== 4. Dashboard — no hardcoded German display strings (static) ===")
+    if not DASHBOARD_FILE.is_file():
+        print(f"  [FAIL] dashboard file not found: {DASHBOARD_FILE}")
+        return 1
+
+    import re  # stdlib, available everywhere
+    display_field_re = re.compile(
+        r"^\s+(primary|secondary|title|name|action_name|content|text)\s*:\s*(.+)"
+    )
+    german_re = re.compile(r"[äöüÄÖÜß]")
+    jinja_re = re.compile(r"\{\{|\{%")
+
+    lines = DASHBOARD_FILE.read_text(encoding="utf-8").splitlines()
+    violations: list[tuple[int, str, str]] = []
+
+    for lineno, raw in enumerate(lines, 1):
+        stripped = raw.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if jinja_re.search(raw):
+            continue
+        m = display_field_re.match(raw)
+        if not m:
+            continue
+        field = m.group(1)
+        value = m.group(2).strip().strip("\"'")
+        if jinja_re.search(value):
+            continue
+        if german_re.search(value):
+            violations.append((lineno, field, value[:100]))
+
+    if violations:
+        print(f"  [FAIL] {len(violations)} hardcoded German string(s):")
+        for lineno, field, value in violations[:30]:
+            print(f"         L{lineno} {field}: {value!r}")
+        if len(violations) > 30:
+            print(f"         ... and {len(violations) - 30} more")
+        return 1
+
+    print(f"  [ OK ] no German text found in {len(lines)} dashboard lines")
+    return 0
+
+
 def check_error_log(base: str, token: str) -> None:
     print("\n=== 3. Frontend module mount (/api/error_log) ===")
     try:
@@ -152,21 +205,28 @@ def check_error_log(base: str, token: str) -> None:
 def main() -> int:
     base = os.environ.get("HA_BASE_URL", DEFAULT_BASE).rstrip("/")
     token = os.environ.get("HA_TOKEN")
-    if not token:
-        print("  [FAIL] set HA_TOKEN env var (long-lived access token)")
-        return 2
     print(f"HeatPump Hero i18n runtime verify · {base}")
+
+    # Static checks — no HA connection required.
+    rc = check_dashboard_german(base, token)
+
+    # Live checks — require HA_TOKEN and a running instance.
+    if not token:
+        print("\n  [INFO] HA_TOKEN not set — skipping live HA checks (1–3)")
+        print()
+        print("RESULT:", "static checks passed" if rc == 0 else "static check(s) failed")
+        return rc
 
     if not DE_JSON.is_file():
         print(f"  [FAIL] {DE_JSON} not found")
-        return 1
+        return rc + 1
 
-    rc = check_entity_names(base, token)
+    rc += check_entity_names(base, token)
     check_help_asset(base, token)
     check_error_log(base, token)
 
     print()
-    print("RESULT:", "names verified German" if rc == 0 else "name mismatches found")
+    print("RESULT:", "all checks passed" if rc == 0 else f"{rc} check(s) failed")
     return rc
 
 

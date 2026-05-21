@@ -72,9 +72,15 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
   every entity using `translation_key` has a non-empty name in
   `strings.json`, `en.json` and `de.json`, and that `strings.json` and
   `en.json` entity key-sets match. Runs in CI.
+- **`tests/smoke.py::test_dashboard_no_hardcoded_german`** — offline guard
+  that no display field (`primary:`, `secondary:`, `title:`, `name:`,
+  `action_name:`, `content:`, `text:`) in `dashboards/hph.yaml` contains
+  German characters (äöüÄÖÜß). Catches regressions against the
+  "static strings must be English" policy. Runs in CI.
 - **`scripts/verify_i18n.py`** — runtime check against a live HA: compares
   every `hph_*` entity's `friendly_name` to the expected German name and
   reports the `hph-help` asset / frontend-mount status (no manual testing).
+  The static dashboard-German scan (check 4) now runs without `HA_TOKEN`.
 
 ---
 
