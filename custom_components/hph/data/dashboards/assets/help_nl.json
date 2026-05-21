@@ -159,5 +159,23 @@
   "ctrl_bivalent": {
     "title": "Bivalent / bijverwarming",
     "subtitle": "Extra details — bivalente modus staat in sectie 5"
+  },
+  "ana_temps_24h": {
+    "title": "Temperaturen — laatste 24 u"
+  },
+  "ana_cop_24h": {
+    "title": "COP-trend — laatste 24 u"
+  },
+  "eff_daily_30d": {
+    "title": "Dagelijkse energie — laatste 30 dagen"
+  },
+  "eff_cop_30d": {
+    "title": "COP-trend — laatste 30 dagen"
+  },
+  "eff_scop_season": {
+    "title": "SCOP per stookseizoen (jul – jun)"
+  },
+  "cycling_7d": {
+    "title": "Pendelen — laatste 7 dagen"
   }
 }

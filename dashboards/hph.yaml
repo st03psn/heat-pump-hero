@@ -3145,10 +3145,12 @@ views:
                 - entity: sensor.hph_source_compressor_freq
                 - entity: sensor.hph_source_flow_rate
 
+      - type: custom:hph-help
+        translation_key: ana_temps_24h
+        button: false
       - type: custom:apexcharts-card
         header:
-          show: true
-          title: Temperaturen — letzte 24 h
+          show: false
           show_states: true
         graph_span: 24h
         span:
@@ -3215,10 +3217,12 @@ views:
       # diagnostisch zu kurz und überlappte mit den Live-Chips.
 
       # Row 2: COP trend (24h) full width
+      - type: custom:hph-help
+        translation_key: ana_cop_24h
+        button: false
       - type: custom:apexcharts-card
         header:
-          show: true
-          title: COP-Verlauf — letzte 24 h
+          show: false
         graph_span: 24h
         yaxis:
           - decimals: 1
@@ -3883,10 +3887,12 @@ views:
                 text: "Sammele Daten — Tageswerte erscheinen, sobald der Kompressor läuft."
 
       # ── 30-day bar chart ──
+      - type: custom:hph-help
+        translation_key: eff_daily_30d
+        button: false
       - type: custom:apexcharts-card
         header:
           show: true
-          title: Tagesenergie — letzte 30 Tage
           show_states: true
         graph_span: 30d
         yaxis:
@@ -3921,10 +3927,12 @@ views:
             text: "Sammele Daten — Tageswerte erscheinen nach dem ersten vollen Tag."
 
       # ── COP trend (30 days) ──
+      - type: custom:hph-help
+        translation_key: eff_cop_30d
+        button: false
       - type: custom:apexcharts-card
         header:
-          show: true
-          title: COP-Verlauf — letzte 30 Tage
+          show: false
         graph_span: 30d
         yaxis:
           - decimals: 1
@@ -3947,10 +3955,12 @@ views:
 
       # ── SCOP per heating season (Jul 1 – Jun 30, up to 10 seasons) ──
       # One LTS entry per season → one bar per season.
+      - type: custom:hph-help
+        translation_key: eff_scop_season
+        button: false
       - type: custom:apexcharts-card
         header:
-          show: true
-          title: SCOP je Heizsaison (Jul – Jun)
+          show: false
         graph_span: 3650d
         span:
           end: day
@@ -4109,10 +4119,12 @@ views:
           - number.hph_cycle_last_pause_min
           - number.hph_cycle_short_threshold_min
 
+      - type: custom:hph-help
+        translation_key: cycling_7d
+        button: false
       - type: custom:apexcharts-card
         header:
-          show: true
-          title: Taktung — letzte 7 Tage
+          show: false
         graph_span: 7d
         span:
           end: day

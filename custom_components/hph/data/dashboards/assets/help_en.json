@@ -159,5 +159,23 @@
   "ctrl_bivalent": {
     "title": "Bivalent / Aux Heater",
     "subtitle": "Extra detail — bivalent mode is in Section 5"
+  },
+  "ana_temps_24h": {
+    "title": "Temperatures — last 24h"
+  },
+  "ana_cop_24h": {
+    "title": "COP trend — last 24h"
+  },
+  "eff_daily_30d": {
+    "title": "Daily energy — last 30 days"
+  },
+  "eff_cop_30d": {
+    "title": "COP trend — last 30 days"
+  },
+  "eff_scop_season": {
+    "title": "SCOP per heating season (Jul – Jun)"
+  },
+  "cycling_7d": {
+    "title": "Cycling — last 7 days"
   }
 }

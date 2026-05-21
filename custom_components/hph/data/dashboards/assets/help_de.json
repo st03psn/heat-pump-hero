@@ -159,5 +159,23 @@
   "ctrl_bivalent": {
     "title": "Bivalent / Zusatzheizung",
     "subtitle": "Zusatzdetails — Bivalenzmodus siehe Abschnitt 5"
+  },
+  "ana_temps_24h": {
+    "title": "Temperaturen — letzte 24 h"
+  },
+  "ana_cop_24h": {
+    "title": "COP-Verlauf — letzte 24 h"
+  },
+  "eff_daily_30d": {
+    "title": "Tagesenergie — letzte 30 Tage"
+  },
+  "eff_cop_30d": {
+    "title": "COP-Verlauf — letzte 30 Tage"
+  },
+  "eff_scop_season": {
+    "title": "SCOP je Heizsaison (Jul – Jun)"
+  },
+  "cycling_7d": {
+    "title": "Taktung — letzte 7 Tage"
   }
 }
