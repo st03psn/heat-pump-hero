@@ -69,9 +69,9 @@ views:
                       icon: mdi:database-alert
                       content: >-
                         {% set h = states('sensor.hph_source_health') %}
-                        {% if h == 'thermal_stale' %}WMZ veraltet
-                        {% elif h == 'electrical_stale' %}Strom veraltet
-                        {% elif h == 'both_stale' %}Quellen veraltet
+                        {% if h == 'thermal_stale' %}Heat meter stale
+                        {% elif h == 'electrical_stale' %}Power stale
+                        {% elif h == 'both_stale' %}Sources stale
                         {% else %}{% endif %}
                       icon_color: red
                       tap_action:
@@ -98,7 +98,7 @@ views:
                   card:
                     type: custom:mushroom-template-card
                     primary: |-
-                      Fehler: {{ states('sensor.hph_diagnostics_current_error') }}
+                      Error: {{ states('sensor.hph_diagnostics_current_error') }}
                     secondary: >-
                       {{ state_attr('sensor.hph_diagnostics_current_error','message') }}
                     icon: mdi:alert-octagon
@@ -1192,7 +1192,7 @@ views:
               icon: mdi:engine
             - type: template
               entity: select.hph_ctrl_operating_mode
-              content: "Modus: {{ states('select.hph_ctrl_operating_mode') | title }}"
+              content: "Mode: {{ states('select.hph_ctrl_operating_mode') | title }}"
               icon: mdi:thermostat
               icon_color: >-
                 {% set m = states('select.hph_ctrl_operating_mode') | lower %}
@@ -1201,7 +1201,7 @@ views:
                 action: more-info
             - type: template
               entity: select.hph_quiet_mode
-              content: "Ruhe: {{ states('select.hph_quiet_mode') }}"
+              content: "Quiet: {{ states('select.hph_quiet_mode') }}"
               icon: mdi:volume-low
               icon_color: >-
                 {{ 'teal' if states('select.hph_quiet_mode') | lower not in ['off','0','level 0','unavailable','unknown'] else 'grey' }}
@@ -1215,7 +1215,7 @@ views:
                 {{ 'green' if cop > 3 else ('orange' if cop > 2 else 'red') }}
             - type: template
               entity: switch.hph_power
-              content: "{{ 'Ein' if is_state('switch.hph_power','on') else 'Standby' }}"
+              content: "{{ 'On' if is_state('switch.hph_power','on') else 'Standby' }}"
               icon: "{{ 'mdi:power' if is_state('switch.hph_power','on') else 'mdi:power-sleep' }}"
               icon_color: "{{ 'green' if is_state('switch.hph_power','on') else 'grey' }}"
               tap_action:
@@ -1982,7 +1982,7 @@ views:
               card:
                 type: custom:mushroom-template-card
                 primary: Internal heater
-                secondary: "{{ 'Active' if is_state('binary_sensor.hph_source_internal_heater','on') else 'Bereit' }}"
+                secondary: "{{ 'Active' if is_state('binary_sensor.hph_source_internal_heater','on') else 'Ready' }}"
                 icon: mdi:heating-coil
                 icon_color: "{{ 'orange' if is_state('binary_sensor.hph_source_internal_heater','on') else 'grey' }}"
                 tap_action:
@@ -2005,7 +2005,7 @@ views:
               card:
                 type: custom:mushroom-template-card
                 primary: DHW heater
-                secondary: "{{ 'Active' if is_state('binary_sensor.hph_source_dhw_heater','on') else 'Bereit' }}"
+                secondary: "{{ 'Active' if is_state('binary_sensor.hph_source_dhw_heater','on') else 'Ready' }}"
                 icon: mdi:water-boiler-alert
                 icon_color: "{{ 'orange' if is_state('binary_sensor.hph_source_dhw_heater','on') else 'grey' }}"
                 tap_action:
@@ -2025,7 +2025,7 @@ views:
               card:
                 type: custom:mushroom-template-card
                 primary: Frost protection
-                secondary: "{{ 'Active' if is_state('binary_sensor.hph_source_antifreeze','on') else 'Aus' }}"
+                secondary: "{{ 'Active' if is_state('binary_sensor.hph_source_antifreeze','on') else 'Off' }}"
                 icon: mdi:snowflake-alert
                 icon_color: "{{ 'blue' if is_state('binary_sensor.hph_source_antifreeze','on') else 'grey' }}"
                 tap_action:
@@ -2550,7 +2550,7 @@ views:
                 primary: Quiet schedule
                 secondary: >-
                   {% set ent = states('text.hph_src_quiet_schedule') %}
-                  {{ 'aktiv' if ent and is_state(ent,'on') else 'bereit' }}
+                  {{ 'active' if ent and is_state(ent,'on') else 'ready' }}
                 icon: mdi:calendar-clock
                 icon_color: >-
                   {% set ent = states('text.hph_src_quiet_schedule') %}
@@ -4127,8 +4127,8 @@ views:
             - type: custom:mushroom-template-card
               primary: |-
                 {% set s = states('sensor.hph_diagnostics_current_error') %}
-                {% if s == 'ok' %}Kein aktiver Fehler
-                {% else %}Fehler: {{ s }}{% endif %}
+                {% if s == 'ok' %}No active error
+                {% else %}Error: {{ s }}{% endif %}
               secondary: >-
                 {{ state_attr('sensor.hph_diagnostics_current_error','message') }}
               icon: |-

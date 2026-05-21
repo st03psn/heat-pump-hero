@@ -832,6 +832,22 @@ _DISPLAY_FIELD_RE = re.compile(
 _GERMAN_RE = re.compile(r"[äöüÄÖÜß]")
 _JINJA_RE = re.compile(r"\{\{|\{%")
 
+# German words that can appear as string literals inside Jinja expressions
+# (e.g. {% if x %}WMZ veraltet{% endif %}).  This catches state-display
+# strings that are not static YAML values and therefore bypassed by the
+# display-field check above.
+_JINJA_GERMAN_RE = re.compile(
+    r"[äöüÄÖÜß]|"
+    r"(?<![a-zA-Z_])("
+    r"Heizen|Kühlen|Warmwasser|Heizung|Kühlung|Bereit|"
+    r"Fehler|Modus|Ruhe|WMZ|veraltet|aktiv|bereit|Aus\b"
+    r")(?![a-zA-Z_])"
+)
+# Extract single-quoted string literals from Jinja: '...' (not bare values)
+_JINJA_STRINGS_RE = re.compile(r"'([^']*)'")
+# Lines that are purely within a Jinja block (the whole line is a template branch)
+_JINJA_BRANCH_RE = re.compile(r"^\s*\{[%{].*[%}]\}?\s*$")
+
 
 def test_dashboard_no_hardcoded_german() -> int:
     """Dashboard display strings must not contain German text.
@@ -860,9 +876,14 @@ def test_dashboard_no_hardcoded_german() -> int:
         # Skip YAML comments and blank lines.
         if not stripped or stripped.startswith("#"):
             continue
-        # Skip lines that are entirely inside a Jinja block — the translated
-        # text lives in help_<lang>.json, not in the YAML template.
+
         if _JINJA_RE.search(raw):
+            # Line contains a Jinja expression.  Check whether any single-
+            # quoted string literals inside it contain German text — these
+            # are state-display strings that bypass the static-field check.
+            for lit in _JINJA_STRINGS_RE.findall(raw):
+                if _JINJA_GERMAN_RE.search(lit):
+                    violations.append((lineno, "jinja-literal", lit[:100]))
             continue
 
         m = _DISPLAY_FIELD_RE.match(raw)
@@ -872,7 +893,7 @@ def test_dashboard_no_hardcoded_german() -> int:
         field = m.group(1)
         value = m.group(2).strip().strip("\"'")
 
-        # Value is a Jinja expression — language-following, skip.
+        # Value is a Jinja expression — checked above.
         if _JINJA_RE.search(value):
             continue
 
