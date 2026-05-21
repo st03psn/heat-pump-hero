@@ -864,12 +864,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         # which surfaces as "Konfigurationsfehler" on every hph-help card.
         import hashlib
         from pathlib import Path as _Path
-        _js_path = _Path(__file__).parent / "data" / "dashboards" / "assets" / "hph-help.js"
+        _js_path = _Path(__file__).parent / "data" / "dashboards" / "assets" / "hph-cards.js"
         try:
             _digest = hashlib.md5(_js_path.read_bytes()).hexdigest()[:10]
         except OSError:
             _digest = "dev"
-        _hph_module_url = f"{ASSETS_URL_PATH}/hph-help.js?v={_digest}"
+        _hph_module_url = f"{ASSETS_URL_PATH}/hph-cards.js?v={_digest}"
         # Default (es5=False): loaded via dynamic import() — same path that
         # mushroom, bubble-card and the other HACS custom cards use. Async,
         # but Lovelace's card-creation retries once the customElement registers.
