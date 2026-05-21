@@ -88,66 +88,7 @@ views:
                 # ── Row B: Hero — operating mode + live COP (Panasonic-style) ─────
                 # Left border color follows active mode. Values are the headline;
                 # label is secondary. badge shows COP quality at a glance.
-                - type: custom:mushroom-template-card
-                  primary: >-
-                    {% set mode = states('sensor.hph_operating_mode') %}
-                    {% set on = is_state('binary_sensor.hph_compressor_running','on') %}
-                    {% if on %}
-                      {% if mode == 'heating' %}Heizung
-                      {% elif mode == 'dhw' %}Warmwasser
-                      {% elif mode == 'cooling' %}Kühlung
-                      {% else %}In Betrieb{% endif %}
-                    {% else %}
-                      {% if mode == 'heating' %}Bereit — Heizmodus
-                      {% elif mode == 'dhw' %}Bereit — Brauchwassermodus
-                      {% elif mode == 'cooling' %}Bereit — Kühlmodus
-                      {% else %}Standby{% endif %}
-                    {% endif %}
-                    — COP live {{ states('sensor.hph_cop_live') | float(0) | round(2) }}
-                    {%- if is_state('binary_sensor.hph_defrost_active','on') %} (×0 Abtauung){% endif %}
-                  secondary: >-
-                    {% set t = states('sensor.hph_thermal_power_active') | float(0) %}
-                    {% set e = states('sensor.hph_electrical_power_active') | float(0) %}
-                    Vorlauf {{ states('sensor.hph_source_outlet_temp') }}°C → Rücklauf {{ states('sensor.hph_source_inlet_temp') }}°C
-                    · Δ {{ states('sensor.hph_water_spread') | float(0) | round(1) }} K
-                    · {{ states('sensor.hph_source_flow_rate') }} L/min
-                    · Thermisch {% if t >= 1000 %}{{ (t / 1000) | round(2) }} kW{% else %}{{ t | round(0) | int }} W{% endif %}
-                    · Elektrisch {% if e >= 1000 %}{{ (e / 1000) | round(2) }} kW{% else %}{{ e | round(0) | int }} W{% endif %}
-                  icon: >-
-                    {% set mode = states('sensor.hph_operating_mode') %}
-                    {% set on = is_state('binary_sensor.hph_compressor_running','on') %}
-                    {% if mode == 'heating' %}{{ 'mdi:radiator' if on else 'mdi:radiator-off' }}
-                    {% elif mode == 'dhw' %}{{ 'mdi:water-boiler' if on else 'mdi:water-boiler-off' }}
-                    {% elif mode == 'cooling' %}{{ 'mdi:snowflake' if on else 'mdi:snowflake-off' }}
-                    {% else %}mdi:heat-pump{% endif %}
-                  icon_color: >-
-                    {% set mode = states('sensor.hph_operating_mode') %}
-                    {% set on = is_state('binary_sensor.hph_compressor_running','on') %}
-                    {% if on and mode == 'heating' %}deep-orange
-                    {% elif on and mode == 'dhw' %}light-blue
-                    {% elif on and mode == 'cooling' %}cyan
-                    {% else %}blue-grey{% endif %}
-                  badge_icon: >-
-                    {% set cop = states('sensor.hph_cop_live') | float(0) %}
-                    {% if cop >= 3.5 %}mdi:star
-                    {% elif cop >= 2.5 %}mdi:star-half-full
-                    {% elif cop > 0 %}mdi:star-outline
-                    {% else %}mdi:pause-circle-outline{% endif %}
-                  badge_color: >-
-                    {% set cop = states('sensor.hph_cop_live') | float(0) %}
-                    {% if cop >= 3.5 %}green{% elif cop >= 2.5 %}amber{% elif cop > 0 %}red{% else %}grey{% endif %}
-                  multiline_secondary: true
-                  fill_container: true
-                  card_mod:
-                    style: >-
-                      ha-card {
-                        border-left: 4px solid
-                          {% set on = is_state('binary_sensor.hph_compressor_running','on') %}
-                          {% if on and is_state('sensor.hph_operating_mode','heating') %}#FF7043
-                          {% elif on and is_state('sensor.hph_operating_mode','dhw') %}#42A5F5
-                          {% elif on and is_state('sensor.hph_operating_mode','cooling') %}#64B5F6
-                          {% else %}#78909C{% endif %};
-                      }
+                - type: custom:hph-hero
 
                 # ── Row C: Conditional active fault (only when present) ─────────────
                 - type: conditional

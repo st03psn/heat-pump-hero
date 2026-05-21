@@ -519,6 +519,114 @@ if (!window.customCards.find((c) => c.type === "hph-tile")) {
   });
 }
 
+// ──────────────────────────────────────────────────────────────────────────
+// <hph-hero> — language-following hero status card (mushroom-style).
+// Composes operating mode + live COP + supply/return/Δ/flow/thermal/electrical
+// into one card, rendered client-side in the user's language. Replaces the
+// server-rendered mushroom-template-card hero whose composed text could not
+// follow the per-user UI language.
+//   - type: custom:hph-hero
+// ──────────────────────────────────────────────────────────────────────────
+const __HPH_HERO_I18N = {
+  en: { heating: "Heating", dhw: "Hot Water", cooling: "Cooling", running: "Running",
+    idle_heating: "Idle — Heating mode", idle_dhw: "Idle — DHW mode",
+    idle_cooling: "Idle — Cooling mode", standby: "Standby", defrost: "defrost",
+    cop_live: "COP live", supply: "Supply", ret: "Return", thermal: "Thermal",
+    electrical: "Electrical" },
+  de: { heating: "Heizung", dhw: "Warmwasser", cooling: "Kühlung", running: "In Betrieb",
+    idle_heating: "Bereit — Heizmodus", idle_dhw: "Bereit — Brauchwassermodus",
+    idle_cooling: "Bereit — Kühlmodus", standby: "Standby", defrost: "Abtauung",
+    cop_live: "COP live", supply: "Vorlauf", ret: "Rücklauf", thermal: "Thermisch",
+    electrical: "Elektrisch" },
+  nl: { heating: "Verwarming", dhw: "Warm water", cooling: "Koeling", running: "In bedrijf",
+    idle_heating: "Gereed — verwarmingsmodus", idle_dhw: "Gereed — warmwatermodus",
+    idle_cooling: "Gereed — koelmodus", standby: "Stand-by", defrost: "ontdooien",
+    cop_live: "COP live", supply: "Aanvoer", ret: "Retour", thermal: "Thermisch",
+    electrical: "Elektrisch" },
+};
+
+class HphHeroCard extends HTMLElement {
+  setConfig(config) { this._cfg = config || {}; this._built = false; this._render(); }
+  set hass(h) { this._hass = h; this._update(); }
+  getCardSize() { return 2; }
+  _t() { return __HPH_HERO_I18N[__hphCurrentLang()] || __HPH_HERO_I18N.en; }
+  _st(id) { return this._hass && this._hass.states[id]; }
+  _raw(id) { const s = this._st(id); return s ? s.state : "—"; }
+  _num(id) { const s = this._st(id); const v = s ? parseFloat(s.state) : NaN; return isNaN(v) ? 0 : v; }
+  _on(id) { const s = this._st(id); return s && s.state === "on"; }
+
+  _render() {
+    if (this._built) return;
+    this._built = true;
+    this.style.display = "block";
+    const card = document.createElement("ha-card");
+    card.style.cssText = "display:flex; align-items:center; gap:14px; padding:12px 16px;";
+    const iconWrap = document.createElement("div");
+    iconWrap.style.cssText = "flex:0 0 auto; width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center;";
+    const icon = document.createElement("ha-icon");
+    iconWrap.appendChild(icon);
+    const txt = document.createElement("div");
+    txt.style.cssText = "display:flex; flex-direction:column; min-width:0; flex:1;";
+    const p = document.createElement("span");
+    p.style.cssText = "font-size:1.1em; font-weight:600; color:var(--primary-text-color);";
+    const s = document.createElement("span");
+    s.style.cssText = "font-size:0.9em; color:var(--secondary-text-color);";
+    txt.appendChild(p); txt.appendChild(s);
+    card.appendChild(iconWrap); card.appendChild(txt);
+    this.appendChild(card);
+    this._els = { card, iconWrap, icon, p, s };
+  }
+
+  _update() {
+    if (!this._els || !this._hass) return;
+    const t = this._t();
+    const mode = this._raw("sensor.hph_operating_mode");
+    const on = this._on("binary_sensor.hph_compressor_running");
+    const cop = this._num("sensor.hph_cop_live");
+    const defrost = this._on("binary_sensor.hph_defrost_active");
+    let word;
+    if (on) word = mode === "heating" ? t.heating : mode === "dhw" ? t.dhw : mode === "cooling" ? t.cooling : t.running;
+    else word = mode === "heating" ? t.idle_heating : mode === "dhw" ? t.idle_dhw : mode === "cooling" ? t.idle_cooling : t.standby;
+    let primary = `${word} — ${t.cop_live} ${cop.toFixed(2)}`;
+    if (defrost) primary += ` (×0 ${t.defrost})`;
+    const fmtPow = (v) => (v >= 1000 ? `${(v / 1000).toFixed(2)} kW` : `${Math.round(v)} W`);
+    const secondary =
+      `${t.supply} ${this._raw("sensor.hph_source_outlet_temp")}°C → ${t.ret} ${this._raw("sensor.hph_source_inlet_temp")}°C` +
+      ` · Δ ${this._num("sensor.hph_water_spread").toFixed(1)} K` +
+      ` · ${this._raw("sensor.hph_source_flow_rate")} L/min` +
+      ` · ${t.thermal} ${fmtPow(this._num("sensor.hph_thermal_power_active"))}` +
+      ` · ${t.electrical} ${fmtPow(this._num("sensor.hph_electrical_power_active"))}`;
+    this._els.p.textContent = primary;
+    this._els.s.textContent = secondary;
+    let ic;
+    if (mode === "heating") ic = on ? "mdi:radiator" : "mdi:radiator-off";
+    else if (mode === "dhw") ic = on ? "mdi:water-boiler" : "mdi:water-boiler-off";
+    else if (mode === "cooling") ic = on ? "mdi:snowflake" : "mdi:snowflake-off";
+    else ic = "mdi:heat-pump";
+    this._els.icon.setAttribute("icon", ic);
+    let col;
+    if (on && mode === "heating") col = "#FF7043";
+    else if (on && mode === "dhw") col = "#42A5F5";
+    else if (on && mode === "cooling") col = "#64B5F6";
+    else col = "#78909C";
+    this._els.icon.style.color = col;
+    this._els.iconWrap.style.background = col + "22";
+    this._els.card.style.borderLeft = `4px solid ${col}`;
+  }
+}
+
+if (!customElements.get("hph-hero")) {
+  customElements.define("hph-hero", HphHeroCard);
+}
+window.customCards = window.customCards || [];
+if (!window.customCards.find((c) => c.type === "hph-hero")) {
+  window.customCards.push({
+    type: "hph-hero",
+    name: "HPH Hero",
+    description: "Language-following hero status card for HeatPump Hero",
+  });
+}
+
 console.info(
   "%c HPH-HELP %c loaded ",
   "color: white; background: #0277bd; padding: 2px 6px; border-radius: 3px;",

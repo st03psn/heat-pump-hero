@@ -866,7 +866,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         from pathlib import Path as _Path
         _js_path = _Path(__file__).parent / "data" / "dashboards" / "assets" / "hph-cards.js"
         try:
-            _digest = hashlib.md5(_js_path.read_bytes()).hexdigest()[:10]
+            _js_bytes = await hass.async_add_executor_job(_js_path.read_bytes)
+            _digest = hashlib.md5(_js_bytes).hexdigest()[:10]
         except OSError:
             _digest = "dev"
         _hph_module_url = f"{ASSETS_URL_PATH}/hph-cards.js?v={_digest}"
