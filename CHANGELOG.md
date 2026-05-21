@@ -7,6 +7,20 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
 
 ### Fixed
 
+- **`hph-tile` / `hph-help` cards now switch language immediately** when
+  the user changes the HA UI language in Settings. Previously both cards
+  resolved their translated labels once at card-creation time and never
+  re-fetched on language changes: `hph-help.set hass()` was a no-op, and
+  `hph-help._resolveStrings()` guarded every field with
+  `if (!this._config.title)` so the English value was silently skipped
+  after the German title was stored. `hph-tile` similarly called
+  `_update()` with the cached German label. All three bugs fixed:
+  language-change detection in `set hass()` triggers a re-fetch; the
+  guard is replaced by per-field hardcoded-vs-translated tracking so
+  YAML-hardcoded titles are still preserved. The MD5 cache-bust in
+  `__init__.py` ensures the new JS loads automatically on the next
+  integration reload.
+
 - **Entity names now actually follow the HA language setting.** rc9 set
   `_attr_name` on the template sensors, template binary sensors, and the
   four facade proxy classes as an intended "fallback". In Home Assistant
