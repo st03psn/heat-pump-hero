@@ -47,6 +47,17 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
 
 ### Fixed
 
+- **Custom cards (`hph-tile`, `hph-help`, `hph-hero`) no longer show
+  "Configuration error" in HA 2026.5+.** HA's frontend replaces
+  `window.customElements` with its own polyfill (constructor `S`) during
+  boot, *after* `add_extra_js_url` modules are imported. Synchronous
+  `customElements.define()` calls in our IIFE landed on the native
+  registry which the polyfill then shadowed, so Lovelace never saw the
+  registrations. Fix: register via a polling helper that waits for
+  HA's `ha-card`/`home-assistant` element to be defined before calling
+  `customElements.define()`, guaranteeing the polyfilled registry is
+  active. Diagnosed via puppeteer probe of the live test instance.
+
 - **Defrost is no longer counted in `hph_electrical_power_heating_runtime`.**
   Defrost cycles are reverse-cycle draws (power without useful heat). The
   live COP was already forced to 0 during defrost; the runtime integrator

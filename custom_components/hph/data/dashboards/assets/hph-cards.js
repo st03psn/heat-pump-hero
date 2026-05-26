@@ -40,6 +40,28 @@
 // hph-tile card would show "Configuration error". Each customElements.define
 // below is guarded individually instead, so re-running is always safe.
 
+// HA 2026.x: window.customElements is replaced by HA's polyfill (constructor
+// name "S") AFTER this script runs when injected via add_extra_js_url. If we
+// call customElements.define() synchronously, registrations land on the native
+// CustomElementRegistry which is then shadowed by the polyfill — Lovelace
+// never sees our elements and renders "Configuration error" for every card.
+// Workaround: defer all customElements.define calls until ha-card is defined
+// (HA's main bundle registers it after the polyfill swap).
+function __hphRegisterWhenReady(name, ctor) {
+  function tryDefine() {
+    if (!window.customElements) return setTimeout(tryDefine, 20);
+    // Polyfill installed when HA's own elements are registered.
+    if (!customElements.get("ha-card") && !customElements.get("home-assistant")) {
+      return setTimeout(tryDefine, 20);
+    }
+    if (!customElements.get(name)) {
+      try { customElements.define(name, ctor); }
+      catch (e) { console.warn("[hph-cards] define(" + name + ") failed:", e); }
+    }
+  }
+  tryDefine();
+}
+
 // Module-level i18n cache: { lang: { key: {title, content} } }
 const __HPH_HELP_STRINGS__ = {};
 const __HPH_HELP_PENDING__ = {};
@@ -357,9 +379,7 @@ class HphHelpCard extends HTMLElement {
   }
 }
 
-if (!customElements.get("hph-help")) {
-  customElements.define("hph-help", HphHelpCard);
-}
+__hphRegisterWhenReady("hph-help", HphHelpCard);
 
 window.customCards = window.customCards || [];
 if (!window.customCards.find((c) => c.type === "hph-help")) {
@@ -580,9 +600,7 @@ class HphTileCard extends HTMLElement {
   }
 }
 
-if (!customElements.get("hph-tile")) {
-  customElements.define("hph-tile", HphTileCard);
-}
+__hphRegisterWhenReady("hph-tile", HphTileCard);
 window.customCards = window.customCards || [];
 if (!window.customCards.find((c) => c.type === "hph-tile")) {
   window.customCards.push({
@@ -688,9 +706,7 @@ class HphHeroCard extends HTMLElement {
   }
 }
 
-if (!customElements.get("hph-hero")) {
-  customElements.define("hph-hero", HphHeroCard);
-}
+__hphRegisterWhenReady("hph-hero", HphHeroCard);
 window.customCards = window.customCards || [];
 if (!window.customCards.find((c) => c.type === "hph-hero")) {
   window.customCards.push({
