@@ -5,6 +5,55 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
 
 ## [Unreleased]
 
+### Added
+
+- **Mode-aware tariff: new `standby` slot in all six split utility_meters.**
+  `sensor.hph_operating_mode` now emits `standby` whenever the compressor
+  is not running, so auxiliary electrical draw (control electronics,
+  frost protection, an externally-permanent circulator) no longer
+  pollutes whichever mode happened to be last active. The
+  `hph_thermal_daily_split`, `_monthly_split`, `_yearly_split` and their
+  electrical counterparts gained a fourth tariff `standby` alongside
+  `heating`, `dhw`, `cooling`. The Python efficiency coordinator routes
+  the new mode to the new tariff via `utility_meter.select_tariff`.
+
+- **Per-mode SCOP sensors.** `sensor.hph_cop_yearly_cooling` (new), plus
+  combined `sensor.hph_scop_heating_plus_dhw` and `_cooling_plus_dhw`
+  alongside the existing `_yearly_heating` and `_yearly_dhw`. All are
+  exposed in a "SCOP by operating mode" card on the Efficiency view.
+
+- **Diagnostic SCOPs alongside the headline SCOP.** The Overview SCOP
+  (`sensor.hph_scop`) continues to follow EN 14825 — it includes
+  auxiliary energy (electronics, frost protection, circulator, defrost),
+  matching manufacturer datasheets and neighbour-system comparisons.
+  Two new sensors on the Efficiency view break that figure apart for
+  diagnosis: `sensor.hph_scop_compressor_only` uses the runtime-gated
+  electrical denominator (compressor-on energy only), and
+  `sensor.hph_scop_auxiliary_share_pct` shows what fraction of the
+  annual draw is overhead. The gap between system and compressor-only
+  SCOP equals the auxiliary share, surfaced as a single percentage.
+
+- **Standby advisor.** `sensor.hph_advisor_standby` compares the daily
+  standby figure against `number.hph_advisor_standby_max_kwh` (default
+  0.4 kWh/day — the expected steady-state for HP control electronics
+  alone) and raises warn/critical above that threshold. Aggregated in
+  `hph_advisor_summary`.
+
+- **Migration helper `scripts/migrate_mode_tariffs.py`.** Snapshots the
+  current split-tariff totals via HA REST, verifies post-update state,
+  and restores values via `utility_meter.calibrate` if anything drifted
+  during the tariff-list change. Documented in
+  [docs/migration_v0.9_mode_tariffs.md](docs/migration_v0.9_mode_tariffs.md).
+
+### Fixed
+
+- **Defrost is no longer counted in `hph_electrical_power_heating_runtime`.**
+  Defrost cycles are reverse-cycle draws (power without useful heat). The
+  live COP was already forced to 0 during defrost; the runtime integrator
+  now follows the same logic, which lifts the heating-COP denominator
+  away from defrost-only intervals and lifts the resulting per-mode COP
+  closer to physical reality.
+
 ### Fixed
 
 - **`hph-tile` / `hph-help` cards now switch language immediately** when

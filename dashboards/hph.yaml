@@ -3971,6 +3971,57 @@ views:
           - entity: sensor.hph_quality_24h_samples
           - entity: sensor.hph_advisor_data_quality
 
+      - type: entities
+        title: SCOP by operating mode
+        entities:
+          - entity: sensor.hph_cop_yearly_heating
+            icon: mdi:radiator
+          - entity: sensor.hph_cop_yearly_dhw
+            icon: mdi:water-boiler
+          - entity: sensor.hph_cop_yearly_cooling
+            icon: mdi:snowflake
+          - entity: sensor.hph_scop_heating_plus_dhw
+            icon: mdi:home-thermometer
+          - entity: sensor.hph_scop_cooling_plus_dhw
+            icon: mdi:snowflake-thermometer
+
+      - type: entities
+        title: SCOP — system vs. compressor-only
+        entities:
+          - entity: sensor.hph_scop
+            icon: mdi:calendar-star
+          - entity: sensor.hph_scop_compressor_only
+            icon: mdi:engine
+          - entity: sensor.hph_scop_auxiliary_share_pct
+            icon: mdi:chart-donut
+      - type: markdown
+        content: >
+          **System SCOP** (top) follows EN 14825 — includes auxiliary
+          energy (electronics, frost protection, circulator, defrost).
+          Comparable to manufacturer data sheets and neighbour systems.
+          **Compressor-only SCOP** shows internal machine efficiency,
+          excluding everything that runs when the compressor is off.
+          The gap between them — surfaced as **auxiliary share** —
+          tells you how much of your annual draw is overhead.
+
+      - type: entities
+        title: Standby consumption
+        entities:
+          - entity: sensor.hph_standby_electrical_daily
+            icon: mdi:power-sleep
+          - entity: sensor.hph_electrical_yearly_split_standby
+            icon: mdi:counter
+          - entity: sensor.hph_advisor_standby
+          - entity: number.hph_advisor_standby_max_kwh
+      - type: markdown
+        content: >
+          **Standby** = electrical kWh consumed while the compressor is
+          off (control electronics, frost protection, an externally-
+          permanent circulator). *Standby today* is the daily differential
+          `total - runtime`. *Standby (season cumulative)* is the
+          tariff-fed total via operating-mode `standby`. Both are correct
+          and complementary views — threshold above is configurable.
+
   # ════════════════════════════════════════════════════════════════════════
   # 5) OPTIMIZATION — cycle analysis + advisor + control switches
   # ════════════════════════════════════════════════════════════════════════

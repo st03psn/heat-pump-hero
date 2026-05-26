@@ -390,6 +390,46 @@ sensors:
       {% endif %}
   _source_package: hph_advisor.yaml
 
+# ── Standby advisor ────────────────────────────────────────────────────────
+# Schwelle einstellbar via number.hph_advisor_standby_max_kwh (default 0.4
+# kWh/Tag — reine HP-Steuerelektronik). warn = 1×–2× Schwelle, critical >2×.
+# Häufige Ursachen für hohe Werte: extern dauerlaufende Heizkreis-
+# Umwälzpumpe (50–80 W × 24 h ≈ 1.2–1.9 kWh/Tag), HA-Reload während
+# Kompressor-Lauf (Baseline-Verlust in runtime_kwh-Koordinator), oder
+# fehlende Defrost-Exclusion in der Runtime-Erfassung.
+- name: HeatPump Hero Advisor Standby
+  unique_id: hph_advisor_standby
+  icon: mdi:power-sleep
+  availability: >-
+    {{ states('sensor.hph_standby_electrical_daily')
+         not in ['unknown','unavailable','none',''] }}
+  state: >-
+    {% set v = states('sensor.hph_standby_electrical_daily') | float(0) %}
+    {% set thr = states('number.hph_advisor_standby_max_kwh') | float(0.4) %}
+    {% if v <= thr %}ok
+    {% elif v <= thr * 2 %}warn
+    {% else %}critical{% endif %}
+  attributes:
+    metric: "{{ states('sensor.hph_standby_electrical_daily') }} kWh"
+    threshold: "{{ states('number.hph_advisor_standby_max_kwh') }} kWh"
+    message: >-
+      {% set v = states('sensor.hph_standby_electrical_daily') | float(0) %}
+      {% set thr = states('number.hph_advisor_standby_max_kwh') | float(0.4) %}
+      {% if v <= thr %}
+        Standby consumption within target ({{ v }} kWh/day ≤ {{ thr }}).
+      {% elif v <= thr * 2 %}
+        Standby above target ({{ v }} kWh/day vs. {{ thr }}). Likely a
+        permanently-running external circulator (50–80 W × 24 h ≈ 1.2–1.9
+        kWh) or HA reload that dropped runtime-kWh baseline. Check the
+        yearly_split_standby tariff for the cumulative figure.
+      {% else %}
+        Standby far above target ({{ v }} kWh/day vs. {{ thr }}).
+        Investigate: external pump always on, leak in runtime detection,
+        or auxiliary heater drawing during idle. The heat-pump electronics
+        alone should not exceed ~0.4 kWh/day.
+      {% endif %}
+  _source_package: hph_advisor.yaml
+
 - name: HeatPump Hero Advisor Summary
   unique_id: hph_advisor_summary
   icon: mdi:lightbulb-on-outline
@@ -399,7 +439,8 @@ sensors:
     \  states('sensor.hph_advisor_diagnostics'),\n  states('sensor.hph_advisor_pressure_trend'),\n\
     \  states('sensor.hph_advisor_analysis'),\n  states('sensor.hph_advisor_pump_curve'),\n\
     \  states('sensor.hph_advisor_efficiency_drift'),\n  states('sensor.hph_advisor_dhw_timing'),\n\
-    \  states('sensor.hph_advisor_source_health'),\n  states('sensor.hph_advisor_data_quality')\n\
+    \  states('sensor.hph_advisor_source_health'),\n  states('sensor.hph_advisor_data_quality'),\n\
+    \  states('sensor.hph_advisor_standby')\n\
     ] %} {% if 'critical' in advisors %}critical {% elif 'warn' in advisors %}warn\
     \ {% else %}ok{% endif %}"
   attributes:
@@ -409,7 +450,8 @@ sensors:
       \    states('sensor.hph_advisor_diagnostics'),\n    states('sensor.hph_advisor_pressure_trend'),\n\
       \    states('sensor.hph_advisor_analysis'),\n    states('sensor.hph_advisor_pump_curve'),\n\
       \    states('sensor.hph_advisor_efficiency_drift'),\n    states('sensor.hph_advisor_dhw_timing'),\n\
-      \    states('sensor.hph_advisor_source_health'),\n    states('sensor.hph_advisor_data_quality')]\n\
+      \    states('sensor.hph_advisor_source_health'),\n    states('sensor.hph_advisor_data_quality'),\n\
+      \    states('sensor.hph_advisor_standby')]\n\
       \   | select('in', ['warn','critical']) | list | count }}"
   _source_package: hph_advisor.yaml
 - name: HPH Source Indoor Temperature
@@ -511,11 +553,18 @@ sensors:
   _source_package: hph_core.yaml
 - name: HeatPump Hero Operating Mode
   unique_id: hph_operating_mode
+  # `standby` is emitted whenever the compressor is not running, regardless
+  # of the underlying source operating-mode string. This routes auxiliary
+  # electrical draw (circulator, electronics, frost protection) into a
+  # dedicated tariff instead of polluting whichever mode was last active.
   availability: "{{ states('sensor.hph_source_operating_mode')\n   not in ['unknown','unavailable','none']\
     \ }}"
-  state: '{% set m = states(''sensor.hph_source_operating_mode'') %} {% if ''Heat''
-    in m %}heating {% elif ''Cool'' in m %}cooling {% elif ''DHW'' in m or ''Tank''
-    in m %}dhw {% else %}{{ m | lower }}{% endif %}'
+  state: "{% set m = states('sensor.hph_source_operating_mode') %}\
+    {% if is_state('binary_sensor.hph_compressor_running','off') %}standby\
+    {% elif 'Heat' in m %}heating\
+    {% elif 'Cool' in m %}cooling\
+    {% elif 'DHW' in m or 'Tank' in m %}dhw\
+    {% else %}{{ m | lower }}{% endif %}"
   _source_package: hph_core.yaml
 - name: HeatPump Hero Avg Cycle Duration 24h
   unique_id: hph_avg_cycle_duration_24h
@@ -698,14 +747,56 @@ sensors:
   unique_id: hph_scop
   unit_of_measurement: x
   state_class: measurement
+  # "Anlagen-SCOP" — Nenner umfasst Hilfsenergie (Steuerung, Frostschutz,
+  # Umwälzpumpe, Defrost). Diese Zahl ist mit Hersteller-Datenblättern
+  # (EN 14825) und Nachbar-Anlagen vergleichbar und gehört auf das
+  # Overview-Tile. Für eine Kompressor-isolierte Diagnose siehe
+  # `hph_scop_compressor_only` weiter unten.
   state: '{% set t = states(''sensor.hph_thermal_yearly'') | float(0) %} {%
     set e = states(''sensor.hph_electrical_yearly'') | float(0) %} {{ (t /
     e) | round(2) if e > 1.0 else 0 }}'
   _source_package: hph_efficiency.yaml
+# "Kompressor-SCOP" — Nenner nur während aktiver Kompressorläufe.
+# Steht für die innere Maschinen-Effizienz, abzgl. Hilfsenergie und
+# Defrost. Differenz zum Anlagen-SCOP zeigt, wie viel Effizienz durch
+# Standby/Pumpen/Defrost verloren geht. Nicht für Hersteller-Vergleich
+# geeignet — nur für Diagnose.
+- name: HeatPump Hero SCOP Compressor Only
+  unique_id: hph_scop_compressor_only
+  unit_of_measurement: x
+  state_class: measurement
+  state: >-
+    {% set t = states('sensor.hph_thermal_runtime_yearly') | float(0) %}
+    {% set e = states('sensor.hph_electrical_runtime_yearly') | float(0) %}
+    {{ (t / e) | round(2) if e > 1.0 else 0 }}
+  _source_package: hph_efficiency.yaml
+# Hilfsenergie-Anteil am Jahresstromverbrauch in Prozent.
+# 100 × (total_yearly − runtime_yearly) / total_yearly. Niedrig (<10 %)
+# = effizient installiert; hoch (>20 %) = Heizkreispumpe oder Standby
+# zieht überproportional. Komplement zur SCOP-Differenz.
+- name: HeatPump Hero SCOP Auxiliary Share
+  unique_id: hph_scop_auxiliary_share_pct
+  unit_of_measurement: '%'
+  state_class: measurement
+  icon: mdi:chart-donut
+  state: >-
+    {% set total = states('sensor.hph_electrical_yearly') | float(0) %}
+    {% set runtime = states('sensor.hph_electrical_runtime_yearly') | float(0) %}
+    {{ ((total - runtime) / total * 100) | round(1) if total > 1.0 else 0 }}
+  _source_package: hph_efficiency.yaml
 # Standby-Diagnose: elektrische kWh, die nicht während Kompressor-Lauf
-# verbraucht wurden (= Umwälzpumpe + Steuerelektronik + Frostschutz).
-# Typisch ~1 kWh/Tag bei einer Aquarea — wenn deutlich höher: Hydraulik
-# / interne Pumpe prüfen.
+# verbraucht wurden (= HP-Steuerelektronik + Frostschutz + ggf. externe
+# dauerlaufende Heizkreispumpe + Defrost-Strom, falls Defrost aus Runtime
+# ausgeschlossen wird).
+#
+# Erwartung: 0.2–0.4 kWh/Tag (reine HP-Steuerelektronik). Schwelle für den
+# Advisor wird über number.hph_advisor_standby_max_kwh (default 0.4)
+# konfiguriert. Höhere Werte → externe Verbraucher (Heizkreis-Pumpe
+# 50–80 W × 24 h ≈ 1.2–1.9 kWh/Tag) oder HA-Reload-Verluste prüfen.
+#
+# Parallel existiert sensor.hph_electrical_yearly_split_standby (Jahres-
+# Topf via Tariff, gespeist vom standby-State des operating_mode) — beide
+# sind unterschiedliche, korrekte Sichten.
 - name: HeatPump Hero Standby Electrical Daily
   unique_id: hph_standby_electrical_daily
   unit_of_measurement: kWh
@@ -787,6 +878,42 @@ sensors:
     {% set t = states('sensor.hph_thermal_dhw_runtime_yearly') | float(0) %}
     {% set e = states('sensor.hph_electrical_dhw_runtime_yearly') | float(0) %}
     {{ (t / e) | round(2) if e > 0.1 else 0 }}
+  _source_package: hph_efficiency.yaml
+# Cooling yearly COP (begrifflich EER, aber symmetrisch zu Heating/DHW
+# als SCOP-Variante geführt). Denominator: runtime-gated cooling-electrical.
+- name: HeatPump Hero COP Yearly Cooling
+  unique_id: hph_cop_yearly_cooling
+  unit_of_measurement: x
+  state_class: measurement
+  state: >-
+    {% set t = states('sensor.hph_thermal_yearly_split_cooling') | float(0) %}
+    {% set e = states('sensor.hph_electrical_cooling_runtime_yearly') | float(0) %}
+    {{ (t / e) | round(2) if e > 0.1 else 0 }}
+  _source_package: hph_efficiency.yaml
+# Combined SCOPs — for installations that want a single "heating-incl-DHW"
+# headline figure (most household use cases) or "cooling-incl-DHW" (rare
+# but possible in summer setups with active cooling + WW).
+- name: HeatPump Hero SCOP Heating + DHW
+  unique_id: hph_scop_heating_plus_dhw
+  unit_of_measurement: x
+  state_class: measurement
+  state: >-
+    {% set th = states('sensor.hph_thermal_yearly_split_heating') | float(0) %}
+    {% set td = states('sensor.hph_thermal_yearly_split_dhw') | float(0) %}
+    {% set eh = states('sensor.hph_electrical_heating_runtime_yearly') | float(0) %}
+    {% set ed = states('sensor.hph_electrical_dhw_runtime_yearly') | float(0) %}
+    {{ ((th + td) / (eh + ed)) | round(2) if (eh + ed) > 0.1 else 0 }}
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero SCOP Cooling + DHW
+  unique_id: hph_scop_cooling_plus_dhw
+  unit_of_measurement: x
+  state_class: measurement
+  state: >-
+    {% set tc = states('sensor.hph_thermal_yearly_split_cooling') | float(0) %}
+    {% set td = states('sensor.hph_thermal_yearly_split_dhw') | float(0) %}
+    {% set ec = states('sensor.hph_electrical_cooling_runtime_yearly') | float(0) %}
+    {% set ed = states('sensor.hph_electrical_dhw_runtime_yearly') | float(0) %}
+    {{ ((tc + td) / (ec + ed)) | round(2) if (ec + ed) > 0.1 else 0 }}
   _source_package: hph_efficiency.yaml
 - name: HeatPump Hero COP Last Month
   unique_id: hph_cop_last_month
@@ -1495,9 +1622,13 @@ sensors:
   unit_of_measurement: W
   device_class: power
   state_class: measurement
+  # Defrost is reverse-cycle: power is drawn but no useful heat is produced
+  # (the live COP is forced to 0 during defrost for the same reason). Excluding
+  # defrost keeps the heating-COP denominator strictly tied to productive runs.
   state: >-
     {% if is_state('binary_sensor.hph_compressor_running','on')
-       and is_state('sensor.hph_operating_mode','heating') %}
+       and is_state('sensor.hph_operating_mode','heating')
+       and is_state('binary_sensor.hph_defrost_active','off') %}
       {{ states('sensor.hph_electrical_power_active') | float(0) }}
     {% else %}0{% endif %}
   _source_package: hph_efficiency.yaml

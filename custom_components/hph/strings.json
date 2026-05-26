@@ -454,6 +454,9 @@
       "hph_advisor_pump_spread_min_samples": {
         "name": "Advisor — pump-curve min samples (7d)"
       },
+      "hph_advisor_standby_max_kwh": {
+        "name": "Advisor — standby max (kWh/day)"
+      },
       "hph_dhw_fires_yesterday": {
         "name": "DHW fires yesterday"
       },
@@ -996,6 +999,24 @@
       },
       "hph_cop_yearly_dhw_direct": {
         "name": "COP Yearly — DHW Direct"
+      },
+      "hph_cop_yearly_cooling": {
+        "name": "COP Yearly — Cooling"
+      },
+      "hph_scop_heating_plus_dhw": {
+        "name": "SCOP — Heating + DHW"
+      },
+      "hph_scop_cooling_plus_dhw": {
+        "name": "SCOP — Cooling + DHW"
+      },
+      "hph_advisor_standby": {
+        "name": "Advisor — Standby"
+      },
+      "hph_scop_compressor_only": {
+        "name": "SCOP — Compressor only"
+      },
+      "hph_scop_auxiliary_share_pct": {
+        "name": "SCOP — Auxiliary share"
       },
       "hph_cop_last_month": {
         "name": "COP Last Month"

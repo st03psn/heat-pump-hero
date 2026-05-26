@@ -454,6 +454,9 @@
       "hph_advisor_pump_spread_min_samples": {
         "name": "Advisor — Pumpenkurve Min. Stichproben (7 Tage)"
       },
+      "hph_advisor_standby_max_kwh": {
+        "name": "Advisor — Standby-Maximum (kWh/Tag)"
+      },
       "hph_dhw_fires_yesterday": {
         "name": "WW-Starts gestern"
       },
@@ -996,6 +999,24 @@
       },
       "hph_cop_yearly_dhw_direct": {
         "name": "COP Jährlich — Brauchwasser Direkt"
+      },
+      "hph_cop_yearly_cooling": {
+        "name": "COP Jährlich — Kühlen"
+      },
+      "hph_scop_heating_plus_dhw": {
+        "name": "SCOP — Heizen + Warmwasser"
+      },
+      "hph_scop_cooling_plus_dhw": {
+        "name": "SCOP — Kühlen + Warmwasser"
+      },
+      "hph_advisor_standby": {
+        "name": "Advisor — Standby"
+      },
+      "hph_scop_compressor_only": {
+        "name": "SCOP — Nur Kompressor"
+      },
+      "hph_scop_auxiliary_share_pct": {
+        "name": "SCOP — Hilfsenergie-Anteil"
       },
       "hph_cop_last_month": {
         "name": "COP Letzter Monat"

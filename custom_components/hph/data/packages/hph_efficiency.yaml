@@ -246,11 +246,11 @@ utility_meter:
   hph_thermal_daily_split:
     source: sensor.hph_thermal_energy_active
     cycle: daily
-    tariffs: [heating, dhw, cooling]
+    tariffs: [heating, dhw, cooling, standby]
   hph_electrical_daily_split:
     source: sensor.hph_electrical_energy_active
     cycle: daily
-    tariffs: [heating, dhw, cooling]
+    tariffs: [heating, dhw, cooling, standby]
 
   # ── Monthly (calendar month) ─────────────────────────────────────────
   hph_thermal_monthly:
@@ -269,11 +269,11 @@ utility_meter:
   hph_thermal_monthly_split:
     source: sensor.hph_thermal_energy_active
     cycle: monthly
-    tariffs: [heating, dhw, cooling]
+    tariffs: [heating, dhw, cooling, standby]
   hph_electrical_monthly_split:
     source: sensor.hph_electrical_energy_active
     cycle: monthly
-    tariffs: [heating, dhw, cooling]
+    tariffs: [heating, dhw, cooling, standby]
   # Runtime-gated per-mode electrical monthly — used as denominator for
   # mode COP so standby power is never included in any mode's COP.
   hph_electrical_heating_runtime_monthly:
@@ -308,11 +308,11 @@ utility_meter:
   hph_thermal_yearly_split:
     source: sensor.hph_thermal_energy_active
     cron: "0 0 1 7 *"
-    tariffs: [heating, dhw, cooling]
+    tariffs: [heating, dhw, cooling, standby]
   hph_electrical_yearly_split:
     source: sensor.hph_electrical_energy_active
     cron: "0 0 1 7 *"
-    tariffs: [heating, dhw, cooling]
+    tariffs: [heating, dhw, cooling, standby]
   # Runtime-gated per-mode electrical yearly — denominator for yearly mode COP.
   hph_electrical_heating_runtime_yearly:
     source: sensor.hph_electrical_energy_heating_runtime
