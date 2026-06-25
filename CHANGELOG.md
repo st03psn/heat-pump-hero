@@ -7,6 +7,22 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
 
 ### Added
 
+- **EER / SEER — real cooling-mode efficiency.** Cooling efficiency was
+  structurally stuck at 0: the thermal-power sensor clamps the (negative)
+  cooling signal to 0 via `max(power, 0)`, so the cooling tariff pot never
+  accumulated and `sensor.hph_cop_yearly_cooling` divided 0 by the cooling
+  electricity. A new `sensor.hph_thermal_power_cooling` captures the heat
+  removed as a positive magnitude (`max(inlet − outlet, 0) × flow × cp`,
+  gated to the cooling operating mode), integrated into
+  `sensor.hph_thermal_cooling_energy_runtime` and metered daily/monthly/
+  yearly. On top of it: `sensor.hph_eer_live`, `hph_eer_daily`,
+  `hph_eer_monthly` and `sensor.hph_seer` (seasonal EER). The previously
+  broken `hph_cop_yearly_cooling` and the cooling term of
+  `hph_scop_cooling_plus_dhw` are repointed to the real meter and now read
+  correctly. Heating COP/SCOP and the heating thermal-power sensor are
+  untouched. Cooling efficiency is reported as a positive EER, never a
+  negative COP.
+
 - **Mode-aware tariff: new `standby` slot in all six split utility_meters.**
   `sensor.hph_operating_mode` now emits `standby` whenever the compressor
   is not running, so auxiliary electrical draw (control electronics,

@@ -99,3 +99,49 @@ async def test_hph_cop_daily_excludes_cooling(hass: HomeAssistant) -> None:
 
     # (40-4)/(12-2) = 3.6.
     assert float(_render(hass, "hph_cop_daily")) == 3.6
+
+
+# ── EER / SEER (cooling-mode efficiency) ────────────────────────────────
+
+
+async def test_thermal_power_cooling_magnitude(hass: HomeAssistant) -> None:
+    """In cooling mode the sensor reports the POSITIVE heat-removed magnitude."""
+    hass.states.async_set("sensor.hph_operating_mode", "cooling")
+    hass.states.async_set("sensor.hph_source_inlet_temp", "18")
+    hass.states.async_set("sensor.hph_source_outlet_temp", "12")
+    hass.states.async_set("sensor.hph_source_flow_rate", "20")
+    await hass.async_block_till_done()
+
+    # tmean=15 → cp=4179; (18-12)*20*4179/60 = 8358 W (positive, not clamped 0).
+    assert float(_render(hass, "hph_thermal_power_cooling")) == 8358
+
+
+async def test_thermal_power_cooling_zero_when_not_cooling(hass: HomeAssistant) -> None:
+    """Outside cooling mode the cooling magnitude is gated to 0."""
+    hass.states.async_set("sensor.hph_operating_mode", "heating")
+    hass.states.async_set("sensor.hph_source_inlet_temp", "30")
+    hass.states.async_set("sensor.hph_source_outlet_temp", "35")
+    hass.states.async_set("sensor.hph_source_flow_rate", "20")
+    await hass.async_block_till_done()
+
+    assert float(_render(hass, "hph_thermal_power_cooling")) == 0
+
+
+async def test_seer_from_cooling_meters(hass: HomeAssistant) -> None:
+    """SEER = seasonal cooling thermal / cooling electrical (positive ratio)."""
+    hass.states.async_set("sensor.hph_thermal_cooling_runtime_yearly", "200")
+    hass.states.async_set("sensor.hph_electrical_cooling_runtime_yearly", "50")
+    await hass.async_block_till_done()
+
+    # 200 / 50 = 4.0.
+    assert float(_render(hass, "hph_seer")) == 4.0
+
+
+async def test_eer_live_from_power(hass: HomeAssistant) -> None:
+    """Live EER divides the cooling thermal power by the cooling electrical power."""
+    hass.states.async_set("sensor.hph_thermal_power_cooling", "3000")
+    hass.states.async_set("sensor.hph_electrical_power_cooling_runtime", "1000")
+    await hass.async_block_till_done()
+
+    # 3000 / 1000 = 3.0 (denominator above the 50 W floor).
+    assert float(_render(hass, "hph_eer_live")) == 3.0

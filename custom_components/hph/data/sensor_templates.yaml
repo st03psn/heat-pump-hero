@@ -551,6 +551,33 @@ sensors:
     else (4196 if tmean >= 80 else 4179 + 0.425 * (tmean - 40)) %} {% set power = (tout
     - tin) * flow * cp / 60 %} {{ [power, 0] | max | round(0) }}'
   _source_package: hph_core.yaml
+# Cooling thermal power as a POSITIVE magnitude. During cooling the heat
+# pump chills the supply, so outlet < inlet and (tout - tin) < 0 — the
+# heating sensor hph_thermal_power clamps that to 0, discarding the heat
+# moved. Here we invert to (tin - tout) and gate strictly on the cooling
+# operating mode (which only resolves when the compressor runs), so
+# heating/DHW never leak in. Same cp(T) interpolation as the heating sensor.
+# Feeds hph_thermal_cooling_energy_runtime → the EER / SEER family.
+- name: HeatPump Hero Thermal Power Cooling
+  unique_id: hph_thermal_power_cooling
+  unit_of_measurement: W
+  device_class: power
+  state_class: measurement
+  availability: >-
+    {{ states('sensor.hph_source_inlet_temp') not in ['unknown','unavailable','none']
+       and states('sensor.hph_source_outlet_temp') not in ['unknown','unavailable','none']
+       and states('sensor.hph_source_flow_rate') not in ['unknown','unavailable','none'] }}
+  state: >-
+    {% if is_state('sensor.hph_operating_mode','cooling') %}
+    {% set tin = states('sensor.hph_source_inlet_temp') | float(0) %}
+    {% set tout = states('sensor.hph_source_outlet_temp') | float(0) %}
+    {% set flow = states('sensor.hph_source_flow_rate') | float(0) %}
+    {% set tmean = (tin + tout) / 2 %}
+    {% set cp = 4179 if tmean <= 40 else (4196 if tmean >= 80 else 4179 + 0.425 * (tmean - 40)) %}
+    {% set power = (tin - tout) * flow * cp / 60 %}
+    {{ [power, 0] | max | round(0) }}
+    {% else %}0{% endif %}
+  _source_package: hph_efficiency.yaml
 - name: HeatPump Hero Operating Mode
   unique_id: hph_operating_mode
   # `standby` is emitted whenever the compressor is not running, regardless
@@ -888,16 +915,65 @@ sensors:
     {% set e = states('sensor.hph_electrical_dhw_runtime_yearly') | float(0) %}
     {{ (t / e) | round(2) if e > 0.1 else 0 }}
   _source_package: hph_efficiency.yaml
-# Cooling yearly COP (begrifflich EER, aber symmetrisch zu Heating/DHW
-# als SCOP-Variante geführt). Denominator: runtime-gated cooling-electrical.
+# Cooling yearly COP (begrifflich EER — siehe hph_seer für die EER-benannte
+# Schwester-Kennzahl, numerisch identisch). Numerator jetzt aus der echten
+# Kühl-Thermik-Magnitude (hph_thermal_cooling_runtime_yearly) statt aus dem
+# Tarif-Topf hph_thermal_yearly_split_cooling, der ~0 blieb, weil der Heiz-
+# Thermik-Sensor das negative Kühl-Signal auf 0 klemmt.
 - name: HeatPump Hero COP Yearly Cooling
   unique_id: hph_cop_yearly_cooling
   unit_of_measurement: x
   state_class: measurement
   state: >-
-    {% set t = states('sensor.hph_thermal_yearly_split_cooling') | float(0) %}
+    {% set t = states('sensor.hph_thermal_cooling_runtime_yearly') | float(0) %}
     {% set e = states('sensor.hph_electrical_cooling_runtime_yearly') | float(0) %}
     {{ (t / e) | round(2) if e > 0.1 else 0 }}
+  _source_package: hph_efficiency.yaml
+# ── EER / SEER — cooling-mode efficiency (positive magnitude) ───────────
+# COP measures heating efficiency; for cooling the analogous figure is the
+# EER (Energy Efficiency Ratio) = |heat removed| / electrical input. The
+# cooling heat is captured as a positive magnitude by
+# sensor.hph_thermal_power_cooling (the heating thermal-power sensor clamps
+# the negative cooling signal to 0), integrated into
+# hph_thermal_cooling_runtime_* and divided by the runtime-gated cooling
+# electrical meters. SEER is simply the seasonal (yearly) EER; it equals
+# hph_cop_yearly_cooling by construction (kept under both names for the
+# EER-branded headline vs. the per-mode COP table).
+- name: HeatPump Hero EER Live
+  unique_id: hph_eer_live
+  unit_of_measurement: x
+  state_class: measurement
+  state: >-
+    {% set t = states('sensor.hph_thermal_power_cooling') | float(0) %}
+    {% set e = states('sensor.hph_electrical_power_cooling_runtime') | float(0) %}
+    {{ (t / e) | round(2) if e > 50 else 0 }}
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero EER Daily
+  unique_id: hph_eer_daily
+  unit_of_measurement: x
+  state_class: measurement
+  state: >-
+    {% set t = states('sensor.hph_thermal_cooling_runtime_daily') | float(0) %}
+    {% set e = states('sensor.hph_electrical_cooling_runtime_daily') | float(0) %}
+    {{ (t / e) | round(2) if e > 0.1 else 0 }}
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero EER Monthly
+  unique_id: hph_eer_monthly
+  unit_of_measurement: x
+  state_class: measurement
+  state: >-
+    {% set t = states('sensor.hph_thermal_cooling_runtime_monthly') | float(0) %}
+    {% set e = states('sensor.hph_electrical_cooling_runtime_monthly') | float(0) %}
+    {{ (t / e) | round(2) if e > 0.5 else 0 }}
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero SEER
+  unique_id: hph_seer
+  unit_of_measurement: x
+  state_class: measurement
+  state: >-
+    {% set t = states('sensor.hph_thermal_cooling_runtime_yearly') | float(0) %}
+    {% set e = states('sensor.hph_electrical_cooling_runtime_yearly') | float(0) %}
+    {{ (t / e) | round(2) if e > 1.0 else 0 }}
   _source_package: hph_efficiency.yaml
 # Combined SCOPs — for installations that want a single "heating-incl-DHW"
 # headline figure (most household use cases) or "cooling-incl-DHW" (rare
@@ -918,7 +994,7 @@ sensors:
   unit_of_measurement: x
   state_class: measurement
   state: >-
-    {% set tc = states('sensor.hph_thermal_yearly_split_cooling') | float(0) %}
+    {% set tc = states('sensor.hph_thermal_cooling_runtime_yearly') | float(0) %}
     {% set td = states('sensor.hph_thermal_yearly_split_dhw') | float(0) %}
     {% set ec = states('sensor.hph_electrical_cooling_runtime_yearly') | float(0) %}
     {% set ed = states('sensor.hph_electrical_dhw_runtime_yearly') | float(0) %}
