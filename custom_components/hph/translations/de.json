@@ -1257,6 +1257,21 @@
       },
       "hph_efficiency_trend": {
         "name": "Effizienztrend"
+      },
+      "hph_thermal_power_cooling": {
+        "name": "Thermische Leistung — Kühlen"
+      },
+      "hph_eer_live": {
+        "name": "EER (Live)"
+      },
+      "hph_eer_daily": {
+        "name": "EER Täglich"
+      },
+      "hph_eer_monthly": {
+        "name": "EER Monatlich"
+      },
+      "hph_seer": {
+        "name": "SEER"
       }
     },
     "binary_sensor": {

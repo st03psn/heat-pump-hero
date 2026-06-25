@@ -192,6 +192,19 @@ sensor:
   unit_time: h
   method: left
   round: 2
+# Cooling thermal energy (magnitude) — integrates sensor.hph_thermal_power_cooling,
+# which is already gated to the cooling operating mode. Numerator for the
+# EER / SEER family (hph_eer_*, hph_seer) and the repointed per-mode cooling
+# COP sensors. Without this the cooling thermal pots stayed ~0 because the
+# heating thermal-power sensor clamps the (negative) cooling signal to 0.
+- platform: integration
+  source: sensor.hph_thermal_power_cooling
+  name: Thermal Energy Cooling (runtime)
+  unique_id: hph_thermal_cooling_energy_runtime
+  unit_prefix: k
+  unit_time: h
+  method: left
+  round: 2
 # DHW thermal energy from Heishamon's direct dhw_power_production measurement.
 # Only accumulates when hph_source_dhw_power_thermal is configured and compressor
 # is running in DHW mode. Feeds hph_cop_monthly_dhw_direct / _yearly_dhw_direct.
@@ -251,6 +264,13 @@ utility_meter:
     source: sensor.hph_electrical_energy_active
     cycle: daily
     tariffs: [heating, dhw, cooling, standby]
+  # Cooling thermal (magnitude) + electrical runtime daily — feed hph_eer_daily.
+  hph_thermal_cooling_runtime_daily:
+    source: sensor.hph_thermal_cooling_energy_runtime
+    cycle: daily
+  hph_electrical_cooling_runtime_daily:
+    source: sensor.hph_electrical_energy_cooling_runtime
+    cycle: daily
 
   # ── Monthly (calendar month) ─────────────────────────────────────────
   hph_thermal_monthly:
@@ -284,6 +304,10 @@ utility_meter:
     cycle: monthly
   hph_electrical_cooling_runtime_monthly:
     source: sensor.hph_electrical_energy_cooling_runtime
+    cycle: monthly
+  # Cooling thermal (magnitude) monthly — numerator for hph_eer_monthly.
+  hph_thermal_cooling_runtime_monthly:
+    source: sensor.hph_thermal_cooling_energy_runtime
     cycle: monthly
 
   # ── Heating season (Jul 1 – Jun 30) ─────────────────────────────────
@@ -322,6 +346,11 @@ utility_meter:
     cron: "0 0 1 7 *"
   hph_electrical_cooling_runtime_yearly:
     source: sensor.hph_electrical_energy_cooling_runtime
+    cron: "0 0 1 7 *"
+  # Cooling thermal (magnitude) seasonal — numerator for hph_seer and the
+  # repointed hph_cop_yearly_cooling / hph_scop_cooling_plus_dhw.
+  hph_thermal_cooling_runtime_yearly:
+    source: sensor.hph_thermal_cooling_energy_runtime
     cron: "0 0 1 7 *"
   # Direct DHW thermal energy — from Heishamon dhw_power_production.
   hph_thermal_dhw_runtime_monthly:
