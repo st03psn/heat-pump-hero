@@ -1,0 +1,64 @@
+name: Release
+
+# Publishes a GitHub Release (and its tag) for the version currently in
+# custom_components/hph/manifest.json. HACS reads GitHub Releases to offer
+# updates, so cutting a release is what makes a new version installable.
+#
+# Trigger manually from the Actions tab (or via the API) with
+# workflow_dispatch. The job runs with the built-in GITHUB_TOKEN, which —
+# unlike a plain push — is allowed to create releases (contents: write).
+#
+# - tag defaults to "v<manifest version>" (override via the `tag` input)
+# - prerelease is set automatically when the version contains rc/beta/alpha
+# - release notes are taken from the top "## [Unreleased]" block of CHANGELOG.md
+# - idempotent: re-running updates the existing release instead of failing
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (default: v<manifest version>)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve version and notes
+        id: meta
+        run: |
+          tag="${{ github.event.inputs.tag }}"
+          if [ -z "$tag" ]; then
+            tag="v$(python3 -c "import json; print(json.load(open('custom_components/hph/manifest.json'))['version'])")"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          case "$tag" in
+            *rc*|*beta*|*alpha*) echo "prerelease=true"  >> "$GITHUB_OUTPUT" ;;
+            *)                   echo "prerelease=false" >> "$GITHUB_OUTPUT" ;;
+          esac
+          # Extract the top [Unreleased] block from the changelog as release notes.
+          awk '/^## \[Unreleased\]/{f=1; next} /^## \[/{f=0} f' CHANGELOG.md > release_notes.md
+          if [ ! -s release_notes.md ]; then
+            echo "See CHANGELOG.md for details." > release_notes.md
+          fi
+
+      - name: Create or update release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${{ steps.meta.outputs.tag }}"
+          flags=""
+          if [ "${{ steps.meta.outputs.prerelease }}" = "true" ]; then
+            flags="--prerelease"
+          fi
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release edit "$tag" --target main --title "$tag" --notes-file release_notes.md $flags
+          else
+            gh release create "$tag" --target main --title "$tag" --notes-file release_notes.md $flags
+          fi
