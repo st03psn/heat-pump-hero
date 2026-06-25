@@ -47,6 +47,25 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
 
 ### Fixed
 
+- **Plant-wide SCOP/COP figures now exclude the cooling mode.** The
+  headline `sensor.hph_scop` (JAZ) and the four derived COP sensors
+  (`hph_cop_daily`, `_monthly`, `_last_month`, `_last_year`) divided two
+  *undivided* meters wired straight to the physical heat/electric meters,
+  so cooling electricity landed in the denominator with no matching
+  useful energy in the numerator — depressing the heating/DHW JAZ. Each
+  now subtracts the corresponding `…_split_cooling` tariff pot from
+  both numerator and denominator; the `float(0)` fallback makes this a
+  no-op until cooling data exists, so installations without cooling are
+  unchanged. Cost sensors (`hph_cost_*`) and the raw utility_meters are
+  intentionally left untouched (they must keep the real electricity
+  draw). Cooling efficiency stays available via
+  `sensor.hph_cop_yearly_cooling` and `sensor.hph_scop_cooling_plus_dhw`.
+  Known limit (follow-up): `hph_scop_compressor_only` and
+  `hph_scop_auxiliary_share_pct` remain cooling-contaminated because they
+  read the runtime-gated `…_runtime_yearly` meters, which are not split
+  by mode — cleaning those requires new mode-gated runtime integrators
+  rather than a subtraction.
+
 - **Custom cards (`hph-tile`, `hph-help`, `hph-hero`) no longer show
   "Configuration error" in HA 2026.5+.** HA's frontend replaces
   `window.customElements` with its own polyfill (constructor `S`) during

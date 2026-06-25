@@ -70,6 +70,14 @@ Mirror the same answers on your heatpumpmonitor.org system page. Different
 answers → different SCOP — but comparable across users who answered
 honestly.
 
+> **Cooling is excluded from the headline SCOP.** `sensor.hph_scop` (and the
+> derived `hph_cop_daily` / `_monthly` / `_last_month` / `_last_year`) report a
+> heating-plus-DHW figure: the cooling tariff pot is subtracted from both
+> numerator and denominator, so summer cooling no longer drags the JAZ down.
+> Cooling efficiency is tracked separately via `sensor.hph_cop_yearly_cooling`
+> and `sensor.hph_scop_cooling_plus_dhw`. Cost sensors and the raw meters keep
+> the full electrical draw.
+
 ## Installation context
 
 heatpumpmonitor.org also asks about the system itself (heat loss, emitter
