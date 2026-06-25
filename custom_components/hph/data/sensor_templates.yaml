@@ -731,17 +731,23 @@ sensors:
   state_class: measurement
   # Uses total daily meters (matches physical Sensostar/Shelly). Survives
   # HPH integration reloads because utility_meter state is persisted by HA.
-  state: '{% set t = states(''sensor.hph_thermal_daily'') | float(0) %} {%
-    set e = states(''sensor.hph_electrical_daily'') | float(0) %} {{ (t / e)
-    | round(2) if e > 0.1 else 0 }}'
+  state: >-
+    {% set t = states('sensor.hph_thermal_daily') | float(0)
+             - states('sensor.hph_thermal_daily_split_cooling') | float(0) %}
+    {% set e = states('sensor.hph_electrical_daily') | float(0)
+             - states('sensor.hph_electrical_daily_split_cooling') | float(0) %}
+    {{ (t / e) | round(2) if e > 0.1 else 0 }}
   _source_package: hph_efficiency.yaml
 - name: HeatPump Hero COP Monthly
   unique_id: hph_cop_monthly
   unit_of_measurement: x
   state_class: measurement
-  state: '{% set t = states(''sensor.hph_thermal_monthly'') | float(0) %} {%
-    set e = states(''sensor.hph_electrical_monthly'') | float(0) %} {{ (t /
-    e) | round(2) if e > 0.5 else 0 }}'
+  state: >-
+    {% set t = states('sensor.hph_thermal_monthly') | float(0)
+             - states('sensor.hph_thermal_monthly_split_cooling') | float(0) %}
+    {% set e = states('sensor.hph_electrical_monthly') | float(0)
+             - states('sensor.hph_electrical_monthly_split_cooling') | float(0) %}
+    {{ (t / e) | round(2) if e > 0.5 else 0 }}
   _source_package: hph_efficiency.yaml
 - name: HeatPump Hero SCOP
   unique_id: hph_scop
@@ -752,9 +758,12 @@ sensors:
   # (EN 14825) und Nachbar-Anlagen vergleichbar und gehört auf das
   # Overview-Tile. Für eine Kompressor-isolierte Diagnose siehe
   # `hph_scop_compressor_only` weiter unten.
-  state: '{% set t = states(''sensor.hph_thermal_yearly'') | float(0) %} {%
-    set e = states(''sensor.hph_electrical_yearly'') | float(0) %} {{ (t /
-    e) | round(2) if e > 1.0 else 0 }}'
+  state: >-
+    {% set t = states('sensor.hph_thermal_yearly') | float(0)
+             - states('sensor.hph_thermal_yearly_split_cooling') | float(0) %}
+    {% set e = states('sensor.hph_electrical_yearly') | float(0)
+             - states('sensor.hph_electrical_yearly_split_cooling') | float(0) %}
+    {{ (t / e) | round(2) if e > 1.0 else 0 }}
   _source_package: hph_efficiency.yaml
 # "Kompressor-SCOP" — Nenner nur während aktiver Kompressorläufe.
 # Steht für die innere Maschinen-Effizienz, abzgl. Hilfsenergie und
@@ -918,16 +927,22 @@ sensors:
 - name: HeatPump Hero COP Last Month
   unique_id: hph_cop_last_month
   unit_of_measurement: x
-  state: '{% set t = state_attr(''sensor.hph_thermal_monthly'',''last_period'') |
-    float(0) %} {% set e = state_attr(''sensor.hph_electrical_monthly'',''last_period'')
-    | float(0) %} {{ (t / e) | round(2) if e > 0.1 else 0 }}'
+  state: >-
+    {% set t = state_attr('sensor.hph_thermal_monthly','last_period') | float(0)
+             - state_attr('sensor.hph_thermal_monthly_split_cooling','last_period') | float(0) %}
+    {% set e = state_attr('sensor.hph_electrical_monthly','last_period') | float(0)
+             - state_attr('sensor.hph_electrical_monthly_split_cooling','last_period') | float(0) %}
+    {{ (t / e) | round(2) if e > 0.1 else 0 }}
   _source_package: hph_efficiency.yaml
 - name: HeatPump Hero COP Last Year
   unique_id: hph_cop_last_year
   unit_of_measurement: x
-  state: '{% set t = state_attr(''sensor.hph_thermal_yearly'',''last_period'') | float(0)
-    %} {% set e = state_attr(''sensor.hph_electrical_yearly'',''last_period'') | float(0)
-    %} {{ (t / e) | round(2) if e > 0.1 else 0 }}'
+  state: >-
+    {% set t = state_attr('sensor.hph_thermal_yearly','last_period') | float(0)
+             - state_attr('sensor.hph_thermal_yearly_split_cooling','last_period') | float(0) %}
+    {% set e = state_attr('sensor.hph_electrical_yearly','last_period') | float(0)
+             - state_attr('sensor.hph_electrical_yearly_split_cooling','last_period') | float(0) %}
+    {{ (t / e) | round(2) if e > 0.1 else 0 }}
   _source_package: hph_efficiency.yaml
 - name: HeatPump Hero Thermal Last Month
   unique_id: hph_thermal_last_month
