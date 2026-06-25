@@ -8,6 +8,7 @@ that package is not installed (e.g. local dev without a full HA env).
 from __future__ import annotations
 
 import importlib.util
+from types import MappingProxyType
 from unittest.mock import patch
 
 import pytest
@@ -25,6 +26,7 @@ from custom_components.hph.const import (
     MODEL_CAPABILITIES,
     TEXT_HELPERS,
     VENDOR_PRESETS,
+    _MODEL_CONDITIONAL,
 )
 
 # Minimal config-entry data that passes the setup guard.
@@ -71,6 +73,7 @@ async def _setup_entry(hass: HomeAssistant, data: dict | None = None) -> None:
             options={},
             source="user",
             unique_id=None,
+            discovery_keys=MappingProxyType({}),
         )
         await hass.config_entries.async_add(entry)
         await hass.async_block_till_done()
@@ -182,7 +185,10 @@ async def test_model_capabilities_cover_all_preset_src_keys() -> None:
     }
     # internal_thermal_power is intentionally NOT in MODEL_CAPABILITIES
     # (it has a non-empty default and is present on all models).
-    always_present = {"internal_thermal_power"}
+    # _MODEL_CONDITIONAL keys (e.g. fan2_speed) are gated per-model by a
+    # dedicated mechanism — models without the feature legitimately omit
+    # them from MODEL_CAPABILITIES, so they must not be flagged here.
+    always_present = {"internal_thermal_power"} | set(_MODEL_CONDITIONAL)
 
     for model_key, caps in MODEL_CAPABILITIES.items():
         if not model_key.startswith("panasonic_"):
