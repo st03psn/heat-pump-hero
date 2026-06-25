@@ -57,8 +57,11 @@ Install / deploy onto a real HA instance:
 - `bash scripts/install.sh /path/to/ha/config [--db sqlite|mariadb|postgresql]`
 
 CI (`.github/workflows/validate.yml`) runs all of the above plus HACS
-validation on every push and PR. There is no separate `release.yml` —
-release notes come from `CHANGELOG.md`.
+validation on every push and PR. A separate `.github/workflows/release.yml`
+publishes the GitHub Release that HACS reads to offer updates: trigger it
+manually via `workflow_dispatch`; it tags `v<manifest version>`, marks
+`rc`/`beta`/`alpha` versions as a pre-release, and takes the release notes
+from the top `## [Unreleased]` block of `CHANGELOG.md`.
 
 ## Repository layout
 
