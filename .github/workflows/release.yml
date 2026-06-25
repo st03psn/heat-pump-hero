@@ -4,16 +4,25 @@ name: Release
 # custom_components/hph/manifest.json. HACS reads GitHub Releases to offer
 # updates, so cutting a release is what makes a new version installable.
 #
-# Trigger manually from the Actions tab (or via the API) with
-# workflow_dispatch. The job runs with the built-in GITHUB_TOKEN, which —
-# unlike a plain push — is allowed to create releases (contents: write).
+# Triggers:
+#   - push to main: a release for the current manifest version is cut
+#     automatically the first time that version reaches main (e.g. after a
+#     version-bump PR merges). Existing releases are left untouched, so
+#     ordinary pushes are a no-op.
+#   - workflow_dispatch: cut/refresh a release on demand (optionally for a
+#     specific `tag`); this variant re-applies the notes to an existing
+#     release.
+#
+# The job runs with the built-in GITHUB_TOKEN (contents: write), which —
+# unlike a plain tag push from a contributor — is allowed to create releases.
 #
 # - tag defaults to "v<manifest version>" (override via the `tag` input)
 # - prerelease is set automatically when the version contains rc/beta/alpha
 # - release notes are taken from the top "## [Unreleased]" block of CHANGELOG.md
-# - idempotent: re-running updates the existing release instead of failing
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       tag:
@@ -48,7 +57,7 @@ jobs:
             echo "See CHANGELOG.md for details." > release_notes.md
           fi
 
-      - name: Create or update release
+      - name: Create or refresh release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -58,7 +67,13 @@ jobs:
             flags="--prerelease"
           fi
           if gh release view "$tag" >/dev/null 2>&1; then
-            gh release edit "$tag" --target main --title "$tag" --notes-file release_notes.md $flags
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              echo "Refreshing existing release $tag"
+              gh release edit "$tag" --target main --title "$tag" --notes-file release_notes.md $flags
+            else
+              echo "Release $tag already exists — nothing to do for this push."
+            fi
           else
+            echo "Creating release $tag"
             gh release create "$tag" --target main --title "$tag" --notes-file release_notes.md $flags
           fi
