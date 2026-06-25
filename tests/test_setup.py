@@ -8,7 +8,6 @@ that package is not installed (e.g. local dev without a full HA env).
 from __future__ import annotations
 
 import importlib.util
-from types import MappingProxyType
 from unittest.mock import patch
 
 import pytest
@@ -62,20 +61,21 @@ async def _setup_entry(hass: HomeAssistant, data: dict | None = None) -> None:
             "custom_components.hph.__init__._async_check_prerequisites",
         ),
     ):
-        from homeassistant.config_entries import ConfigEntry
+        # MockConfigEntry tracks HA's evolving ConfigEntry signature
+        # (required fields like discovery_keys / subentries_data change
+        # between versions); constructing ConfigEntry by hand drifts and
+        # breaks. add_to_hass + async_setup is the canonical setup path.
+        from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-        entry = ConfigEntry(
-            version=1,
-            minor_version=1,
+        entry = MockConfigEntry(
             domain=DOMAIN,
             title="HeatPump Hero",
             data=entry_data,
             options={},
             source="user",
-            unique_id=None,
-            discovery_keys=MappingProxyType({}),
         )
-        await hass.config_entries.async_add(entry)
+        entry.add_to_hass(hass)
+        await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
 
 
