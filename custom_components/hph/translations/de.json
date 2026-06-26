@@ -212,6 +212,9 @@
       "hph_src_buffer_temp": {
         "name": "Quelle — Pufferspeicher-Temperatur"
       },
+      "hph_src_cooling_mode": {
+        "name": "Quelle — Kühlmodus-Selector (leer = keine Kühlung)"
+      },
       "hph_src_dhw_target_temp": {
         "name": "Quelle — Warmwasser-Solltemperatur"
       },

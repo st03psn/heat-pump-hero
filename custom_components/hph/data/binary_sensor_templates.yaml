@@ -116,8 +116,9 @@ binary_sensors:
 - name: HeatPump Hero Has Cooling
   unique_id: hph_has_cooling
   icon: mdi:snowflake
-  # True when the heat pump exposes cooling-mode controls. Heat-only
-  # installs disable cool_delta etc. by default.
-  state: "{{ states('number.panasonic_heat_pump_main_cool_delta')\n   not in\
-    \ ['unknown','unavailable','none'] }}"
+  # True when hph_src_cooling_mode helper is set and the referenced entity is
+  # available. Blank the helper on heat-only installs to hide all cooling UI.
+  state: >-
+    {% set ent = states('text.hph_src_cooling_mode') %}
+    {{ ent != '' and states(ent) not in ['unknown','unavailable','none'] }}
   _source_package: hph_sources.yaml

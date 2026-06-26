@@ -154,6 +154,8 @@ VENDOR_PRESETS: Final[dict[str, dict[str, str]]] = {
         "hph_src_opt_z1_mixing_valve":      "sensor.panasonic_heat_pump_optional_z1_mixing_valve",
         # S0 pulse counter (external electricity meter input on HeishaMon board)
         "hph_src_s0_power":                 "sensor.panasonic_heat_pump_s0_watt",
+        # Cooling capability detection — present on all cooling-capable models
+        "hph_src_cooling_mode":             "select.panasonic_heat_pump_main_operating_mode_state",
     },
     "panasonic_heishamon_aquarea": {
         # Bundled HeishaMon MQTT YAML naming (aquarea_*)
@@ -229,6 +231,8 @@ VENDOR_PRESETS: Final[dict[str, dict[str, str]]] = {
         "hph_src_force_heater": "binary_sensor.aquarea_main_force_heater_state",
         "hph_src_sterilization": "binary_sensor.aquarea_main_sterilization_state",
         "hph_src_quiet_schedule": "binary_sensor.aquarea_main_quiet_mode_schedule",
+        # Cooling capability detection
+        "hph_src_cooling_mode":  "select.aquarea_main_operating_mode_state",
     },
     "daikin_altherma_core": {
         "hph_src_inlet_temp": "sensor.altherma_leaving_water_temperature",
@@ -463,6 +467,8 @@ TEXT_HELPERS: Final[dict[str, dict[str, Any]]] = {
                          "initial": "sensor.panasonic_heat_pump_main_dhw_temperature"},
     "hph_src_buffer_temp": {"name": "HeatPump Hero source — buffer-tank temperature", "icon": "mdi:propane-tank",
                              "initial": ""},
+    "hph_src_cooling_mode": {"name": "HeatPump Hero source — cooling mode selector (blank = no cooling)", "icon": "mdi:snowflake",
+                              "initial": "select.panasonic_heat_pump_main_operating_mode_state"},
     "hph_src_dhw_target_temp": {"name": "HeatPump Hero source — DHW target temperature", "icon": "mdi:thermostat-cog",
                                  "initial": "sensor.panasonic_heat_pump_main_dhw_target_temperature"},
     "hph_src_target_supply_temp": {"name": "HeatPump Hero source — target supply temperature", "icon": "mdi:thermometer-chevron-up",

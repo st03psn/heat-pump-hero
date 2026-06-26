@@ -212,6 +212,9 @@
       "hph_src_buffer_temp": {
         "name": "Bron — buffervattemperatuur"
       },
+      "hph_src_cooling_mode": {
+        "name": "Bron — koelmodusselector (leeg = geen koeling)"
+      },
       "hph_src_dhw_target_temp": {
         "name": "Bron — warmwater doeltemperatuur"
       },

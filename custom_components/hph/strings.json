@@ -212,6 +212,9 @@
       "hph_src_buffer_temp": {
         "name": "Source — buffer tank temperature"
       },
+      "hph_src_cooling_mode": {
+        "name": "Source — cooling mode selector (blank = no cooling)"
+      },
       "hph_src_dhw_target_temp": {
         "name": "Source — DHW target temperature"
       },
