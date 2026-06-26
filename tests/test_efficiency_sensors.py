@@ -145,3 +145,55 @@ async def test_eer_live_from_power(hass: HomeAssistant) -> None:
 
     # 3000 / 1000 = 3.0 (denominator above the 50 W floor).
     assert float(_render(hass, "hph_eer_live")) == 3.0
+
+
+# ── Mode-aware headline sensors (COP↔EER / SCOP↔SEER swap) ───────────────
+
+
+def _attr_expr(unique_id: str, attr: str) -> str:
+    """Return the raw Jinja for an `attributes.<attr>` of a sensor."""
+    sensors = yaml.safe_load(_TEMPLATES.read_text(encoding="utf-8"))["sensors"]
+    for entry in sensors:
+        if entry.get("unique_id") == unique_id:
+            return entry["attributes"][attr]
+    raise AssertionError(f"unique_id {unique_id!r} not found in {_TEMPLATES}")
+
+
+async def test_efficiency_live_heating_shows_cop(hass: HomeAssistant) -> None:
+    """Outside cooling the headline follows COP and labels itself 'COP'."""
+    hass.states.async_set("sensor.hph_operating_mode", "heating")
+    hass.states.async_set("sensor.hph_cop_live", "4.2")
+    hass.states.async_set("sensor.hph_eer_live", "0")
+    await hass.async_block_till_done()
+
+    assert float(_render(hass, "hph_efficiency_live")) == 4.2
+    assert Template(_attr_expr("hph_efficiency_live", "metric"), hass).async_render() == "COP"
+
+
+async def test_efficiency_live_cooling_shows_eer(hass: HomeAssistant) -> None:
+    """In cooling mode the headline switches to the positive EER and label 'EER'."""
+    hass.states.async_set("sensor.hph_operating_mode", "cooling")
+    hass.states.async_set("sensor.hph_cop_live", "0")
+    hass.states.async_set("sensor.hph_eer_live", "3.4")
+    await hass.async_block_till_done()
+
+    value = float(_render(hass, "hph_efficiency_live"))
+    assert value == 3.4
+    assert value >= 0  # never negative
+    assert Template(_attr_expr("hph_efficiency_live", "metric"), hass).async_render() == "EER"
+
+
+async def test_efficiency_seasonal_swaps_scop_seer(hass: HomeAssistant) -> None:
+    """Seasonal headline pairs SCOP (heating) with SEER (cooling)."""
+    hass.states.async_set("sensor.hph_scop", "3.8")
+    hass.states.async_set("sensor.hph_seer", "5.1")
+
+    hass.states.async_set("sensor.hph_operating_mode", "heating")
+    await hass.async_block_till_done()
+    assert float(_render(hass, "hph_efficiency_seasonal")) == 3.8
+    assert Template(_attr_expr("hph_efficiency_seasonal", "metric"), hass).async_render() == "SCOP"
+
+    hass.states.async_set("sensor.hph_operating_mode", "cooling")
+    await hass.async_block_till_done()
+    assert float(_render(hass, "hph_efficiency_seasonal")) == 5.1
+    assert Template(_attr_expr("hph_efficiency_seasonal", "metric"), hass).async_render() == "SEER"

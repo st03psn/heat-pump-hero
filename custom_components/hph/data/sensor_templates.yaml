@@ -975,6 +975,73 @@ sensors:
     {% set e = states('sensor.hph_electrical_cooling_runtime_yearly') | float(0) %}
     {{ (t / e) | round(2) if e > 1.0 else 0 }}
   _source_package: hph_efficiency.yaml
+# Mode-aware "headline" efficiency — one value that a dashboard tile can read
+# without any Jinja: it follows the heating/DHW COP normally and switches to
+# the positive cooling EER while the heat pump is in cooling mode. This keeps
+# every COP/SCOP display ≥ 0 (the underlying COP/SCOP/EER/SEER sensors all
+# clamp to 0 below their threshold) and lets cards relabel COP→EER via the
+# `metric` attribute. The seasonal variant pairs SCOP with SEER. Used across
+# the bundled dashboard so cooling never shows a misleading 0/negative COP.
+- name: HeatPump Hero Efficiency Live
+  unique_id: hph_efficiency_live
+  unit_of_measurement: x
+  state_class: measurement
+  availability: >-
+    {{ states('sensor.hph_cop_live') not in ['unknown','unavailable','none']
+       and states('sensor.hph_eer_live') not in ['unknown','unavailable','none'] }}
+  state: >-
+    {% if is_state('sensor.hph_operating_mode','cooling') %}
+    {{ states('sensor.hph_eer_live') | float(0) }}
+    {% else %}{{ states('sensor.hph_cop_live') | float(0) }}{% endif %}
+  attributes:
+    metric: "{{ 'EER' if is_state('sensor.hph_operating_mode','cooling') else 'COP' }}"
+    cooling: "{{ is_state('sensor.hph_operating_mode','cooling') }}"
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero Efficiency Daily
+  unique_id: hph_efficiency_daily
+  unit_of_measurement: x
+  state_class: measurement
+  availability: >-
+    {{ states('sensor.hph_cop_daily') not in ['unknown','unavailable','none']
+       and states('sensor.hph_eer_daily') not in ['unknown','unavailable','none'] }}
+  state: >-
+    {% if is_state('sensor.hph_operating_mode','cooling') %}
+    {{ states('sensor.hph_eer_daily') | float(0) }}
+    {% else %}{{ states('sensor.hph_cop_daily') | float(0) }}{% endif %}
+  attributes:
+    metric: "{{ 'EER' if is_state('sensor.hph_operating_mode','cooling') else 'COP' }}"
+    cooling: "{{ is_state('sensor.hph_operating_mode','cooling') }}"
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero Efficiency Monthly
+  unique_id: hph_efficiency_monthly
+  unit_of_measurement: x
+  state_class: measurement
+  availability: >-
+    {{ states('sensor.hph_cop_monthly') not in ['unknown','unavailable','none']
+       and states('sensor.hph_eer_monthly') not in ['unknown','unavailable','none'] }}
+  state: >-
+    {% if is_state('sensor.hph_operating_mode','cooling') %}
+    {{ states('sensor.hph_eer_monthly') | float(0) }}
+    {% else %}{{ states('sensor.hph_cop_monthly') | float(0) }}{% endif %}
+  attributes:
+    metric: "{{ 'EER' if is_state('sensor.hph_operating_mode','cooling') else 'COP' }}"
+    cooling: "{{ is_state('sensor.hph_operating_mode','cooling') }}"
+  _source_package: hph_efficiency.yaml
+- name: HeatPump Hero Efficiency Seasonal
+  unique_id: hph_efficiency_seasonal
+  unit_of_measurement: x
+  state_class: measurement
+  availability: >-
+    {{ states('sensor.hph_scop') not in ['unknown','unavailable','none']
+       and states('sensor.hph_seer') not in ['unknown','unavailable','none'] }}
+  state: >-
+    {% if is_state('sensor.hph_operating_mode','cooling') %}
+    {{ states('sensor.hph_seer') | float(0) }}
+    {% else %}{{ states('sensor.hph_scop') | float(0) }}{% endif %}
+  attributes:
+    metric: "{{ 'SEER' if is_state('sensor.hph_operating_mode','cooling') else 'SCOP' }}"
+    cooling: "{{ is_state('sensor.hph_operating_mode','cooling') }}"
+  _source_package: hph_efficiency.yaml
 # Combined SCOPs — for installations that want a single "heating-incl-DHW"
 # headline figure (most household use cases) or "cooling-incl-DHW" (rare
 # but possible in summer setups with active cooling + WW).

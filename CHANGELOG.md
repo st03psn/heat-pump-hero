@@ -7,6 +7,21 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
 
 ### Added
 
+- **Dashboard: COP/SCOP tiles flip to EER/SEER in cooling mode.** Four
+  mode-aware sensors — `sensor.hph_efficiency_live`, `_daily`, `_monthly`
+  and `_seasonal` — follow the heating/DHW COP/SCOP normally and switch to
+  the positive cooling EER/SEER while `sensor.hph_operating_mode` is
+  `cooling`, exposing a `metric` attribute (`COP`/`EER`/`SCOP`/`SEER`) for
+  labels. Every COP/SCOP display in the bundled dashboard (Overview and
+  Efficiency KPI tiles, the live-COP chip, the schematic state-labels in all
+  four variants, and the Analysis/Efficiency/Overview entity lists) now reads
+  these sensors, so cooling shows a real positive efficiency instead of a
+  misleading 0. Year-on-year comparison rows keep the plain COP/SCOP (the
+  underlying figures are already clamped ≥ 0). The live/daily COP and SCOP
+  charts gained a parallel EER/SEER series, and a new "Cooling efficiency
+  (EER/SEER)" card group (gated on `binary_sensor.hph_has_cooling`) appears on
+  the Efficiency and Heat-pump views.
+
 - **EER / SEER — real cooling-mode efficiency.** Cooling efficiency was
   structurally stuck at 0: the thermal-power sensor clamps the (negative)
   cooling signal to 0 via `max(power, 0)`, so the cooling tariff pot never

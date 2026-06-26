@@ -1251,6 +1251,18 @@
       },
       "hph_seer": {
         "name": "SEER"
+      },
+      "hph_efficiency_live": {
+        "name": "Efficiëntie (live)"
+      },
+      "hph_efficiency_daily": {
+        "name": "Efficiëntie (vandaag)"
+      },
+      "hph_efficiency_monthly": {
+        "name": "Efficiëntie (maand)"
+      },
+      "hph_efficiency_seasonal": {
+        "name": "Efficiëntie (seizoen)"
       }
     },
     "binary_sensor": {

@@ -1272,6 +1272,18 @@
       },
       "hph_seer": {
         "name": "SEER"
+      },
+      "hph_efficiency_live": {
+        "name": "Efficiency (live)"
+      },
+      "hph_efficiency_daily": {
+        "name": "Efficiency (today)"
+      },
+      "hph_efficiency_monthly": {
+        "name": "Efficiency (month)"
+      },
+      "hph_efficiency_seasonal": {
+        "name": "Efficiency (season)"
       }
     },
     "binary_sensor": {
