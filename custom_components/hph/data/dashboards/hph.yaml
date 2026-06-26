@@ -3701,22 +3701,6 @@ views:
         translation_key: eff_cop_mode_note
         icon: mdi:information-outline
 
-      # ── Cooling Efficiency (EER/SEER) — conditional on hph_has_cooling ───
-      - type: conditional
-        conditions:
-          - condition: state
-            entity: binary_sensor.hph_has_cooling
-            state: "on"
-        card:
-          type: entities
-          title: "Cooling Efficiency (EER/SEER)"
-          show_header_toggle: false
-          entities:
-            - entity: sensor.hph_eer_live
-            - entity: sensor.hph_eer_daily
-            - entity: sensor.hph_eer_monthly
-            - entity: sensor.hph_seer
-
       # ── Cooling energy — conditional on hph_has_cooling ─────────────────
       - type: conditional
         conditions:
@@ -3729,9 +3713,13 @@ views:
           show_header_toggle: false
           entities:
             - entity: sensor.hph_thermal_daily_split_cooling
+              name: Thermal today (cooling)
             - entity: sensor.hph_thermal_monthly_split_cooling
+              name: Thermal this month (cooling)
             - entity: sensor.hph_electrical_daily_split_cooling
+              name: Electrical today (cooling)
             - entity: sensor.hph_electrical_monthly_split_cooling
+              name: Electrical this month (cooling)
 
       # ── PV Coverage ─────────────────────────────────────────────────────
       - type: entities

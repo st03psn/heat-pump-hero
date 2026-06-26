@@ -2023,7 +2023,7 @@ sensors:
   availability: >-
     {{ states('sensor.hph_thermal_power_active') not in ['unknown','unavailable','none'] }}
   state: >-
-    {{ states('sensor.hph_thermal_power_active') | float(0) | abs }}
+    {{ (states('sensor.hph_thermal_power_active') | float(0) | abs) | round(1) }}
   attributes:
     direction: >-
       {{ 'cooling' if is_state('sensor.hph_operating_mode','cooling') else 'heating' }}
