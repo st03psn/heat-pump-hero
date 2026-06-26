@@ -41,12 +41,15 @@ async def async_setup(hass: HomeAssistant, entry: ConfigEntry) -> list[Callable]
         if new is None:
             return
         mode = new.state
+        if mode == "standby":
+            # Standby power is attributed to the last active mode so that
+            # system COP/EER figures include all electrical consumption
+            # (electronics, pump, controller) — not just compressor runtime.
+            return
         if mode == "dhw":
             tariff = "dhw"
         elif mode == "cooling":
             tariff = "cooling"
-        elif mode == "standby":
-            tariff = "standby"
         else:
             tariff = "heating"
         hass.async_create_task(_switch_tariff(tariff))

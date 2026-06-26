@@ -929,52 +929,6 @@ sensors:
     {% set e = states('sensor.hph_electrical_cooling_runtime_yearly') | float(0) %}
     {{ (t / e) | round(2) if e > 0.1 else 0 }}
   _source_package: hph_efficiency.yaml
-# ── EER / SEER — cooling-mode efficiency (positive magnitude) ───────────
-# COP measures heating efficiency; for cooling the analogous figure is the
-# EER (Energy Efficiency Ratio) = |heat removed| / electrical input. The
-# cooling heat is captured as a positive magnitude by
-# sensor.hph_thermal_power_cooling (the heating thermal-power sensor clamps
-# the negative cooling signal to 0), integrated into
-# hph_thermal_cooling_runtime_* and divided by the runtime-gated cooling
-# electrical meters. SEER is simply the seasonal (yearly) EER; it equals
-# hph_cop_yearly_cooling by construction (kept under both names for the
-# EER-branded headline vs. the per-mode COP table).
-- name: HeatPump Hero EER Live
-  unique_id: hph_eer_live
-  unit_of_measurement: x
-  state_class: measurement
-  state: >-
-    {% set t = states('sensor.hph_thermal_power_cooling') | float(0) %}
-    {% set e = states('sensor.hph_electrical_power_cooling_runtime') | float(0) %}
-    {{ (t / e) | round(2) if e > 50 else 0 }}
-  _source_package: hph_efficiency.yaml
-- name: HeatPump Hero EER Daily
-  unique_id: hph_eer_daily
-  unit_of_measurement: x
-  state_class: measurement
-  state: >-
-    {% set t = states('sensor.hph_thermal_cooling_runtime_daily') | float(0) %}
-    {% set e = states('sensor.hph_electrical_cooling_runtime_daily') | float(0) %}
-    {{ (t / e) | round(2) if e > 0.1 else 0 }}
-  _source_package: hph_efficiency.yaml
-- name: HeatPump Hero EER Monthly
-  unique_id: hph_eer_monthly
-  unit_of_measurement: x
-  state_class: measurement
-  state: >-
-    {% set t = states('sensor.hph_thermal_cooling_runtime_monthly') | float(0) %}
-    {% set e = states('sensor.hph_electrical_cooling_runtime_monthly') | float(0) %}
-    {{ (t / e) | round(2) if e > 0.5 else 0 }}
-  _source_package: hph_efficiency.yaml
-- name: HeatPump Hero SEER
-  unique_id: hph_seer
-  unit_of_measurement: x
-  state_class: measurement
-  state: >-
-    {% set t = states('sensor.hph_thermal_cooling_runtime_yearly') | float(0) %}
-    {% set e = states('sensor.hph_electrical_cooling_runtime_yearly') | float(0) %}
-    {{ (t / e) | round(2) if e > 1.0 else 0 }}
-  _source_package: hph_efficiency.yaml
 # Mode-aware "headline" efficiency — one value that a dashboard tile can read
 # without any Jinja: it follows the heating/DHW COP normally and switches to
 # the positive cooling EER while the heat pump is in cooling mode. This keeps
@@ -1989,29 +1943,6 @@ sensors:
     {% endif %}
   _source_package: hph_efficiency.yaml
 
-# ── Efficiency Live — single COP↔EER wrapper for display ───────────────────
-# Shows COP in heating/DHW mode, EER in cooling mode.
-# Statistik-Sensoren (hph_cop_daily, hph_scop, …) bleiben unverändert —
-# ein monatlicher COP-Wert wurde unter Heizbedingungen gemessen; ihn durch
-# EER zu ersetzen würde historische Vergleiche verfälschen.
-- name: HeatPump Hero Efficiency Live
-  unique_id: hph_efficiency_live
-  unit_of_measurement: x
-  state_class: measurement
-  availability: >-
-    {{ states('sensor.hph_cop_live') not in ['unknown','unavailable','none']
-       and states('sensor.hph_eer_live') not in ['unknown','unavailable','none'] }}
-  state: >-
-    {% if is_state('sensor.hph_operating_mode','cooling') %}
-      {{ states('sensor.hph_eer_live') | float(0) }}
-    {% else %}
-      {{ states('sensor.hph_cop_live') | float(0) }}
-    {% endif %}
-  attributes:
-    metric: "{{ 'EER' if is_state('sensor.hph_operating_mode','cooling') else 'COP' }}"
-    cooling: "{{ is_state('sensor.hph_operating_mode','cooling') }}"
-  _source_package: hph_efficiency.yaml
-
 # ── Thermal Power Display — abs value, no negative sign during cooling ───────
 # hph_thermal_power_active is negative in cooling mode (heat extracted).
 # Dashboard tiles should show absolute value; direction is in attributes.
@@ -2032,12 +1963,16 @@ sensors:
   _source_package: hph_efficiency.yaml
 
 # ── EER/SEER — cooling-season efficiency statistics ──────────────────────────
-# Denominator = cooling-tariff split meters (exclude heating/DHW/standby).
+# Denominator = cooling-tariff split meters (system-level: includes standby
+# power credited to the cooling bucket, same philosophy as SCOP/COP_daily).
 # Parallel to hph_cop_daily / hph_cop_monthly / hph_scop — not a replacement.
 - name: HeatPump Hero EER Daily
   unique_id: hph_eer_daily
   unit_of_measurement: x
   state_class: measurement
+  availability: >-
+    {{ states('sensor.hph_thermal_daily_split_cooling') not in ['unknown','unavailable','none']
+       and states('sensor.hph_electrical_daily_split_cooling') not in ['unknown','unavailable','none'] }}
   state: >-
     {% set t = states('sensor.hph_thermal_daily_split_cooling') | float(0) %}
     {% set e = states('sensor.hph_electrical_daily_split_cooling') | float(0) %}
@@ -2048,6 +1983,9 @@ sensors:
   unique_id: hph_eer_monthly
   unit_of_measurement: x
   state_class: measurement
+  availability: >-
+    {{ states('sensor.hph_thermal_monthly_split_cooling') not in ['unknown','unavailable','none']
+       and states('sensor.hph_electrical_monthly_split_cooling') not in ['unknown','unavailable','none'] }}
   state: >-
     {% set t = states('sensor.hph_thermal_monthly_split_cooling') | float(0) %}
     {% set e = states('sensor.hph_electrical_monthly_split_cooling') | float(0) %}
@@ -2058,6 +1996,9 @@ sensors:
   unique_id: hph_seer
   unit_of_measurement: x
   state_class: measurement
+  availability: >-
+    {{ states('sensor.hph_thermal_yearly_split_cooling') not in ['unknown','unavailable','none']
+       and states('sensor.hph_electrical_yearly_split_cooling') not in ['unknown','unavailable','none'] }}
   state: >-
     {% set t = states('sensor.hph_thermal_yearly_split_cooling') | float(0) %}
     {% set e = states('sensor.hph_electrical_yearly_split_cooling') | float(0) %}
