@@ -151,6 +151,21 @@
   "kpi_scop_season": {
     "title": "SCOP seizoen"
   },
+  "kpi_eer_today": {
+    "title": "EER vandaag"
+  },
+  "kpi_eer_month": {
+    "title": "EER maand"
+  },
+  "kpi_seer_season": {
+    "title": "SEER seizoen"
+  },
+  "kpi_pv_coverage_today": {
+    "title": "PV-dekking vandaag"
+  },
+  "kpi_pv_coverage_month": {
+    "title": "PV-dekking maand"
+  },
   "model_thresholds": {
     "content": "Deze vier getallen beschrijven het werkgebied van je WP-generatie:\n\n- **Compressor min Hz / max Hz** — modulatie­bereik. Wordt gebruikt door de cyclus-advisor: een WP die `min_hz` nooit haalt, schakelt te vaak; een die continu op `max_hz` draait, is mogelijk onder­gedimensio­neerd.\n- **Minimum waterdebiet (L/min)** — debiet waar­onder de WP veilig­heids­halve afslaat. Low-flow alarmen (H62) triggeren hier.\n- **Maximum aanvoer­temperatuur (°C)** — wat de unit onder ontwerpcondities levert. Stooklijnen boven dit maximum leiden in verwarmings­modus tot DHW-achtig gedrag.\n\nDefaults worden vooraf ingevuld uit de **model-selector** met empirisch gevalideerde waarden per Panasonic-generatie (J / K / L / TCAP / M). Alleen wijzigen als je specifieke unit afwijkt — typeplaatje of service­handboek raadplegen.",
     "title": "Modelle-drempels — wanneer aanpassen?"

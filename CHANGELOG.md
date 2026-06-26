@@ -5,6 +5,63 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
 
 ## [Unreleased]
 
+## [0.9.0-rc12] — 2026-06-26
+
+### Added
+
+- **`sensor.hph_efficiency_live` — COP↔EER live wrapper.** Single tile that shows
+  COP in heating/DHW mode and EER in cooling mode. The `metric` attribute carries
+  `'COP'` or `'EER'` so dashboard labels update automatically. Schema hotspot,
+  control-panel chip, and analysis tile all updated to this sensor.
+
+- **`sensor.hph_eer_live` — live EER during cooling.** Mirrors the COP-live
+  formula (`|thermal_power| / electrical_power`) but only emits when
+  `hph_operating_mode` is `cooling`. Zero otherwise.
+
+- **`sensor.hph_thermal_power_display` — thermal power without negative sign.**
+  `hph_thermal_power_active` is negative in cooling mode (heat extracted). This
+  display sensor takes `| abs` and carries `direction` / `label` attributes
+  (`heating` / `cooling`, `Wärmeleistung` / `Kühlleistung`). Dashboard tiles
+  updated from `hph_thermal_power_active` to this sensor.
+
+- **`sensor.hph_eer_daily`, `hph_eer_monthly`, `hph_seer` — cooling efficiency
+  statistics.** Parallel to existing `hph_cop_daily / monthly / scop`; denominator
+  is the cooling-tariff split meters so heating/DHW/standby energy is excluded.
+  COP statistics remain untouched — mixing heating-season COP with cooling-season
+  EER would falsify historical comparisons.
+
+- **PV coverage sensors** (`hph_pv_selfconsumption_daily/monthly`,
+  `hph_pv_coverage_daily/monthly`). Additionality method: `self_consumption =
+  solar_produced − grid_export`. Coverage = `self_consumption / hp_electrical × 100`,
+  capped 0–100 %. Shelly KE Balkonkraftwerk Stecker as production source (inverter-
+  independent), Shelly Pro 3EM as grid-export source.
+
+- **Five new utility_meter entries** in `hph_efficiency.yaml`:
+  `hph_solar_daily/monthly/yearly` (source: `shelly_ke_bkkw_energy`) and
+  `hph_grid_export_daily/monthly` (source: `shelly_pro_3em_saldierend_export`).
+
+- **EER KPI strips** on Overview and Efficiency views, shown conditionally when
+  `binary_sensor.hph_has_cooling` is `on`. PV coverage tiles included in the
+  Efficiency-view strip.
+
+- **Cooling efficiency and PV sections** on the Efficiency view: "Kühl-Effizienz
+  (EER/SEER)", "Kühl-Energie", "PV-Deckungspotenzial" — all conditional on
+  `hph_has_cooling` where applicable.
+
+### Fixed
+
+- `hph_thermal_power_active` no longer used directly in display tiles — negative
+  sign during cooling mode no longer visible to the user.
+
+- COP/SCOP statistics (`hph_cop_daily`, `hph_scop`, …) left unchanged; they
+  correctly reflect heating-mode performance and must not be mixed with cooling EER.
+
+### Note
+
+- `hph_source_internal_thermal_power` (Panasonic internal thermal power, schema
+  view lines 2122/2789) not substituted — sign behaviour on that sensor is an open
+  question requiring live verification during cooling season.
+
 ### Added
 
 - **Dashboard: COP/SCOP tiles flip to EER/SEER in cooling mode.** Four

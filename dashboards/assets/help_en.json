@@ -151,6 +151,21 @@
   "kpi_scop_season": {
     "title": "SCOP season"
   },
+  "kpi_eer_today": {
+    "title": "EER today"
+  },
+  "kpi_eer_month": {
+    "title": "EER month"
+  },
+  "kpi_seer_season": {
+    "title": "SEER season"
+  },
+  "kpi_pv_coverage_today": {
+    "title": "PV coverage today"
+  },
+  "kpi_pv_coverage_month": {
+    "title": "PV coverage month"
+  },
   "model_thresholds": {
     "content": "These four numbers describe the operating envelope of your heat-pump generation:\n\n- **Compressor min Hz / max Hz** — modulation range. Used by the cycle advisor: a heat pump that never reaches `min_hz` cycles excessively, one that runs at `max_hz` all the time may be undersized.\n- **Minimum water flow (L/min)** — the flow rate below which the heat pump shuts off on safety. Low-flow alarms (H62) trigger here.\n- **Maximum supply temperature (°C)** — what the unit can deliver at design conditions. Heating curves above this max produce DHW-style operation in heating mode.\n\nDefaults are pre-filled from the **model selector** with empirically validated values per Panasonic generation (J / K / L / TCAP / M). Override only if your specific unit deviates — check the type plate or service manual.",
     "title": "Model thresholds — when to adjust?"

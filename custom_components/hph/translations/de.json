@@ -1264,17 +1264,20 @@
       "hph_eer_live": {
         "name": "EER (Live)"
       },
+      "hph_efficiency_live": {
+        "name": "Effizienz (live)"
+      },
+      "hph_thermal_power_display": {
+        "name": "Thermische Leistung (Anzeige)"
+      },
       "hph_eer_daily": {
-        "name": "EER Täglich"
+        "name": "EER täglich"
       },
       "hph_eer_monthly": {
-        "name": "EER Monatlich"
+        "name": "EER monatlich"
       },
       "hph_seer": {
         "name": "SEER"
-      },
-      "hph_efficiency_live": {
-        "name": "Effizienz (live)"
       },
       "hph_efficiency_daily": {
         "name": "Effizienz (heute)"
@@ -1284,6 +1287,18 @@
       },
       "hph_efficiency_seasonal": {
         "name": "Effizienz (Saison)"
+      },
+      "hph_pv_selfconsumption_daily": {
+        "name": "PV-Eigenverbrauch täglich"
+      },
+      "hph_pv_coverage_daily": {
+        "name": "PV-Deckung täglich"
+      },
+      "hph_pv_selfconsumption_monthly": {
+        "name": "PV-Eigenverbrauch monatlich"
+      },
+      "hph_pv_coverage_monthly": {
+        "name": "PV-Deckung monatlich"
       }
     },
     "binary_sensor": {

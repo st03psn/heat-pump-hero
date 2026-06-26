@@ -151,6 +151,21 @@
   "kpi_scop_season": {
     "title": "SCOP Saison"
   },
+  "kpi_eer_today": {
+    "title": "EER heute"
+  },
+  "kpi_eer_month": {
+    "title": "EER Monat"
+  },
+  "kpi_seer_season": {
+    "title": "SEER Saison"
+  },
+  "kpi_pv_coverage_today": {
+    "title": "PV-Deckung heute"
+  },
+  "kpi_pv_coverage_month": {
+    "title": "PV-Deckung Monat"
+  },
   "model_thresholds": {
     "content": "Diese vier Werte beschreiben den Betriebsbereich deiner WP-Generation:\n\n- **Verdichter min Hz / max Hz** — Modulationsbereich. Wird vom Takt-Advisor genutzt: eine WP, die nie `min_hz` erreicht, taktet zu oft; eine, die dauerhaft auf `max_hz` läuft, ist evtl. unterdimensioniert.\n- **Mindest-Wasserdurchfluss (L/min)** — Durchfluss, unter dem die WP sicherheitsbedingt abschaltet. Low-Flow-Alarme (H62) triggern hier.\n- **Maximale Vorlauftemperatur (°C)** — was die Einheit unter Auslegungsbedingungen liefert. Heizkurven oberhalb dieses Maximums führen im Heizmodus zu DHW-ähnlichem Verhalten.\n\nDefaults werden aus dem **Modell-Selector** vorbelegt, mit empirisch validierten Werten je Panasonic-Generation (J / K / L / TCAP / M). Nur ändern wenn dein spezifisches Gerät abweicht — Typenschild oder Servicehandbuch prüfen.",
     "title": "Modell-Schwellwerte — wann anpassen?"

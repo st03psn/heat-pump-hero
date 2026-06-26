@@ -359,3 +359,25 @@ utility_meter:
   hph_thermal_dhw_runtime_yearly:
     source: sensor.hph_dhw_thermal_energy_runtime
     cron: "0 0 1 7 *"
+
+  # ── PV production & grid export ─────────────────────────────────────────
+  # Shelly KE am Balkonkraftwerk-Stecker (inverterunabhängig).
+  # Energiebilanz-Quelle: geräteunabhängig vom Wechselrichter.
+  hph_solar_daily:
+    source: sensor.shelly_ke_bkkw_energy
+    cycle: daily
+  hph_solar_monthly:
+    source: sensor.shelly_ke_bkkw_energy
+    cycle: monthly
+  hph_solar_yearly:
+    source: sensor.shelly_ke_bkkw_energy
+    cron: "0 0 1 7 *"
+
+  # Netzeinspeisung via Shelly Pro 3EM (Hauptzähler).
+  # Eigenverbrauch = solar_daily − grid_export_daily.
+  hph_grid_export_daily:
+    source: sensor.shelly_pro_3em_saldierend_export
+    cycle: daily
+  hph_grid_export_monthly:
+    source: sensor.shelly_pro_3em_saldierend_export
+    cycle: monthly

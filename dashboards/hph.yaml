@@ -170,6 +170,42 @@ views:
                       color_else: grey
                       navigate: /hph/efficiency
 
+                # ── Row D2: EER KPI strip — shown only when cooling data present ────
+                - type: conditional
+                  conditions:
+                    - condition: state
+                      entity: binary_sensor.hph_has_cooling
+                      state: "on"
+                  card:
+                    type: grid
+                    columns: 3
+                    square: false
+                    cards:
+                      - type: custom:hph-tile
+                        entity: sensor.hph_eer_daily
+                        decimals: 2
+                        label_key: kpi_eer_today
+                        icon: mdi:snowflake
+                        color_thresholds: [[3.5, "green"], [2.5, "amber"], [0.0001, "red"]]
+                        color_else: grey
+                        navigate: /hph/efficiency
+                      - type: custom:hph-tile
+                        entity: sensor.hph_eer_monthly
+                        decimals: 2
+                        label_key: kpi_eer_month
+                        icon: mdi:snowflake-melt
+                        color_thresholds: [[3.5, "green"], [2.5, "amber"], [0.0001, "red"]]
+                        color_else: grey
+                        navigate: /hph/efficiency
+                      - type: custom:hph-tile
+                        entity: sensor.hph_seer
+                        decimals: 2
+                        label_key: kpi_seer_season
+                        icon: mdi:snowflake-variant
+                        color_thresholds: [[3.5, "green"], [2.5, "amber"], [0.0001, "red"]]
+                        color_else: grey
+                        navigate: /hph/efficiency
+
                 # ── Row G: Conditional Screed running (only during program) ─────────
                 - type: conditional
                   conditions:
@@ -359,7 +395,7 @@ views:
                         - entity: sensor.hph_efficiency_daily
                         - entity: sensor.hph_efficiency_monthly
                         - entity: sensor.hph_efficiency_seasonal
-                        - entity: sensor.hph_thermal_power_active
+                        - entity: sensor.hph_thermal_power_display
                         - entity: sensor.hph_electrical_power_active
                         - entity: sensor.hph_electrical_daily
                         - entity: sensor.hph_standby_electrical_daily
@@ -1225,8 +1261,8 @@ views:
                 {{ states('sensor.hph_efficiency_live') | float(0) | round(2) }}
               icon: mdi:lightning-bolt-circle
               icon_color: >-
-                {% set cop = states('sensor.hph_efficiency_live') | float(0) %}
-                {{ 'green' if cop > 3 else ('orange' if cop > 2 else 'red') }}
+                {% set v = states('sensor.hph_efficiency_live') | float(0) %}
+                {{ 'green' if v > 3 else ('orange' if v > 2 else 'red') }}
             - type: template
               entity: switch.hph_power
               content: "{{ 'On' if is_state('switch.hph_power','on') else 'Standby' }}"
@@ -2994,7 +3030,7 @@ views:
           square: false
           cards:
             - type: custom:hph-tile
-              entity: sensor.hph_thermal_power_active
+              entity: sensor.hph_thermal_power_display
               label_key: ana_thermal_power
               icon: mdi:fire
               icon_color: red
@@ -3011,6 +3047,9 @@ views:
               icon_color: >-
                 {% set v = states('sensor.hph_efficiency_live') | float(0) %}
                 {% if v >= 3.5 %}green{% elif v >= 2.5 %}amber{% elif v > 0 %}red{% else %}grey{% endif %}
+              tap_action:
+                action: navigate
+                navigation_path: /hph/efficiency
             - type: custom:hph-tile
               entity: sensor.hph_source_compressor_freq
               suffix: " Hz"
@@ -3072,7 +3111,7 @@ views:
                   }
                   state-badge { display: none; }
               entities:
-                - entity: sensor.hph_thermal_power_active
+                - entity: sensor.hph_thermal_power_display
                 - entity: sensor.hph_electrical_power_active
                 - entity: sensor.hph_efficiency_live
                 - entity: sensor.hph_source_compressor_freq
@@ -3162,8 +3201,8 @@ views:
             min: 0
             max: 8
         series:
-          - entity: sensor.hph_cop_live
-            name: COP (live)
+          - entity: sensor.hph_efficiency_live
+            name: COP/EER (live)
             type: line
             color: "#17a2b8"
             stroke_width: 2
@@ -3402,6 +3441,60 @@ views:
               color_else: grey
               navigate: /hph/efficiency
 
+        # ── EER KPI strip — shown when cooling data present ──
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: select.hph_ui_style
+            state: mushroom
+          - condition: state
+            entity: binary_sensor.hph_has_cooling
+            state: "on"
+        card:
+          type: grid
+          columns: 5
+          square: false
+          cards:
+            - type: custom:hph-tile
+              entity: sensor.hph_eer_daily
+              decimals: 2
+              label_key: kpi_eer_today
+              icon: mdi:snowflake
+              color_thresholds: [[3.5, "green"], [2.5, "amber"], [0.0001, "red"]]
+              color_else: grey
+            - type: custom:hph-tile
+              entity: sensor.hph_eer_monthly
+              decimals: 2
+              label_key: kpi_eer_month
+              icon: mdi:snowflake-melt
+              color_thresholds: [[3.5, "green"], [2.5, "amber"], [0.0001, "red"]]
+              color_else: grey
+            - type: custom:hph-tile
+              entity: sensor.hph_seer
+              decimals: 2
+              label_key: kpi_seer_season
+              icon: mdi:snowflake-variant
+              color_thresholds: [[3.5, "green"], [2.5, "amber"], [0.0001, "red"]]
+              color_else: grey
+            - type: custom:hph-tile
+              entity: sensor.hph_pv_coverage_daily
+              decimals: 1
+              suffix: " %"
+              use_unit: false
+              label_key: kpi_pv_coverage_today
+              icon: mdi:solar-power
+              color_thresholds: [[50, "green"], [20, "amber"], [0.1, "red"]]
+              color_else: grey
+            - type: custom:hph-tile
+              entity: sensor.hph_pv_coverage_monthly
+              decimals: 1
+              suffix: " %"
+              use_unit: false
+              label_key: kpi_pv_coverage_month
+              icon: mdi:solar-power-variant
+              color_thresholds: [[50, "green"], [20, "amber"], [0.1, "red"]]
+              color_else: grey
+
         # ── Side-by-side comparison cards (month / year) ──
       - type: conditional
         conditions:
@@ -3588,6 +3681,12 @@ views:
           - entity: sensor.hph_efficiency_monthly
           - entity: sensor.hph_efficiency_daily
           - entity: sensor.hph_efficiency_live
+          - entity: sensor.hph_scop
+          - entity: sensor.hph_seer
+          - entity: sensor.hph_cop_monthly
+          - entity: sensor.hph_eer_monthly
+          - entity: sensor.hph_cop_daily
+          - entity: sensor.hph_eer_daily
 
       # ── Mode-split COP removed — architecture note ─────────────────────
       # The tariff-split utility meters (hph_thermal/electrical_monthly_split_*)
@@ -3601,6 +3700,48 @@ views:
       - type: custom:hph-help
         translation_key: eff_cop_mode_note
         icon: mdi:information-outline
+
+      # ── Cooling Efficiency (EER/SEER) — conditional on hph_has_cooling ───
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: binary_sensor.hph_has_cooling
+            state: "on"
+        card:
+          type: entities
+          title: "Cooling Efficiency (EER/SEER)"
+          show_header_toggle: false
+          entities:
+            - entity: sensor.hph_eer_live
+            - entity: sensor.hph_eer_daily
+            - entity: sensor.hph_eer_monthly
+            - entity: sensor.hph_seer
+
+      # ── Cooling energy — conditional on hph_has_cooling ─────────────────
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: binary_sensor.hph_has_cooling
+            state: "on"
+        card:
+          type: entities
+          title: "Cooling Energy"
+          show_header_toggle: false
+          entities:
+            - entity: sensor.hph_thermal_daily_split_cooling
+            - entity: sensor.hph_thermal_monthly_split_cooling
+            - entity: sensor.hph_electrical_daily_split_cooling
+            - entity: sensor.hph_electrical_monthly_split_cooling
+
+      # ── PV Coverage ─────────────────────────────────────────────────────
+      - type: entities
+        title: "PV Coverage"
+        show_header_toggle: false
+        entities:
+          - entity: sensor.hph_pv_coverage_daily
+          - entity: sensor.hph_pv_coverage_monthly
+          - entity: sensor.hph_pv_selfconsumption_daily
+          - entity: sensor.hph_pv_selfconsumption_monthly
 
       # ── Energy totals (markdown for 2-decimal display — utility_meter
       # accumulates with float precision, has no round option, and the

@@ -1968,3 +1968,149 @@ sensors:
     year_pct: "{{ states('sensor.hph_scop_change_year_pct') }}"
     headline: "{% set m = states('sensor.hph_cop_change_yoy_pct') | float(0) %} {% set y = states('sensor.hph_scop_change_year_pct') | float(0) %} {% set m_prev = states('sensor.hph_cop_same_month_last_year') | float(0) %} {% set y_prev = states('sensor.hph_cop_last_year') | float(0) %} {% set parts = [] %} {% if m_prev > 0.1 %} {% if m > 0 %}{% set parts = parts + ['+ ' ~ m ~ '% vs same month last year'] %}{% elif m < 0 %}{% set parts = parts + [m ~ '% vs same month last year'] %}{% endif %} {% endif %} {% if y_prev > 0.1 %} {% if y > 0 %}{% set parts = parts + ['+ ' ~ y ~ '% SCOP vs last year'] %}{% elif y < 0 %}{% set parts = parts + [y ~ '% SCOP vs last year'] %}{% endif %} {% endif %} {% if parts | length == 0 %}Trend stable — not enough data yet.{% else %}{{ parts | join(' · ') }}{% endif %}"
   _source_package: hph_efficiency.yaml
+
+# ── EER Live (cooling mode equivalent of COP Live) ──────────────────────────
+- name: HeatPump Hero EER Live
+  unique_id: hph_eer_live
+  unit_of_measurement: x
+  state_class: measurement
+  availability: >-
+    {{ states('sensor.hph_thermal_power_active') not in ['unknown','unavailable','none']
+       and states('sensor.hph_electrical_power_active') not in ['unknown','unavailable','none'] }}
+  state: >-
+    {% if not is_state('sensor.hph_operating_mode','cooling') %}
+      0
+    {% elif not is_state('binary_sensor.hph_compressor_running','on') %}
+      0
+    {% else %}
+      {% set t = states('sensor.hph_thermal_power_active') | float(0) | abs %}
+      {% set e = states('sensor.hph_electrical_power_active') | float(0) %}
+      {{ (t / e) | round(2) if e > 150 else 0 }}
+    {% endif %}
+  _source_package: hph_efficiency.yaml
+
+# ── Efficiency Live — single COP↔EER wrapper for display ───────────────────
+# Shows COP in heating/DHW mode, EER in cooling mode.
+# Statistik-Sensoren (hph_cop_daily, hph_scop, …) bleiben unverändert —
+# ein monatlicher COP-Wert wurde unter Heizbedingungen gemessen; ihn durch
+# EER zu ersetzen würde historische Vergleiche verfälschen.
+- name: HeatPump Hero Efficiency Live
+  unique_id: hph_efficiency_live
+  unit_of_measurement: x
+  state_class: measurement
+  availability: >-
+    {{ states('sensor.hph_cop_live') not in ['unknown','unavailable','none']
+       and states('sensor.hph_eer_live') not in ['unknown','unavailable','none'] }}
+  state: >-
+    {% if is_state('sensor.hph_operating_mode','cooling') %}
+      {{ states('sensor.hph_eer_live') | float(0) }}
+    {% else %}
+      {{ states('sensor.hph_cop_live') | float(0) }}
+    {% endif %}
+  attributes:
+    metric: "{{ 'EER' if is_state('sensor.hph_operating_mode','cooling') else 'COP' }}"
+    cooling: "{{ is_state('sensor.hph_operating_mode','cooling') }}"
+  _source_package: hph_efficiency.yaml
+
+# ── Thermal Power Display — abs value, no negative sign during cooling ───────
+# hph_thermal_power_active is negative in cooling mode (heat extracted).
+# Dashboard tiles should show absolute value; direction is in attributes.
+- name: HeatPump Hero Thermal Power Display
+  unique_id: hph_thermal_power_display
+  unit_of_measurement: W
+  state_class: measurement
+  device_class: power
+  availability: >-
+    {{ states('sensor.hph_thermal_power_active') not in ['unknown','unavailable','none'] }}
+  state: >-
+    {{ states('sensor.hph_thermal_power_active') | float(0) | abs }}
+  attributes:
+    direction: >-
+      {{ 'cooling' if is_state('sensor.hph_operating_mode','cooling') else 'heating' }}
+    label: >-
+      {{ 'Kühlleistung' if is_state('sensor.hph_operating_mode','cooling') else 'Wärmeleistung' }}
+  _source_package: hph_efficiency.yaml
+
+# ── EER/SEER — cooling-season efficiency statistics ──────────────────────────
+# Denominator = cooling-tariff split meters (exclude heating/DHW/standby).
+# Parallel to hph_cop_daily / hph_cop_monthly / hph_scop — not a replacement.
+- name: HeatPump Hero EER Daily
+  unique_id: hph_eer_daily
+  unit_of_measurement: x
+  state_class: measurement
+  state: >-
+    {% set t = states('sensor.hph_thermal_daily_split_cooling') | float(0) %}
+    {% set e = states('sensor.hph_electrical_daily_split_cooling') | float(0) %}
+    {{ (t / e) | round(2) if e > 0.1 else 0 }}
+  _source_package: hph_efficiency.yaml
+
+- name: HeatPump Hero EER Monthly
+  unique_id: hph_eer_monthly
+  unit_of_measurement: x
+  state_class: measurement
+  state: >-
+    {% set t = states('sensor.hph_thermal_monthly_split_cooling') | float(0) %}
+    {% set e = states('sensor.hph_electrical_monthly_split_cooling') | float(0) %}
+    {{ (t / e) | round(2) if e > 0.5 else 0 }}
+  _source_package: hph_efficiency.yaml
+
+- name: HeatPump Hero SEER
+  unique_id: hph_seer
+  unit_of_measurement: x
+  state_class: measurement
+  state: >-
+    {% set t = states('sensor.hph_thermal_yearly_split_cooling') | float(0) %}
+    {% set e = states('sensor.hph_electrical_yearly_split_cooling') | float(0) %}
+    {{ (t / e) | round(2) if e > 1.0 else 0 }}
+  _source_package: hph_efficiency.yaml
+
+# ── PV self-consumption & coverage ──────────────────────────────────────────
+# Methodik: Eigenverbrauch = Produktion (Shelly KE) − Netzeinspeisung (Shelly Pro 3EM).
+# PV-Deckung = Eigenverbrauch / WP-Stromverbrauch × 100 (capped 0–100 %).
+# hp=0 guard prevents division-by-zero on non-PV days.
+- name: HeatPump Hero PV Self-Consumption Daily
+  unique_id: hph_pv_selfconsumption_daily
+  unit_of_measurement: kWh
+  state_class: measurement
+  device_class: energy
+  state: >-
+    {% set prod = states('sensor.hph_solar_daily') | float(0) %}
+    {% set exp  = states('sensor.hph_grid_export_daily') | float(0) %}
+    {{ [prod - exp, 0] | max | round(3) }}
+  _source_package: hph_efficiency.yaml
+
+- name: HeatPump Hero PV Coverage Daily
+  unique_id: hph_pv_coverage_daily
+  unit_of_measurement: "%"
+  state_class: measurement
+  state: >-
+    {% set sc = states('sensor.hph_pv_selfconsumption_daily') | float(0) %}
+    {% set hp = states('sensor.hph_electrical_daily') | float(0) %}
+    {{ [[(sc / hp * 100) | round(1) if hp > 0 else 0, 0] | max, 100] | min }}
+  attributes:
+    solar_produced_kwh: "{{ states('sensor.hph_solar_daily') | float(0) | round(3) }}"
+    grid_export_kwh:    "{{ states('sensor.hph_grid_export_daily') | float(0) | round(3) }}"
+    self_consumed_kwh:  "{{ states('sensor.hph_pv_selfconsumption_daily') | float(0) | round(3) }}"
+    hp_consumed_kwh:    "{{ states('sensor.hph_electrical_daily') | float(0) | round(3) }}"
+  _source_package: hph_efficiency.yaml
+
+- name: HeatPump Hero PV Self-Consumption Monthly
+  unique_id: hph_pv_selfconsumption_monthly
+  unit_of_measurement: kWh
+  state_class: measurement
+  device_class: energy
+  state: >-
+    {% set prod = states('sensor.hph_solar_monthly') | float(0) %}
+    {% set exp  = states('sensor.hph_grid_export_monthly') | float(0) %}
+    {{ [prod - exp, 0] | max | round(3) }}
+  _source_package: hph_efficiency.yaml
+
+- name: HeatPump Hero PV Coverage Monthly
+  unique_id: hph_pv_coverage_monthly
+  unit_of_measurement: "%"
+  state_class: measurement
+  state: >-
+    {% set sc = states('sensor.hph_pv_selfconsumption_monthly') | float(0) %}
+    {% set hp = states('sensor.hph_electrical_monthly') | float(0) %}
+    {{ [[(sc / hp * 100) | round(1) if hp > 0 else 0, 0] | max, 100] | min }}
+  _source_package: hph_efficiency.yaml

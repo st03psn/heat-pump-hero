@@ -1243,17 +1243,20 @@
       "hph_eer_live": {
         "name": "EER (Live)"
       },
+      "hph_efficiency_live": {
+        "name": "Efficiëntie (live)"
+      },
+      "hph_thermal_power_display": {
+        "name": "Thermisch vermogen (weergave)"
+      },
       "hph_eer_daily": {
-        "name": "EER Dagelijks"
+        "name": "EER dagelijks"
       },
       "hph_eer_monthly": {
-        "name": "EER Maandelijks"
+        "name": "EER maandelijks"
       },
       "hph_seer": {
         "name": "SEER"
-      },
-      "hph_efficiency_live": {
-        "name": "Efficiëntie (live)"
       },
       "hph_efficiency_daily": {
         "name": "Efficiëntie (vandaag)"
@@ -1263,6 +1266,18 @@
       },
       "hph_efficiency_seasonal": {
         "name": "Efficiëntie (seizoen)"
+      },
+      "hph_pv_selfconsumption_daily": {
+        "name": "PV-eigenverbruik dagelijks"
+      },
+      "hph_pv_coverage_daily": {
+        "name": "PV-dekking dagelijks"
+      },
+      "hph_pv_selfconsumption_monthly": {
+        "name": "PV-eigenverbruik maandelijks"
+      },
+      "hph_pv_coverage_monthly": {
+        "name": "PV-dekking maandelijks"
       }
     },
     "binary_sensor": {
