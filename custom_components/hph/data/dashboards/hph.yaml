@@ -111,34 +111,46 @@ views:
 
                 # ── Row D: KPI strip — values as primary (large), label as secondary ─
                 # COP cards are color-coded: ≥3.5 green, 2.5-3.49 amber, <2.5 red.
+                # The efficiency tiles read the mode-aware hph_efficiency_*
+                # sensors: in cooling mode they show the positive EER/SEER and
+                # the label flips COP→EER / SCOP→SEER via the `metric` attribute.
                 - type: grid
                   columns: 5
                   square: false
                   cards:
-                    - type: custom:hph-tile
-                      entity: sensor.hph_cop_daily
-                      decimals: 2
-                      label_key: kpi_cop_today
+                    - type: custom:mushroom-template-card
+                      entity: sensor.hph_efficiency_daily
+                      primary: "{{ states('sensor.hph_efficiency_daily') | float(0) | round(2) }}"
+                      secondary: "{{ state_attr('sensor.hph_efficiency_daily','metric') or 'COP' }} today"
                       icon: mdi:calendar-today
-                      color_thresholds: [[3.5, "green"], [2.5, "amber"], [0.0001, "red"]]
-                      color_else: grey
-                      navigate: /hph/efficiency
-                    - type: custom:hph-tile
-                      entity: sensor.hph_cop_monthly
-                      decimals: 2
-                      label_key: kpi_cop_month
+                      icon_color: >-
+                        {% set v = states('sensor.hph_efficiency_daily') | float(0) %}
+                        {% if v >= 3.5 %}green{% elif v >= 2.5 %}amber{% elif v > 0 %}red{% else %}grey{% endif %}
+                      tap_action:
+                        action: navigate
+                        navigation_path: /hph/efficiency
+                    - type: custom:mushroom-template-card
+                      entity: sensor.hph_efficiency_monthly
+                      primary: "{{ states('sensor.hph_efficiency_monthly') | float(0) | round(2) }}"
+                      secondary: "{{ state_attr('sensor.hph_efficiency_monthly','metric') or 'COP' }} month"
                       icon: mdi:calendar-month
-                      color_thresholds: [[3.5, "green"], [2.5, "amber"], [0.0001, "red"]]
-                      color_else: grey
-                      navigate: /hph/efficiency
-                    - type: custom:hph-tile
-                      entity: sensor.hph_scop
-                      decimals: 2
-                      label_key: kpi_scop_season
+                      icon_color: >-
+                        {% set v = states('sensor.hph_efficiency_monthly') | float(0) %}
+                        {% if v >= 3.5 %}green{% elif v >= 2.5 %}amber{% elif v > 0 %}red{% else %}grey{% endif %}
+                      tap_action:
+                        action: navigate
+                        navigation_path: /hph/efficiency
+                    - type: custom:mushroom-template-card
+                      entity: sensor.hph_efficiency_seasonal
+                      primary: "{{ states('sensor.hph_efficiency_seasonal') | float(0) | round(2) }}"
+                      secondary: "{{ state_attr('sensor.hph_efficiency_seasonal','metric') or 'SCOP' }} season"
                       icon: mdi:calendar-star
-                      color_thresholds: [[3.5, "green"], [2.5, "amber"], [0.0001, "red"]]
-                      color_else: grey
-                      navigate: /hph/efficiency
+                      icon_color: >-
+                        {% set v = states('sensor.hph_efficiency_seasonal') | float(0) %}
+                        {% if v >= 3.5 %}green{% elif v >= 2.5 %}amber{% elif v > 0 %}red{% else %}grey{% endif %}
+                      tap_action:
+                        action: navigate
+                        navigation_path: /hph/efficiency
                     - type: custom:hph-tile
                       entity: sensor.hph_cost_today
                       decimals: 2
@@ -343,10 +355,10 @@ views:
                           }
                           state-badge { display: none; }
                       entities:
-                        - entity: sensor.hph_cop_live
-                        - entity: sensor.hph_cop_daily
-                        - entity: sensor.hph_cop_monthly
-                        - entity: sensor.hph_scop
+                        - entity: sensor.hph_efficiency_live
+                        - entity: sensor.hph_efficiency_daily
+                        - entity: sensor.hph_efficiency_monthly
+                        - entity: sensor.hph_efficiency_seasonal
                         - entity: sensor.hph_thermal_power_active
                         - entity: sensor.hph_electrical_power_active
                         - entity: sensor.hph_electrical_daily
@@ -546,7 +558,7 @@ views:
                     transform: translate(-50%, -50%)
                 # hotspot-cop-live (252,479)
                 - type: state-label
-                  entity: sensor.hph_cop_live
+                  entity: sensor.hph_efficiency_live
                   style:
                     top: 92.1%
                     left: 28.0%
@@ -557,7 +569,7 @@ views:
                     transform: translate(-50%, -50%)
                 # hotspot-cop-daily (364,479)
                 - type: state-label
-                  entity: sensor.hph_cop_daily
+                  entity: sensor.hph_efficiency_daily
                   style:
                     top: 92.1%
                     left: 40.4%
@@ -568,7 +580,7 @@ views:
                     transform: translate(-50%, -50%)
                 # hotspot-scop (461,479)
                 - type: state-label
-                  entity: sensor.hph_scop
+                  entity: sensor.hph_efficiency_seasonal
                   style:
                     top: 92.1%
                     left: 51.2%
@@ -728,7 +740,7 @@ views:
                     transform: translate(-50%, -50%)
                 # hotspot-cop-live (252,479)
                 - type: state-label
-                  entity: sensor.hph_cop_live
+                  entity: sensor.hph_efficiency_live
                   style:
                     top: 92.1%
                     left: 28.0%
@@ -739,7 +751,7 @@ views:
                     transform: translate(-50%, -50%)
                 # hotspot-cop-daily (364,479)
                 - type: state-label
-                  entity: sensor.hph_cop_daily
+                  entity: sensor.hph_efficiency_daily
                   style:
                     top: 92.1%
                     left: 40.4%
@@ -750,7 +762,7 @@ views:
                     transform: translate(-50%, -50%)
                 # hotspot-scop (461,479)
                 - type: state-label
-                  entity: sensor.hph_scop
+                  entity: sensor.hph_efficiency_seasonal
                   style:
                     top: 92.1%
                     left: 51.2%
@@ -921,7 +933,7 @@ views:
                     transform: translate(-50%, -50%)
                 # hotspot-cop-live (252,557)
                 - type: state-label
-                  entity: sensor.hph_cop_live
+                  entity: sensor.hph_efficiency_live
                   style:
                     top: 95.9%
                     left: 28.0%
@@ -932,7 +944,7 @@ views:
                     transform: translate(-50%, -50%)
                 # hotspot-cop-daily (364,557)
                 - type: state-label
-                  entity: sensor.hph_cop_daily
+                  entity: sensor.hph_efficiency_daily
                   style:
                     top: 95.9%
                     left: 40.4%
@@ -943,7 +955,7 @@ views:
                     transform: translate(-50%, -50%)
                 # hotspot-scop (461,557)
                 - type: state-label
-                  entity: sensor.hph_scop
+                  entity: sensor.hph_efficiency_seasonal
                   style:
                     top: 95.9%
                     left: 51.2%
@@ -1125,7 +1137,7 @@ views:
                     transform: translate(-50%, -50%)
                 # hotspot-cop-live (252,601)
                 - type: state-label
-                  entity: sensor.hph_cop_live
+                  entity: sensor.hph_efficiency_live
                   style:
                     top: 97.0%
                     left: 28.0%
@@ -1136,7 +1148,7 @@ views:
                     transform: translate(-50%, -50%)
                 # hotspot-cop-daily (364,601)
                 - type: state-label
-                  entity: sensor.hph_cop_daily
+                  entity: sensor.hph_efficiency_daily
                   style:
                     top: 97.0%
                     left: 40.4%
@@ -1147,7 +1159,7 @@ views:
                     transform: translate(-50%, -50%)
                 # hotspot-scop (461,601)
                 - type: state-label
-                  entity: sensor.hph_scop
+                  entity: sensor.hph_efficiency_seasonal
                   style:
                     top: 97.0%
                     left: 51.2%
@@ -1208,10 +1220,12 @@ views:
               tap_action:
                 action: more-info
             - type: template
-              content: "COP {{ states('sensor.hph_cop_live') | float(0) | round(2) }}"
+              content: >-
+                {{ state_attr('sensor.hph_efficiency_live','metric') or 'COP' }}
+                {{ states('sensor.hph_efficiency_live') | float(0) | round(2) }}
               icon: mdi:lightning-bolt-circle
               icon_color: >-
-                {% set cop = states('sensor.hph_cop_live') | float(0) %}
+                {% set cop = states('sensor.hph_efficiency_live') | float(0) %}
                 {{ 'green' if cop > 3 else ('orange' if cop > 2 else 'red') }}
             - type: template
               entity: switch.hph_power
@@ -2661,7 +2675,7 @@ views:
                 - entity: binary_sensor.hph_compressor_running
                 - entity: select.hph_ctrl_operating_mode
                 - entity: select.hph_quiet_mode
-                - entity: sensor.hph_cop_live
+                - entity: sensor.hph_efficiency_live
                 - entity: switch.hph_power
 
             # ── Zone 1 heating ────────────────────────────────────────────────────
@@ -2989,13 +3003,14 @@ views:
               label_key: ana_electrical_power
               icon: mdi:flash
               icon_color: yellow
-            - type: custom:hph-tile
-              entity: sensor.hph_cop_live
-              decimals: 2
-              label_key: ana_cop_live
+            - type: custom:mushroom-template-card
+              entity: sensor.hph_efficiency_live
+              primary: "{{ states('sensor.hph_efficiency_live') | float(0) | round(2) }}"
+              secondary: "{{ state_attr('sensor.hph_efficiency_live','metric') or 'COP' }} live"
               icon: mdi:speedometer
-              color_thresholds: [[3.5, "green"], [2.5, "amber"], [0.0001, "red"]]
-              color_else: grey
+              icon_color: >-
+                {% set v = states('sensor.hph_efficiency_live') | float(0) %}
+                {% if v >= 3.5 %}green{% elif v >= 2.5 %}amber{% elif v > 0 %}red{% else %}grey{% endif %}
             - type: custom:hph-tile
               entity: sensor.hph_source_compressor_freq
               suffix: " Hz"
@@ -3059,7 +3074,7 @@ views:
               entities:
                 - entity: sensor.hph_thermal_power_active
                 - entity: sensor.hph_electrical_power_active
-                - entity: sensor.hph_cop_live
+                - entity: sensor.hph_efficiency_live
                 - entity: sensor.hph_source_compressor_freq
                 - entity: sensor.hph_source_flow_rate
 
@@ -3151,6 +3166,15 @@ views:
             name: COP (live)
             type: line
             color: "#17a2b8"
+            stroke_width: 2
+            extend_to: now
+            statistics:
+              type: mean
+              period: 5minute
+          - entity: sensor.hph_eer_live
+            name: EER (live)
+            type: line
+            color: "#7e57c2"
             stroke_width: 2
             extend_to: now
             statistics:
@@ -3326,30 +3350,39 @@ views:
           columns: 5
           square: false
           cards:
-            - type: custom:hph-tile
-              entity: sensor.hph_cop_daily
-              decimals: 2
-              label_key: kpi_cop_today
+            - type: custom:mushroom-template-card
+              entity: sensor.hph_efficiency_daily
+              primary: "{{ states('sensor.hph_efficiency_daily') | float(0) | round(2) }}"
+              secondary: "{{ state_attr('sensor.hph_efficiency_daily','metric') or 'COP' }} today"
               icon: mdi:calendar-today
-              color_thresholds: [[3.5, "green"], [2.5, "amber"], [0.0001, "red"]]
-              color_else: grey
-              navigate: /hph/efficiency
-            - type: custom:hph-tile
-              entity: sensor.hph_cop_monthly
-              decimals: 2
-              label_key: kpi_cop_month
+              icon_color: >-
+                {% set v = states('sensor.hph_efficiency_daily') | float(0) %}
+                {% if v >= 3.5 %}green{% elif v >= 2.5 %}amber{% elif v > 0 %}red{% else %}grey{% endif %}
+              tap_action:
+                action: navigate
+                navigation_path: /hph/efficiency
+            - type: custom:mushroom-template-card
+              entity: sensor.hph_efficiency_monthly
+              primary: "{{ states('sensor.hph_efficiency_monthly') | float(0) | round(2) }}"
+              secondary: "{{ state_attr('sensor.hph_efficiency_monthly','metric') or 'COP' }} month"
               icon: mdi:calendar-month
-              color_thresholds: [[3.5, "green"], [2.5, "amber"], [0.0001, "red"]]
-              color_else: grey
-              navigate: /hph/efficiency
-            - type: custom:hph-tile
-              entity: sensor.hph_scop
-              decimals: 2
-              label_key: kpi_scop_season
+              icon_color: >-
+                {% set v = states('sensor.hph_efficiency_monthly') | float(0) %}
+                {% if v >= 3.5 %}green{% elif v >= 2.5 %}amber{% elif v > 0 %}red{% else %}grey{% endif %}
+              tap_action:
+                action: navigate
+                navigation_path: /hph/efficiency
+            - type: custom:mushroom-template-card
+              entity: sensor.hph_efficiency_seasonal
+              primary: "{{ states('sensor.hph_efficiency_seasonal') | float(0) | round(2) }}"
+              secondary: "{{ state_attr('sensor.hph_efficiency_seasonal','metric') or 'SCOP' }} season"
               icon: mdi:calendar-star
-              color_thresholds: [[3.5, "green"], [2.5, "amber"], [0.0001, "red"]]
-              color_else: grey
-              navigate: /hph/efficiency
+              icon_color: >-
+                {% set v = states('sensor.hph_efficiency_seasonal') | float(0) %}
+                {% if v >= 3.5 %}green{% elif v >= 2.5 %}amber{% elif v > 0 %}red{% else %}grey{% endif %}
+              tap_action:
+                action: navigate
+                navigation_path: /hph/efficiency
             - type: custom:hph-tile
               entity: sensor.hph_cost_today
               decimals: 2
@@ -3502,9 +3535,9 @@ views:
                   }
                   state-badge { display: none; }
               entities:
-                - entity: sensor.hph_cop_daily
-                - entity: sensor.hph_cop_monthly
-                - entity: sensor.hph_scop
+                - entity: sensor.hph_efficiency_daily
+                - entity: sensor.hph_efficiency_monthly
+                - entity: sensor.hph_efficiency_seasonal
                 - entity: sensor.hph_cost_today
                 - entity: sensor.hph_cost_monthly
 
@@ -3551,10 +3584,10 @@ views:
         button: false
       - type: entities
         entities:
-          - entity: sensor.hph_scop
-          - entity: sensor.hph_cop_monthly
-          - entity: sensor.hph_cop_daily
-          - entity: sensor.hph_cop_live
+          - entity: sensor.hph_efficiency_seasonal
+          - entity: sensor.hph_efficiency_monthly
+          - entity: sensor.hph_efficiency_daily
+          - entity: sensor.hph_efficiency_live
 
       # ── Mode-split COP removed — architecture note ─────────────────────
       # The tariff-split utility meters (hph_thermal/electrical_monthly_split_*)
@@ -3865,6 +3898,14 @@ views:
             statistics:
               type: mean
               period: day
+          - entity: sensor.hph_eer_daily
+            name: Daily EER
+            type: line
+            color: "#7e57c2"
+            stroke_width: 2
+            statistics:
+              type: mean
+              period: day
         apex_config:
           chart:
             height: 280
@@ -3889,6 +3930,14 @@ views:
             name: SCOP
             type: column
             color: "#66bb6a"
+            statistics:
+              type: mean
+              period: month
+              align: start
+          - entity: sensor.hph_seer
+            name: SEER
+            type: column
+            color: "#7e57c2"
             statistics:
               type: mean
               period: month
@@ -3984,6 +4033,46 @@ views:
             icon: mdi:home-thermometer
           - entity: sensor.hph_scop_cooling_plus_dhw
             icon: mdi:snowflake-thermometer
+
+      # ── Cooling efficiency (EER / SEER) — only when cooling is configured ──
+      # EER is the cooling-side counterpart of COP: thermal cooling power
+      # divided by cooling electrical power, always a positive figure. SEER is
+      # its seasonal (yearly) aggregate. Gated on hph_has_cooling so heat-only
+      # installs never see empty cooling tiles.
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: binary_sensor.hph_has_cooling
+            state: "on"
+        card:
+          type: vertical-stack
+          cards:
+            - type: markdown
+              content: "### Cooling efficiency (EER / SEER)"
+            - type: grid
+              columns: 2
+              square: false
+              cards:
+                - type: tile
+                  entity: sensor.hph_eer_live
+                  name: EER live
+                  color: cyan
+                - type: tile
+                  entity: sensor.hph_eer_daily
+                  name: EER today
+                  color: cyan
+                - type: tile
+                  entity: sensor.hph_eer_monthly
+                  name: EER month
+                  color: cyan
+                - type: tile
+                  entity: sensor.hph_seer
+                  name: SEER
+                  color: green
+            - type: entities
+              entities:
+                - entity: sensor.hph_thermal_power_cooling
+                  name: Cooling power
 
       - type: entities
         title: SCOP — system vs. compressor-only
@@ -4339,6 +4428,29 @@ views:
     path: heatpump
     icon: mdi:heat-pump
     cards:
+      # ── Cooling efficiency summary (EER / SEER) — only when cooling exists ──
+      # Mirrors the heating COP/SCOP headline: in cooling mode the COP tiles on
+      # the other views already flip to EER/SEER; here the raw cooling figures
+      # are surfaced directly for quick reference. Gated on hph_has_cooling.
+      - type: conditional
+        conditions:
+          - condition: state
+            entity: binary_sensor.hph_has_cooling
+            state: "on"
+        card:
+          type: grid
+          columns: 2
+          square: false
+          cards:
+            - type: tile
+              entity: sensor.hph_eer_live
+              name: EER live
+              color: cyan
+            - type: tile
+              entity: sensor.hph_seer
+              name: SEER (season)
+              color: green
+
       # ── Heating curve Z2 (conditional) — kept here for reference ─────
       - type: conditional
         conditions:
