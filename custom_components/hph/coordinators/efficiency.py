@@ -22,12 +22,12 @@ if TYPE_CHECKING:
 _LOGGER = logging.getLogger(__name__)
 
 _SPLIT_METERS = [
-    "sensor.hph_thermal_daily_split",
-    "sensor.hph_thermal_monthly_split",
-    "sensor.hph_thermal_yearly_split",
-    "sensor.hph_electrical_daily_split",
-    "sensor.hph_electrical_monthly_split",
-    "sensor.hph_electrical_yearly_split",
+    "select.hph_thermal_daily_split",
+    "select.hph_thermal_monthly_split",
+    "select.hph_thermal_yearly_split",
+    "select.hph_electrical_daily_split",
+    "select.hph_electrical_monthly_split",
+    "select.hph_electrical_yearly_split",
 ]
 
 
