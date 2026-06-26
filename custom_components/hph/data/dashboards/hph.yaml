@@ -4557,29 +4557,6 @@ views:
     path: heatpump
     icon: mdi:heat-pump
     cards:
-      # ── Cooling efficiency summary (EER / SEER) — only when cooling exists ──
-      # Mirrors the heating COP/SCOP headline: in cooling mode the COP tiles on
-      # the other views already flip to EER/SEER; here the raw cooling figures
-      # are surfaced directly for quick reference. Gated on hph_has_cooling.
-      - type: conditional
-        conditions:
-          - condition: state
-            entity: binary_sensor.hph_has_cooling
-            state: "on"
-        card:
-          type: grid
-          columns: 2
-          square: false
-          cards:
-            - type: tile
-              entity: sensor.hph_eer_live
-              name: EER live
-              color: cyan
-            - type: tile
-              entity: sensor.hph_seer
-              name: SEER (season)
-              color: green
-
       # ── Heating curve Z2 (conditional) — kept here for reference ─────
       - type: conditional
         conditions:
