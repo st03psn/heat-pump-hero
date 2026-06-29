@@ -913,13 +913,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     from homeassistant.core import CoreState
 
     if hass.state is CoreState.running:
-        hass.async_create_task(_async_check_prerequisites(hass, entry))
+        entry.async_create_task(
+            hass, _async_check_prerequisites(hass, entry)
+        )
     else:
-        hass.bus.async_listen_once(
-            EVENT_HOMEASSISTANT_STARTED,
-            lambda _event: hass.async_create_task(
-                _async_check_prerequisites(hass, entry)
-            ),
+
+        async def _on_started(_event) -> None:
+            await _async_check_prerequisites(hass, entry)
+
+        entry.async_on_unload(
+            hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _on_started)
         )
 
     # Apply chosen vendor preset (one-shot on first install).

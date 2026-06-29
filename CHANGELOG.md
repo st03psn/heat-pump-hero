@@ -5,6 +5,19 @@ and HeatPump Hero adheres to [Semantic Versioning](https://semver.org/spec/v2.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Prerequisite check on cold boot no longer leaks an orphaned task.** The
+  `EVENT_HOMEASSISTANT_STARTED` listener that defers `_async_check_prerequisites`
+  used a `lambda` calling `hass.async_create_task(...)` and discarded the task,
+  so an exception during the check (likely on cold boot, before all Lovelace
+  resources / vendor integrations have loaded) was never retrieved — producing
+  the `coroutine … was never awaited`, `Future exception was never retrieved`,
+  and HA thread-safety warnings, and silently skipping the Repairs-issue check
+  at startup. Replaced with a real `async` listener (awaited by the event bus),
+  an entry-bound `entry.async_create_task` on reload, and `entry.async_on_unload`
+  cleanup of the once-listener.
+
 ## [0.9.0-rc12] — 2026-06-26
 
 ### Added
